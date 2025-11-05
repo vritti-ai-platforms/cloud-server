@@ -8,7 +8,6 @@ import {
   Param,
   HttpCode,
   HttpStatus,
-  ValidationPipe,
   Logger,
 } from '@nestjs/common';
 import { TenantService } from './tenant.service';
@@ -29,8 +28,7 @@ export class TenantController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   async create(
-    @Body(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
-    createTenantDto: CreateTenantDto,
+    @Body() createTenantDto: CreateTenantDto,
   ): Promise<TenantResponseDto> {
     this.logger.log(`POST /tenants - Creating tenant: ${createTenantDto.subdomain}`);
     return await this.tenantService.create(createTenantDto);
@@ -77,8 +75,7 @@ export class TenantController {
   @Patch(':id')
   async update(
     @Param('id') id: string,
-    @Body(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
-    updateTenantDto: UpdateTenantDto,
+    @Body() updateTenantDto: UpdateTenantDto,
   ): Promise<TenantResponseDto> {
     this.logger.log(`PATCH /tenants/${id} - Updating tenant`);
     return await this.tenantService.update(id, updateTenantDto);

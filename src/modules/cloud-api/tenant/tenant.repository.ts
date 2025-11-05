@@ -20,6 +20,7 @@ export class TenantRepository {
 
   /**
    * Create a new tenant
+   * Note: Database configuration is handled separately by TenantDatabaseConfigRepository
    */
   async create(data: CreateTenantDto): Promise<Tenant> {
     const prisma = await this.getPrisma();
@@ -28,61 +29,65 @@ export class TenantRepository {
     return await prisma.tenant.create({
       data: {
         subdomain: data.subdomain,
-
         name: data.name,
         description: data.description,
         dbType: data.dbType,
         status: data.status || 'ACTIVE',
-        dbHost: data.dbHost,
-        dbPort: data.dbPort,
-        dbUsername: data.dbUsername,
-        dbPassword: data.dbPassword, // TODO: Encrypt before storing
-        dbName: data.dbName,
-        dbSchema: data.dbSchema,
-        dbSslMode: data.dbSslMode,
-        connectionPoolSize: data.connectionPoolSize,
       },
     });
   }
 
   /**
    * Find all tenants
+   * @param includeConfig - Whether to include database configuration
    */
-  async findAll(): Promise<Tenant[]> {
+  async findAll(includeConfig = false): Promise<Tenant[]> {
     const prisma = await this.getPrisma();
     this.logger.debug('Finding all tenants');
 
     return await prisma.tenant.findMany({
       orderBy: { createdAt: 'desc' },
+      include: {
+        databaseConfig: includeConfig,
+      },
     });
   }
 
   /**
    * Find tenant by ID
+   * @param includeConfig - Whether to include database configuration
    */
-  async findById(id: string): Promise<Tenant | null> {
+  async findById(id: string, includeConfig = false): Promise<Tenant | null> {
     const prisma = await this.getPrisma();
     this.logger.debug(`Finding tenant by ID: ${id}`);
 
     return await prisma.tenant.findUnique({
       where: { id },
+      include: {
+        databaseConfig: includeConfig,
+      },
     });
   }
 
   /**
    * Find tenant by subdomain
+   * @param includeConfig - Whether to include database configuration
    */
-  async findBySubdomain(subdomain: string): Promise<Tenant | null> {
+  async findBySubdomain(subdomain: string, includeConfig = false): Promise<Tenant | null> {
     const prisma = await this.getPrisma();
     this.logger.debug(`Finding tenant by subdomain: ${subdomain}`);
 
     return await prisma.tenant.findUnique({
       where: { subdomain },
+      include: {
+        databaseConfig: includeConfig,
+      },
     });
   }
 
   /**
    * Update tenant
+   * Note: Database configuration is handled separately by TenantDatabaseConfigRepository
    */
   async update(id: string, data: UpdateTenantDto): Promise<Tenant> {
     const prisma = await this.getPrisma();
@@ -92,19 +97,10 @@ export class TenantRepository {
       where: { id },
       data: {
         subdomain: data.subdomain,
-
         name: data.name,
         description: data.description,
         dbType: data.dbType,
         status: data.status,
-        dbHost: data.dbHost,
-        dbPort: data.dbPort,
-        dbUsername: data.dbUsername,
-        dbPassword: data.dbPassword, // TODO: Encrypt before storing
-        dbName: data.dbName,
-        dbSchema: data.dbSchema,
-        dbSslMode: data.dbSslMode,
-        connectionPoolSize: data.connectionPoolSize,
       },
     });
   }

@@ -1,4 +1,5 @@
 import { DatabaseType, TenantStatus } from '@prisma/client';
+import { TenantDatabaseConfigResponseDto } from './tenant-database-config-response.dto';
 
 export class TenantResponseDto {
   id: string;
@@ -8,13 +9,8 @@ export class TenantResponseDto {
   dbType: DatabaseType;
   status: TenantStatus;
 
-  // Database connection details (sanitized - no sensitive data)
-  dbHost?: string | null;
-  dbPort?: number | null;
-  dbName?: string | null;
-  dbSchema?: string | null;
-  dbSslMode?: string | null;
-  connectionPoolSize?: number | null;
+  // Database configuration (if exists, for DEDICATED tenants)
+  databaseConfig?: TenantDatabaseConfigResponseDto | null;
 
   // Metadata
   createdAt: Date;
@@ -25,7 +21,9 @@ export class TenantResponseDto {
   }
 
   /**
-   * Create from Prisma Tenant model, excluding sensitive fields
+   * Create from Prisma Tenant model with optional database configuration
+   * @param tenant - Tenant model with optional databaseConfig relation
+   * @returns TenantResponseDto with sanitized database configuration
    */
   static fromPrisma(tenant: any): TenantResponseDto {
     return new TenantResponseDto({
@@ -35,15 +33,11 @@ export class TenantResponseDto {
       description: tenant.description,
       dbType: tenant.dbType,
       status: tenant.status,
-      dbHost: tenant.dbHost,
-      dbPort: tenant.dbPort,
-      dbName: tenant.dbName,
-      dbSchema: tenant.dbSchema,
-      dbSslMode: tenant.dbSslMode,
-      connectionPoolSize: tenant.connectionPoolSize,
+      databaseConfig: tenant.databaseConfig
+        ? TenantDatabaseConfigResponseDto.fromPrisma(tenant.databaseConfig)
+        : null,
       createdAt: tenant.createdAt,
       updatedAt: tenant.updatedAt,
-      // Explicitly exclude: dbUsername, dbPassword
     });
   }
 }

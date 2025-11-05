@@ -73,13 +73,7 @@ class EnvironmentVariables {
 
   // JWT Configuration
   @IsString()
-  JWT_ACCESS_SECRET: string;
-
-  @IsString()
-  JWT_REFRESH_SECRET: string;
-
-  @IsString()
-  JWT_SIGNUP_SECRET: string;
+  JWT_SECRET: string;
 
   @IsString()
   @IsOptional()

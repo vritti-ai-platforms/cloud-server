@@ -9,12 +9,16 @@ import { CreateTenantDto } from './dto/create-tenant.dto';
 import { TenantResponseDto } from './dto/tenant-response.dto';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
 import { TenantRepository } from './tenant.repository';
+import { TenantDatabaseConfigService } from './tenant-database-config.service';
 
 @Injectable()
 export class TenantService {
   private readonly logger = new Logger(TenantService.name);
 
-  constructor(private readonly tenantRepository: TenantRepository) {}
+  constructor(
+    private readonly tenantRepository: TenantRepository,
+    private readonly configService: TenantDatabaseConfigService,
+  ) {}
 
   /**
    * Create a new tenant
@@ -33,12 +37,27 @@ export class TenantService {
     // Validate database configuration based on dbType
     this.validateDatabaseConfig(createTenantDto);
 
-    // Create tenant
+    // Create tenant (business data only)
     const tenant = await this.tenantRepository.create(createTenantDto);
+
+    // Create database configuration if DEDICATED type
+    if (createTenantDto.dbType === 'DEDICATED') {
+      await this.configService.create(tenant.id, {
+        dbHost: createTenantDto.dbHost!,
+        dbPort: createTenantDto.dbPort!,
+        dbUsername: createTenantDto.dbUsername!,
+        dbPassword: createTenantDto.dbPassword!,
+        dbName: createTenantDto.dbName!,
+        dbSchema: createTenantDto.dbSchema,
+        dbSslMode: createTenantDto.dbSslMode,
+        connectionPoolSize: createTenantDto.connectionPoolSize,
+      });
+    }
 
     this.logger.log(`Created tenant: ${tenant.subdomain} (${tenant.id})`);
 
-    return TenantResponseDto.fromPrisma(tenant);
+    // Return tenant with config (if exists)
+    return this.findById(tenant.id);
   }
 
   /**
@@ -53,7 +72,7 @@ export class TenantService {
    * Get tenant by ID
    */
   async findById(id: string): Promise<TenantResponseDto> {
-    const tenant = await this.tenantRepository.findById(id);
+    const tenant = await this.tenantRepository.findById(id, true); // Include config
 
     if (!tenant) {
       throw new NotFoundException(`Tenant with ID '${id}' not found`);
@@ -66,7 +85,7 @@ export class TenantService {
    * Get tenant by subdomain
    */
   async findBySubdomain(subdomain: string): Promise<TenantResponseDto> {
-    const tenant = await this.tenantRepository.findBySubdomain(subdomain);
+    const tenant = await this.tenantRepository.findBySubdomain(subdomain, true); // Include config
 
     if (!tenant) {
       throw new NotFoundException(
@@ -85,7 +104,7 @@ export class TenantService {
     updateTenantDto: UpdateTenantDto,
   ): Promise<TenantResponseDto> {
     // Check if tenant exists
-    const existing = await this.tenantRepository.findById(id);
+    const existing = await this.tenantRepository.findById(id, true); // Include config
     if (!existing) {
       throw new NotFoundException(`Tenant with ID '${id}' not found`);
     }
@@ -105,20 +124,60 @@ export class TenantService {
       }
     }
 
-    // Validate database configuration if dbType is being changed
-    if (updateTenantDto.dbType) {
-      this.validateDatabaseConfig({
-        ...existing,
-        ...updateTenantDto,
-      } as CreateTenantDto);
-    }
+    // Extract database config fields from update DTO
+    const {
+      dbHost,
+      dbPort,
+      dbUsername,
+      dbPassword,
+      dbName,
+      dbSchema,
+      dbSslMode,
+      connectionPoolSize,
+      ...tenantData
+    } = updateTenantDto;
 
-    // Update tenant
-    const tenant = await this.tenantRepository.update(id, updateTenantDto);
+    // Update tenant (business data only)
+    const tenant = await this.tenantRepository.update(id, tenantData);
+
+    // Update database configuration if any DB fields are provided
+    const hasDbConfigFields =
+      dbHost || dbPort || dbUsername || dbPassword || dbName || dbSchema || dbSslMode || connectionPoolSize;
+
+    if (hasDbConfigFields) {
+      const configExists = await this.configService.exists(id);
+
+      if (configExists) {
+        // Update existing config
+        await this.configService.update(id, {
+          dbHost,
+          dbPort,
+          dbUsername,
+          dbPassword,
+          dbName,
+          dbSchema,
+          dbSslMode,
+          connectionPoolSize,
+        });
+      } else if (tenant.dbType === 'DEDICATED') {
+        // Create new config if tenant is DEDICATED and config doesn't exist
+        await this.configService.create(id, {
+          dbHost: dbHost!,
+          dbPort: dbPort!,
+          dbUsername: dbUsername!,
+          dbPassword: dbPassword!,
+          dbName: dbName!,
+          dbSchema,
+          dbSslMode,
+          connectionPoolSize,
+        });
+      }
+    }
 
     this.logger.log(`Updated tenant: ${tenant.subdomain} (${tenant.id})`);
 
-    return TenantResponseDto.fromPrisma(tenant);
+    // Return tenant with updated config
+    return this.findById(id);
   }
 
   /**

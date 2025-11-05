@@ -9,6 +9,7 @@ import { AppService } from './app.service';
 import { validate } from './config/env.validation';
 
 import {
+  AuthConfigModule,
   DatabaseModule,
   DatabaseModuleOptions,
   TenantContextInterceptor,
@@ -49,6 +50,9 @@ import { TenantModule } from './modules/cloud-api/tenant/tenant.module';
         return options;
       },
     }),
+    // Authentication module (Global guard + JWT)
+    // Must be imported after DatabaseModule since VrittiAuthGuard depends on its services
+    AuthConfigModule.forRootAsync(),
     CloudApiModule,
     RouterModule.register([
       {

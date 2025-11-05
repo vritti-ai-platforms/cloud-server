@@ -1,0 +1,103 @@
+import {
+  Controller,
+  Post,
+  Get,
+  Body,
+  Request,
+  HttpCode,
+  HttpStatus,
+  Logger,
+} from '@nestjs/common';
+import { Public, Onboarding } from '@vritti/api-sdk';
+import { OnboardingService } from './services/onboarding.service';
+import { EmailVerificationService } from './services/email-verification.service';
+import { RegisterDto } from './dto/register.dto';
+import { VerifyEmailDto } from './dto/verify-email.dto';
+import { OnboardingStatusResponseDto } from './dto/onboarding-status-response.dto';
+
+/**
+ * Onboarding Controller
+ * Handles user registration and email verification
+ */
+@Controller('onboarding')
+export class OnboardingController {
+  private readonly logger = new Logger(OnboardingController.name);
+
+  constructor(
+    private readonly onboardingService: OnboardingService,
+    private readonly emailVerificationService: EmailVerificationService,
+  ) {}
+
+  /**
+   * Register or resume onboarding (smart endpoint)
+   * POST /onboarding/register
+   */
+  @Post('register')
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  async register(
+    @Body() registerDto: RegisterDto,
+  ): Promise<OnboardingStatusResponseDto> {
+    this.logger.log(`POST /onboarding/register - Email: ${registerDto.email}`);
+    return await this.onboardingService.register(registerDto);
+  }
+
+  /**
+   * Verify email OTP
+   * POST /onboarding/verify-email
+   * Requires: Onboarding token in Authorization header
+   */
+  @Post('verify-email')
+  @Onboarding()
+  @HttpCode(HttpStatus.OK)
+  async verifyEmail(
+    @Request() req,
+    @Body() verifyEmailDto: VerifyEmailDto,
+  ): Promise<{ success: boolean; message: string }> {
+    const userId = req.user.id;
+    this.logger.log(`POST /onboarding/verify-email - User: ${userId}`);
+
+    await this.emailVerificationService.verifyOtp(userId, verifyEmailDto.otp);
+
+    return {
+      success: true,
+      message: 'Email verified successfully',
+    };
+  }
+
+  /**
+   * Resend email verification OTP
+   * POST /onboarding/resend-email-otp
+   * Requires: Onboarding token in Authorization header
+   */
+  @Post('resend-email-otp')
+  @Onboarding()
+  @HttpCode(HttpStatus.OK)
+  async resendEmailOtp(
+    @Request() req,
+  ): Promise<{ success: boolean; message: string }> {
+    const userId = req.user.id;
+    this.logger.log(`POST /onboarding/resend-email-otp - User: ${userId}`);
+
+    await this.emailVerificationService.resendOtp(userId);
+
+    return {
+      success: true,
+      message: 'OTP sent successfully',
+    };
+  }
+
+  /**
+   * Get current onboarding status
+   * GET /onboarding/status
+   * Requires: Onboarding token in Authorization header
+   */
+  @Get('status')
+  @Onboarding()
+  async getStatus(@Request() req): Promise<OnboardingStatusResponseDto> {
+    const userId = req.user.id;
+    this.logger.log(`GET /onboarding/status - User: ${userId}`);
+
+    return await this.onboardingService.getStatus(userId);
+  }
+}
