@@ -38,8 +38,15 @@ export class EmailVerificationService {
       expiresAt,
     });
 
-    // Send email
-    // await this.emailService.sendVerificationOtp(email, otp);
+    // Get user details for personalization
+    const user = await this.userService.findById(userId);
+
+    // Send email via Brevo
+    await this.emailService.sendVerificationEmail(
+      email,
+      otp,
+      user.firstName || undefined,
+    );
 
     this.logger.log(
       `Sent email verification OTP to ${email} for user ${userId}`,
@@ -91,10 +98,6 @@ export class EmailVerificationService {
    * Resend verification OTP
    */
   async resendOtp(userId: string): Promise<void> {
-    // Get user to fetch email
-    const user = await this.userService.findByEmail(''); // We need to get user by ID first
-    // Actually, we should fetch user by ID, let me adjust this
-
     // Find user by ID to get email
     const userResponse = await this.userService.findById(userId);
 

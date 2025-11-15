@@ -7,6 +7,7 @@ import {
   IsOptional,
   Min,
   Max,
+  IsEmail,
 } from 'class-validator';
 
 enum Environment {
@@ -104,6 +105,16 @@ class EnvironmentVariables {
   @IsString()
   @IsOptional()
   ENCRYPTION_KEY: string;
+
+  // Brevo Email Configuration
+  @IsString()
+  BREVO_API_KEY: string;
+
+  @IsEmail()
+  SENDER_EMAIL: string;
+
+  @IsString()
+  SENDER_NAME: string;
 }
 
 /**
