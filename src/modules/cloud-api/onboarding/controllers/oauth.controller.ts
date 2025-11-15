@@ -124,7 +124,7 @@ export class OAuthController {
    * Get frontend redirect URL after successful OAuth
    */
   private getFrontendRedirectUrl(response: OAuthResponseDto): string {
-    const baseUrl = 'http://localhost:5173'; // TODO: Get from config
+    const baseUrl = 'http://cloud.localhost:3001'; // TODO: Get from config
     const params = new URLSearchParams({
       token: response.onboardingToken,
       isNewUser: String(response.isNewUser),
