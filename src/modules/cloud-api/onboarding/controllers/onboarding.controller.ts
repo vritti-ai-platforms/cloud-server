@@ -8,10 +8,9 @@ import {
   Post,
   Request,
 } from '@nestjs/common';
-import { FastifyRequest } from 'fastify';
-import { Onboarding, Public } from '@vritti/api-sdk';
+import type { FastifyRequest } from 'fastify';
+import { Onboarding } from '@vritti/api-sdk';
 import { OnboardingStatusResponseDto } from '../dto/onboarding-status-response.dto';
-import { RegisterDto } from '../dto/register.dto';
 import { SetPasswordDto } from '../dto/set-password.dto';
 import { VerifyEmailDto } from '../dto/verify-email.dto';
 import { EmailVerificationService } from '../services/email-verification.service';
@@ -40,21 +39,6 @@ export class OnboardingController {
     private readonly onboardingService: OnboardingService,
     private readonly emailVerificationService: EmailVerificationService,
   ) {}
-
-  /**
-   * Register or resume onboarding (smart endpoint)
-   * POST /onboarding/register
-   * Requires CSRF token in X-CSRF-Token header
-   */
-  @Post('register')
-  @Public()
-  @HttpCode(HttpStatus.OK)
-  async register(
-    @Body() registerDto: RegisterDto,
-  ): Promise<OnboardingStatusResponseDto> {
-    this.logger.log(`POST /onboarding/register - Email: ${registerDto.email}`);
-    return await this.onboardingService.register(registerDto);
-  }
 
   /**
    * Verify email OTP

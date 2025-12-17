@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@/generated/prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
 
 import { RouterModule } from '@nestjs/core';
 
@@ -46,7 +47,7 @@ import { TenantModule } from './modules/cloud-api/tenant/tenant.module';
           filePath: configService.get('LOG_FILE_PATH'),
           maxFiles: configService.get('LOG_MAX_FILES'),
 
-          // HTTP logging configuration (optional)
+          // // HTTP logging configuration (optional)
           enableHttpLogger: true,
           httpLogger: {
             enableRequestLog: true,
@@ -71,11 +72,12 @@ import { TenantModule } from './modules/cloud-api/tenant/tenant.module';
             password: config.getOrThrow<string>('PRIMARY_DB_PASSWORD'),
             database: config.getOrThrow<string>('PRIMARY_DB_DATABASE'),
             schema: config.get<string>('PRIMARY_DB_SCHEMA'),
-            sslMode: config.get<'require' | 'prefer' | 'disable'>(
+            sslMode: config.get<'require' | 'prefer' | 'disable' | 'no-verify'>(
               'PRIMARY_DB_SSL_MODE',
             ),
           },
           prismaClientConstructor: PrismaClient,
+          prismaAdapterConstructor: PrismaPg,
 
           // Connection pool configuration
           connectionCacheTTL: 300000, // 5 minutes

@@ -10,7 +10,7 @@ import {
   Matches,
   IsIn,
 } from 'class-validator';
-import { DatabaseType, TenantStatus } from '@prisma/client';
+import { DatabaseType, TenantStatus } from '@/generated/prisma/client';
 
 export class CreateTenantDto {
   @IsString()

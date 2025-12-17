@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { TenantDatabaseConfig } from '@prisma/client';
+import { TenantDatabaseConfig } from '@/generated/prisma/client';
 import { PrimaryBaseRepository, PrimaryDatabaseService } from '@vritti/api-sdk';
 
 /**

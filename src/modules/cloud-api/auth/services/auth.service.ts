@@ -1,12 +1,17 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { UnauthorizedException, BadRequestException } from '@vritti/api-sdk';
 import { LoginDto } from '../dto/login.dto';
+import { SignupDto } from '../dto/signup.dto';
 import { AuthResponseDto } from '../dto/auth-response.dto';
 import { UserService } from '../../user/user.service';
 import { UserResponseDto } from '../../user/dto/user-response.dto';
 import { EncryptionService } from '../../../../services';
 import { SessionService } from './session.service';
 import { JwtAuthService } from './jwt.service';
+import { User } from '@/generated/prisma/client';
+import { OnboardingStatusResponseDto } from '../../onboarding/dto/onboarding-status-response.dto';
+import { EmailVerificationService } from '../../onboarding/services/email-verification.service';
+import { TokenType } from '../../../../config/jwt.config';
 
 @Injectable()
 export class AuthService {
@@ -17,6 +22,7 @@ export class AuthService {
     private readonly encryptionService: EncryptionService,
     private readonly sessionService: SessionService,
     private readonly jwtService: JwtAuthService,
+    private readonly emailVerificationService: EmailVerificationService,
   ) {}
 
   /**
@@ -40,10 +46,39 @@ export class AuthService {
 
     // Check if onboarding is complete
     if (!user.onboardingComplete) {
-      throw new BadRequestException(
-        'Please complete onboarding first. Use /onboarding/register to continue',
-        'Your account setup is incomplete. Please finish registration before logging in.'
+      // User needs to complete onboarding
+      // Verify password first
+      if (!user.passwordHash) {
+        throw new UnauthorizedException(
+          'Invalid credentials',
+          'The email or password you entered is incorrect. Please check your credentials and try again.'
+        );
+      }
+
+      const isPasswordValid = await this.encryptionService.comparePassword(
+        dto.password,
+        user.passwordHash,
       );
+
+      if (!isPasswordValid) {
+        throw new UnauthorizedException(
+          'Invalid credentials',
+          'The email or password you entered is incorrect. Please check your credentials and try again.'
+        );
+      }
+
+      // Generate onboarding token
+      const onboardingToken = this.generateOnboardingToken(user.id);
+
+      this.logger.log(`User login - requires onboarding: ${user.email} (${user.id})`);
+
+      // Return response with onboarding requirements
+      return new AuthResponseDto({
+        requiresOnboarding: true,
+        onboardingToken,
+        onboardingStep: user.onboardingStep,
+        user: UserResponseDto.fromPrisma(user),
+      });
     }
 
     // Only ACTIVE users can login
@@ -77,6 +112,9 @@ export class AuthService {
     // Create session and generate tokens
     const { accessToken, refreshToken } =
       await this.sessionService.createSession(user.id, ipAddress, userAgent);
+
+    // Delete all onboarding sessions (user has completed onboarding)
+    await this.sessionService.deleteOnboardingSessions(user.id);
 
     // Update last login timestamp
     await this.userService.updateLastLogin(user.id);
@@ -154,5 +192,145 @@ export class AuthService {
     }
 
     return user;
+  }
+
+  /**
+   * Smart signup endpoint - handles both new registration and resume
+   * This is the main entry point for user registration
+   */
+  async signup(dto: SignupDto): Promise<OnboardingStatusResponseDto> {
+    const existingUser = await this.userService.findByEmail(dto.email);
+
+    // Case 1: Onboarding complete → error
+    if (existingUser?.onboardingComplete) {
+      throw new BadRequestException(
+        'email',
+        'User Already Exists. Please login.',
+        'Your account has already been set up. Please proceed to login.'
+      );
+    }
+
+    // Case 2: Resume onboarding
+    if (existingUser && !existingUser.onboardingComplete) {
+      return await this.resumeOnboarding(existingUser, dto.password);
+    }
+
+    // Case 3: New user
+    return await this.createNewUser(dto);
+  }
+
+  /**
+   * Resume existing onboarding
+   */
+  private async resumeOnboarding(
+    user: User,
+    password: string,
+  ): Promise<OnboardingStatusResponseDto> {
+    // Skip password check if BOTH email AND mobile not verified
+    const shouldSkipPasswordCheck = !user.emailVerified && !user.phoneVerified;
+
+    if (!shouldSkipPasswordCheck && user.passwordHash) {
+      const isPasswordValid = await this.encryptionService.comparePassword(
+        password,
+        user.passwordHash,
+      );
+      if (!isPasswordValid) {
+        throw new BadRequestException(
+          [
+            { field: 'password', message: 'Invalid password' },
+            { message: 'A password is already set for this account' }
+          ],
+          'The password you entered is incorrect. This account already has a password set. Please enter the correct password to continue.'
+        );
+      }
+    }
+
+    // Generate onboarding token
+    const onboardingToken = this.generateOnboardingToken(user.id);
+
+    // Resend OTP if needed (based on current step)
+    await this.resendOtpIfNeeded(user);
+
+    this.logger.log(`Resuming onboarding for user: ${user.email} (${user.id})`);
+
+    return OnboardingStatusResponseDto.fromUser(user, onboardingToken);
+  }
+
+  /**
+   * Create new user and start onboarding
+   */
+  private async createNewUser(
+    dto: SignupDto,
+  ): Promise<OnboardingStatusResponseDto> {
+    // Hash password
+    const passwordHash = await this.encryptionService.hashPassword(
+      dto.password,
+    );
+
+    // Create user
+    const userResponse = await this.userService.create(
+      {
+        email: dto.email,
+        firstName: dto.firstName,
+        lastName: dto.lastName,
+      },
+      passwordHash,
+    );
+
+    // Send email verification OTP
+    await this.emailVerificationService.sendVerificationOtp(
+      userResponse.id,
+      userResponse.email,
+    );
+
+    // Generate onboarding token
+    const onboardingToken = this.generateOnboardingToken(userResponse.id);
+
+    this.logger.log(
+      `Created new user and started onboarding: ${userResponse.email} (${userResponse.id})`,
+    );
+
+    // Get fresh user data to return
+    const user = await this.userService.findByEmail(dto.email);
+    return OnboardingStatusResponseDto.fromUser(user!, onboardingToken);
+  }
+
+  /**
+   * Generate onboarding JWT token
+   */
+  private generateOnboardingToken(userId: string): string {
+    // Use the internal jwtService (NestJwtService) through JwtAuthService
+    // We need to access it directly since JwtAuthService doesn't expose an onboarding token method
+    // This is a temporary approach - ideally JwtAuthService should have this method
+    const token = this.jwtService['jwtService'].sign(
+      {
+        userId,
+        type: TokenType.ONBOARDING,
+      },
+      {
+        expiresIn: '7d', // Onboarding token expires in 7 days
+      },
+    );
+    return token;
+  }
+
+  /**
+   * Resend OTP if needed based on current onboarding step
+   */
+  private async resendOtpIfNeeded(user: User): Promise<void> {
+    switch (user.onboardingStep) {
+      case 'EMAIL_VERIFICATION':
+        if (!user.emailVerified) {
+          await this.emailVerificationService.resendOtp(user.id);
+        }
+        break;
+      case 'MOBILE_VERIFICATION':
+        // TODO: Implement mobile verification resend in Phase 2
+        this.logger.debug(`Mobile verification resend not yet implemented`);
+        break;
+      default:
+        // No OTP needed for other steps
+        break;
+    }
   }
 }

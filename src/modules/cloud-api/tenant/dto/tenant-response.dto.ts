@@ -1,4 +1,4 @@
-import { DatabaseType, TenantStatus } from '@prisma/client';
+import { DatabaseType, TenantStatus } from '@/generated/prisma/client';
 import { TenantDatabaseConfigResponseDto } from './tenant-database-config-response.dto';
 
 export class TenantResponseDto {

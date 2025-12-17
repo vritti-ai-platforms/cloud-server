@@ -1,4 +1,4 @@
-import { AccountStatus, OnboardingStep } from '@prisma/client';
+import { AccountStatus, OnboardingStep } from '@/generated/prisma/client';
 
 export class UserResponseDto {
   id: string;

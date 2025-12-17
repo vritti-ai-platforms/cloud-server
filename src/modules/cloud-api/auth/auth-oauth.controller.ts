@@ -9,25 +9,25 @@ import {
   Res,
 } from '@nestjs/common';
 import { BadRequestException } from '@vritti/api-sdk';
-import { OAuthProviderType } from '@prisma/client';
+import { OAuthProviderType } from '@/generated/prisma/client';
 import { Onboarding, Public } from '@vritti/api-sdk';
 import type { FastifyReply } from 'fastify';
-import { OAuthResponseDto } from '../dto/oauth-response.dto';
-import { OAuthService } from '../services/oauth.service';
+import { OAuthResponseDto } from './oauth/dto/oauth-response.dto';
+import { OAuthService } from './oauth/services/oauth.service';
 
 /**
  * OAuth Controller
  * Handles OAuth authentication flows for all providers
  */
-@Controller('onboarding/oauth')
-export class OAuthController {
-  private readonly logger = new Logger(OAuthController.name);
+@Controller('auth/oauth')
+export class AuthOAuthController {
+  private readonly logger = new Logger(AuthOAuthController.name);
 
   constructor(private readonly oauthService: OAuthService) {}
 
   /**
    * Initiate OAuth flow
-   * GET /onboarding/oauth/:provider
+   * GET /auth/oauth/:provider
    * Public endpoint - redirects to OAuth provider
    */
   @Get(':provider')
@@ -47,7 +47,7 @@ export class OAuthController {
 
   /**
    * Link OAuth provider to existing user
-   * GET /onboarding/oauth/:provider/link
+   * GET /auth/oauth/:provider/link
    * Requires onboarding token - user must be authenticated
    */
   @Get(':provider/link')
@@ -69,7 +69,7 @@ export class OAuthController {
 
   /**
    * Handle OAuth callback
-   * GET /onboarding/oauth/:provider/callback
+   * GET /auth/oauth/:provider/callback
    * Public endpoint - receives authorization code from provider
    */
   @Get(':provider/callback')

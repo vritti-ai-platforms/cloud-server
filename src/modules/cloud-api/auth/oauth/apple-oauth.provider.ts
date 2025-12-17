@@ -1,12 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { OAuthProviderType } from '@prisma/client';
+import { OAuthProviderType } from '@/generated/prisma/client';
 import axios from 'axios';
 import * as crypto from 'crypto';
-import { IOAuthProvider } from '../interfaces/oauth-provider.interface';
-import { OAuthTokens } from '../interfaces/oauth-tokens.interface';
-import { OAuthUserProfile } from '../interfaces/oauth-user-profile.interface';
+import { IOAuthProvider } from './interfaces/oauth-provider.interface';
+import { OAuthTokens } from './interfaces/oauth-tokens.interface';
+import { OAuthUserProfile } from './interfaces/oauth-user-profile.interface';
 
 /**
  * Apple OAuth 2.0 Provider (Sign in with Apple)

@@ -1,5 +1,5 @@
 import { IsString, IsOptional, IsEnum, IsBoolean } from 'class-validator';
-import { AccountStatus, OnboardingStep } from '@prisma/client';
+import { AccountStatus, OnboardingStep } from '@/generated/prisma/client';
 
 export class UpdateUserDto {
   @IsString()

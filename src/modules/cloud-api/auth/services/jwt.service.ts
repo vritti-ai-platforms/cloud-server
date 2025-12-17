@@ -50,6 +50,21 @@ export class JwtAuthService {
   }
 
   /**
+   * Generate onboarding token (7 days)
+   */
+  generateOnboardingToken(userId: string): string {
+    return this.jwtService.sign(
+      {
+        userId,
+        type: TokenType.ONBOARDING,
+      },
+      {
+        expiresIn: this.tokenExpiry.ONBOARDING as any,
+      },
+    );
+  }
+
+  /**
    * Verify access token
    */
   verifyAccessToken(token: string): { userId: string; type: TokenType } {
@@ -98,6 +113,15 @@ export class JwtAuthService {
    * Calculate expiry time for refresh token
    */
   getRefreshTokenExpiryTime(): Date {
+    const expiryTime = new Date();
+    expiryTime.setDate(expiryTime.getDate() + 7); // 7 days
+    return expiryTime;
+  }
+
+  /**
+   * Calculate expiry time for onboarding token
+   */
+  getOnboardingTokenExpiryTime(): Date {
     const expiryTime = new Date();
     expiryTime.setDate(expiryTime.getDate() + 7); // 7 days
     return expiryTime;

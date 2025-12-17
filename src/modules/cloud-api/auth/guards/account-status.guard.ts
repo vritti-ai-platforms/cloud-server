@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { ForbiddenException } from '@vritti/api-sdk';
 import { Reflector } from '@nestjs/core';
-import { AccountStatus } from '@prisma/client';
+import { AccountStatus } from '@/generated/prisma/client';
 
 /**
  * Account Status Guard

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { EmailVerification } from '@prisma/client';
+import { EmailVerification } from '@/generated/prisma/client';
 import { PrimaryDatabaseService, PrimaryBaseRepository } from '@vritti/api-sdk';
 
 @Injectable()

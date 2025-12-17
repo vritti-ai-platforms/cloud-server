@@ -1,51 +1,50 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { OAuthProviderType } from '@prisma/client';
+import { OAuthProviderType } from '@/generated/prisma/client';
 import axios from 'axios';
-import { IOAuthProvider } from '../interfaces/oauth-provider.interface';
-import { OAuthTokens } from '../interfaces/oauth-tokens.interface';
-import { OAuthUserProfile } from '../interfaces/oauth-user-profile.interface';
+import { IOAuthProvider } from './interfaces/oauth-provider.interface';
+import { OAuthTokens } from './interfaces/oauth-tokens.interface';
+import { OAuthUserProfile } from './interfaces/oauth-user-profile.interface';
 
 /**
- * Microsoft OAuth 2.0 Provider (Azure AD / Microsoft Account)
- * Implements OAuth flow for Microsoft authentication
+ * Google OAuth 2.0 Provider
+ * Implements OAuth flow for Google authentication
  */
 @Injectable()
-export class MicrosoftOAuthProvider implements IOAuthProvider {
-  private readonly logger = new Logger(MicrosoftOAuthProvider.name);
+export class GoogleOAuthProvider implements IOAuthProvider {
+  private readonly logger = new Logger(GoogleOAuthProvider.name);
   private readonly clientId: string;
   private readonly clientSecret: string;
   private readonly redirectUri: string;
 
   private readonly AUTHORIZATION_URL =
-    'https://login.microsoftonline.com/common/oauth2/v2.0/authorize';
-  private readonly TOKEN_URL =
-    'https://login.microsoftonline.com/common/oauth2/v2.0/token';
-  private readonly USER_INFO_URL = 'https://graph.microsoft.com/v1.0/me';
+    'https://accounts.google.com/o/oauth2/v2/auth';
+  private readonly TOKEN_URL = 'https://oauth2.googleapis.com/token';
+  private readonly USER_INFO_URL =
+    'https://www.googleapis.com/oauth2/v2/userinfo';
 
   constructor(private readonly configService: ConfigService) {
-    this.clientId = this.configService.getOrThrow<string>(
-      'MICROSOFT_CLIENT_ID',
-    );
+    this.clientId = this.configService.getOrThrow<string>('GOOGLE_CLIENT_ID');
     this.clientSecret = this.configService.getOrThrow<string>(
-      'MICROSOFT_CLIENT_SECRET',
+      'GOOGLE_CLIENT_SECRET',
     );
     this.redirectUri = this.configService.getOrThrow<string>(
-      'MICROSOFT_CALLBACK_URL',
+      'GOOGLE_CALLBACK_URL',
     );
   }
 
   /**
-   * Get Microsoft authorization URL
+   * Get Google authorization URL
    */
   getAuthorizationUrl(state: string, codeChallenge?: string): string {
     const params = new URLSearchParams({
       client_id: this.clientId,
       redirect_uri: this.redirectUri,
       response_type: 'code',
-      scope: 'openid email profile User.Read',
+      scope: 'openid email profile',
       state,
-      response_mode: 'query',
+      access_type: 'offline', // Get refresh token
+      prompt: 'consent', // Force consent screen for refresh token
     });
 
     // Add PKCE if code challenge provided
@@ -55,7 +54,7 @@ export class MicrosoftOAuthProvider implements IOAuthProvider {
     }
 
     const url = `${this.AUTHORIZATION_URL}?${params.toString()}`;
-    this.logger.debug('Generated Microsoft authorization URL');
+    this.logger.debug('Generated Google authorization URL');
     return url;
   }
 
@@ -86,7 +85,7 @@ export class MicrosoftOAuthProvider implements IOAuthProvider {
         },
       });
 
-      this.logger.log('Successfully exchanged Microsoft authorization code');
+      this.logger.log('Successfully exchanged Google authorization code');
 
       return {
         accessToken: response.data.access_token,
@@ -96,16 +95,13 @@ export class MicrosoftOAuthProvider implements IOAuthProvider {
         idToken: response.data.id_token,
       };
     } catch (error) {
-      this.logger.error(
-        'Failed to exchange Microsoft authorization code',
-        error,
-      );
+      this.logger.error('Failed to exchange Google authorization code', error);
       throw new Error('Failed to exchange authorization code');
     }
   }
 
   /**
-   * Get user profile from Microsoft Graph API
+   * Get user profile from Google
    */
   async getUserProfile(accessToken: string): Promise<OAuthUserProfile> {
     try {
@@ -117,21 +113,19 @@ export class MicrosoftOAuthProvider implements IOAuthProvider {
 
       const data = response.data;
 
-      this.logger.log(
-        `Retrieved Microsoft profile for user: ${data.userPrincipalName}`,
-      );
+      this.logger.log(`Retrieved Google profile for user: ${data.email}`);
 
       return {
-        provider: OAuthProviderType.MICROSOFT,
+        provider: OAuthProviderType.GOOGLE,
         providerId: data.id,
-        email: data.userPrincipalName || data.mail,
-        displayName: data.displayName,
-        firstName: data.givenName,
-        lastName: data.surname,
-        profilePictureUrl: undefined, // Microsoft Graph API requires separate call for photo
+        email: data.email,
+        displayName: data.name,
+        firstName: data.given_name,
+        lastName: data.family_name,
+        profilePictureUrl: data.picture,
       };
     } catch (error) {
-      this.logger.error('Failed to get Microsoft user profile', error);
+      this.logger.error('Failed to get Google user profile', error);
       throw new Error('Failed to get user profile');
     }
   }

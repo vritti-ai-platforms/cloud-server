@@ -6,18 +6,18 @@ import {
 } from '@vritti/api-sdk';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { OnboardingStep, OAuthProviderType } from '@prisma/client';
+import { OnboardingStep, OAuthProviderType } from '@/generated/prisma/client';
 import * as crypto from 'crypto';
-import { getTokenExpiry, TokenType } from '../../../../config/jwt.config';
-import { UserRepository } from '../../user/user.repository';
-import { UserService } from '../../user/user.service';
+import { getTokenExpiry, TokenType } from '../../../../../config/jwt.config';
+import { UserRepository } from '../../../user/user.repository';
+import { UserService } from '../../../user/user.service';
 import { OAuthResponseDto } from '../dto/oauth-response.dto';
 import { IOAuthProvider } from '../interfaces/oauth-provider.interface';
-import { AppleOAuthProvider } from '../providers/apple-oauth.provider';
-import { FacebookOAuthProvider } from '../providers/facebook-oauth.provider';
-import { GoogleOAuthProvider } from '../providers/google-oauth.provider';
-import { MicrosoftOAuthProvider } from '../providers/microsoft-oauth.provider';
-import { TwitterOAuthProvider } from '../providers/twitter-oauth.provider';
+import { AppleOAuthProvider } from '../apple-oauth.provider';
+import { FacebookOAuthProvider } from '../facebook-oauth.provider';
+import { GoogleOAuthProvider } from '../google-oauth.provider';
+import { MicrosoftOAuthProvider } from '../microsoft-oauth.provider';
+import { TwitterOAuthProvider } from '../twitter-oauth.provider';
 import { OAuthProviderRepository } from '../repositories/oauth-provider.repository';
 import { OAuthStateService } from './oauth-state.service';
 

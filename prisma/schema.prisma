@@ -2,13 +2,13 @@
 // This schema is owned by the API Gateway (vritti-api-nexus)
 
 generator client {
-  provider = "prisma-client-js"
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("PRISMA_CLI_DATABASE_URL")
-  directUrl = env("PRISMA_CLI_DIRECT_URL")
+  provider = "postgresql"
 }
 
 /// Tenant registry - stores configuration for all tenants
@@ -246,9 +246,12 @@ model Session {
   userId String @map("user_id")
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  // Session type
+  type SessionType @default(CLOUD)
+
   // Token details
-  accessToken  String   @unique @map("access_token") /// JWT access token
-  refreshToken String   @unique @map("refresh_token") /// JWT refresh token
+  accessToken  String   @unique @map("access_token") /// JWT access token (or onboarding token for type=ONBOARDING)
+  refreshToken String?  @unique @map("refresh_token") /// JWT refresh token (null for onboarding sessions)
   tokenType    String   @default("Bearer") @map("token_type")
 
   // Session metadata
@@ -257,8 +260,8 @@ model Session {
   isActive  Boolean  @default(true) @map("is_active")
 
   // Expiry
-  accessTokenExpiresAt  DateTime @map("access_token_expires_at")
-  refreshTokenExpiresAt DateTime @map("refresh_token_expires_at")
+  accessTokenExpiresAt  DateTime  @map("access_token_expires_at")
+  refreshTokenExpiresAt DateTime? @map("refresh_token_expires_at") /// Null for onboarding sessions
 
   // Metadata
   createdAt DateTime @default(now()) @map("created_at")
@@ -307,6 +310,11 @@ enum OAuthProviderType {
   APPLE
   FACEBOOK
   X
+}
+
+enum SessionType {
+  ONBOARDING /// Onboarding session with onboarding token
+  CLOUD      /// Cloud session with access and refresh tokens
 }
 
 /// OAuth state tokens - for CSRF protection in OAuth flows

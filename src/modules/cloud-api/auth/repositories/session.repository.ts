@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Session } from '@prisma/client';
+import { Session } from '@/generated/prisma/client';
 import { PrimaryBaseRepository, PrimaryDatabaseService } from '@vritti/api-sdk';
 
 @Injectable()

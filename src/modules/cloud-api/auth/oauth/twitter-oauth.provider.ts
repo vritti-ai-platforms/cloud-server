@@ -1,10 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { OAuthProviderType } from '@prisma/client';
+import { OAuthProviderType } from '@/generated/prisma/client';
 import axios from 'axios';
-import { IOAuthProvider } from '../interfaces/oauth-provider.interface';
-import { OAuthTokens } from '../interfaces/oauth-tokens.interface';
-import { OAuthUserProfile } from '../interfaces/oauth-user-profile.interface';
+import { IOAuthProvider } from './interfaces/oauth-provider.interface';
+import { OAuthTokens } from './interfaces/oauth-tokens.interface';
+import { OAuthUserProfile } from './interfaces/oauth-user-profile.interface';
 
 /**
  * X (Twitter) OAuth 2.0 Provider

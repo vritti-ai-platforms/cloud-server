@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { OAuthProvider } from '@prisma/client';
+import { OAuthProvider } from '@/generated/prisma/client';
 import { PrimaryDatabaseService, PrimaryBaseRepository } from '@vritti/api-sdk';
 import { OAuthUserProfile } from '../interfaces/oauth-user-profile.interface';
 

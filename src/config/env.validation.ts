@@ -61,9 +61,9 @@ class EnvironmentVariables {
   @IsOptional()
   PRIMARY_DB_SCHEMA: string = 'public';
 
-  @IsEnum(['require', 'prefer', 'disable'])
+  @IsEnum(['require', 'prefer', 'disable', 'no-verify'])
   @IsOptional()
-  PRIMARY_DB_SSL_MODE: 'require' | 'prefer' | 'disable' = 'require';
+  PRIMARY_DB_SSL_MODE: 'require' | 'prefer' | 'disable' | 'no-verify' = 'require';
 
   // Prisma CLI Connection URLs (ONLY used by Prisma CLI tools, NOT by app runtime)
   @IsString()

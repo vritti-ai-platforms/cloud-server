@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { OAuthState, Prisma } from '@prisma/client';
+import { OAuthState, Prisma } from '@/generated/prisma/client';
 import { PrimaryDatabaseService, PrimaryBaseRepository } from '@vritti/api-sdk';
 
 /**

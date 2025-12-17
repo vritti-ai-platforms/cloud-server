@@ -1,8 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { UnauthorizedException } from '@vritti/api-sdk';
-import { Session } from '@prisma/client';
+import { Session, SessionType } from '@/generated/prisma/client';
 import { SessionRepository } from '../repositories/session.repository';
 import { JwtAuthService } from './jwt.service';
+import { SessionTokenResponseDto } from '../dto/session-token-response.dto';
 
 @Injectable()
 export class SessionService {
@@ -14,7 +15,7 @@ export class SessionService {
   ) {}
 
   /**
-   * Create a new session
+   * Create a new cloud session with access and refresh tokens
    */
   async createSession(
     userId: string,
@@ -36,6 +37,7 @@ export class SessionService {
     // Create session
     const session = await this.sessionRepository.create({
       userId,
+      type: SessionType.CLOUD,
       accessToken,
       refreshToken,
       accessTokenExpiresAt,
@@ -44,13 +46,175 @@ export class SessionService {
       userAgent,
     });
 
-    this.logger.log(`Created session for user: ${userId}`);
+    this.logger.log(`Created cloud session for user: ${userId}`);
 
     return {
       session,
       accessToken,
       refreshToken,
     };
+  }
+
+  /**
+   * Create a new onboarding session
+   * Returns session ID to be stored in cookie
+   */
+  async createOnboardingSession(
+    userId: string,
+    ipAddress?: string,
+    userAgent?: string,
+  ): Promise<{
+    sessionId: string;
+    onboardingToken: string;
+  }> {
+    // Generate onboarding token
+    const onboardingToken = this.jwtService.generateOnboardingToken(userId);
+
+    // Calculate expiry time
+    const accessTokenExpiresAt = this.jwtService.getOnboardingTokenExpiryTime();
+
+    // Create session (store onboarding token in accessToken field)
+    const session = await this.sessionRepository.create({
+      userId,
+      type: SessionType.ONBOARDING,
+      accessToken: onboardingToken,
+      refreshToken: null,
+      accessTokenExpiresAt,
+      refreshTokenExpiresAt: null,
+      ipAddress,
+      userAgent,
+    });
+
+    this.logger.log(`Created onboarding session for user: ${userId}`);
+
+    return {
+      sessionId: session.id,
+      onboardingToken,
+    };
+  }
+
+  /**
+   * Get onboarding session by session ID
+   * Validates session is active and not expired
+   */
+  async getOnboardingSession(sessionId: string): Promise<{
+    onboardingToken: string;
+    userId: string;
+  }> {
+    const session = await this.sessionRepository.findOne({
+      where: { id: sessionId },
+    });
+
+    if (!session) {
+      throw new UnauthorizedException(
+        'Onboarding session not found',
+        'No active onboarding session found. Please sign up again.'
+      );
+    }
+
+    if (session.type !== SessionType.ONBOARDING) {
+      throw new UnauthorizedException(
+        'Invalid session type',
+        'This is not an onboarding session.'
+      );
+    }
+
+    if (!session.isActive) {
+      throw new UnauthorizedException(
+        'Onboarding session inactive',
+        'Your onboarding session has been invalidated. Please sign up again.'
+      );
+    }
+
+    // Check if token is expired
+    if (new Date() > session.accessTokenExpiresAt) {
+      await this.sessionRepository.update(session.id, { isActive: false });
+      throw new UnauthorizedException(
+        'Onboarding session expired',
+        'Your onboarding session has expired. Please sign up again.'
+      );
+    }
+
+    return {
+      onboardingToken: session.accessToken,
+      userId: session.userId,
+    };
+  }
+
+  /**
+   * Get session token(s) by session ID (unified endpoint for both onboarding and cloud)
+   */
+  async getSessionToken(sessionId: string): Promise<SessionTokenResponseDto> {
+    const session = await this.sessionRepository.findOne({
+      where: { id: sessionId },
+    });
+
+    if (!session) {
+      throw new UnauthorizedException(
+        'Session not found',
+        'No active session found. Please sign up or log in again.'
+      );
+    }
+
+    if (!session.isActive) {
+      throw new UnauthorizedException(
+        'Session inactive',
+        'Your session has been invalidated. Please sign up or log in again.'
+      );
+    }
+
+    if (new Date() > session.accessTokenExpiresAt) {
+      await this.sessionRepository.update(session.id, { isActive: false });
+      throw new UnauthorizedException(
+        'Session expired',
+        'Your session has expired. Please sign up or log in again.'
+      );
+    }
+
+    if (session.type === SessionType.ONBOARDING) {
+      return SessionTokenResponseDto.forOnboarding(session.accessToken);
+    } else {
+      if (!session.refreshToken) {
+        throw new UnauthorizedException(
+          'Invalid cloud session',
+          'Cloud session is missing refresh token. Please log in again.'
+        );
+      }
+
+      const expiresIn = Math.floor(
+        (session.accessTokenExpiresAt.getTime() - Date.now()) / 1000
+      );
+
+      return SessionTokenResponseDto.forCloud(
+        session.accessToken,
+        session.refreshToken,
+        expiresIn > 0 ? expiresIn : 0
+      );
+    }
+  }
+
+  /**
+   * Delete all onboarding sessions for a user
+   * Called when user completes onboarding and logs in
+   */
+  async deleteOnboardingSessions(userId: string): Promise<void> {
+    const sessions = await this.sessionRepository.findMany({
+      where: {
+        userId,
+        type: SessionType.ONBOARDING,
+      },
+    });
+
+    if (sessions.length > 0) {
+      await this.sessionRepository.deleteMany({
+        where: {
+          userId,
+          type: SessionType.ONBOARDING,
+        },
+      });
+
+      this.logger.log(`Deleted ${sessions.length} onboarding sessions for user: ${userId}`);
+    }
   }
 
   /**
@@ -76,11 +240,19 @@ export class SessionService {
     }
 
     // Check if refresh token is expired
-    if (new Date() > session.refreshTokenExpiresAt) {
+    if (session.refreshTokenExpiresAt && new Date() > session.refreshTokenExpiresAt) {
       await this.sessionRepository.update(session.id, { isActive: false });
       throw new UnauthorizedException(
         'Refresh token expired. Please login again',
         'Your session has expired. Please log in again.'
+      );
+    }
+
+    // Ensure refresh token exists (should always be present for cloud sessions)
+    if (!session.refreshToken) {
+      throw new UnauthorizedException(
+        'Invalid session type',
+        'This session does not support token refresh.'
       );
     }
 
