@@ -22,7 +22,13 @@ import { SessionTokenResponseDto } from './dto/session-token-response.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { Public, UnauthorizedException } from '@vritti/api-sdk';
 import { OnboardingStatusResponseDto } from '../onboarding/dto/onboarding-status-response.dto';
+import { User } from '@/db/schema';
 import type { FastifyRequest, FastifyReply } from 'fastify';
+
+/** Request with authenticated user from JwtAuthGuard */
+interface AuthenticatedRequest extends FastifyRequest {
+  user: User;
+}
 
 /**
  * Auth Controller
@@ -157,7 +163,7 @@ export class AuthController {
    */
   @Post('logout-all')
   @UseGuards(JwtAuthGuard)
-  async logoutAll(@Req() request: any): Promise<{ message: string }> {
+  async logoutAll(@Req() request: AuthenticatedRequest): Promise<{ message: string }> {
     const userId = request.user.id; // Set by JwtAuthGuard
 
     const count = await this.authService.logoutAll(userId);
@@ -174,7 +180,7 @@ export class AuthController {
    */
   @Get('me')
   @UseGuards(JwtAuthGuard)
-  async getCurrentUser(@Req() request: any) {
+  async getCurrentUser(@Req() request: AuthenticatedRequest): Promise<User> {
     return request.user; // User info set by JwtAuthGuard
   }
 }

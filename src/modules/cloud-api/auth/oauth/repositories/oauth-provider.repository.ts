@@ -1,6 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { OAuthProvider } from '@/generated/prisma/client';
-import { PrimaryDatabaseService, PrimaryBaseRepository } from '@vritti/api-sdk';
+import {
+  PrimaryDatabaseService,
+  PrimaryBaseRepository,
+} from '@vritti/api-sdk';
+import { eq, and } from '@vritti/api-sdk/drizzle-orm';
+import { oauthProviders, OAuthProvider } from '@/db/schema';
 import { OAuthUserProfile } from '../interfaces/oauth-user-profile.interface';
 
 /**
@@ -8,19 +12,41 @@ import { OAuthUserProfile } from '../interfaces/oauth-user-profile.interface';
  * CRUD operations for OAuthProvider model
  *
  * For simple queries, use inherited methods from PrimaryBaseRepository:
- * - findOne({ where: { provider, userId } })
- * - findMany({ where: { userId } })
+ * - findOne(where)
+ * - findMany({ where })
  * - delete(id)
- * - deleteMany({ where: { provider, userId } })
+ * - deleteMany(where)
  */
 @Injectable()
 export class OAuthProviderRepository extends PrimaryBaseRepository<
-  OAuthProvider,
-  any,
-  any
+  typeof oauthProviders
 > {
   constructor(database: PrimaryDatabaseService) {
-    super(database, (prisma) => prisma.oAuthProvider);
+    super(database, oauthProviders);
+  }
+
+  /**
+   * Find OAuth provider by provider type and provider ID
+   */
+  async findByProviderAndProviderId(
+    provider: OAuthProvider['provider'],
+    providerId: string,
+  ): Promise<OAuthProvider | undefined> {
+    return this.findOne(
+      and(
+        eq(oauthProviders.provider, provider),
+        eq(oauthProviders.providerId, providerId),
+      )!,
+    );
+  }
+
+  /**
+   * Find all OAuth providers for a user
+   */
+  async findByUserId(userId: string): Promise<OAuthProvider[]> {
+    return this.findMany({
+      where: eq(oauthProviders.userId, userId),
+    });
   }
 
   /**
@@ -43,44 +69,34 @@ export class OAuthProviderRepository extends PrimaryBaseRepository<
     tokenExpiresAt?: Date,
   ): Promise<OAuthProvider> {
     // Find existing OAuth provider by unique constraint (provider + providerId)
-    const existing = await this.findOne({
-      where: {
-        provider_providerId: {
-          provider: profile.provider,
-          providerId: profile.providerId,
-        },
-      },
-    });
+    const existing = await this.findByProviderAndProviderId(
+      profile.provider as OAuthProvider['provider'],
+      profile.providerId,
+    );
 
     if (existing) {
       // Update existing provider with new tokens and profile data
-      return this.model.update({
-        where: { id: existing.id },
-        data: {
-          email: profile.email,
-          displayName: profile.displayName,
-          profilePictureUrl: profile.profilePictureUrl,
-          accessToken,
-          refreshToken,
-          tokenExpiresAt,
-          updatedAt: new Date(),
-        },
-      });
-    }
-
-    // Create new provider
-    return this.model.create({
-      data: {
-        userId,
-        provider: profile.provider,
-        providerId: profile.providerId,
+      return this.update(existing.id, {
         email: profile.email,
         displayName: profile.displayName,
         profilePictureUrl: profile.profilePictureUrl,
         accessToken,
         refreshToken,
         tokenExpiresAt,
-      },
+      });
+    }
+
+    // Create new provider
+    return this.create({
+      userId,
+      provider: profile.provider as OAuthProvider['provider'],
+      providerId: profile.providerId,
+      email: profile.email,
+      displayName: profile.displayName,
+      profilePictureUrl: profile.profilePictureUrl,
+      accessToken,
+      refreshToken,
+      tokenExpiresAt,
     });
   }
 }

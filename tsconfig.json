@@ -22,7 +22,9 @@
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false,
     "paths": {
-      "@/generated/*": ["src/generated/*"]
+      "@/generated/*": ["src/generated/*"],
+      "@/db/*": ["src/db/*"],
+      "@/*": ["src/*"]
     }
   }
 }

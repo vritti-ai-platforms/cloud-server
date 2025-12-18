@@ -1,29 +1,27 @@
 import { Injectable } from '@nestjs/common';
-import { Session } from '@/generated/prisma/client';
-import { PrimaryBaseRepository, PrimaryDatabaseService } from '@vritti/api-sdk';
+import {
+  PrimaryBaseRepository,
+  PrimaryDatabaseService,
+} from '@vritti/api-sdk';
+import { eq, and, lt, desc } from '@vritti/api-sdk/drizzle-orm';
+import { sessions, Session } from '@/db/schema';
 
 @Injectable()
-export class SessionRepository extends PrimaryBaseRepository<
-  Session,
-  any,
-  any
-> {
+export class SessionRepository extends PrimaryBaseRepository<typeof sessions> {
   constructor(database: PrimaryDatabaseService) {
-    super(database, (prisma) => prisma.session);
+    super(database, sessions);
   }
 
   /**
    * Find all active sessions for a user
    */
   async findActiveByUserId(userId: string): Promise<Session[]> {
-    return await this.model.findMany({
-      where: {
-        userId,
-        isActive: true,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
+    return this.model.findMany({
+      where: and(
+        eq(sessions.userId, userId),
+        eq(sessions.isActive, true),
+      ),
+      orderBy: desc(sessions.createdAt),
     });
   }
 
@@ -35,12 +33,9 @@ export class SessionRepository extends PrimaryBaseRepository<
     accessToken: string,
     accessTokenExpiresAt: Date,
   ): Promise<Session> {
-    return await this.model.update({
-      where: { id },
-      data: {
-        accessToken,
-        accessTokenExpiresAt,
-      },
+    return this.update(id, {
+      accessToken,
+      accessTokenExpiresAt,
     });
   }
 
@@ -48,14 +43,10 @@ export class SessionRepository extends PrimaryBaseRepository<
    * Invalidate all sessions for a user
    */
   async invalidateAllByUserId(userId: string): Promise<number> {
-    const result = await this.model.updateMany({
-      where: {
-        userId,
-        isActive: true,
-      },
-      data: { isActive: false },
-    });
-
+    const result = await this.updateMany(
+      and(eq(sessions.userId, userId), eq(sessions.isActive, true))!,
+      { isActive: false },
+    );
     return result.count;
   }
 
@@ -63,14 +54,9 @@ export class SessionRepository extends PrimaryBaseRepository<
    * Delete expired sessions
    */
   async deleteExpired(): Promise<number> {
-    const result = await this.model.deleteMany({
-      where: {
-        refreshTokenExpiresAt: {
-          lt: new Date(),
-        },
-      },
-    });
-
+    const result = await this.deleteMany(
+      lt(sessions.refreshTokenExpiresAt, new Date()),
+    );
     return result.count;
   }
 }

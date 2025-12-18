@@ -9,7 +9,7 @@ import {
   Res,
 } from '@nestjs/common';
 import { BadRequestException } from '@vritti/api-sdk';
-import { OAuthProviderType } from '@/generated/prisma/client';
+import { OAuthProviderType, OAuthProviderTypeValues } from '@/db/schema';
 import { Onboarding, Public } from '@vritti/api-sdk';
 import type { FastifyReply } from 'fastify';
 import { OAuthResponseDto } from './oauth/dto/oauth-response.dto';
@@ -116,7 +116,7 @@ export class AuthOAuthController {
   private validateProvider(providerStr: string): OAuthProviderType {
     const upperProvider = providerStr.toUpperCase();
 
-    if (!Object.values(OAuthProviderType).includes(upperProvider as any)) {
+    if (!Object.values(OAuthProviderTypeValues).includes(upperProvider as any)) {
       throw new BadRequestException(
         'provider',
         `Invalid OAuth provider: ${providerStr}`,

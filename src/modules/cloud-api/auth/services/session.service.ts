@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { UnauthorizedException } from '@vritti/api-sdk';
-import { Session, SessionType } from '@/generated/prisma/client';
+import { eq, and } from '@vritti/api-sdk/drizzle-orm';
+import { sessions, Session } from '@/db/schema';
 import { SessionRepository } from '../repositories/session.repository';
 import { JwtAuthService } from './jwt.service';
 import { SessionTokenResponseDto } from '../dto/session-token-response.dto';
@@ -37,7 +38,7 @@ export class SessionService {
     // Create session
     const session = await this.sessionRepository.create({
       userId,
-      type: SessionType.CLOUD,
+      type: 'CLOUD',
       accessToken,
       refreshToken,
       accessTokenExpiresAt,
@@ -76,7 +77,7 @@ export class SessionService {
     // Create session (store onboarding token in accessToken field)
     const session = await this.sessionRepository.create({
       userId,
-      type: SessionType.ONBOARDING,
+      type: 'ONBOARDING',
       accessToken: onboardingToken,
       refreshToken: null,
       accessTokenExpiresAt,
@@ -101,9 +102,7 @@ export class SessionService {
     onboardingToken: string;
     userId: string;
   }> {
-    const session = await this.sessionRepository.findOne({
-      where: { id: sessionId },
-    });
+    const session = await this.sessionRepository.findById(sessionId);
 
     if (!session) {
       throw new UnauthorizedException(
@@ -112,7 +111,7 @@ export class SessionService {
       );
     }
 
-    if (session.type !== SessionType.ONBOARDING) {
+    if (session.type !== 'ONBOARDING') {
       throw new UnauthorizedException(
         'Invalid session type',
         'This is not an onboarding session.'
@@ -145,9 +144,7 @@ export class SessionService {
    * Get session token(s) by session ID (unified endpoint for both onboarding and cloud)
    */
   async getSessionToken(sessionId: string): Promise<SessionTokenResponseDto> {
-    const session = await this.sessionRepository.findOne({
-      where: { id: sessionId },
-    });
+    const session = await this.sessionRepository.findById(sessionId);
 
     if (!session) {
       throw new UnauthorizedException(
@@ -171,7 +168,7 @@ export class SessionService {
       );
     }
 
-    if (session.type === SessionType.ONBOARDING) {
+    if (session.type === 'ONBOARDING') {
       return SessionTokenResponseDto.forOnboarding(session.accessToken);
     } else {
       if (!session.refreshToken) {
@@ -198,22 +195,22 @@ export class SessionService {
    * Called when user completes onboarding and logs in
    */
   async deleteOnboardingSessions(userId: string): Promise<void> {
-    const sessions = await this.sessionRepository.findMany({
-      where: {
-        userId,
-        type: SessionType.ONBOARDING,
-      },
+    const sessionList = await this.sessionRepository.findMany({
+      where: and(
+        eq(sessions.userId, userId),
+        eq(sessions.type, 'ONBOARDING'),
+      ),
     });
 
-    if (sessions.length > 0) {
-      await this.sessionRepository.deleteMany({
-        where: {
-          userId,
-          type: SessionType.ONBOARDING,
-        },
-      });
+    if (sessionList.length > 0) {
+      await this.sessionRepository.deleteMany(
+        and(
+          eq(sessions.userId, userId),
+          eq(sessions.type, 'ONBOARDING'),
+        )!,
+      );
 
-      this.logger.log(`Deleted ${sessions.length} onboarding sessions for user: ${userId}`);
+      this.logger.log(`Deleted ${sessionList.length} onboarding sessions for user: ${userId}`);
     }
   }
 
@@ -228,9 +225,9 @@ export class SessionService {
     const payload = this.jwtService.verifyRefreshToken(refreshToken);
 
     // Find session by refresh token
-    const session = await this.sessionRepository.findOne({
-      where: { refreshToken },
-    });
+    const session = await this.sessionRepository.findOne(
+      eq(sessions.refreshToken, refreshToken),
+    );
 
     if (!session || !session.isActive) {
       throw new UnauthorizedException(
@@ -279,9 +276,9 @@ export class SessionService {
    * Invalidate a session (logout)
    */
   async invalidateSession(accessToken: string): Promise<void> {
-    const session = await this.sessionRepository.findOne({
-      where: { accessToken },
-    });
+    const session = await this.sessionRepository.findOne(
+      eq(sessions.accessToken, accessToken),
+    );
 
     if (session) {
       await this.sessionRepository.update(session.id, { isActive: false });
@@ -309,9 +306,9 @@ export class SessionService {
    * Validate access token
    */
   async validateAccessToken(accessToken: string): Promise<Session> {
-    const session = await this.sessionRepository.findOne({
-      where: { accessToken },
-    });
+    const session = await this.sessionRepository.findOne(
+      eq(sessions.accessToken, accessToken),
+    );
 
     if (!session || !session.isActive) {
       throw new UnauthorizedException(

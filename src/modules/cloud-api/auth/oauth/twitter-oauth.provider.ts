@@ -1,9 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { OAuthProviderType } from '@/generated/prisma/client';
+import { OAuthProviderTypeValues } from '@/db/schema';
 import axios from 'axios';
 import { IOAuthProvider } from './interfaces/oauth-provider.interface';
-import { OAuthTokens } from './interfaces/oauth-tokens.interface';
+import { OAuthTokens, OAuthTokenExchangePayload } from './interfaces/oauth-tokens.interface';
 import { OAuthUserProfile } from './interfaces/oauth-user-profile.interface';
 
 /**
@@ -64,17 +64,17 @@ export class TwitterOAuthProvider implements IOAuthProvider {
     codeVerifier?: string,
   ): Promise<OAuthTokens> {
     try {
-      const data: any = {
+      // Twitter uses Basic Auth header for client authentication
+      const data: Omit<OAuthTokenExchangePayload, 'client_secret'> = {
         code,
         grant_type: 'authorization_code',
         client_id: this.clientId,
         redirect_uri: this.redirectUri,
+        code_verifier: codeVerifier,
       };
 
       // Twitter OAuth 2.0 requires PKCE
-      if (codeVerifier) {
-        data.code_verifier = codeVerifier;
-      } else {
+      if (!codeVerifier) {
         this.logger.warn(
           'Twitter OAuth 2.0 requires PKCE, but no code verifier provided',
         );
@@ -134,7 +134,7 @@ export class TwitterOAuthProvider implements IOAuthProvider {
       const email = data.email || `${data.username}@twitter.com`;
 
       return {
-        provider: OAuthProviderType.X,
+        provider: OAuthProviderTypeValues.X,
         providerId: data.id,
         email,
         displayName: data.name,

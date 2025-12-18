@@ -1,9 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { OAuthProviderType } from '@/generated/prisma/client';
+import { OAuthProviderTypeValues } from '@/db/schema';
 import axios from 'axios';
 import { IOAuthProvider } from './interfaces/oauth-provider.interface';
-import { OAuthTokens } from './interfaces/oauth-tokens.interface';
+import { OAuthTokens, OAuthTokenExchangePayload } from './interfaces/oauth-tokens.interface';
 import { OAuthUserProfile } from './interfaces/oauth-user-profile.interface';
 
 /**
@@ -67,18 +67,14 @@ export class MicrosoftOAuthProvider implements IOAuthProvider {
     codeVerifier?: string,
   ): Promise<OAuthTokens> {
     try {
-      const data: any = {
+      const data: OAuthTokenExchangePayload = {
         code,
         client_id: this.clientId,
         client_secret: this.clientSecret,
         redirect_uri: this.redirectUri,
         grant_type: 'authorization_code',
+        code_verifier: codeVerifier,
       };
-
-      // Add PKCE verifier if provided
-      if (codeVerifier) {
-        data.code_verifier = codeVerifier;
-      }
 
       const response = await axios.post(this.TOKEN_URL, data, {
         headers: {
@@ -122,7 +118,7 @@ export class MicrosoftOAuthProvider implements IOAuthProvider {
       );
 
       return {
-        provider: OAuthProviderType.MICROSOFT,
+        provider: OAuthProviderTypeValues.MICROSOFT,
         providerId: data.id,
         email: data.userPrincipalName || data.mail,
         displayName: data.displayName,

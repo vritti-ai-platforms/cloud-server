@@ -8,7 +8,7 @@ import { UserResponseDto } from '../../user/dto/user-response.dto';
 import { EncryptionService } from '../../../../services';
 import { SessionService } from './session.service';
 import { JwtAuthService } from './jwt.service';
-import { User } from '@/generated/prisma/client';
+import { User } from '@/db/schema';
 import { OnboardingStatusResponseDto } from '../../onboarding/dto/onboarding-status-response.dto';
 import { EmailVerificationService } from '../../onboarding/services/email-verification.service';
 import { TokenType } from '../../../../config/jwt.config';
@@ -77,7 +77,7 @@ export class AuthService {
         requiresOnboarding: true,
         onboardingToken,
         onboardingStep: user.onboardingStep,
-        user: UserResponseDto.fromPrisma(user),
+        user: UserResponseDto.from(user),
       });
     }
 
@@ -127,7 +127,7 @@ export class AuthService {
       refreshToken,
       tokenType: 'Bearer',
       expiresIn: this.jwtService.getAccessTokenExpiryInSeconds(),
-      user: UserResponseDto.fromPrisma(user),
+      user: UserResponseDto.from(user),
     });
   }
 
@@ -155,7 +155,7 @@ export class AuthService {
       refreshToken: tokens.refreshToken,
       tokenType: 'Bearer',
       expiresIn: this.jwtService.getAccessTokenExpiryInSeconds(),
-      user: UserResponseDto.fromPrisma(freshUser!),
+      user: UserResponseDto.from(freshUser!),
     });
   }
 

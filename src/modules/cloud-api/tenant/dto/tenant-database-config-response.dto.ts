@@ -1,3 +1,5 @@
+import { TenantDatabaseConfig } from '@/db/schema';
+
 /**
  * Response DTO for tenant database configuration
  * Excludes sensitive fields (dbUsername, dbPassword) for security
@@ -23,10 +25,10 @@ export class TenantDatabaseConfigResponseDto {
   }
 
   /**
-   * Create from Prisma TenantDatabaseConfig model, excluding sensitive fields
+   * Create from TenantDatabaseConfig model, excluding sensitive fields
    * Explicitly excludes: dbUsername, dbPassword
    */
-  static fromPrisma(config: any): TenantDatabaseConfigResponseDto {
+  static from(config: TenantDatabaseConfig): TenantDatabaseConfigResponseDto {
     return new TenantDatabaseConfigResponseDto({
       id: config.id,
       tenantId: config.tenantId,

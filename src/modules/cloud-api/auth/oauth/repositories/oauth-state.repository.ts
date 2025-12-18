@@ -1,6 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { OAuthState, Prisma } from '@/generated/prisma/client';
-import { PrimaryDatabaseService, PrimaryBaseRepository } from '@vritti/api-sdk';
+import {
+  PrimaryDatabaseService,
+  PrimaryBaseRepository,
+} from '@vritti/api-sdk';
+import { eq, lt } from '@vritti/api-sdk/drizzle-orm';
+import { oauthStates, OAuthState } from '@/db/schema';
 
 /**
  * OAuth State Repository
@@ -11,23 +15,19 @@ import { PrimaryDatabaseService, PrimaryBaseRepository } from '@vritti/api-sdk';
  */
 @Injectable()
 export class OAuthStateRepository extends PrimaryBaseRepository<
-  OAuthState,
-  Prisma.OAuthStateCreateInput,
-  Prisma.OAuthStateUpdateInput
+  typeof oauthStates
 > {
   constructor(database: PrimaryDatabaseService) {
-    super(database, (prisma) => prisma.oAuthState);
+    super(database, oauthStates);
   }
 
   /**
    * Find OAuth state by state token
    * @param token - The signed state token
-   * @returns OAuthState record or null if not found
+   * @returns OAuthState record or undefined if not found
    */
-  async findByToken(token: string): Promise<OAuthState | null> {
-    return this.findOne({
-      where: { stateToken: token },
-    });
+  async findByToken(token: string): Promise<OAuthState | undefined> {
+    return this.findOne(eq(oauthStates.stateToken, token));
   }
 
   /**
@@ -35,12 +35,6 @@ export class OAuthStateRepository extends PrimaryBaseRepository<
    * @returns Object containing count of deleted records
    */
   async deleteExpired(): Promise<{ count: number }> {
-    return this.model.deleteMany({
-      where: {
-        expiresAt: {
-          lt: new Date(),
-        },
-      },
-    });
+    return this.deleteMany(lt(oauthStates.expiresAt, new Date()));
   }
 }

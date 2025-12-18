@@ -1,6 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { TenantDatabaseConfig } from '@/generated/prisma/client';
-import { PrimaryBaseRepository, PrimaryDatabaseService } from '@vritti/api-sdk';
+import {
+  PrimaryBaseRepository,
+  PrimaryDatabaseService,
+} from '@vritti/api-sdk';
+import { eq } from '@vritti/api-sdk/drizzle-orm';
+import { tenantDatabaseConfigs } from '@/db/schema';
+
+type TenantDatabaseConfig = typeof tenantDatabaseConfigs.$inferSelect;
+type NewTenantDatabaseConfig = typeof tenantDatabaseConfigs.$inferInsert;
 
 /**
  * Repository for managing tenant database configuration data access
@@ -8,12 +15,19 @@ import { PrimaryBaseRepository, PrimaryDatabaseService } from '@vritti/api-sdk';
  */
 @Injectable()
 export class TenantDatabaseConfigRepository extends PrimaryBaseRepository<
-  TenantDatabaseConfig,
-  any,
-  any
+  typeof tenantDatabaseConfigs
 > {
   constructor(database: PrimaryDatabaseService) {
-    super(database, (prisma) => prisma.tenantDatabaseConfig);
+    super(database, tenantDatabaseConfigs);
+  }
+
+  /**
+   * Find tenant database configuration by tenant ID
+   * @param tenantId - ID of the tenant
+   * @returns Configuration or undefined if not found
+   */
+  async findByTenantId(tenantId: string): Promise<TenantDatabaseConfig | undefined> {
+    return this.findOne(eq(tenantDatabaseConfigs.tenantId, tenantId));
   }
 
   /**
@@ -25,12 +39,17 @@ export class TenantDatabaseConfigRepository extends PrimaryBaseRepository<
    */
   async updateByTenantId(
     tenantId: string,
-    data: any,
+    data: Partial<NewTenantDatabaseConfig>,
   ): Promise<TenantDatabaseConfig> {
     this.logger.log(
       `Updating ${this.constructor.name} for tenant: ${tenantId}`,
     );
-    return await this.model.update({ where: { tenantId }, data });
+    const [result] = await this.db
+      .update(tenantDatabaseConfigs)
+      .set(data)
+      .where(eq(tenantDatabaseConfigs.tenantId, tenantId))
+      .returning();
+    return result;
   }
 
   /**
@@ -43,6 +62,10 @@ export class TenantDatabaseConfigRepository extends PrimaryBaseRepository<
     this.logger.log(
       `Deleting ${this.constructor.name} for tenant: ${tenantId}`,
     );
-    return await this.model.delete({ where: { tenantId } });
+    const [result] = await this.db
+      .delete(tenantDatabaseConfigs)
+      .where(eq(tenantDatabaseConfigs.tenantId, tenantId))
+      .returning();
+    return result;
   }
 }

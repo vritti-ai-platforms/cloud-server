@@ -1,11 +1,15 @@
+import { OAuthProviderTypeValues } from '@/db/schema';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { OAuthProviderType } from '@/generated/prisma/client';
 import axios from 'axios';
 import * as crypto from 'crypto';
 import { IOAuthProvider } from './interfaces/oauth-provider.interface';
-import { OAuthTokens } from './interfaces/oauth-tokens.interface';
+import {
+  AppleIdTokenPayload,
+  OAuthTokenExchangePayload,
+  OAuthTokens,
+} from './interfaces/oauth-tokens.interface';
 import { OAuthUserProfile } from './interfaces/oauth-user-profile.interface';
 
 /**
@@ -74,18 +78,14 @@ export class AppleOAuthProvider implements IOAuthProvider {
       // Generate client secret JWT
       const clientSecret = this.generateClientSecret();
 
-      const data: any = {
+      const data: OAuthTokenExchangePayload = {
         code,
         client_id: this.clientId,
         client_secret: clientSecret,
         redirect_uri: this.redirectUri,
         grant_type: 'authorization_code',
+        code_verifier: codeVerifier,
       };
-
-      // Add PKCE verifier if provided
-      if (codeVerifier) {
-        data.code_verifier = codeVerifier;
-      }
 
       const response = await axios.post(this.TOKEN_URL, data, {
         headers: {
@@ -119,10 +119,19 @@ export class AppleOAuthProvider implements IOAuthProvider {
       // In practice, the ID token is passed separately in the OAuth flow
       // For now, we'll assume the accessToken is the ID token
 
-      const decoded: any = this.jwtService.decode(accessToken);
+      const decoded = this.jwtService.decode(
+        accessToken,
+      ) as AppleIdTokenPayload;
 
       if (!decoded) {
         throw new Error('Failed to decode Apple ID token');
+      }
+
+      // Apple doesn't always provide email (private relay users)
+      if (!decoded.email) {
+        throw new Error(
+          'Apple ID token missing email - user may have opted for private relay',
+        );
       }
 
       this.logger.log(`Retrieved Apple profile for user: ${decoded.email}`);
@@ -130,7 +139,7 @@ export class AppleOAuthProvider implements IOAuthProvider {
       // Apple doesn't provide first/last name in subsequent logins
       // They're only provided in the initial authorization response
       return {
-        provider: OAuthProviderType.APPLE,
+        provider: OAuthProviderTypeValues.APPLE,
         providerId: decoded.sub,
         email: decoded.email,
         displayName: decoded.email, // Apple doesn't provide name after first auth

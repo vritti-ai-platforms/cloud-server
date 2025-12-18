@@ -1,5 +1,10 @@
-import { DatabaseType, TenantStatus } from '@/generated/prisma/client';
+import { Tenant, DatabaseType, TenantStatus, TenantDatabaseConfig } from '@/db/schema';
 import { TenantDatabaseConfigResponseDto } from './tenant-database-config-response.dto';
+
+/** Tenant with optional database configuration relation */
+type TenantWithConfig = Tenant & {
+  databaseConfig?: TenantDatabaseConfig | null;
+};
 
 export class TenantResponseDto {
   id: string;
@@ -21,11 +26,11 @@ export class TenantResponseDto {
   }
 
   /**
-   * Create from Prisma Tenant model with optional database configuration
+   * Create from Tenant model with optional database configuration
    * @param tenant - Tenant model with optional databaseConfig relation
    * @returns TenantResponseDto with sanitized database configuration
    */
-  static fromPrisma(tenant: any): TenantResponseDto {
+  static from(tenant: TenantWithConfig): TenantResponseDto {
     return new TenantResponseDto({
       id: tenant.id,
       subdomain: tenant.subdomain,
@@ -34,7 +39,7 @@ export class TenantResponseDto {
       dbType: tenant.dbType,
       status: tenant.status,
       databaseConfig: tenant.databaseConfig
-        ? TenantDatabaseConfigResponseDto.fromPrisma(tenant.databaseConfig)
+        ? TenantDatabaseConfigResponseDto.from(tenant.databaseConfig)
         : null,
       createdAt: tenant.createdAt,
       updatedAt: tenant.updatedAt,

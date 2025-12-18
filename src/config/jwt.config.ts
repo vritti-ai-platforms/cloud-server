@@ -16,20 +16,37 @@ export const jwtConfigFactory = (
 });
 
 /**
- * Get token expiry durations from environment variables
+ * Token expiry string type compatible with ms library.
+ * This is a subset of StringValue from 'ms' that covers common JWT expiry formats.
  */
-export const getTokenExpiry = (configService: ConfigService) => ({
+type TokenExpiryString = `${number}${'s' | 'm' | 'h' | 'd' | 'w' | 'y'}`;
+
+/** Token expiry configuration object */
+export interface TokenExpiry {
+  ONBOARDING: TokenExpiryString;
+  ACCESS: TokenExpiryString;
+  REFRESH: TokenExpiryString;
+  PASSWORD_RESET: TokenExpiryString;
+}
+
+/**
+ * Get token expiry durations from environment variables.
+ * Values from env must match TokenExpiryString format (e.g., '15m', '24h', '30d').
+ */
+export const getTokenExpiry = (configService: ConfigService): TokenExpiry => ({
   // Onboarding token: default 24 hours
-  ONBOARDING: '24h' as string,
+  ONBOARDING: '24h',
 
   // Access token: from env, default 15 minutes
-  ACCESS: configService.get<string>('JWT_ACCESS_EXPIRY', '15m'),
+  ACCESS: (configService.get<string>('JWT_ACCESS_EXPIRY') ??
+    '15m') as TokenExpiryString,
 
   // Refresh token: from env, default 30 days
-  REFRESH: configService.get<string>('JWT_REFRESH_EXPIRY', '30d'),
+  REFRESH: (configService.get<string>('JWT_REFRESH_EXPIRY') ??
+    '30d') as TokenExpiryString,
 
   // Password reset token: default 15 minutes
-  PASSWORD_RESET: '15m' as string,
+  PASSWORD_RESET: '15m',
 });
 
 /**

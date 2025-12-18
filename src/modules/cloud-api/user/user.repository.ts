@@ -1,17 +1,15 @@
 import { Injectable } from '@nestjs/common';
-import { User } from '@/generated/prisma/client';
-import { PrimaryBaseRepository, PrimaryDatabaseService } from '@vritti/api-sdk';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import {
+  PrimaryBaseRepository,
+  PrimaryDatabaseService,
+} from '@vritti/api-sdk';
+import { eq, desc, and } from '@vritti/api-sdk/drizzle-orm';
+import { users, User } from '@/db/schema';
 
 @Injectable()
-export class UserRepository extends PrimaryBaseRepository<
-  User,
-  CreateUserDto & { passwordHash?: string },
-  UpdateUserDto & { passwordHash?: string }
-> {
+export class UserRepository extends PrimaryBaseRepository<typeof users> {
   constructor(database: PrimaryDatabaseService) {
-    super(database, (prisma) => prisma.user);
+    super(database, users);
   }
 
   /**
@@ -20,24 +18,28 @@ export class UserRepository extends PrimaryBaseRepository<
   async findAll(): Promise<User[]> {
     this.logger.debug('Finding all users');
     return this.model.findMany({
-      orderBy: { createdAt: 'desc' },
+      orderBy: desc(users.createdAt),
     });
   }
 
   /**
    * Find user by email
    */
-  async findByEmail(email: string): Promise<User | null> {
+  async findByEmail(email: string): Promise<User | undefined> {
     this.logger.debug(`Finding user by email: ${email}`);
-    return this.findOne({ where: { email } });
+    return this.model.findFirst({
+      where: eq(users.email, email),
+    });
   }
 
   /**
    * Find user by phone
    */
-  async findByPhone(phone: string): Promise<User | null> {
+  async findByPhone(phone: string): Promise<User | undefined> {
     this.logger.debug(`Finding user by phone: ${phone}`);
-    return this.model.findFirst({ where: { phone } });
+    return this.model.findFirst({
+      where: eq(users.phone, phone),
+    });
   }
 
   /**
@@ -45,10 +47,7 @@ export class UserRepository extends PrimaryBaseRepository<
    */
   async updateLastLogin(id: string): Promise<User> {
     this.logger.debug(`Updating last login for user: ${id}`);
-    return this.model.update({
-      where: { id },
-      data: { lastLoginAt: new Date() },
-    });
+    return this.update(id, { lastLoginAt: new Date() });
   }
 
   /**
@@ -56,12 +55,9 @@ export class UserRepository extends PrimaryBaseRepository<
    */
   async markEmailVerified(id: string): Promise<User> {
     this.logger.log(`Marking email verified for user: ${id}`);
-    return this.model.update({
-      where: { id },
-      data: {
-        emailVerified: true,
-        emailVerifiedAt: new Date(),
-      },
+    return this.update(id, {
+      emailVerified: true,
+      emailVerifiedAt: new Date(),
     });
   }
 
@@ -74,14 +70,11 @@ export class UserRepository extends PrimaryBaseRepository<
     phoneCountry: string,
   ): Promise<User> {
     this.logger.log(`Marking phone verified for user: ${id}`);
-    return this.model.update({
-      where: { id },
-      data: {
-        phone,
-        phoneCountry,
-        phoneVerified: true,
-        phoneVerifiedAt: new Date(),
-      },
+    return this.update(id, {
+      phone,
+      phoneCountry,
+      phoneVerified: true,
+      phoneVerifiedAt: new Date(),
     });
   }
 
@@ -94,20 +87,18 @@ export class UserRepository extends PrimaryBaseRepository<
     firstName?: string | null;
     lastName?: string | null;
     emailVerified?: boolean;
-    onboardingStep?: any;
+    onboardingStep?: typeof users.$inferInsert['onboardingStep'];
     profilePictureUrl?: string | null;
   }): Promise<User> {
     this.logger.log(`Creating user from OAuth: ${data.email}`);
-    return this.model.create({
-      data: {
-        email: data.email,
-        firstName: data.firstName,
-        lastName: data.lastName,
-        passwordHash: null, // OAuth users don't have password initially
-        emailVerified: data.emailVerified ?? false,
-        onboardingStep: data.onboardingStep,
-        profilePictureUrl: data.profilePictureUrl,
-      },
+    return this.create({
+      email: data.email,
+      firstName: data.firstName,
+      lastName: data.lastName,
+      passwordHash: null, // OAuth users don't have password initially
+      emailVerified: data.emailVerified ?? false,
+      onboardingStep: data.onboardingStep,
+      profilePictureUrl: data.profilePictureUrl,
     });
   }
 
@@ -123,9 +114,6 @@ export class UserRepository extends PrimaryBaseRepository<
    */
   async delete(id: string): Promise<User> {
     this.logger.log(`Deactivating user: ${id}`);
-    return this.model.update({
-      where: { id },
-      data: { accountStatus: 'DEACTIVATED' },
-    });
+    return this.update(id, { accountStatus: 'DEACTIVATED' });
   }
 }

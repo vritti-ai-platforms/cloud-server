@@ -17,7 +17,11 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "db:generate": "drizzle-kit generate",
+    "db:push": "NODE_TLS_REJECT_UNAUTHORIZED=0 drizzle-kit push",
+    "db:migrate": "NODE_TLS_REJECT_UNAUTHORIZED=0 drizzle-kit migrate",
+    "db:studio": "NODE_TLS_REJECT_UNAUTHORIZED=0 drizzle-kit studio"
   },
   "dependencies": {
     "@fastify/cookie": "^11.0.2",
@@ -31,8 +35,6 @@
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/platform-fastify": "^11.1.6",
-    "@prisma/adapter-pg": "^7.0.0",
-    "@prisma/client": "^7.0.0",
     "@vritti/api-sdk": "file:.yalc/@vritti/api-sdk",
     "axios": "^1.13.2",
     "bcrypt": "^6.0.0",
@@ -42,9 +44,7 @@
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.1",
-    "winston": "^3.18.3",
-    "winston-daily-rotate-file": "^5.0.0"
+    "rxjs": "^7.8.1"
   },
   "devDependencies": {
     "@compodoc/compodoc": "^1.1.31",
@@ -62,14 +62,15 @@
     "@types/node": "^22.10.7",
     "@types/nodemailer": "^7.0.3",
     "@types/passport-jwt": "^4.0.1",
+    "@types/pg": "^8.16.0",
     "@types/supertest": "^6.0.2",
+    "drizzle-kit": "^1.0.0-beta.3-36e9b9e",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-prettier": "^5.2.2",
     "globals": "^16.0.0",
     "jest": "^30.0.0",
     "prettier": "^3.4.2",
-    "prisma": "^7.0.0",
     "source-map-support": "^0.5.21",
     "supertest": "^7.0.0",
     "ts-jest": "^29.2.5",

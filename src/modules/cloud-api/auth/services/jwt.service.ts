@@ -29,7 +29,7 @@ export class JwtAuthService {
         type: TokenType.ACCESS,
       },
       {
-        expiresIn: this.tokenExpiry.ACCESS as any,
+        expiresIn: this.tokenExpiry.ACCESS,
       },
     );
   }
@@ -44,7 +44,7 @@ export class JwtAuthService {
         type: TokenType.REFRESH,
       },
       {
-        expiresIn: this.tokenExpiry.REFRESH as any,
+        expiresIn: this.tokenExpiry.REFRESH,
       },
     );
   }
@@ -59,7 +59,7 @@ export class JwtAuthService {
         type: TokenType.ONBOARDING,
       },
       {
-        expiresIn: this.tokenExpiry.ONBOARDING as any,
+        expiresIn: this.tokenExpiry.ONBOARDING,
       },
     );
   }

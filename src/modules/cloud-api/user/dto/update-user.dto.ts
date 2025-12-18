@@ -1,5 +1,6 @@
 import { IsString, IsOptional, IsEnum, IsBoolean } from 'class-validator';
-import { AccountStatus, OnboardingStep } from '@/generated/prisma/client';
+import type { AccountStatus, OnboardingStep } from '@/db/schema';
+import { AccountStatusValues, OnboardingStepValues } from '@/db/schema';
 
 export class UpdateUserDto {
   @IsString()
@@ -30,7 +31,7 @@ export class UpdateUserDto {
   @IsOptional()
   timezone?: string;
 
-  @IsEnum(AccountStatus)
+  @IsEnum(AccountStatusValues)
   @IsOptional()
   accountStatus?: AccountStatus;
 
@@ -42,7 +43,7 @@ export class UpdateUserDto {
   @IsOptional()
   phoneVerified?: boolean;
 
-  @IsEnum(OnboardingStep)
+  @IsEnum(OnboardingStepValues)
   @IsOptional()
   onboardingStep?: OnboardingStep;
 

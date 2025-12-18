@@ -1,4 +1,4 @@
-import { AccountStatus, OnboardingStep } from '@/generated/prisma/client';
+import { User, AccountStatus, OnboardingStep } from '@/db/schema';
 
 export class UserResponseDto {
   id: string;
@@ -34,11 +34,11 @@ export class UserResponseDto {
   }
 
   /**
-   * Create from Prisma User model
-   * @param user - User model from Prisma
+   * Create from User model
+   * @param user - User model from database
    * @returns UserResponseDto without sensitive data (passwordHash excluded)
    */
-  static fromPrisma(user: any): UserResponseDto {
+  static from(user: User): UserResponseDto {
     return new UserResponseDto({
       id: user.id,
       email: user.email,

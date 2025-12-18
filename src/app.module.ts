@@ -1,7 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { PrismaClient } from '@/generated/prisma/client';
-import { PrismaPg } from '@prisma/adapter-pg';
+import * as schema from '@/db/schema';
+
+import './db/schema.registry';
 
 import { RouterModule } from '@nestjs/core';
 
@@ -76,8 +77,7 @@ import { TenantModule } from './modules/cloud-api/tenant/tenant.module';
               'PRIMARY_DB_SSL_MODE',
             ),
           },
-          prismaClientConstructor: PrismaClient,
-          prismaAdapterConstructor: PrismaPg,
+          drizzleSchema: schema,
 
           // Connection pool configuration
           connectionCacheTTL: 300000, // 5 minutes

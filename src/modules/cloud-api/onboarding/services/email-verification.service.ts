@@ -3,6 +3,8 @@ import {
   BadRequestException,
   UnauthorizedException,
 } from '@vritti/api-sdk';
+import { eq } from '@vritti/api-sdk/drizzle-orm';
+import { emailVerifications } from '@/db/schema';
 import { EmailService } from '../../../../services';
 import { UserService } from '../../user/user.service';
 import { EmailVerificationRepository } from '../repositories/email-verification.repository';
@@ -41,16 +43,15 @@ export class EmailVerificationService {
     // Get user details for personalization
     const user = await this.userService.findById(userId);
 
-    // Send email via Brevo
-    await this.emailService.sendVerificationEmail(
-      email,
-      otp,
-      user.firstName || undefined,
-    );
-
-    this.logger.log(
-      `Sent email verification OTP to ${email} for user ${userId}`,
-    );
+    // Fire and forget - don't block response waiting for email
+    this.emailService
+      .sendVerificationEmail(email, otp, user.firstName || undefined)
+      .then(() => {
+        this.logger.log(`Sent email verification OTP to ${email} for user ${userId}`);
+      })
+      .catch((error) => {
+        this.logger.error(`Failed to send verification email to ${email}: ${error.message}`);
+      });
   }
 
   /**
@@ -114,7 +115,7 @@ export class EmailVerificationService {
     }
 
     // Delete old verifications
-    await this.emailVerificationRepo.deleteMany({ userId });
+    await this.emailVerificationRepo.deleteMany(eq(emailVerifications.userId, userId));
 
     // Send new OTP
     await this.sendVerificationOtp(userId, userResponse.email);

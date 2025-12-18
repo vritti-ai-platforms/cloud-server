@@ -10,7 +10,8 @@ import {
   Matches,
   IsIn,
 } from 'class-validator';
-import { DatabaseType, TenantStatus } from '@/generated/prisma/client';
+import type { DatabaseType, TenantStatus } from '@/db/schema';
+import { DatabaseTypeValues, TenantStatusValues } from '@/db/schema';
 
 export class CreateTenantDto {
   @IsString()
@@ -32,10 +33,10 @@ export class CreateTenantDto {
   @MaxLength(500)
   description?: string;
 
-  @IsEnum(DatabaseType)
+  @IsEnum(DatabaseTypeValues)
   dbType: DatabaseType;
 
-  @IsEnum(TenantStatus)
+  @IsEnum(TenantStatusValues)
   @IsOptional()
   status?: TenantStatus;
 

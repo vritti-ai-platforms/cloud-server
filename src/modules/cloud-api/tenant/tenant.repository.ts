@@ -1,36 +1,35 @@
 import { Injectable } from '@nestjs/common';
+import {
+  PrimaryBaseRepository,
+  PrimaryDatabaseService,
+} from '@vritti/api-sdk';
+import { eq, desc } from '@vritti/api-sdk/drizzle-orm';
+import { tenants } from '@/db/schema';
 
-import { Tenant } from '@/generated/prisma/client';
-import { PrimaryBaseRepository, PrimaryDatabaseService } from '@vritti/api-sdk';
-import { CreateTenantDto } from './dto/create-tenant.dto';
-import { UpdateTenantDto } from './dto/update-tenant.dto';
+type Tenant = typeof tenants.$inferSelect;
 
 @Injectable()
-export class TenantRepository extends PrimaryBaseRepository<
-  Tenant,
-  CreateTenantDto,
-  UpdateTenantDto
-> {
+export class TenantRepository extends PrimaryBaseRepository<typeof tenants> {
   constructor(database: PrimaryDatabaseService) {
-    super(database, (prisma) => prisma.tenant);
+    super(database, tenants);
   }
 
   /**
    * Find all tenants ordered by creation date
    */
   async findAll(): Promise<Tenant[]> {
-    return this.findMany({
-      orderBy: { createdAt: 'desc' },
+    return this.model.findMany({
+      orderBy: desc(tenants.createdAt),
     });
   }
 
   /**
    * Find tenant by ID with database configuration included
    */
-  async findByIdWithConfig(id: string): Promise<Tenant | null> {
-    return this.findOne({
-      where: { id },
-      include: { databaseConfig: true },
+  async findByIdWithConfig(id: string) {
+    return this.model.findFirst({
+      where: eq(tenants.id, id),
+      with: { databaseConfig: true },
     });
   }
 
@@ -38,15 +37,15 @@ export class TenantRepository extends PrimaryBaseRepository<
    * Find tenant by subdomain
    * @param includeConfig - Whether to include database configuration
    */
-  async findBySubdomain(
-    subdomain: string,
-    includeConfig = false,
-  ): Promise<Tenant | null> {
-    return this.findOne({
-      where: { subdomain },
-      include: {
-        databaseConfig: includeConfig,
-      },
+  async findBySubdomain(subdomain: string, includeConfig = false) {
+    if (!includeConfig) {
+      return this.model.findFirst({
+        where: eq(tenants.subdomain, subdomain),
+      });
+    }
+    return this.model.findFirst({
+      where: eq(tenants.subdomain, subdomain),
+      with: { databaseConfig: true },
     });
   }
 }

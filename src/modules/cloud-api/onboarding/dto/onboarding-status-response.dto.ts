@@ -1,4 +1,4 @@
-import { AccountStatus, OnboardingStep } from '@/generated/prisma/client';
+import { User, AccountStatus, OnboardingStep } from '@/db/schema';
 
 export class OnboardingStatusResponseDto {
   userId: string;
@@ -23,10 +23,10 @@ export class OnboardingStatusResponseDto {
   }
 
   /**
-   * Create from Prisma User model
+   * Create from User model
    */
   static fromUser(
-    user: any,
+    user: User,
     onboardingToken?: string,
   ): OnboardingStatusResponseDto {
     return new OnboardingStatusResponseDto({

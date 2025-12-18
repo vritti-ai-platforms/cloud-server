@@ -1,5 +1,5 @@
 import { UserResponseDto } from '../../user/dto/user-response.dto';
-import { OnboardingStep } from '@/generated/prisma/client';
+import { OnboardingStep } from '@/db/schema';
 
 export class AuthResponseDto {
   accessToken?: string;

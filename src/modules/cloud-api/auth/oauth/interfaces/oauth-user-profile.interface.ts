@@ -1,4 +1,4 @@
-import { OAuthProviderType } from '@/generated/prisma/client';
+import { OAuthProviderType } from '@/db/schema';
 
 /**
  * Normalized user profile from OAuth providers

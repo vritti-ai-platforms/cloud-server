@@ -3,6 +3,8 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@vritti/api-sdk';
+import { eq } from '@vritti/api-sdk/drizzle-orm';
+import { tenantDatabaseConfigs } from '@/db/schema';
 import { TenantDatabaseConfigRepository } from './tenant-database-config.repository';
 import { CreateTenantDatabaseConfigDto } from './dto/create-tenant-database-config.dto';
 import { UpdateTenantDatabaseConfigDto } from './dto/update-tenant-database-config.dto';
@@ -33,9 +35,7 @@ export class TenantDatabaseConfigService {
     this.logger.log(`Creating database config for tenant: ${tenantId}`);
 
     // Check if config already exists
-    const existing = await this.configRepository.findOne({
-      where: { tenantId },
-    });
+    const existing = await this.configRepository.findByTenantId(tenantId);
     if (existing) {
       throw new BadRequestException(
         `Database configuration already exists for tenant: ${tenantId}`,
@@ -61,7 +61,7 @@ export class TenantDatabaseConfigService {
     });
 
     this.logger.log(`Database config created for tenant: ${tenantId}`);
-    return TenantDatabaseConfigResponseDto.fromPrisma(config);
+    return TenantDatabaseConfigResponseDto.from(config);
   }
 
   /**
@@ -73,7 +73,7 @@ export class TenantDatabaseConfigService {
   async getByTenantId(
     tenantId: string,
   ): Promise<TenantDatabaseConfigResponseDto> {
-    const config = await this.configRepository.findOne({ where: { tenantId } });
+    const config = await this.configRepository.findByTenantId(tenantId);
     if (!config) {
       throw new NotFoundException(
         `Database configuration not found for tenant: ${tenantId}`,
@@ -81,7 +81,7 @@ export class TenantDatabaseConfigService {
       );
     }
 
-    return TenantDatabaseConfigResponseDto.fromPrisma(config);
+    return TenantDatabaseConfigResponseDto.from(config);
   }
 
   /**
@@ -98,9 +98,7 @@ export class TenantDatabaseConfigService {
     this.logger.log(`Updating database config for tenant: ${tenantId}`);
 
     // Check if config exists
-    const existing = await this.configRepository.findOne({
-      where: { tenantId },
-    });
+    const existing = await this.configRepository.findByTenantId(tenantId);
     if (!existing) {
       throw new NotFoundException(
         `Database configuration not found for tenant: ${tenantId}`,
@@ -122,7 +120,7 @@ export class TenantDatabaseConfigService {
     const config = await this.configRepository.updateByTenantId(tenantId, dto);
 
     this.logger.log(`Database config updated for tenant: ${tenantId}`);
-    return TenantDatabaseConfigResponseDto.fromPrisma(config);
+    return TenantDatabaseConfigResponseDto.from(config);
   }
 
   /**
@@ -134,9 +132,7 @@ export class TenantDatabaseConfigService {
     this.logger.log(`Deleting database config for tenant: ${tenantId}`);
 
     // Check if config exists
-    const existing = await this.configRepository.findOne({
-      where: { tenantId },
-    });
+    const existing = await this.configRepository.findByTenantId(tenantId);
     if (!existing) {
       throw new NotFoundException(
         `Database configuration not found for tenant: ${tenantId}`,
@@ -154,7 +150,7 @@ export class TenantDatabaseConfigService {
    * @returns True if config exists
    */
   async exists(tenantId: string): Promise<boolean> {
-    return this.configRepository.exists({ tenantId });
+    return this.configRepository.exists(eq(tenantDatabaseConfigs.tenantId, tenantId));
   }
 
   /**

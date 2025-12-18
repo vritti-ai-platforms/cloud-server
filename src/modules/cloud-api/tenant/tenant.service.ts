@@ -66,7 +66,7 @@ export class TenantService {
    */
   async findAll(): Promise<TenantResponseDto[]> {
     const tenants = await this.tenantRepository.findAll();
-    return tenants.map((tenant) => TenantResponseDto.fromPrisma(tenant));
+    return tenants.map((tenant) => TenantResponseDto.from(tenant));
   }
 
   /**
@@ -82,7 +82,7 @@ export class TenantService {
       );
     }
 
-    return TenantResponseDto.fromPrisma(tenant);
+    return TenantResponseDto.from(tenant);
   }
 
   /**
@@ -98,7 +98,7 @@ export class TenantService {
       );
     }
 
-    return TenantResponseDto.fromPrisma(tenant);
+    return TenantResponseDto.from(tenant);
   }
 
   /**
@@ -214,7 +214,7 @@ export class TenantService {
 
     this.logger.log(`Archived tenant: ${tenant.subdomain} (${tenant.id})`);
 
-    return TenantResponseDto.fromPrisma(tenant);
+    return TenantResponseDto.from(tenant);
   }
 
   /**

@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConflictException, NotFoundException } from '@vritti/api-sdk';
-import { User } from '@/generated/prisma/client';
+import { User } from '@/db/schema';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserResponseDto } from './dto/user-response.dto';
@@ -41,7 +41,7 @@ export class UserService {
 
     this.logger.log(`Created user: ${user.email} (${user.id})`);
 
-    return UserResponseDto.fromPrisma(user);
+    return UserResponseDto.from(user);
   }
 
   /**
@@ -49,7 +49,7 @@ export class UserService {
    */
   async findAll(): Promise<UserResponseDto[]> {
     const users = await this.userRepository.findAll();
-    return users.map((user) => UserResponseDto.fromPrisma(user));
+    return users.map((user) => UserResponseDto.from(user));
   }
 
   /**
@@ -65,21 +65,21 @@ export class UserService {
       );
     }
 
-    return UserResponseDto.fromPrisma(user);
+    return UserResponseDto.from(user);
   }
 
   /**
    * Get user by email (returns Prisma User for internal use)
    */
-  async findByEmail(email: string): Promise<User | null> {
-    return await this.userRepository.findByEmail(email);
+  async findByEmail(email: string): Promise<User | undefined> {
+    return this.userRepository.findByEmail(email);
   }
 
   /**
    * Get user by phone (returns Prisma User for internal use)
    */
-  async findByPhone(phone: string): Promise<User | null> {
-    return await this.userRepository.findByPhone(phone);
+  async findByPhone(phone: string): Promise<User | undefined> {
+    return this.userRepository.findByPhone(phone);
   }
 
   /**
@@ -103,7 +103,7 @@ export class UserService {
 
     this.logger.log(`Updated user: ${user.email} (${user.id})`);
 
-    return UserResponseDto.fromPrisma(user);
+    return UserResponseDto.from(user);
   }
 
   /**
@@ -122,7 +122,7 @@ export class UserService {
     this.logger.log(
       `Marked email verified for user: ${user.email} (${user.id})`,
     );
-    return UserResponseDto.fromPrisma(user);
+    return UserResponseDto.from(user);
   }
 
   /**
@@ -141,7 +141,7 @@ export class UserService {
     this.logger.log(
       `Marked phone verified for user: ${user.email} (${user.id})`,
     );
-    return UserResponseDto.fromPrisma(user);
+    return UserResponseDto.from(user);
   }
 
   /**
@@ -161,6 +161,6 @@ export class UserService {
 
     this.logger.log(`Deactivated user: ${user.email} (${user.id})`);
 
-    return UserResponseDto.fromPrisma(user);
+    return UserResponseDto.from(user);
   }
 }

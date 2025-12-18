@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { UnauthorizedException } from '@vritti/api-sdk';
 import { ConfigService } from '@nestjs/config';
-import { OAuthProviderType } from '@/generated/prisma/client';
+import { OAuthProviderType } from '@/db/schema';
 import * as crypto from 'crypto';
 import { OAuthStateData } from '../interfaces/oauth-state.interface';
 import { OAuthStateRepository } from '../repositories/oauth-state.repository';

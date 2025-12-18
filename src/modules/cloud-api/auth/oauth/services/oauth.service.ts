@@ -6,13 +6,15 @@ import {
 } from '@vritti/api-sdk';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { OnboardingStep, OAuthProviderType } from '@/generated/prisma/client';
+import { User, OnboardingStep, OAuthProviderType, OAuthProviderTypeValues, OnboardingStepValues } from '@/db/schema';
 import * as crypto from 'crypto';
 import { getTokenExpiry, TokenType } from '../../../../../config/jwt.config';
 import { UserRepository } from '../../../user/user.repository';
 import { UserService } from '../../../user/user.service';
 import { OAuthResponseDto } from '../dto/oauth-response.dto';
 import { IOAuthProvider } from '../interfaces/oauth-provider.interface';
+import { OAuthUserProfile } from '../interfaces/oauth-user-profile.interface';
+import { OAuthTokens } from '../interfaces/oauth-tokens.interface';
 import { AppleOAuthProvider } from '../apple-oauth.provider';
 import { FacebookOAuthProvider } from '../facebook-oauth.provider';
 import { GoogleOAuthProvider } from '../google-oauth.provider';
@@ -50,11 +52,11 @@ export class OAuthService {
     // Map provider types to implementations
     // Use type assertion to bypass structural typing issues with private logger properties
     this.providers = new Map([
-      [OAuthProviderType.GOOGLE, this.googleProvider],
-      [OAuthProviderType.MICROSOFT, this.microsoftProvider],
-      [OAuthProviderType.APPLE, this.appleProvider],
-      [OAuthProviderType.FACEBOOK, this.facebookProvider],
-      [OAuthProviderType.X, this.twitterProvider],
+      [OAuthProviderTypeValues.GOOGLE, this.googleProvider],
+      [OAuthProviderTypeValues.MICROSOFT, this.microsoftProvider],
+      [OAuthProviderTypeValues.APPLE, this.appleProvider],
+      [OAuthProviderTypeValues.FACEBOOK, this.facebookProvider],
+      [OAuthProviderTypeValues.X, this.twitterProvider],
     ] as [OAuthProviderType, IOAuthProvider][]);
   }
 
@@ -149,23 +151,24 @@ export class OAuthService {
    * Find or create user from OAuth profile
    */
   private async findOrCreateUser(
-    profile: any,
+    profile: OAuthUserProfile,
     linkToUserId?: string,
-  ): Promise<{ user: any; isNewUser: boolean }> {
+  ): Promise<{ user: User; isNewUser: boolean }> {
     // If linkToUserId provided, link to existing user
+    // Use repository directly to get full User type (service returns UserResponseDto)
     if (linkToUserId) {
-      const user = await this.userService.findById(linkToUserId);
+      const user = await this.userRepository.findById(linkToUserId);
       if (!user) {
         throw new BadRequestException(
           'User not found',
-          'We couldn\'t find your account. Please check your information or register.'
+          "We couldn't find your account. Please check your information or register.",
         );
       }
       return { user, isNewUser: false };
     }
 
-    // Check if user with email exists
-    const existingUser = await this.userService.findByEmail(profile.email);
+    // Check if user with email exists (returns full User type)
+    const existingUser = await this.userRepository.findByEmail(profile.email);
 
     if (existingUser) {
       // Check if onboarding is complete
@@ -194,7 +197,7 @@ export class OAuthService {
       firstName: profile.firstName || null,
       lastName: profile.lastName || null,
       emailVerified: true, // Email verified by OAuth provider
-      onboardingStep: OnboardingStep.SET_PASSWORD,
+      onboardingStep: OnboardingStepValues.SET_PASSWORD,
       profilePictureUrl: profile.profilePictureUrl || null,
     });
 
@@ -206,8 +209,8 @@ export class OAuthService {
    */
   private async linkOAuthProvider(
     userId: string,
-    profile: any,
-    tokens: any,
+    profile: OAuthUserProfile,
+    tokens: OAuthTokens,
   ): Promise<void> {
     // Calculate token expiry
     const tokenExpiresAt = tokens.expiresIn
@@ -237,7 +240,7 @@ export class OAuthService {
         type: TokenType.ONBOARDING,
       },
       {
-        expiresIn: this.tokenExpiry.ONBOARDING as any,
+        expiresIn: this.tokenExpiry.ONBOARDING,
       },
     );
   }

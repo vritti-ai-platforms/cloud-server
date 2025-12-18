@@ -1,9 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { OAuthProviderType } from '@/generated/prisma/client';
+import { OAuthProviderTypeValues } from '@/db/schema';
 import axios from 'axios';
 import { IOAuthProvider } from './interfaces/oauth-provider.interface';
-import { OAuthTokens } from './interfaces/oauth-tokens.interface';
+import { OAuthTokens, FacebookTokenParams } from './interfaces/oauth-tokens.interface';
 import { OAuthUserProfile } from './interfaces/oauth-user-profile.interface';
 
 /**
@@ -64,17 +64,13 @@ export class FacebookOAuthProvider implements IOAuthProvider {
     codeVerifier?: string,
   ): Promise<OAuthTokens> {
     try {
-      const params: any = {
+      const params: FacebookTokenParams = {
         code,
         client_id: this.clientId,
         client_secret: this.clientSecret,
         redirect_uri: this.redirectUri,
+        code_verifier: codeVerifier,
       };
-
-      // Add PKCE verifier if provided
-      if (codeVerifier) {
-        params.code_verifier = codeVerifier;
-      }
 
       const response = await axios.get(this.TOKEN_URL, { params });
 
@@ -111,7 +107,7 @@ export class FacebookOAuthProvider implements IOAuthProvider {
       this.logger.log(`Retrieved Facebook profile for user: ${data.email}`);
 
       return {
-        provider: OAuthProviderType.FACEBOOK,
+        provider: OAuthProviderTypeValues.FACEBOOK,
         providerId: data.id,
         email: data.email,
         displayName: data.name,

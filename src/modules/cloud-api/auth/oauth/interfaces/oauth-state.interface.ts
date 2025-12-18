@@ -1,4 +1,4 @@
-import { OAuthProviderType } from '@/generated/prisma/client';
+import { OAuthProviderType } from '@/db/schema';
 
 /**
  * OAuth state data stored in database
