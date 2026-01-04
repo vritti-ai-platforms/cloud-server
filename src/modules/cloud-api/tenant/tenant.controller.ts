@@ -15,7 +15,7 @@ import { CreateTenantDto } from './dto/create-tenant.dto';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
 import { TenantResponseDto } from './dto/tenant-response.dto';
 
-@Controller()
+@Controller('tenants')
 export class TenantController {
   private readonly logger = new Logger(TenantController.name);
 

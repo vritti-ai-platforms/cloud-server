@@ -18,7 +18,6 @@ import {
   LoggerModule,
 } from '@vritti/api-sdk';
 import { CloudApiModule } from './modules/cloud-api/cloud-api.module';
-import { TenantModule } from './modules/cloud-api/tenant/tenant.module';
 
 @Module({
   imports: [
@@ -94,12 +93,6 @@ import { TenantModule } from './modules/cloud-api/tenant/tenant.module';
       {
         path: 'cloud-api',
         module: CloudApiModule,
-        children: [
-          {
-            path: 'tenants',
-            module: TenantModule,
-          },
-        ],
       },
     ]),
   ],
