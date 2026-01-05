@@ -1,10 +1,7 @@
+import { Session, sessions } from '@/db/schema';
 import { Injectable } from '@nestjs/common';
-import {
-  PrimaryBaseRepository,
-  PrimaryDatabaseService,
-} from '@vritti/api-sdk';
-import { eq, and, lt, desc } from '@vritti/api-sdk/drizzle-orm';
-import { sessions, Session } from '@/db/schema';
+import { PrimaryBaseRepository, PrimaryDatabaseService } from '@vritti/api-sdk';
+import { and, eq, lt } from '@vritti/api-sdk/drizzle-orm';
 
 @Injectable()
 export class SessionRepository extends PrimaryBaseRepository<typeof sessions> {
@@ -17,11 +14,9 @@ export class SessionRepository extends PrimaryBaseRepository<typeof sessions> {
    */
   async findActiveByUserId(userId: string): Promise<Session[]> {
     return this.model.findMany({
-      where: and(
-        eq(sessions.userId, userId),
-        eq(sessions.isActive, true),
-      ),
-      orderBy: desc(sessions.createdAt),
+      where: (cols, { eq, and }) =>
+        and(eq(cols.userId, userId), eq(cols.isActive, true)),
+      orderBy: { createdAt: 'desc' },
     });
   }
 

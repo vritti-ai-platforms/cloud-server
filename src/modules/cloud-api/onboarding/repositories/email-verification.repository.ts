@@ -3,7 +3,7 @@ import {
   PrimaryDatabaseService,
   PrimaryBaseRepository,
 } from '@vritti/api-sdk';
-import { eq, and, lt, desc, sql } from '@vritti/api-sdk/drizzle-orm';
+import { eq, and, lt, sql } from '@vritti/api-sdk/drizzle-orm';
 import { emailVerifications, EmailVerification } from '@/db/schema';
 
 @Injectable()
@@ -19,11 +19,11 @@ export class EmailVerificationRepository extends PrimaryBaseRepository<
    */
   async findLatestByUserId(userId: string): Promise<EmailVerification | undefined> {
     const results = await this.findMany({
-      where: and(
-        eq(emailVerifications.userId, userId),
-        eq(emailVerifications.isVerified, false),
+      where: (cols, { eq, and }) => and(
+        eq(cols.userId, userId),
+        eq(cols.isVerified, false),
       ),
-      orderBy: desc(emailVerifications.createdAt),
+      orderBy: { createdAt: 'desc' },
       limit: 1,
     });
     return results[0];

@@ -3920,10 +3920,10 @@
   resolved "https://registry.yarnpkg.com/@unrs/resolver-binding-win32-x64-msvc/-/resolver-binding-win32-x64-msvc-1.11.1.tgz#538b1e103bf8d9864e7b85cc96fa8d6fb6c40777"
   integrity sha512-lrW200hZdbfRtztbygyaq/6jP6AKE8qQN2KvPcJ+x7wiD038YtnYtZ82IMNJ69GJibV7bwL3y9FgK+5w/pYt6g==
 
-"@vritti/api-sdk@^0.1.0":
-  version "0.1.0"
-  resolved "https://registry.yarnpkg.com/@vritti/api-sdk/-/api-sdk-0.1.0.tgz#583126b0bfe2b163288fd218bb8a967c8d8ab10a"
-  integrity sha512-l2utR6eyn5mnj+8pwubX4uXuyIxw/CcqA0BGarneT+PRd4l5ybVOO3nJcomv0iBxqoanoPbjUZBSIpWcs3DfgA==
+"@vritti/api-sdk@^0.1.1":
+  version "0.1.1"
+  resolved "https://registry.yarnpkg.com/@vritti/api-sdk/-/api-sdk-0.1.1.tgz#9e4afaabb53ce125ce7f3a27f0a5c964def5d694"
+  integrity sha512-Kz22O8zwCjTfxU/OZe97g9f6M/j5MHUBjhG1rBNnAuVIrFlEXFD6HpQ5poXMo9Q83Q7LAcQdxMlTsVaSiuMM7w==
   dependencies:
     drizzle-orm "^1.0.0-beta.3-36e9b9e"
     pg "^8.16.0"

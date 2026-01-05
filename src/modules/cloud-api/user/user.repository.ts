@@ -3,7 +3,6 @@ import {
   PrimaryBaseRepository,
   PrimaryDatabaseService,
 } from '@vritti/api-sdk';
-import { eq, desc, and } from '@vritti/api-sdk/drizzle-orm';
 import { users, User } from '@/db/schema';
 
 @Injectable()
@@ -18,27 +17,27 @@ export class UserRepository extends PrimaryBaseRepository<typeof users> {
   async findAll(): Promise<User[]> {
     this.logger.debug('Finding all users');
     return this.model.findMany({
-      orderBy: desc(users.createdAt),
+      orderBy: { createdAt: 'desc' },
     });
   }
 
   /**
-   * Find user by email
+   * Find user by email (Drizzle v2 object-based where)
    */
   async findByEmail(email: string): Promise<User | undefined> {
     this.logger.debug(`Finding user by email: ${email}`);
     return this.model.findFirst({
-      where: eq(users.email, email),
+      where: { email },
     });
   }
 
   /**
-   * Find user by phone
+   * Find user by phone (Drizzle v2 object-based where)
    */
   async findByPhone(phone: string): Promise<User | undefined> {
     this.logger.debug(`Finding user by phone: ${phone}`);
     return this.model.findFirst({
-      where: eq(users.phone, phone),
+      where: { phone },
     });
   }
 

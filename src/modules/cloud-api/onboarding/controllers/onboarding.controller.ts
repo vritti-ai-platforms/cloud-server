@@ -11,6 +11,7 @@ import {
 import type { FastifyRequest } from 'fastify';
 import { Onboarding } from '@vritti/api-sdk';
 import { OnboardingStatusResponseDto } from '../dto/onboarding-status-response.dto';
+import { StartOnboardingResponseDto } from '../dto/start-onboarding-response.dto';
 import { SetPasswordDto } from '../dto/set-password.dto';
 import { VerifyEmailDto } from '../dto/verify-email.dto';
 import { EmailVerificationService } from '../services/email-verification.service';
@@ -99,6 +100,24 @@ export class OnboardingController {
     this.logger.log(`GET /onboarding/status - User: ${userId}`);
 
     return await this.onboardingService.getStatus(userId);
+  }
+
+  /**
+   * Start onboarding process
+   * POST /onboarding/start
+   * Sends OTP based on current onboarding step (if needed)
+   * Requires: Onboarding token in Authorization header + CSRF token
+   */
+  @Post('start')
+  @Onboarding()
+  @HttpCode(HttpStatus.OK)
+  async startOnboarding(
+    @Request() req: AuthenticatedRequest,
+  ): Promise<StartOnboardingResponseDto> {
+    const userId: string = req.user.id;
+    this.logger.log(`POST /onboarding/start - User: ${userId}`);
+
+    return await this.onboardingService.startOnboarding(userId);
   }
 
   /**

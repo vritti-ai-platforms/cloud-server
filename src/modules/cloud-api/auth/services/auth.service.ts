@@ -10,7 +10,6 @@ import { SessionService } from './session.service';
 import { JwtAuthService } from './jwt.service';
 import { User } from '@/db/schema';
 import { OnboardingStatusResponseDto } from '../../onboarding/dto/onboarding-status-response.dto';
-import { EmailVerificationService } from '../../onboarding/services/email-verification.service';
 import { TokenType } from '../../../../config/jwt.config';
 
 @Injectable()
@@ -22,7 +21,6 @@ export class AuthService {
     private readonly encryptionService: EncryptionService,
     private readonly sessionService: SessionService,
     private readonly jwtService: JwtAuthService,
-    private readonly emailVerificationService: EmailVerificationService,
   ) {}
 
   /**
@@ -248,12 +246,11 @@ export class AuthService {
     // Generate onboarding token
     const onboardingToken = this.generateOnboardingToken(user.id);
 
-    // Resend OTP if needed (based on current step)
-    await this.resendOtpIfNeeded(user);
+    // OTP sending removed - now handled by POST /onboarding/start endpoint
 
     this.logger.log(`Resuming onboarding for user: ${user.email} (${user.id})`);
 
-    return OnboardingStatusResponseDto.fromUser(user, onboardingToken);
+    return OnboardingStatusResponseDto.fromUser(user, onboardingToken, false);
   }
 
   /**
@@ -277,11 +274,7 @@ export class AuthService {
       passwordHash,
     );
 
-    // Send email verification OTP
-    await this.emailVerificationService.sendVerificationOtp(
-      userResponse.id,
-      userResponse.email,
-    );
+    // OTP sending removed - now handled by POST /onboarding/start endpoint
 
     // Generate onboarding token
     const onboardingToken = this.generateOnboardingToken(userResponse.id);
@@ -292,7 +285,7 @@ export class AuthService {
 
     // Get fresh user data to return
     const user = await this.userService.findByEmail(dto.email);
-    return OnboardingStatusResponseDto.fromUser(user!, onboardingToken);
+    return OnboardingStatusResponseDto.fromUser(user!, onboardingToken, true);
   }
 
   /**
@@ -314,23 +307,4 @@ export class AuthService {
     return token;
   }
 
-  /**
-   * Resend OTP if needed based on current onboarding step
-   */
-  private async resendOtpIfNeeded(user: User): Promise<void> {
-    switch (user.onboardingStep) {
-      case 'EMAIL_VERIFICATION':
-        if (!user.emailVerified) {
-          await this.emailVerificationService.resendOtp(user.id);
-        }
-        break;
-      case 'MOBILE_VERIFICATION':
-        // TODO: Implement mobile verification resend in Phase 2
-        this.logger.debug(`Mobile verification resend not yet implemented`);
-        break;
-      default:
-        // No OTP needed for other steps
-        break;
-    }
-  }
 }

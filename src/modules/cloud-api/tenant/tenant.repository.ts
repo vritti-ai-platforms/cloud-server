@@ -3,7 +3,7 @@ import {
   PrimaryBaseRepository,
   PrimaryDatabaseService,
 } from '@vritti/api-sdk';
-import { eq, desc } from '@vritti/api-sdk/drizzle-orm';
+import { eq } from '@vritti/api-sdk/drizzle-orm';
 import { tenants } from '@/db/schema';
 
 type Tenant = typeof tenants.$inferSelect;
@@ -19,7 +19,7 @@ export class TenantRepository extends PrimaryBaseRepository<typeof tenants> {
    */
   async findAll(): Promise<Tenant[]> {
     return this.model.findMany({
-      orderBy: desc(tenants.createdAt),
+      orderBy: { createdAt: 'desc' },
     });
   }
 

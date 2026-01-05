@@ -18,6 +18,12 @@ export class OnboardingStatusResponseDto {
   // Token for continuing onboarding
   onboardingToken?: string;
 
+  // Whether this is a newly created account (vs resuming)
+  isNewUser: boolean;
+
+  // Signup method used: 'email' for manual signup, 'oauth' for OAuth
+  signupMethod: 'email' | 'oauth';
+
   constructor(partial: Partial<OnboardingStatusResponseDto>) {
     Object.assign(this, partial);
   }
@@ -28,7 +34,11 @@ export class OnboardingStatusResponseDto {
   static fromUser(
     user: User,
     onboardingToken?: string,
+    isNewUser: boolean = false,
   ): OnboardingStatusResponseDto {
+    // Determine signup method: 'oauth' if no password hash, 'email' otherwise
+    const signupMethod: 'email' | 'oauth' = user.passwordHash === null ? 'oauth' : 'email';
+
     return new OnboardingStatusResponseDto({
       userId: user.id,
       email: user.email,
@@ -40,6 +50,8 @@ export class OnboardingStatusResponseDto {
       emailVerified: user.emailVerified,
       phoneVerified: user.phoneVerified,
       onboardingToken,
+      isNewUser,
+      signupMethod,
     });
   }
 }

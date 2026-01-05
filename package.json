@@ -35,7 +35,7 @@
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/platform-fastify": "^11.1.6",
-    "@vritti/api-sdk": "^0.1.0",
+    "@vritti/api-sdk": "^0.1.1",
     "axios": "^1.13.2",
     "bcrypt": "^6.0.0",
     "class-transformer": "^0.5.1",

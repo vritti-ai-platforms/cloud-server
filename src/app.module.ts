@@ -1,6 +1,7 @@
+import * as schema from '@/db/schema';
+import { relations } from '@/db/schema';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import * as schema from '@/db/schema';
 
 import './db/schema.registry';
 
@@ -76,7 +77,10 @@ import { CloudApiModule } from './modules/cloud-api/cloud-api.module';
               'PRIMARY_DB_SSL_MODE',
             ),
           },
+
           drizzleSchema: schema,
+          // Relations must be passed separately for db.query to work (drizzle-orm v2)
+          drizzleRelations: relations,
 
           // Connection pool configuration
           connectionCacheTTL: 300000, // 5 minutes
