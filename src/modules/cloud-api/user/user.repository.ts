@@ -3,7 +3,7 @@ import {
   PrimaryBaseRepository,
   PrimaryDatabaseService,
 } from '@vritti/api-sdk';
-import { users, User } from '@/db/schema';
+import { AccountStatusValues, users, User } from '@/db/schema';
 
 @Injectable()
 export class UserRepository extends PrimaryBaseRepository<typeof users> {
@@ -113,6 +113,6 @@ export class UserRepository extends PrimaryBaseRepository<typeof users> {
    */
   async delete(id: string): Promise<User> {
     this.logger.log(`Deactivating user: ${id}`);
-    return this.update(id, { accountStatus: 'DEACTIVATED' });
+    return this.update(id, { accountStatus: AccountStatusValues.DEACTIVATED });
   }
 }

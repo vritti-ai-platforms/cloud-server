@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { JwtService as NestJwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { hashToken } from '@vritti/api-sdk';
 import { getTokenExpiry, TokenType } from '../../../../config/jwt.config';
 
 /**
@@ -21,12 +22,15 @@ export class JwtAuthService {
 
   /**
    * Generate access token (15 minutes)
+   * @param userId - The user ID to include in the token
+   * @param refreshToken - The refresh token to bind this access token to
    */
-  generateAccessToken(userId: string): string {
+  generateAccessToken(userId: string, refreshToken: string): string {
     return this.jwtService.sign(
       {
         userId,
         type: TokenType.ACCESS,
+        refreshTokenHash: hashToken(refreshToken),
       },
       {
         expiresIn: this.tokenExpiry.ACCESS,
@@ -50,13 +54,16 @@ export class JwtAuthService {
   }
 
   /**
-   * Generate onboarding token (7 days)
+   * Generate onboarding token (24 hours)
+   * @param userId - The user ID to include in the token
+   * @param refreshToken - The refresh token to bind this onboarding token to
    */
-  generateOnboardingToken(userId: string): string {
+  generateOnboardingToken(userId: string, refreshToken: string): string {
     return this.jwtService.sign(
       {
         userId,
         type: TokenType.ONBOARDING,
+        refreshTokenHash: hashToken(refreshToken),
       },
       {
         expiresIn: this.tokenExpiry.ONBOARDING,

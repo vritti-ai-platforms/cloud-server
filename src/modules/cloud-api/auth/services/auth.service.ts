@@ -1,16 +1,16 @@
+import { AccountStatusValues, User } from '@/db/schema';
 import { Injectable, Logger } from '@nestjs/common';
-import { UnauthorizedException, BadRequestException } from '@vritti/api-sdk';
+import { BadRequestException, UnauthorizedException } from '@vritti/api-sdk';
+import { TokenType } from '../../../../config/jwt.config';
+import { EncryptionService } from '../../../../services';
+import { OnboardingStatusResponseDto } from '../../onboarding/dto/onboarding-status-response.dto';
+import { UserResponseDto } from '../../user/dto/user-response.dto';
+import { UserService } from '../../user/user.service';
+import { AuthResponseDto } from '../dto/auth-response.dto';
 import { LoginDto } from '../dto/login.dto';
 import { SignupDto } from '../dto/signup.dto';
-import { AuthResponseDto } from '../dto/auth-response.dto';
-import { UserService } from '../../user/user.service';
-import { UserResponseDto } from '../../user/dto/user-response.dto';
-import { EncryptionService } from '../../../../services';
-import { SessionService } from './session.service';
 import { JwtAuthService } from './jwt.service';
-import { User } from '@/db/schema';
-import { OnboardingStatusResponseDto } from '../../onboarding/dto/onboarding-status-response.dto';
-import { TokenType } from '../../../../config/jwt.config';
+import { SessionService } from './session.service';
 
 @Injectable()
 export class AuthService {
@@ -38,7 +38,7 @@ export class AuthService {
     if (!user) {
       throw new UnauthorizedException(
         'Invalid credentials',
-        'The email or password you entered is incorrect. Please check your credentials and try again.'
+        'The email or password you entered is incorrect. Please check your credentials and try again.',
       );
     }
 
@@ -49,7 +49,7 @@ export class AuthService {
       if (!user.passwordHash) {
         throw new UnauthorizedException(
           'Invalid credentials',
-          'The email or password you entered is incorrect. Please check your credentials and try again.'
+          'The email or password you entered is incorrect. Please check your credentials and try again.',
         );
       }
 
@@ -61,14 +61,16 @@ export class AuthService {
       if (!isPasswordValid) {
         throw new UnauthorizedException(
           'Invalid credentials',
-          'The email or password you entered is incorrect. Please check your credentials and try again.'
+          'The email or password you entered is incorrect. Please check your credentials and try again.',
         );
       }
 
       // Generate onboarding token
       const onboardingToken = this.generateOnboardingToken(user.id);
 
-      this.logger.log(`User login - requires onboarding: ${user.email} (${user.id})`);
+      this.logger.log(
+        `User login - requires onboarding: ${user.email} (${user.id})`,
+      );
 
       // Return response with onboarding requirements
       return new AuthResponseDto({
@@ -80,10 +82,10 @@ export class AuthService {
     }
 
     // Only ACTIVE users can login
-    if (user.accountStatus !== 'ACTIVE') {
+    if (user.accountStatus !== AccountStatusValues.ACTIVE) {
       throw new UnauthorizedException(
         `Account is ${user.accountStatus.toLowerCase()}. Please contact support`,
-        `Your account is ${user.accountStatus.toLowerCase()}. Please contact support for assistance.`
+        `Your account is ${user.accountStatus.toLowerCase()}. Please contact support for assistance.`,
       );
     }
 
@@ -91,7 +93,7 @@ export class AuthService {
     if (!user.passwordHash) {
       throw new UnauthorizedException(
         'Invalid credentials',
-        'The email or password you entered is incorrect. Please check your credentials and try again.'
+        'The email or password you entered is incorrect. Please check your credentials and try again.',
       );
     }
 
@@ -103,7 +105,7 @@ export class AuthService {
     if (!isPasswordValid) {
       throw new UnauthorizedException(
         'Invalid credentials',
-        'The email or password you entered is incorrect. Please check your credentials and try again.'
+        'The email or password you entered is incorrect. Please check your credentials and try again.',
       );
     }
 
@@ -182,10 +184,10 @@ export class AuthService {
     const user = await this.userService.findById(userId);
 
     // Check if account is active
-    if (user.accountStatus !== 'ACTIVE') {
+    if (user.accountStatus !== AccountStatusValues.ACTIVE) {
       throw new UnauthorizedException(
         'Account is not active',
-        'Your account is not active. Please contact support for assistance.'
+        'Your account is not active. Please contact support for assistance.',
       );
     }
 
@@ -199,21 +201,20 @@ export class AuthService {
   async signup(dto: SignupDto): Promise<OnboardingStatusResponseDto> {
     const existingUser = await this.userService.findByEmail(dto.email);
 
-    // Case 1: Onboarding complete → error
-    if (existingUser?.onboardingComplete) {
+    if (existingUser) {
+      if (!existingUser.onboardingComplete) {
+        // Resume onboarding
+        return await this.resumeOnboarding(existingUser, dto.password);
+      }
+      // Onboarding complete → error
       throw new BadRequestException(
         'email',
-        'User Already Exists. Please login.',
-        'Your account has already been set up. Please proceed to login.'
+        'User Already Exists with this email. Please login.',
+        'Your account has already been set up. Please proceed to login.',
       );
     }
 
-    // Case 2: Resume onboarding
-    if (existingUser && !existingUser.onboardingComplete) {
-      return await this.resumeOnboarding(existingUser, dto.password);
-    }
-
-    // Case 3: New user
+    // New user
     return await this.createNewUser(dto);
   }
 
@@ -236,9 +237,9 @@ export class AuthService {
         throw new BadRequestException(
           [
             { field: 'password', message: 'Invalid password' },
-            { message: 'A password is already set for this account' }
+            { message: 'A password is already set for this account' },
           ],
-          'The password you entered is incorrect. This account already has a password set. Please enter the correct password to continue.'
+          'The password you entered is incorrect. This account already has a password set. Please enter the correct password to continue.',
         );
       }
     }
@@ -306,5 +307,4 @@ export class AuthService {
     );
     return token;
   }
-
 }

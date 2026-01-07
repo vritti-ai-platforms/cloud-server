@@ -3,7 +3,7 @@ import {
   PrimaryDatabaseService,
   PrimaryBaseRepository,
 } from '@vritti/api-sdk';
-import { eq, lt } from '@vritti/api-sdk/drizzle-orm';
+import { lt } from '@vritti/api-sdk/drizzle-orm';
 import { oauthStates, OAuthState } from '@/db/schema';
 
 /**
@@ -27,7 +27,8 @@ export class OAuthStateRepository extends PrimaryBaseRepository<
    * @returns OAuthState record or undefined if not found
    */
   async findByToken(token: string): Promise<OAuthState | undefined> {
-    return this.findOne(eq(oauthStates.stateToken, token));
+    // Use object-based filter for Drizzle v2 relational API
+    return this.findOne({ stateToken: token });
   }
 
   /**

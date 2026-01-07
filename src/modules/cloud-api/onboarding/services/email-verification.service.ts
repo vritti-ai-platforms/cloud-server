@@ -4,7 +4,7 @@ import {
   UnauthorizedException,
 } from '@vritti/api-sdk';
 import { eq } from '@vritti/api-sdk/drizzle-orm';
-import { emailVerifications } from '@/db/schema';
+import { AccountStatusValues, emailVerifications, OnboardingStepValues } from '@/db/schema';
 import { EmailService } from '../../../../services';
 import { UserService } from '../../user/user.service';
 import { EmailVerificationRepository } from '../repositories/email-verification.repository';
@@ -93,8 +93,8 @@ export class EmailVerificationService {
 
     // Update onboarding step to MOBILE_VERIFICATION
     await this.userService.update(userId, {
-      onboardingStep: 'MOBILE_VERIFICATION',
-      accountStatus: 'PENDING_MOBILE',
+      onboardingStep: OnboardingStepValues.MOBILE_VERIFICATION,
+      accountStatus: AccountStatusValues.PENDING_MOBILE,
     });
 
     this.logger.log(`Email verified successfully for user ${userId}`);

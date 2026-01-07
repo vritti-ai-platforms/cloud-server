@@ -1,7 +1,6 @@
+import { OnboardingStepValues } from '@/db/schema';
 import { Injectable, Logger } from '@nestjs/common';
-import {
-  BadRequestException
-} from '@vritti/api-sdk';
+import { BadRequestException } from '@vritti/api-sdk';
 import { EncryptionService } from '../../../../services';
 import { UserService } from '../../user/user.service';
 import { OnboardingStatusResponseDto } from '../dto/onboarding-status-response.dto';
@@ -45,7 +44,7 @@ export class OnboardingService {
     }
 
     // Verify user is on SET_PASSWORD step
-    if (user.onboardingStep !== 'SET_PASSWORD') {
+    if (user.onboardingStep !== OnboardingStepValues.SET_PASSWORD) {
       throw new BadRequestException(
         'User is not on SET_PASSWORD onboarding step',
         'You cannot set a password at this stage. Please complete the previous onboarding steps first.'
@@ -94,7 +93,7 @@ export class OnboardingService {
     let message: string;
 
     switch (user.onboardingStep) {
-      case 'EMAIL_VERIFICATION':
+      case OnboardingStepValues.EMAIL_VERIFICATION:
         if (!user.emailVerified) {
           await this.emailVerificationService.sendVerificationOtp(user.id, user.email);
           otpSentTo = 'email';
@@ -105,21 +104,21 @@ export class OnboardingService {
         }
         break;
 
-      case 'SET_PASSWORD':
+      case OnboardingStepValues.SET_PASSWORD:
         message = 'Please set your password';
         break;
 
-      case 'MOBILE_VERIFICATION':
+      case OnboardingStepValues.MOBILE_VERIFICATION:
         // TODO: Mobile OTP in Phase 2
         message = 'Please verify your mobile number';
         this.logger.debug('Mobile verification not yet implemented');
         break;
 
-      case 'TWO_FACTOR_SETUP':
+      case OnboardingStepValues.TWO_FACTOR_SETUP:
         message = 'Please set up two-factor authentication';
         break;
 
-      case 'COMPLETE':
+      case OnboardingStepValues.COMPLETE:
         message = 'Onboarding already complete';
         break;
 

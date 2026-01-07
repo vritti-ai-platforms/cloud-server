@@ -58,3 +58,23 @@ export enum TokenType {
   REFRESH = 'refresh',
   PASSWORD_RESET = 'password_reset',
 }
+
+/**
+ * Access token payload with refresh token binding
+ */
+export interface AccessTokenPayload {
+  userId: string;
+  type: TokenType.ACCESS;
+  /** SHA-256 hash of bound refresh token */
+  refreshTokenHash: string;
+}
+
+/**
+ * Onboarding token payload with refresh token binding
+ */
+export interface OnboardingTokenPayload {
+  userId: string;
+  type: TokenType.ONBOARDING;
+  /** SHA-256 hash of bound refresh token */
+  refreshTokenHash: string;
+}

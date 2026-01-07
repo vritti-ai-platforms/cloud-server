@@ -8,6 +8,7 @@ import {
   NestFastifyApplication,
 } from '@nestjs/platform-fastify';
 import {
+  configureApiSdk,
   CorrelationIdMiddleware,
   CsrfGuard,
   HttpExceptionFilter,
@@ -17,6 +18,22 @@ import {
 import { AppModule } from './app.module';
 
 async function bootstrap() {
+  // Configure api-sdk BEFORE creating the NestJS app
+  // This sets up cookie names, JWT settings, and auth guard config
+  configureApiSdk({
+    cookie: {
+      refreshCookieName: process.env.REFRESH_COOKIE_NAME ?? 'vritti_refresh',
+      refreshCookieSecure: process.env.NODE_ENV === 'production',
+      refreshCookieMaxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+    },
+    jwt: {
+      validateTokenBinding: true,
+    },
+    guard: {
+      tenantHeaderName: 'x-tenant-id',
+    },
+  });
+
   // When using default provider, let NestJS use its built-in logger to avoid circular reference
   // When using Winston, we need to use LoggerService
   const logProvider = process.env.LOG_PROVIDER || 'winston';

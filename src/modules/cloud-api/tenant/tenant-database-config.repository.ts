@@ -27,7 +27,8 @@ export class TenantDatabaseConfigRepository extends PrimaryBaseRepository<
    * @returns Configuration or undefined if not found
    */
   async findByTenantId(tenantId: string): Promise<TenantDatabaseConfig | undefined> {
-    return this.findOne(eq(tenantDatabaseConfigs.tenantId, tenantId));
+    // Use object-based filter for Drizzle v2 relational API
+    return this.findOne({ tenantId });
   }
 
   /**
