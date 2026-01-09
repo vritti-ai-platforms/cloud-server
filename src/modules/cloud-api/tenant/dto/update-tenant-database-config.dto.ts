@@ -5,6 +5,4 @@ import { CreateTenantDatabaseConfigDto } from './create-tenant-database-config.d
  * DTO for updating tenant database configuration
  * All fields are optional (partial of CreateTenantDatabaseConfigDto)
  */
-export class UpdateTenantDatabaseConfigDto extends PartialType(
-  CreateTenantDatabaseConfigDto,
-) {}
+export class UpdateTenantDatabaseConfigDto extends PartialType(CreateTenantDatabaseConfigDto) {}

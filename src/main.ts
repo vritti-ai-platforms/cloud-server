@@ -3,14 +3,11 @@ import fastifyCsrfProtection from '@fastify/csrf-protection';
 import { BadRequestException, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory, Reflector } from '@nestjs/core';
+import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
 import {
-  FastifyAdapter,
-  NestFastifyApplication,
-} from '@nestjs/platform-fastify';
-import {
-  configureApiSdk,
   CorrelationIdMiddleware,
   CsrfGuard,
+  configureApiSdk,
   HttpExceptionFilter,
   HttpLoggerInterceptor,
   LoggerService,
@@ -43,11 +40,13 @@ async function bootstrap() {
     AppModule,
     new FastifyAdapter(),
     // Only pass custom logger for Winston to avoid circular reference with default provider
-    useBuiltInLogger ? {} : {
-      logger: new LoggerService({
-        environment: process.env.NODE_ENV 
-      })
-    },
+    useBuiltInLogger
+      ? {}
+      : {
+          logger: new LoggerService({
+            environment: process.env.NODE_ENV,
+          }),
+        },
   );
 
   // Get services from DI container

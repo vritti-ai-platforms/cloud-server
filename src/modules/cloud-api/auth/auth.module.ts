@@ -1,30 +1,30 @@
-import { Module, forwardRef } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
+import { forwardRef, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
+import { jwtConfigFactory } from '../../../config/jwt.config';
 import { ServicesModule } from '../../../services';
+import { OnboardingModule } from '../onboarding/onboarding.module';
+import { UserModule } from '../user/user.module';
 import { AuthController } from './auth.controller';
 import { AuthOAuthController } from './auth-oauth.controller';
-import { AuthService } from './services/auth.service';
-import { JwtAuthService } from './services/jwt.service';
-import { SessionService } from './services/session.service';
-import { SessionRepository } from './repositories/session.repository';
-import { JwtStrategy } from './strategies/jwt.strategy';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { AccountStatusGuard } from './guards/account-status.guard';
-import { UserModule } from '../user/user.module';
-import { OnboardingModule } from '../onboarding/onboarding.module';
-import { jwtConfigFactory } from '../../../config/jwt.config';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { AppleOAuthProvider } from './oauth/apple-oauth.provider';
+import { FacebookOAuthProvider } from './oauth/facebook-oauth.provider';
+import { GoogleOAuthProvider } from './oauth/google-oauth.provider';
+import { MicrosoftOAuthProvider } from './oauth/microsoft-oauth.provider';
+import { OAuthProviderRepository } from './oauth/repositories/oauth-provider.repository';
+import { OAuthStateRepository } from './oauth/repositories/oauth-state.repository';
 // OAuth imports
 import { OAuthService } from './oauth/services/oauth.service';
 import { OAuthStateService } from './oauth/services/oauth-state.service';
-import { OAuthProviderRepository } from './oauth/repositories/oauth-provider.repository';
-import { OAuthStateRepository } from './oauth/repositories/oauth-state.repository';
-import { GoogleOAuthProvider } from './oauth/google-oauth.provider';
-import { MicrosoftOAuthProvider } from './oauth/microsoft-oauth.provider';
-import { AppleOAuthProvider } from './oauth/apple-oauth.provider';
-import { FacebookOAuthProvider } from './oauth/facebook-oauth.provider';
 import { TwitterOAuthProvider } from './oauth/twitter-oauth.provider';
+import { SessionRepository } from './repositories/session.repository';
+import { AuthService } from './services/auth.service';
+import { JwtAuthService } from './services/jwt.service';
+import { SessionService } from './services/session.service';
+import { JwtStrategy } from './strategies/jwt.strategy';
 
 /**
  * Auth Module
@@ -61,12 +61,6 @@ import { TwitterOAuthProvider } from './oauth/twitter-oauth.provider';
     FacebookOAuthProvider,
     TwitterOAuthProvider,
   ],
-  exports: [
-    AuthService,
-    JwtAuthService,
-    SessionService,
-    JwtAuthGuard,
-    AccountStatusGuard,
-  ],
+  exports: [AuthService, JwtAuthService, SessionService, JwtAuthGuard, AccountStatusGuard],
 })
 export class AuthModule {}

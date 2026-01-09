@@ -1,14 +1,14 @@
-import { AccountStatusValues, User } from '@/db/schema';
 import { Injectable, Logger } from '@nestjs/common';
 import { BadRequestException, UnauthorizedException } from '@vritti/api-sdk';
+import { AccountStatusValues, type User } from '@/db/schema';
 import { TokenType } from '../../../../config/jwt.config';
 import { EncryptionService } from '../../../../services';
 import { OnboardingStatusResponseDto } from '../../onboarding/dto/onboarding-status-response.dto';
 import { UserResponseDto } from '../../user/dto/user-response.dto';
 import { UserService } from '../../user/user.service';
 import { AuthResponseDto } from '../dto/auth-response.dto';
-import { LoginDto } from '../dto/login.dto';
-import { SignupDto } from '../dto/signup.dto';
+import type { LoginDto } from '../dto/login.dto';
+import type { SignupDto } from '../dto/signup.dto';
 import { JwtAuthService } from './jwt.service';
 import { SessionService } from './session.service';
 
@@ -27,11 +27,7 @@ export class AuthService {
    * User login
    * Only ACTIVE users can login
    */
-  async login(
-    dto: LoginDto,
-    ipAddress?: string,
-    userAgent?: string,
-  ): Promise<AuthResponseDto> {
+  async login(dto: LoginDto, ipAddress?: string, userAgent?: string): Promise<AuthResponseDto> {
     // Find user by email
     const user = await this.userService.findByEmail(dto.email);
 
@@ -53,10 +49,7 @@ export class AuthService {
         );
       }
 
-      const isPasswordValid = await this.encryptionService.comparePassword(
-        dto.password,
-        user.passwordHash,
-      );
+      const isPasswordValid = await this.encryptionService.comparePassword(dto.password, user.passwordHash);
 
       if (!isPasswordValid) {
         throw new UnauthorizedException(
@@ -68,9 +61,7 @@ export class AuthService {
       // Generate onboarding token
       const onboardingToken = this.generateOnboardingToken(user.id);
 
-      this.logger.log(
-        `User login - requires onboarding: ${user.email} (${user.id})`,
-      );
+      this.logger.log(`User login - requires onboarding: ${user.email} (${user.id})`);
 
       // Return response with onboarding requirements
       return new AuthResponseDto({
@@ -97,10 +88,7 @@ export class AuthService {
       );
     }
 
-    const isPasswordValid = await this.encryptionService.comparePassword(
-      dto.password,
-      user.passwordHash,
-    );
+    const isPasswordValid = await this.encryptionService.comparePassword(dto.password, user.passwordHash);
 
     if (!isPasswordValid) {
       throw new UnauthorizedException(
@@ -110,8 +98,7 @@ export class AuthService {
     }
 
     // Create session and generate tokens
-    const { accessToken, refreshToken } =
-      await this.sessionService.createSession(user.id, ipAddress, userAgent);
+    const { accessToken, refreshToken } = await this.sessionService.createSession(user.id, ipAddress, userAgent);
 
     // Delete all onboarding sessions (user has completed onboarding)
     await this.sessionService.deleteOnboardingSessions(user.id);
@@ -142,7 +129,7 @@ export class AuthService {
     const payload = this.jwtService.verifyRefreshToken(refreshToken);
 
     // Get user
-    const user = await this.userService.findByEmail(''); // We need user by ID
+    const _user = await this.userService.findByEmail(''); // We need user by ID
     const userResponse = await this.userService.findById(payload.userId);
 
     // Get fresh user data
@@ -221,18 +208,12 @@ export class AuthService {
   /**
    * Resume existing onboarding
    */
-  private async resumeOnboarding(
-    user: User,
-    password: string,
-  ): Promise<OnboardingStatusResponseDto> {
+  private async resumeOnboarding(user: User, password: string): Promise<OnboardingStatusResponseDto> {
     // Skip password check if BOTH email AND mobile not verified
     const shouldSkipPasswordCheck = !user.emailVerified && !user.phoneVerified;
 
     if (!shouldSkipPasswordCheck && user.passwordHash) {
-      const isPasswordValid = await this.encryptionService.comparePassword(
-        password,
-        user.passwordHash,
-      );
+      const isPasswordValid = await this.encryptionService.comparePassword(password, user.passwordHash);
       if (!isPasswordValid) {
         throw new BadRequestException(
           [
@@ -257,13 +238,9 @@ export class AuthService {
   /**
    * Create new user and start onboarding
    */
-  private async createNewUser(
-    dto: SignupDto,
-  ): Promise<OnboardingStatusResponseDto> {
+  private async createNewUser(dto: SignupDto): Promise<OnboardingStatusResponseDto> {
     // Hash password
-    const passwordHash = await this.encryptionService.hashPassword(
-      dto.password,
-    );
+    const passwordHash = await this.encryptionService.hashPassword(dto.password);
 
     // Create user
     const userResponse = await this.userService.create(
@@ -280,9 +257,7 @@ export class AuthService {
     // Generate onboarding token
     const onboardingToken = this.generateOnboardingToken(userResponse.id);
 
-    this.logger.log(
-      `Created new user and started onboarding: ${userResponse.email} (${userResponse.id})`,
-    );
+    this.logger.log(`Created new user and started onboarding: ${userResponse.email} (${userResponse.id})`);
 
     // Get fresh user data to return
     const user = await this.userService.findByEmail(dto.email);
@@ -293,18 +268,14 @@ export class AuthService {
    * Generate onboarding JWT token
    */
   private generateOnboardingToken(userId: string): string {
-    // Use the internal jwtService (NestJwtService) through JwtAuthService
-    // We need to access it directly since JwtAuthService doesn't expose an onboarding token method
-    // This is a temporary approach - ideally JwtAuthService should have this method
-    const token = this.jwtService['jwtService'].sign(
+    return this.jwtService.sign(
       {
         userId,
         type: TokenType.ONBOARDING,
       },
       {
-        expiresIn: '7d', // Onboarding token expires in 7 days
+        expiresIn: '7d',
       },
     );
-    return token;
   }
 }

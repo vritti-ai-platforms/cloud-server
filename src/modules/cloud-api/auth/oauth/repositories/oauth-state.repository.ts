@@ -1,10 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import {
-  PrimaryDatabaseService,
-  PrimaryBaseRepository,
-} from '@vritti/api-sdk';
+import { PrimaryBaseRepository, PrimaryDatabaseService } from '@vritti/api-sdk';
 import { lt } from '@vritti/api-sdk/drizzle-orm';
-import { oauthStates, OAuthState } from '@/db/schema';
+import { type OAuthState, oauthStates } from '@/db/schema';
 
 /**
  * OAuth State Repository
@@ -14,9 +11,7 @@ import { oauthStates, OAuthState } from '@/db/schema';
  * Used for CSRF protection during OAuth flows
  */
 @Injectable()
-export class OAuthStateRepository extends PrimaryBaseRepository<
-  typeof oauthStates
-> {
+export class OAuthStateRepository extends PrimaryBaseRepository<typeof oauthStates> {
   constructor(database: PrimaryDatabaseService) {
     super(database, oauthStates);
   }

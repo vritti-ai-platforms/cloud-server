@@ -1,10 +1,4 @@
-import {
-  boolean,
-  text,
-  timestamp,
-  uuid,
-  varchar,
-} from '@vritti/api-sdk/drizzle-pg-core';
+import { boolean, text, timestamp, uuid, varchar } from '@vritti/api-sdk/drizzle-pg-core';
 import { cloudSchema } from './cloud-schema';
 import { accountStatusEnum, onboardingStepEnum } from './enums';
 
@@ -17,23 +11,17 @@ export const users = cloudSchema.table('users', {
   firstName: varchar('first_name', { length: 255 }),
   lastName: varchar('last_name', { length: 255 }),
   passwordHash: varchar('password_hash', { length: 255 }),
-  accountStatus: accountStatusEnum('account_status')
-    .notNull()
-    .default('PENDING_VERIFICATION'),
+  accountStatus: accountStatusEnum('account_status').notNull().default('PENDING_VERIFICATION'),
   emailVerified: boolean('email_verified').notNull().default(false),
   phoneVerified: boolean('phone_verified').notNull().default(false),
-  onboardingStep: onboardingStepEnum('onboarding_step')
-    .notNull()
-    .default('EMAIL_VERIFICATION'),
+  onboardingStep: onboardingStepEnum('onboarding_step').notNull().default('EMAIL_VERIFICATION'),
   onboardingComplete: boolean('onboarding_complete').notNull().default(false),
   phone: varchar('phone', { length: 20 }),
   phoneCountry: varchar('phone_country', { length: 5 }),
   profilePictureUrl: text('profile_picture_url'),
   locale: varchar('locale', { length: 10 }).notNull().default('en'),
   timezone: varchar('timezone', { length: 50 }).notNull().default('UTC'),
-  createdAt: timestamp('created_at', { withTimezone: true })
-    .notNull()
-    .defaultNow(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true })
     .notNull()
     .defaultNow()

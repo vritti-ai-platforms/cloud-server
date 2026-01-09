@@ -1,4 +1,4 @@
-import { Tenant, DatabaseType, TenantStatus, TenantDatabaseConfig } from '@/db/schema';
+import type { DatabaseType, Tenant, TenantDatabaseConfig, TenantStatus } from '@/db/schema';
 import { TenantDatabaseConfigResponseDto } from './tenant-database-config-response.dto';
 
 /** Tenant with optional database configuration relation */
@@ -38,9 +38,7 @@ export class TenantResponseDto {
       description: tenant.description,
       dbType: tenant.dbType,
       status: tenant.status,
-      databaseConfig: tenant.databaseConfig
-        ? TenantDatabaseConfigResponseDto.from(tenant.databaseConfig)
-        : null,
+      databaseConfig: tenant.databaseConfig ? TenantDatabaseConfigResponseDto.from(tenant.databaseConfig) : null,
       createdAt: tenant.createdAt,
       updatedAt: tenant.updatedAt,
     });

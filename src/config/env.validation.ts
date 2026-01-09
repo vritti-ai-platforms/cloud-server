@@ -1,15 +1,5 @@
 import { plainToInstance, Transform } from 'class-transformer';
-import {
-  IsEnum,
-  IsNumber,
-  IsString,
-  validateSync,
-  IsOptional,
-  Min,
-  Max,
-  IsEmail,
-  IsBoolean,
-} from 'class-validator';
+import { IsBoolean, IsEmail, IsEnum, IsNumber, IsOptional, IsString, Max, Min, validateSync } from 'class-validator';
 
 enum Environment {
   Development = 'development',
@@ -140,31 +130,21 @@ class EnvironmentVariables {
  * @returns The original config object if validation passes
  * @throws Error if validation fails
  */
-export function validate(
-  config: Record<string, unknown>,
-): Record<string, unknown> {
+export function validate(config: Record<string, unknown>): Record<string, unknown> {
   // Convert numeric string values to numbers for validation
   const processedConfig = {
     ...config,
     PORT: config.PORT ? parseInt(config.PORT as string, 10) : undefined,
-    PRIMARY_DB_PORT: config.PRIMARY_DB_PORT
-      ? parseInt(config.PRIMARY_DB_PORT as string, 10)
-      : undefined,
-    BCRYPT_SALT_ROUNDS: config.BCRYPT_SALT_ROUNDS
-      ? parseInt(config.BCRYPT_SALT_ROUNDS as string, 10)
-      : undefined,
+    PRIMARY_DB_PORT: config.PRIMARY_DB_PORT ? parseInt(config.PRIMARY_DB_PORT as string, 10) : undefined,
+    BCRYPT_SALT_ROUNDS: config.BCRYPT_SALT_ROUNDS ? parseInt(config.BCRYPT_SALT_ROUNDS as string, 10) : undefined,
     REFRESH_TOKEN_ROTATION_DAYS: config.REFRESH_TOKEN_ROTATION_DAYS
       ? parseInt(config.REFRESH_TOKEN_ROTATION_DAYS as string, 10)
       : undefined,
   };
 
-  const validatedConfig = plainToInstance(
-    EnvironmentVariables,
-    processedConfig,
-    {
-      enableImplicitConversion: true,
-    },
-  );
+  const validatedConfig = plainToInstance(EnvironmentVariables, processedConfig, {
+    enableImplicitConversion: true,
+  });
 
   const errors = validateSync(validatedConfig, {
     skipMissingProperties: false,
@@ -173,9 +153,7 @@ export function validate(
   if (errors.length > 0) {
     const errorMessages = errors
       .map((error) => {
-        const constraints = error.constraints
-          ? Object.values(error.constraints).join(', ')
-          : 'Unknown error';
+        const constraints = error.constraints ? Object.values(error.constraints).join(', ') : 'Unknown error';
         return `  - ${error.property}: ${constraints}`;
       })
       .join('\n');

@@ -1,10 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { OAuthProviderTypeValues } from '@/db/schema';
 import axios from 'axios';
-import { IOAuthProvider } from './interfaces/oauth-provider.interface';
-import { OAuthTokens, OAuthTokenExchangePayload } from './interfaces/oauth-tokens.interface';
-import { OAuthUserProfile } from './interfaces/oauth-user-profile.interface';
+import { OAuthProviderTypeValues } from '@/db/schema';
+import type { IOAuthProvider } from './interfaces/oauth-provider.interface';
+import type { OAuthTokenExchangePayload, OAuthTokens } from './interfaces/oauth-tokens.interface';
+import type { OAuthUserProfile } from './interfaces/oauth-user-profile.interface';
 
 /**
  * X (Twitter) OAuth 2.0 Provider
@@ -24,8 +24,7 @@ export class TwitterOAuthProvider implements IOAuthProvider {
 
   constructor(private readonly configService: ConfigService) {
     this.clientId = this.configService.getOrThrow<string>('X_CLIENT_ID');
-    this.clientSecret =
-      this.configService.getOrThrow<string>('X_CLIENT_SECRET');
+    this.clientSecret = this.configService.getOrThrow<string>('X_CLIENT_SECRET');
     this.redirectUri = this.configService.getOrThrow<string>('X_CALLBACK_URL');
   }
 
@@ -46,9 +45,7 @@ export class TwitterOAuthProvider implements IOAuthProvider {
       params.append('code_challenge', codeChallenge);
       params.append('code_challenge_method', 'S256');
     } else {
-      this.logger.warn(
-        'Twitter OAuth 2.0 requires PKCE, but no code challenge provided',
-      );
+      this.logger.warn('Twitter OAuth 2.0 requires PKCE, but no code challenge provided');
     }
 
     const url = `${this.AUTHORIZATION_URL}?${params.toString()}`;
@@ -59,10 +56,7 @@ export class TwitterOAuthProvider implements IOAuthProvider {
   /**
    * Exchange authorization code for tokens
    */
-  async exchangeCodeForToken(
-    code: string,
-    codeVerifier?: string,
-  ): Promise<OAuthTokens> {
+  async exchangeCodeForToken(code: string, codeVerifier?: string): Promise<OAuthTokens> {
     try {
       // Twitter uses Basic Auth header for client authentication
       const data: Omit<OAuthTokenExchangePayload, 'client_secret'> = {
@@ -75,15 +69,11 @@ export class TwitterOAuthProvider implements IOAuthProvider {
 
       // Twitter OAuth 2.0 requires PKCE
       if (!codeVerifier) {
-        this.logger.warn(
-          'Twitter OAuth 2.0 requires PKCE, but no code verifier provided',
-        );
+        this.logger.warn('Twitter OAuth 2.0 requires PKCE, but no code verifier provided');
       }
 
       // Create Basic Auth header
-      const authHeader = Buffer.from(
-        `${this.clientId}:${this.clientSecret}`,
-      ).toString('base64');
+      const authHeader = Buffer.from(`${this.clientId}:${this.clientSecret}`).toString('base64');
 
       const response = await axios.post(this.TOKEN_URL, data, {
         headers: {
@@ -101,10 +91,7 @@ export class TwitterOAuthProvider implements IOAuthProvider {
         expiresIn: response.data.expires_in,
       };
     } catch (error) {
-      this.logger.error(
-        'Failed to exchange X (Twitter) authorization code',
-        error,
-      );
+      this.logger.error('Failed to exchange X (Twitter) authorization code', error);
       throw new Error('Failed to exchange authorization code');
     }
   }
@@ -125,9 +112,7 @@ export class TwitterOAuthProvider implements IOAuthProvider {
 
       const data = response.data.data;
 
-      this.logger.log(
-        `Retrieved X (Twitter) profile for user: ${data.username}`,
-      );
+      this.logger.log(`Retrieved X (Twitter) profile for user: ${data.username}`);
 
       // Twitter doesn't provide email by default (requires additional permissions)
       // We'll use username@twitter.com as fallback

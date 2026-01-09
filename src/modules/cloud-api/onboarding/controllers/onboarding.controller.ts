@@ -1,19 +1,10 @@
-import {
-  Body,
-  Controller,
-  Get,
-  HttpCode,
-  HttpStatus,
-  Logger,
-  Post,
-  Request,
-} from '@nestjs/common';
-import type { FastifyRequest } from 'fastify';
+import { Body, Controller, Get, HttpCode, HttpStatus, Logger, Post, Request } from '@nestjs/common';
 import { Onboarding } from '@vritti/api-sdk';
-import { OnboardingStatusResponseDto } from '../dto/onboarding-status-response.dto';
-import { StartOnboardingResponseDto } from '../dto/start-onboarding-response.dto';
-import { SetPasswordDto } from '../dto/set-password.dto';
-import { VerifyEmailDto } from '../dto/verify-email.dto';
+import type { FastifyRequest } from 'fastify';
+import type { OnboardingStatusResponseDto } from '../dto/onboarding-status-response.dto';
+import type { SetPasswordDto } from '../dto/set-password.dto';
+import type { StartOnboardingResponseDto } from '../dto/start-onboarding-response.dto';
+import type { VerifyEmailDto } from '../dto/verify-email.dto';
 import { EmailVerificationService } from '../services/email-verification.service';
 import { OnboardingService } from '../services/onboarding.service';
 
@@ -72,9 +63,7 @@ export class OnboardingController {
   @Post('resend-email-otp')
   @Onboarding()
   @HttpCode(HttpStatus.OK)
-  async resendEmailOtp(
-    @Request() req: AuthenticatedRequest,
-  ): Promise<{ success: boolean; message: string }> {
+  async resendEmailOtp(@Request() req: AuthenticatedRequest): Promise<{ success: boolean; message: string }> {
     const userId: string = req.user.id;
     this.logger.log(`POST /onboarding/resend-email-otp - User: ${userId}`);
 
@@ -93,9 +82,7 @@ export class OnboardingController {
    */
   @Get('status')
   @Onboarding()
-  async getStatus(
-    @Request() req: AuthenticatedRequest,
-  ): Promise<OnboardingStatusResponseDto> {
+  async getStatus(@Request() req: AuthenticatedRequest): Promise<OnboardingStatusResponseDto> {
     const userId: string = req.user.id;
     this.logger.log(`GET /onboarding/status - User: ${userId}`);
 
@@ -111,9 +98,7 @@ export class OnboardingController {
   @Post('start')
   @Onboarding()
   @HttpCode(HttpStatus.OK)
-  async startOnboarding(
-    @Request() req: AuthenticatedRequest,
-  ): Promise<StartOnboardingResponseDto> {
+  async startOnboarding(@Request() req: AuthenticatedRequest): Promise<StartOnboardingResponseDto> {
     const userId: string = req.user.id;
     this.logger.log(`POST /onboarding/start - User: ${userId}`);
 

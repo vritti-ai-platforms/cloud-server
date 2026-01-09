@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { BadRequestException } from '@vritti/api-sdk';
 import { EncryptionService } from '../../../../services';
 
@@ -8,7 +8,6 @@ import { EncryptionService } from '../../../../services';
  */
 @Injectable()
 export class OtpService {
-  private readonly logger = new Logger(OtpService.name);
   private readonly OTP_EXPIRY_MINUTES = 5;
   private readonly MAX_ATTEMPTS = 3;
 
@@ -62,17 +61,13 @@ export class OtpService {
    * Validate OTP attempts and expiry
    * Throws BadRequestException if validation fails
    */
-  validateOtpAttempt(verification: {
-    attempts: number;
-    expiresAt: Date;
-    isVerified: boolean;
-  }): void {
+  validateOtpAttempt(verification: { attempts: number; expiresAt: Date; isVerified: boolean }): void {
     // Check if already verified
     if (verification.isVerified) {
       throw new BadRequestException(
         'code',
         'OTP already verified',
-        'This verification code has already been used. You can proceed to the next step.'
+        'This verification code has already been used. You can proceed to the next step.',
       );
     }
 
@@ -81,7 +76,7 @@ export class OtpService {
       throw new BadRequestException(
         'code',
         'OTP has expired. Please request a new one',
-        'Your verification code has expired. Please request a new code to continue.'
+        'Your verification code has expired. Please request a new code to continue.',
       );
     }
 
@@ -90,7 +85,7 @@ export class OtpService {
       throw new BadRequestException(
         'code',
         'Maximum verification attempts exceeded. Please request a new OTP',
-        'You have exceeded the maximum number of verification attempts. Please request a new code to try again.'
+        'You have exceeded the maximum number of verification attempts. Please request a new code to try again.',
       );
     }
   }

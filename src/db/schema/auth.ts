@@ -1,12 +1,4 @@
-import {
-  uuid,
-  varchar,
-  text,
-  boolean,
-  timestamp,
-  index,
-  unique,
-} from '@vritti/api-sdk/drizzle-pg-core';
+import { boolean, index, text, timestamp, unique, uuid, varchar } from '@vritti/api-sdk/drizzle-pg-core';
 import { cloudSchema } from './cloud-schema';
 import { oauthProviderTypeEnum, sessionTypeEnum } from './enums';
 import { users } from './user';
@@ -34,9 +26,7 @@ export const sessions = cloudSchema.table(
     refreshTokenExpiresAt: timestamp('refresh_token_expires_at', {
       withTimezone: true,
     }),
-    createdAt: timestamp('created_at', { withTimezone: true })
-      .notNull()
-      .defaultNow(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true })
       .notNull()
       .defaultNow()
@@ -67,19 +57,14 @@ export const oauthProviders = cloudSchema.table(
     accessToken: text('access_token'),
     refreshToken: text('refresh_token'),
     tokenExpiresAt: timestamp('token_expires_at', { withTimezone: true }),
-    createdAt: timestamp('created_at', { withTimezone: true })
-      .notNull()
-      .defaultNow(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true })
       .notNull()
       .defaultNow()
       .$onUpdate(() => new Date()),
   },
   (table) => [
-    unique('oauth_providers_provider_provider_id_key').on(
-      table.provider,
-      table.providerId,
-    ),
+    unique('oauth_providers_provider_provider_id_key').on(table.provider, table.providerId),
     index('oauth_providers_user_id_provider_idx').on(table.userId, table.provider),
   ],
 );
@@ -96,9 +81,7 @@ export const oauthStates = cloudSchema.table(
     userId: uuid('user_id'),
     codeVerifier: varchar('code_verifier', { length: 255 }).notNull(),
     expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
-    createdAt: timestamp('created_at', { withTimezone: true })
-      .notNull()
-      .defaultNow(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
     index('oauth_states_state_token_idx').on(table.stateToken),

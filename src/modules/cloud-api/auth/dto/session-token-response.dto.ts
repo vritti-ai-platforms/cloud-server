@@ -18,11 +18,7 @@ export class SessionTokenResponseDto {
     });
   }
 
-  static forCloud(
-    accessToken: string,
-    refreshToken: string,
-    expiresIn: number,
-  ): SessionTokenResponseDto {
+  static forCloud(accessToken: string, refreshToken: string, expiresIn: number): SessionTokenResponseDto {
     return new SessionTokenResponseDto({
       sessionType: 'cloud',
       accessToken,

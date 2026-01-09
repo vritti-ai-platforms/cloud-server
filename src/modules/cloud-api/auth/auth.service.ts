@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { User } from '@/db/schema';
-import { TokenType } from '../../../config/jwt.config';
+import type { User } from '@/db/schema';
+import type { TokenType } from '../../../config/jwt.config';
 
 /** Decoded JWT token payload */
 export interface DecodedToken {
@@ -24,7 +24,7 @@ export class AuthService {
    * @param password - User's password
    * @returns Promise resolving to user data if valid, null otherwise
    */
-  async validateUser(username: string, password: string): Promise<User | null> {
+  async validateUser(username: string, _password: string): Promise<User | null> {
     this.logger.log(`Validating user: ${username}`);
     // TODO: Implement user validation logic
     return null;
@@ -35,7 +35,7 @@ export class AuthService {
    * @param user - User object
    * @returns Promise resolving to token string
    */
-  async generateToken(user: User): Promise<string> {
+  async generateToken(_user: User): Promise<string> {
     this.logger.log(`Generating token for user`);
     // TODO: Implement token generation logic
     return '';
@@ -46,7 +46,7 @@ export class AuthService {
    * @param token - Token to verify
    * @returns Promise resolving to decoded token data if valid, null otherwise
    */
-  async verifyToken(token: string): Promise<DecodedToken | null> {
+  async verifyToken(_token: string): Promise<DecodedToken | null> {
     this.logger.log(`Verifying token`);
     // TODO: Implement token verification logic
     return null;

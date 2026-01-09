@@ -1,5 +1,5 @@
-import { OAuthTokens } from './oauth-tokens.interface';
-import { OAuthUserProfile } from './oauth-user-profile.interface';
+import type { OAuthTokens } from './oauth-tokens.interface';
+import type { OAuthUserProfile } from './oauth-user-profile.interface';
 
 /**
  * Common interface for all OAuth providers
@@ -20,10 +20,7 @@ export interface IOAuthProvider {
    * @param codeVerifier - PKCE code verifier (optional, for OAuth 2.1)
    * @returns OAuth tokens (access, refresh, etc.)
    */
-  exchangeCodeForToken(
-    code: string,
-    codeVerifier?: string,
-  ): Promise<OAuthTokens>;
+  exchangeCodeForToken(code: string, codeVerifier?: string): Promise<OAuthTokens>;
 
   /**
    * Get user profile using access token

@@ -9,7 +9,7 @@ import { ConfigService } from '@nestjs/config';
 export class SmsService {
   private readonly logger = new Logger(SmsService.name);
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(readonly _configService: ConfigService) {
     this.logger.warn('SMS service is currently in mock mode');
   }
 
@@ -19,13 +19,9 @@ export class SmsService {
    * @param otp - 6-digit OTP code
    * @param firstName - Optional user's first name for personalization
    */
-  async sendVerificationSms(
-    phoneNumber: string,
-    otp: string,
-    firstName?: string,
-  ): Promise<void> {
+  async sendVerificationSms(phoneNumber: string, otp: string, firstName?: string): Promise<void> {
     try {
-      const message = `Hello${firstName ? ` ${firstName}` : ''}, your Vritti AI Cloud verification code is: ${otp}. This code will expire in 10 minutes.`;
+      const _message = `Hello${firstName ? ` ${firstName}` : ''}, your Vritti AI Cloud verification code is: ${otp}. This code will expire in 10 minutes.`;
 
       // TODO: Integrate with Twilio or other SMS provider
       // const accountSid = this.configService.get<string>('TWILIO_ACCOUNT_SID');
@@ -40,9 +36,7 @@ export class SmsService {
       // });
 
       // Security: Never log OTP values in production - GDPR/PCI compliance
-      this.logger.warn(
-        `[MOCK] SMS verification would be sent to ${phoneNumber}`,
-      );
+      this.logger.warn(`[MOCK] SMS verification would be sent to ${phoneNumber}`);
     } catch (error) {
       this.logger.error(`Failed to send SMS to ${phoneNumber}:`, error);
       throw new Error('Failed to send SMS');
@@ -55,13 +49,9 @@ export class SmsService {
    * @param otp - 6-digit OTP code
    * @param firstName - Optional user's first name for personalization
    */
-  async sendVerificationWhatsApp(
-    phoneNumber: string,
-    otp: string,
-    firstName?: string,
-  ): Promise<void> {
+  async sendVerificationWhatsApp(phoneNumber: string, otp: string, firstName?: string): Promise<void> {
     try {
-      const message = `Hello${firstName ? ` ${firstName}` : ''}, your Vritti AI Cloud verification code is: ${otp}. This code will expire in 10 minutes.`;
+      const _message = `Hello${firstName ? ` ${firstName}` : ''}, your Vritti AI Cloud verification code is: ${otp}. This code will expire in 10 minutes.`;
 
       // TODO: Integrate with Twilio WhatsApp API
       // const accountSid = this.configService.get<string>('TWILIO_ACCOUNT_SID');
@@ -76,14 +66,9 @@ export class SmsService {
       // });
 
       // Security: Never log OTP values in production - GDPR/PCI compliance
-      this.logger.warn(
-        `[MOCK] WhatsApp verification would be sent to ${phoneNumber}`,
-      );
+      this.logger.warn(`[MOCK] WhatsApp verification would be sent to ${phoneNumber}`);
     } catch (error) {
-      this.logger.error(
-        `Failed to send WhatsApp message to ${phoneNumber}:`,
-        error,
-      );
+      this.logger.error(`Failed to send WhatsApp message to ${phoneNumber}:`, error);
       throw new Error('Failed to send WhatsApp message');
     }
   }

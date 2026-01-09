@@ -93,12 +93,8 @@
           "tableFrom": "tenant_database_configs",
           "tableTo": "tenants",
           "schemaTo": "cloud",
-          "columnsFrom": [
-            "tenant_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["tenant_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -108,9 +104,7 @@
         "tenant_database_configs_tenant_id_unique": {
           "name": "tenant_database_configs_tenant_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "tenant_id"
-          ]
+          "columns": ["tenant_id"]
         }
       },
       "policies": {},
@@ -184,9 +178,7 @@
         "tenants_subdomain_unique": {
           "name": "tenants_subdomain_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "subdomain"
-          ]
+          "columns": ["subdomain"]
         }
       },
       "policies": {},
@@ -337,9 +329,7 @@
         "users_email_unique": {
           "name": "users_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         }
       },
       "policies": {},
@@ -456,12 +446,8 @@
           "tableFrom": "oauth_providers",
           "tableTo": "users",
           "schemaTo": "cloud",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -471,10 +457,7 @@
         "oauth_providers_provider_provider_id_key": {
           "name": "oauth_providers_provider_provider_id_key",
           "nullsNotDistinct": false,
-          "columns": [
-            "provider",
-            "provider_id"
-          ]
+          "columns": ["provider", "provider_id"]
         }
       },
       "policies": {},
@@ -569,9 +552,7 @@
         "oauth_states_state_token_unique": {
           "name": "oauth_states_state_token_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "state_token"
-          ]
+          "columns": ["state_token"]
         }
       },
       "policies": {},
@@ -727,12 +708,8 @@
           "tableFrom": "sessions",
           "tableTo": "users",
           "schemaTo": "cloud",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -742,16 +719,12 @@
         "sessions_access_token_unique": {
           "name": "sessions_access_token_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "access_token"
-          ]
+          "columns": ["access_token"]
         },
         "sessions_refresh_token_unique": {
           "name": "sessions_refresh_token_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "refresh_token"
-          ]
+          "columns": ["refresh_token"]
         }
       },
       "policies": {},
@@ -850,12 +823,8 @@
           "tableFrom": "email_verifications",
           "tableTo": "users",
           "schemaTo": "cloud",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1004,12 +973,8 @@
           "tableFrom": "mobile_verifications",
           "tableTo": "users",
           "schemaTo": "cloud",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1019,9 +984,7 @@
         "mobile_verifications_qr_verification_id_unique": {
           "name": "mobile_verifications_qr_verification_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "qr_verification_id"
-          ]
+          "columns": ["qr_verification_id"]
         }
       },
       "policies": {},
@@ -1139,12 +1102,8 @@
           "tableFrom": "two_factor_auth",
           "tableTo": "users",
           "schemaTo": "cloud",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1154,9 +1113,7 @@
         "two_factor_auth_passkey_credential_id_unique": {
           "name": "two_factor_auth_passkey_credential_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "passkey_credential_id"
-          ]
+          "columns": ["passkey_credential_id"]
         }
       },
       "policies": {},
@@ -1168,77 +1125,42 @@
     "cloud.AccountStatus": {
       "name": "AccountStatus",
       "schema": "cloud",
-      "values": [
-        "PENDING_VERIFICATION",
-        "PENDING_MOBILE",
-        "ACTIVE",
-        "SUSPENDED",
-        "DEACTIVATED"
-      ]
+      "values": ["PENDING_VERIFICATION", "PENDING_MOBILE", "ACTIVE", "SUSPENDED", "DEACTIVATED"]
     },
     "cloud.DatabaseType": {
       "name": "DatabaseType",
       "schema": "cloud",
-      "values": [
-        "SHARED",
-        "DEDICATED"
-      ]
+      "values": ["SHARED", "DEDICATED"]
     },
     "cloud.OAuthProviderType": {
       "name": "OAuthProviderType",
       "schema": "cloud",
-      "values": [
-        "GOOGLE",
-        "MICROSOFT",
-        "APPLE",
-        "FACEBOOK",
-        "X"
-      ]
+      "values": ["GOOGLE", "MICROSOFT", "APPLE", "FACEBOOK", "X"]
     },
     "cloud.OnboardingStep": {
       "name": "OnboardingStep",
       "schema": "cloud",
-      "values": [
-        "EMAIL_VERIFICATION",
-        "SET_PASSWORD",
-        "MOBILE_VERIFICATION",
-        "TWO_FACTOR_SETUP",
-        "COMPLETE"
-      ]
+      "values": ["EMAIL_VERIFICATION", "SET_PASSWORD", "MOBILE_VERIFICATION", "TWO_FACTOR_SETUP", "COMPLETE"]
     },
     "cloud.SessionType": {
       "name": "SessionType",
       "schema": "cloud",
-      "values": [
-        "ONBOARDING",
-        "CLOUD"
-      ]
+      "values": ["ONBOARDING", "CLOUD"]
     },
     "cloud.TenantStatus": {
       "name": "TenantStatus",
       "schema": "cloud",
-      "values": [
-        "ACTIVE",
-        "SUSPENDED",
-        "ARCHIVED"
-      ]
+      "values": ["ACTIVE", "SUSPENDED", "ARCHIVED"]
     },
     "cloud.TwoFactorMethod": {
       "name": "TwoFactorMethod",
       "schema": "cloud",
-      "values": [
-        "TOTP",
-        "PASSKEY"
-      ]
+      "values": ["TOTP", "PASSKEY"]
     },
     "cloud.VerificationMethod": {
       "name": "VerificationMethod",
       "schema": "cloud",
-      "values": [
-        "WHATSAPP_QR",
-        "SMS_QR",
-        "MANUAL_OTP"
-      ]
+      "values": ["WHATSAPP_QR", "SMS_QR", "MANUAL_OTP"]
     }
   },
   "schemas": {

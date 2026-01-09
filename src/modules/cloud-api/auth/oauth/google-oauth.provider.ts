@@ -1,10 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { OAuthProviderTypeValues } from '@/db/schema';
 import axios from 'axios';
-import { IOAuthProvider } from './interfaces/oauth-provider.interface';
-import { OAuthTokens, OAuthTokenExchangePayload } from './interfaces/oauth-tokens.interface';
-import { OAuthUserProfile } from './interfaces/oauth-user-profile.interface';
+import { OAuthProviderTypeValues } from '@/db/schema';
+import type { IOAuthProvider } from './interfaces/oauth-provider.interface';
+import type { OAuthTokenExchangePayload, OAuthTokens } from './interfaces/oauth-tokens.interface';
+import type { OAuthUserProfile } from './interfaces/oauth-user-profile.interface';
 
 /**
  * Google OAuth 2.0 Provider
@@ -17,20 +17,14 @@ export class GoogleOAuthProvider implements IOAuthProvider {
   private readonly clientSecret: string;
   private readonly redirectUri: string;
 
-  private readonly AUTHORIZATION_URL =
-    'https://accounts.google.com/o/oauth2/v2/auth';
+  private readonly AUTHORIZATION_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
   private readonly TOKEN_URL = 'https://oauth2.googleapis.com/token';
-  private readonly USER_INFO_URL =
-    'https://www.googleapis.com/oauth2/v2/userinfo';
+  private readonly USER_INFO_URL = 'https://www.googleapis.com/oauth2/v2/userinfo';
 
   constructor(private readonly configService: ConfigService) {
     this.clientId = this.configService.getOrThrow<string>('GOOGLE_CLIENT_ID');
-    this.clientSecret = this.configService.getOrThrow<string>(
-      'GOOGLE_CLIENT_SECRET',
-    );
-    this.redirectUri = this.configService.getOrThrow<string>(
-      'GOOGLE_CALLBACK_URL',
-    );
+    this.clientSecret = this.configService.getOrThrow<string>('GOOGLE_CLIENT_SECRET');
+    this.redirectUri = this.configService.getOrThrow<string>('GOOGLE_CALLBACK_URL');
   }
 
   /**
@@ -61,10 +55,7 @@ export class GoogleOAuthProvider implements IOAuthProvider {
   /**
    * Exchange authorization code for tokens
    */
-  async exchangeCodeForToken(
-    code: string,
-    codeVerifier?: string,
-  ): Promise<OAuthTokens> {
+  async exchangeCodeForToken(code: string, codeVerifier?: string): Promise<OAuthTokens> {
     try {
       const data: OAuthTokenExchangePayload = {
         code,

@@ -1,16 +1,12 @@
-import { OAuthProviderTypeValues } from '@/db/schema';
+import * as crypto from 'node:crypto';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import axios from 'axios';
-import * as crypto from 'crypto';
-import { IOAuthProvider } from './interfaces/oauth-provider.interface';
-import {
-  AppleIdTokenPayload,
-  OAuthTokenExchangePayload,
-  OAuthTokens,
-} from './interfaces/oauth-tokens.interface';
-import { OAuthUserProfile } from './interfaces/oauth-user-profile.interface';
+import { OAuthProviderTypeValues } from '@/db/schema';
+import type { IOAuthProvider } from './interfaces/oauth-provider.interface';
+import type { AppleIdTokenPayload, OAuthTokenExchangePayload, OAuthTokens } from './interfaces/oauth-tokens.interface';
+import type { OAuthUserProfile } from './interfaces/oauth-user-profile.interface';
 
 /**
  * Apple OAuth 2.0 Provider (Sign in with Apple)
@@ -26,8 +22,7 @@ export class AppleOAuthProvider implements IOAuthProvider {
   private readonly privateKey: string;
   private readonly redirectUri: string;
 
-  private readonly AUTHORIZATION_URL =
-    'https://appleid.apple.com/auth/authorize';
+  private readonly AUTHORIZATION_URL = 'https://appleid.apple.com/auth/authorize';
   private readonly TOKEN_URL = 'https://appleid.apple.com/auth/token';
 
   constructor(
@@ -37,10 +32,8 @@ export class AppleOAuthProvider implements IOAuthProvider {
     this.clientId = this.configService.getOrThrow<string>('APPLE_CLIENT_ID');
     this.teamId = this.configService.getOrThrow<string>('APPLE_TEAM_ID');
     this.keyId = this.configService.getOrThrow<string>('APPLE_KEY_ID');
-    this.privateKey =
-      this.configService.getOrThrow<string>('APPLE_PRIVATE_KEY');
-    this.redirectUri =
-      this.configService.getOrThrow<string>('APPLE_CALLBACK_URL');
+    this.privateKey = this.configService.getOrThrow<string>('APPLE_PRIVATE_KEY');
+    this.redirectUri = this.configService.getOrThrow<string>('APPLE_CALLBACK_URL');
   }
 
   /**
@@ -70,10 +63,7 @@ export class AppleOAuthProvider implements IOAuthProvider {
   /**
    * Exchange authorization code for tokens
    */
-  async exchangeCodeForToken(
-    code: string,
-    codeVerifier?: string,
-  ): Promise<OAuthTokens> {
+  async exchangeCodeForToken(code: string, codeVerifier?: string): Promise<OAuthTokens> {
     try {
       // Generate client secret JWT
       const clientSecret = this.generateClientSecret();
@@ -119,9 +109,7 @@ export class AppleOAuthProvider implements IOAuthProvider {
       // In practice, the ID token is passed separately in the OAuth flow
       // For now, we'll assume the accessToken is the ID token
 
-      const decoded = this.jwtService.decode(
-        accessToken,
-      ) as AppleIdTokenPayload;
+      const decoded = this.jwtService.decode(accessToken) as AppleIdTokenPayload;
 
       if (!decoded) {
         throw new Error('Failed to decode Apple ID token');
@@ -129,9 +117,7 @@ export class AppleOAuthProvider implements IOAuthProvider {
 
       // Apple doesn't always provide email (private relay users)
       if (!decoded.email) {
-        throw new Error(
-          'Apple ID token missing email - user may have opted for private relay',
-        );
+        throw new Error('Apple ID token missing email - user may have opted for private relay');
       }
 
       this.logger.log(`Retrieved Apple profile for user: ${decoded.email}`);
@@ -197,10 +183,6 @@ export class AppleOAuthProvider implements IOAuthProvider {
    */
   private base64URLEncode(data: string | Buffer): string {
     const buffer = Buffer.isBuffer(data) ? data : Buffer.from(data);
-    return buffer
-      .toString('base64')
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_')
-      .replace(/=/g, '');
+    return buffer.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
   }
 }

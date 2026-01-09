@@ -1,9 +1,6 @@
+import { TransactionalEmailsApi, TransactionalEmailsApiApiKeys } from '@getbrevo/brevo';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import {
-  TransactionalEmailsApi,
-  TransactionalEmailsApiApiKeys,
-} from '@getbrevo/brevo';
 
 /**
  * Interface for Brevo API errors
@@ -37,12 +34,8 @@ export class EmailService {
     const apiKey = this.configService.get<string>('BREVO_API_KEY');
 
     if (!apiKey) {
-      this.logger.error(
-        'BREVO_API_KEY is not configured. Email sending will fail.',
-      );
-      throw new Error(
-        'Email service configuration error: Missing BREVO_API_KEY',
-      );
+      this.logger.error('BREVO_API_KEY is not configured. Email sending will fail.');
+      throw new Error('Email service configuration error: Missing BREVO_API_KEY');
     }
 
     this.brevoApi.setApiKey(TransactionalEmailsApiApiKeys.apiKey, apiKey);
@@ -53,9 +46,7 @@ export class EmailService {
 
     if (!senderEmail || !senderName) {
       this.logger.error('Sender email or name is not configured.');
-      throw new Error(
-        'Email service configuration error: Missing SENDER_EMAIL or SENDER_NAME',
-      );
+      throw new Error('Email service configuration error: Missing SENDER_EMAIL or SENDER_NAME');
     }
 
     this.senderEmail = senderEmail;
@@ -70,11 +61,7 @@ export class EmailService {
    * @param otp One-time password
    * @param firstName Optional recipient first name for personalization
    */
-  async sendVerificationEmail(
-    email: string,
-    otp: string,
-    firstName?: string,
-  ): Promise<void> {
+  async sendVerificationEmail(email: string, otp: string, firstName?: string): Promise<void> {
     const displayName = firstName || 'there';
     const subject = 'Verify Your Email - Vritti AI Cloud';
 
@@ -174,11 +161,7 @@ This is an automated message, please do not reply.
    * @param otp One-time password
    * @param firstName Optional recipient first name for personalization
    */
-  async sendPasswordResetEmail(
-    email: string,
-    otp: string,
-    firstName?: string,
-  ): Promise<void> {
+  async sendPasswordResetEmail(email: string, otp: string, firstName?: string): Promise<void> {
     const displayName = firstName || 'there';
     const subject = 'Reset Your Password - Vritti AI Cloud';
 
@@ -304,21 +287,16 @@ This is an automated message, please do not reply.
         textContent: emailData.textContent,
       });
 
-      this.logger.debug(
-        `Email sent successfully. Message ID: ${result.body.messageId}`,
-      );
+      this.logger.debug(`Email sent successfully. Message ID: ${result.body.messageId}`);
     } catch (err) {
       const error = err as BrevoError;
       const errorStatus = error?.status || error?.response?.status;
-      const errorMessage =
-        error?.body?.message || error?.message || 'Unknown error';
+      const errorMessage = error?.body?.message || error?.message || 'Unknown error';
 
       // Handle rate limiting with exponential backoff
       if (errorStatus === 429 && attempt < this.maxRetries) {
-        const waitTime = Math.pow(2, attempt) * 1000;
-        this.logger.warn(
-          `Rate limit hit. Retrying in ${waitTime}ms... (Attempt ${attempt}/${this.maxRetries})`,
-        );
+        const waitTime = 2 ** attempt * 1000;
+        this.logger.warn(`Rate limit hit. Retrying in ${waitTime}ms... (Attempt ${attempt}/${this.maxRetries})`);
         await this.delay(waitTime);
         return this.sendEmail(emailData, attempt + 1);
       }

@@ -1,15 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import {
-  PrimaryDatabaseService,
-  PrimaryBaseRepository,
-} from '@vritti/api-sdk';
-import { eq, and, lt, sql } from '@vritti/api-sdk/drizzle-orm';
-import { emailVerifications, EmailVerification } from '@/db/schema';
+import { PrimaryBaseRepository, PrimaryDatabaseService } from '@vritti/api-sdk';
+import { and, eq, lt, sql } from '@vritti/api-sdk/drizzle-orm';
+import { type EmailVerification, emailVerifications } from '@/db/schema';
 
 @Injectable()
-export class EmailVerificationRepository extends PrimaryBaseRepository<
-  typeof emailVerifications
-> {
+export class EmailVerificationRepository extends PrimaryBaseRepository<typeof emailVerifications> {
   constructor(database: PrimaryDatabaseService) {
     super(database, emailVerifications);
   }
@@ -19,10 +14,7 @@ export class EmailVerificationRepository extends PrimaryBaseRepository<
    */
   async findLatestByUserId(userId: string): Promise<EmailVerification | undefined> {
     const results = await this.findMany({
-      where: (cols, { eq, and }) => and(
-        eq(cols.userId, userId),
-        eq(cols.isVerified, false),
-      ),
+      where: (cols, { eq, and }) => and(eq(cols.userId, userId), eq(cols.isVerified, false)),
       orderBy: { createdAt: 'desc' },
       limit: 1,
     });
@@ -59,10 +51,7 @@ export class EmailVerificationRepository extends PrimaryBaseRepository<
    */
   async deleteExpired(): Promise<number> {
     const result = await this.deleteMany(
-      and(
-        lt(emailVerifications.expiresAt, new Date()),
-        eq(emailVerifications.isVerified, false),
-      )!,
+      and(lt(emailVerifications.expiresAt, new Date()), eq(emailVerifications.isVerified, false))!,
     );
     return result.count;
   }

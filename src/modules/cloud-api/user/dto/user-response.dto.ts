@@ -1,4 +1,4 @@
-import { User, AccountStatus, OnboardingStep } from '@/db/schema';
+import type { AccountStatus, OnboardingStep, User } from '@/db/schema';
 
 export class UserResponseDto {
   id: string;

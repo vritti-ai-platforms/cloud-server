@@ -1,11 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import {
-  PrimaryDatabaseService,
-  PrimaryBaseRepository,
-} from '@vritti/api-sdk';
-import { eq, and } from '@vritti/api-sdk/drizzle-orm';
-import { oauthProviders, OAuthProvider } from '@/db/schema';
-import { OAuthUserProfile } from '../interfaces/oauth-user-profile.interface';
+import { PrimaryBaseRepository, PrimaryDatabaseService } from '@vritti/api-sdk';
+import { and, eq } from '@vritti/api-sdk/drizzle-orm';
+import { type OAuthProvider, oauthProviders } from '@/db/schema';
+import type { OAuthUserProfile } from '../interfaces/oauth-user-profile.interface';
 
 /**
  * OAuth Provider Repository
@@ -18,9 +15,7 @@ import { OAuthUserProfile } from '../interfaces/oauth-user-profile.interface';
  * - deleteMany(where)
  */
 @Injectable()
-export class OAuthProviderRepository extends PrimaryBaseRepository<
-  typeof oauthProviders
-> {
+export class OAuthProviderRepository extends PrimaryBaseRepository<typeof oauthProviders> {
   constructor(database: PrimaryDatabaseService) {
     super(database, oauthProviders);
   }
@@ -32,12 +27,7 @@ export class OAuthProviderRepository extends PrimaryBaseRepository<
     provider: OAuthProvider['provider'],
     providerId: string,
   ): Promise<OAuthProvider | undefined> {
-    return this.findOne(
-      and(
-        eq(oauthProviders.provider, provider),
-        eq(oauthProviders.providerId, providerId),
-      )!,
-    );
+    return this.findOne(and(eq(oauthProviders.provider, provider), eq(oauthProviders.providerId, providerId))!);
   }
 
   /**

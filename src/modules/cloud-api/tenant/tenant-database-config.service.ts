@@ -1,14 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
-import {
-  NotFoundException,
-  BadRequestException,
-} from '@vritti/api-sdk';
+import { BadRequestException, NotFoundException } from '@vritti/api-sdk';
 import { eq } from '@vritti/api-sdk/drizzle-orm';
 import { tenantDatabaseConfigs } from '@/db/schema';
-import { TenantDatabaseConfigRepository } from './tenant-database-config.repository';
-import { CreateTenantDatabaseConfigDto } from './dto/create-tenant-database-config.dto';
-import { UpdateTenantDatabaseConfigDto } from './dto/update-tenant-database-config.dto';
+import type { CreateTenantDatabaseConfigDto } from './dto/create-tenant-database-config.dto';
 import { TenantDatabaseConfigResponseDto } from './dto/tenant-database-config-response.dto';
+import type { UpdateTenantDatabaseConfigDto } from './dto/update-tenant-database-config.dto';
+import { TenantDatabaseConfigRepository } from './tenant-database-config.repository';
 
 /**
  * Service for handling tenant database configuration operations
@@ -18,9 +15,7 @@ import { TenantDatabaseConfigResponseDto } from './dto/tenant-database-config-re
 export class TenantDatabaseConfigService {
   private readonly logger = new Logger(TenantDatabaseConfigService.name);
 
-  constructor(
-    private readonly configRepository: TenantDatabaseConfigRepository,
-  ) {}
+  constructor(private readonly configRepository: TenantDatabaseConfigRepository) {}
 
   /**
    * Creates a new database configuration for a tenant
@@ -28,10 +23,7 @@ export class TenantDatabaseConfigService {
    * @param dto - Database configuration data
    * @returns Created configuration
    */
-  async create(
-    tenantId: string,
-    dto: CreateTenantDatabaseConfigDto,
-  ): Promise<TenantDatabaseConfigResponseDto> {
+  async create(tenantId: string, dto: CreateTenantDatabaseConfigDto): Promise<TenantDatabaseConfigResponseDto> {
     this.logger.log(`Creating database config for tenant: ${tenantId}`);
 
     // Check if config already exists
@@ -39,7 +31,7 @@ export class TenantDatabaseConfigService {
     if (existing) {
       throw new BadRequestException(
         `Database configuration already exists for tenant: ${tenantId}`,
-        'A database configuration already exists for this organization. Please update the existing configuration instead.'
+        'A database configuration already exists for this organization. Please update the existing configuration instead.',
       );
     }
 
@@ -70,14 +62,12 @@ export class TenantDatabaseConfigService {
    * @returns Configuration if found
    * @throws NotFoundException if config not found
    */
-  async getByTenantId(
-    tenantId: string,
-  ): Promise<TenantDatabaseConfigResponseDto> {
+  async getByTenantId(tenantId: string): Promise<TenantDatabaseConfigResponseDto> {
     const config = await this.configRepository.findByTenantId(tenantId);
     if (!config) {
       throw new NotFoundException(
         `Database configuration not found for tenant: ${tenantId}`,
-        'No database configuration exists for this organization. Please create one first.'
+        'No database configuration exists for this organization. Please create one first.',
       );
     }
 
@@ -91,10 +81,7 @@ export class TenantDatabaseConfigService {
    * @returns Updated configuration
    * @throws NotFoundException if config not found
    */
-  async update(
-    tenantId: string,
-    dto: UpdateTenantDatabaseConfigDto,
-  ): Promise<TenantDatabaseConfigResponseDto> {
+  async update(tenantId: string, dto: UpdateTenantDatabaseConfigDto): Promise<TenantDatabaseConfigResponseDto> {
     this.logger.log(`Updating database config for tenant: ${tenantId}`);
 
     // Check if config exists
@@ -102,7 +89,7 @@ export class TenantDatabaseConfigService {
     if (!existing) {
       throw new NotFoundException(
         `Database configuration not found for tenant: ${tenantId}`,
-        'No database configuration exists for this organization. Please create one first.'
+        'No database configuration exists for this organization. Please create one first.',
       );
     }
 
@@ -136,7 +123,7 @@ export class TenantDatabaseConfigService {
     if (!existing) {
       throw new NotFoundException(
         `Database configuration not found for tenant: ${tenantId}`,
-        'No database configuration exists for this organization. There is nothing to delete.'
+        'No database configuration exists for this organization. There is nothing to delete.',
       );
     }
 
@@ -158,15 +145,13 @@ export class TenantDatabaseConfigService {
    * @param dto - Database configuration to validate
    * @throws BadRequestException if validation fails
    */
-  private validateDatabaseConfig(
-    dto: Partial<CreateTenantDatabaseConfigDto>,
-  ): void {
+  private validateDatabaseConfig(dto: Partial<CreateTenantDatabaseConfigDto>): void {
     // Validate host
     if (dto.dbHost && !this.isValidHost(dto.dbHost)) {
       throw new BadRequestException(
         'dbHost',
         'Invalid database host format',
-        'The database host format is invalid. Please provide a valid hostname, IP address, or localhost.'
+        'The database host format is invalid. Please provide a valid hostname, IP address, or localhost.',
       );
     }
 
@@ -175,19 +160,16 @@ export class TenantDatabaseConfigService {
       throw new BadRequestException(
         'dbPort',
         'Database port must be between 1 and 65535',
-        'The database port must be a valid port number between 1 and 65535.'
+        'The database port must be a valid port number between 1 and 65535.',
       );
     }
 
     // Validate connection pool size
-    if (
-      dto.connectionPoolSize &&
-      (dto.connectionPoolSize < 1 || dto.connectionPoolSize > 100)
-    ) {
+    if (dto.connectionPoolSize && (dto.connectionPoolSize < 1 || dto.connectionPoolSize > 100)) {
       throw new BadRequestException(
         'connectionPoolSize',
         'Connection pool size must be between 1 and 100',
-        'The connection pool size must be between 1 and 100 connections.'
+        'The connection pool size must be between 1 and 100 connections.',
       );
     }
 
@@ -204,11 +186,8 @@ export class TenantDatabaseConfigService {
    */
   private isValidHost(host: string): boolean {
     // Basic hostname validation (allows localhost, IP addresses, domain names)
-    const hostPattern =
-      /^([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)*[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/;
+    const hostPattern = /^([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)*[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/;
     const ipPattern = /^(\d{1,3}\.){3}\d{1,3}$/;
-    return (
-      hostPattern.test(host) || ipPattern.test(host) || host === 'localhost'
-    );
+    return hostPattern.test(host) || ipPattern.test(host) || host === 'localhost';
   }
 }

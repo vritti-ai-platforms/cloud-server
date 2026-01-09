@@ -1,8 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import {
-  PrimaryBaseRepository,
-  PrimaryDatabaseService,
-} from '@vritti/api-sdk';
+import { PrimaryBaseRepository, PrimaryDatabaseService } from '@vritti/api-sdk';
 import { eq } from '@vritti/api-sdk/drizzle-orm';
 import { tenantDatabaseConfigs } from '@/db/schema';
 
@@ -14,9 +11,7 @@ type NewTenantDatabaseConfig = typeof tenantDatabaseConfigs.$inferInsert;
  * Handles CRUD operations for tenant database connection details
  */
 @Injectable()
-export class TenantDatabaseConfigRepository extends PrimaryBaseRepository<
-  typeof tenantDatabaseConfigs
-> {
+export class TenantDatabaseConfigRepository extends PrimaryBaseRepository<typeof tenantDatabaseConfigs> {
   constructor(database: PrimaryDatabaseService) {
     super(database, tenantDatabaseConfigs);
   }
@@ -38,13 +33,8 @@ export class TenantDatabaseConfigRepository extends PrimaryBaseRepository<
    * @param data - Data to update
    * @returns Updated configuration
    */
-  async updateByTenantId(
-    tenantId: string,
-    data: Partial<NewTenantDatabaseConfig>,
-  ): Promise<TenantDatabaseConfig> {
-    this.logger.log(
-      `Updating ${this.constructor.name} for tenant: ${tenantId}`,
-    );
+  async updateByTenantId(tenantId: string, data: Partial<NewTenantDatabaseConfig>): Promise<TenantDatabaseConfig> {
+    this.logger.log(`Updating ${this.constructor.name} for tenant: ${tenantId}`);
     const [result] = await this.db
       .update(tenantDatabaseConfigs)
       .set(data)
@@ -60,9 +50,7 @@ export class TenantDatabaseConfigRepository extends PrimaryBaseRepository<
    * @returns Deleted configuration
    */
   async deleteByTenantId(tenantId: string): Promise<TenantDatabaseConfig> {
-    this.logger.log(
-      `Deleting ${this.constructor.name} for tenant: ${tenantId}`,
-    );
+    this.logger.log(`Deleting ${this.constructor.name} for tenant: ${tenantId}`);
     const [result] = await this.db
       .delete(tenantDatabaseConfigs)
       .where(eq(tenantDatabaseConfigs.tenantId, tenantId))

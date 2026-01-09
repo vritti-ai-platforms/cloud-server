@@ -1,19 +1,8 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Patch,
-  Delete,
-  Body,
-  Param,
-  HttpCode,
-  HttpStatus,
-  Logger,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Logger, Param, Patch, Post } from '@nestjs/common';
+import type { CreateTenantDto } from './dto/create-tenant.dto';
+import type { TenantResponseDto } from './dto/tenant-response.dto';
+import type { UpdateTenantDto } from './dto/update-tenant.dto';
 import { TenantService } from './tenant.service';
-import { CreateTenantDto } from './dto/create-tenant.dto';
-import { UpdateTenantDto } from './dto/update-tenant.dto';
-import { TenantResponseDto } from './dto/tenant-response.dto';
 
 @Controller('tenants')
 export class TenantController {
@@ -27,12 +16,8 @@ export class TenantController {
    */
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  async create(
-    @Body() createTenantDto: CreateTenantDto,
-  ): Promise<TenantResponseDto> {
-    this.logger.log(
-      `POST /tenants - Creating tenant: ${createTenantDto.subdomain}`,
-    );
+  async create(@Body() createTenantDto: CreateTenantDto): Promise<TenantResponseDto> {
+    this.logger.log(`POST /tenants - Creating tenant: ${createTenantDto.subdomain}`);
     return await this.tenantService.create(createTenantDto);
   }
 
@@ -61,12 +46,8 @@ export class TenantController {
    * GET /tenants/subdomain/:subdomain
    */
   @Get('subdomain/:subdomain')
-  async findBySubdomain(
-    @Param('subdomain') subdomain: string,
-  ): Promise<TenantResponseDto> {
-    this.logger.log(
-      `GET /tenants/subdomain/${subdomain} - Fetching tenant by subdomain`,
-    );
+  async findBySubdomain(@Param('subdomain') subdomain: string): Promise<TenantResponseDto> {
+    this.logger.log(`GET /tenants/subdomain/${subdomain} - Fetching tenant by subdomain`);
     return await this.tenantService.findBySubdomain(subdomain);
   }
 
@@ -75,10 +56,7 @@ export class TenantController {
    * PATCH /tenants/:id
    */
   @Patch(':id')
-  async update(
-    @Param('id') id: string,
-    @Body() updateTenantDto: UpdateTenantDto,
-  ): Promise<TenantResponseDto> {
+  async update(@Param('id') id: string, @Body() updateTenantDto: UpdateTenantDto): Promise<TenantResponseDto> {
     this.logger.log(`PATCH /tenants/${id} - Updating tenant`);
     return await this.tenantService.update(id, updateTenantDto);
   }

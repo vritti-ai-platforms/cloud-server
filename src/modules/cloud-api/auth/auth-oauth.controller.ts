@@ -1,18 +1,8 @@
-import {
-  Controller,
-  Get,
-  Logger,
-  Param,
-  Query,
-  Redirect,
-  Request,
-  Res,
-} from '@nestjs/common';
-import { BadRequestException } from '@vritti/api-sdk';
-import { OAuthProviderType, OAuthProviderTypeValues } from '@/db/schema';
-import { Onboarding, Public } from '@vritti/api-sdk';
+import { Controller, Get, Logger, Param, Query, Redirect, Request, Res } from '@nestjs/common';
+import { BadRequestException, Onboarding, Public } from '@vritti/api-sdk';
 import type { FastifyReply } from 'fastify';
-import { OAuthResponseDto } from './oauth/dto/oauth-response.dto';
+import { type OAuthProviderType, OAuthProviderTypeValues } from '@/db/schema';
+import type { OAuthResponseDto } from './oauth/dto/oauth-response.dto';
 import { OAuthService } from './oauth/services/oauth.service';
 
 /**
@@ -33,9 +23,7 @@ export class AuthOAuthController {
   @Get(':provider')
   @Public()
   @Redirect()
-  async initiateOAuth(
-    @Param('provider') providerStr: string,
-  ): Promise<{ url: string }> {
+  async initiateOAuth(@Param('provider') providerStr: string): Promise<{ url: string }> {
     const provider = this.validateProvider(providerStr);
 
     this.logger.log(`Initiating OAuth flow for provider: ${provider}`);
@@ -53,10 +41,7 @@ export class AuthOAuthController {
   @Get(':provider/link')
   @Onboarding()
   @Redirect()
-  async linkOAuthProvider(
-    @Param('provider') providerStr: string,
-    @Request() req,
-  ): Promise<{ url: string }> {
+  async linkOAuthProvider(@Param('provider') providerStr: string, @Request() req): Promise<{ url: string }> {
     const provider = this.validateProvider(providerStr);
     const userId = req.user.id;
 
@@ -85,18 +70,14 @@ export class AuthOAuthController {
     if (!code || !state) {
       throw new BadRequestException(
         'Missing code or state parameter',
-        'The authentication request is incomplete. Please try logging in again.'
+        'The authentication request is incomplete. Please try logging in again.',
       );
     }
 
     this.logger.log(`Handling OAuth callback for provider: ${provider}`);
 
     try {
-      const response: OAuthResponseDto = await this.oauthService.handleCallback(
-        provider,
-        code,
-        state,
-      );
+      const response: OAuthResponseDto = await this.oauthService.handleCallback(provider, code, state);
 
       // Redirect to frontend with onboarding token
       const frontendUrl = this.getFrontendRedirectUrl(response);
@@ -120,7 +101,7 @@ export class AuthOAuthController {
       throw new BadRequestException(
         'provider',
         `Invalid OAuth provider: ${providerStr}`,
-        'The selected login method is not supported. Please choose a different option.'
+        'The selected login method is not supported. Please choose a different option.',
       );
     }
 

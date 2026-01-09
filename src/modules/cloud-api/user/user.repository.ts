@@ -1,9 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import {
-  PrimaryBaseRepository,
-  PrimaryDatabaseService,
-} from '@vritti/api-sdk';
-import { AccountStatusValues, users, User } from '@/db/schema';
+import { PrimaryBaseRepository, PrimaryDatabaseService } from '@vritti/api-sdk';
+import { AccountStatusValues, type User, users } from '@/db/schema';
 
 @Injectable()
 export class UserRepository extends PrimaryBaseRepository<typeof users> {
@@ -63,11 +60,7 @@ export class UserRepository extends PrimaryBaseRepository<typeof users> {
   /**
    * Mark phone as verified
    */
-  async markPhoneVerified(
-    id: string,
-    phone: string,
-    phoneCountry: string,
-  ): Promise<User> {
+  async markPhoneVerified(id: string, phone: string, phoneCountry: string): Promise<User> {
     this.logger.log(`Marking phone verified for user: ${id}`);
     return this.update(id, {
       phone,
@@ -86,7 +79,7 @@ export class UserRepository extends PrimaryBaseRepository<typeof users> {
     firstName?: string | null;
     lastName?: string | null;
     emailVerified?: boolean;
-    onboardingStep?: typeof users.$inferInsert['onboardingStep'];
+    onboardingStep?: (typeof users.$inferInsert)['onboardingStep'];
     profilePictureUrl?: string | null;
   }): Promise<User> {
     this.logger.log(`Creating user from OAuth: ${data.email}`);

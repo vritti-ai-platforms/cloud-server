@@ -1,4 +1,4 @@
-import { OAuthProviderType } from '@/db/schema';
+import type { OAuthProviderType } from '@/db/schema';
 
 /**
  * OAuth state data stored in database

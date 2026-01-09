@@ -1,8 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import {
-  BadRequestException,
-  UnauthorizedException,
-} from '@vritti/api-sdk';
+import { BadRequestException, UnauthorizedException } from '@vritti/api-sdk';
 import { eq } from '@vritti/api-sdk/drizzle-orm';
 import { AccountStatusValues, emailVerifications, OnboardingStepValues } from '@/db/schema';
 import { EmailService } from '../../../../services';
@@ -59,13 +56,12 @@ export class EmailVerificationService {
    */
   async verifyOtp(userId: string, otp: string): Promise<void> {
     // Find latest verification
-    const verification =
-      await this.emailVerificationRepo.findLatestByUserId(userId);
+    const verification = await this.emailVerificationRepo.findLatestByUserId(userId);
 
     if (!verification) {
       throw new BadRequestException(
         'No verification request found. Please request a new OTP',
-        'We couldn\'t find a verification code for your account. Please request a new code to continue.'
+        "We couldn't find a verification code for your account. Please request a new code to continue.",
       );
     }
 
@@ -81,7 +77,7 @@ export class EmailVerificationService {
       throw new UnauthorizedException(
         'code',
         'Invalid OTP. Please try again',
-        'The verification code you entered is incorrect. Please check the code and try again.'
+        'The verification code you entered is incorrect. Please check the code and try again.',
       );
     }
 
@@ -110,7 +106,7 @@ export class EmailVerificationService {
     if (userResponse.emailVerified) {
       throw new BadRequestException(
         'Email already verified',
-        'Your email has already been verified. You can proceed to the next step.'
+        'Your email has already been verified. You can proceed to the next step.',
       );
     }
 

@@ -1,4 +1,4 @@
-import { TenantDatabaseConfig } from '@/db/schema';
+import type { TenantDatabaseConfig } from '@/db/schema';
 
 /**
  * Response DTO for tenant database configuration

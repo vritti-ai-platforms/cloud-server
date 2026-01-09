@@ -1,12 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
-import {
-  BadRequestException,
-  ConflictException,
-  NotFoundException,
-} from '@vritti/api-sdk';
-import { CreateTenantDto } from './dto/create-tenant.dto';
+import { BadRequestException, ConflictException, NotFoundException } from '@vritti/api-sdk';
+import type { CreateTenantDto } from './dto/create-tenant.dto';
 import { TenantResponseDto } from './dto/tenant-response.dto';
-import { UpdateTenantDto } from './dto/update-tenant.dto';
+import type { UpdateTenantDto } from './dto/update-tenant.dto';
 import { TenantRepository } from './tenant.repository';
 import { TenantDatabaseConfigService } from './tenant-database-config.service';
 
@@ -24,14 +20,12 @@ export class TenantService {
    */
   async create(createTenantDto: CreateTenantDto): Promise<TenantResponseDto> {
     // Validate subdomain uniqueness
-    const existingBySubdomain = await this.tenantRepository.findBySubdomain(
-      createTenantDto.subdomain,
-    );
+    const existingBySubdomain = await this.tenantRepository.findBySubdomain(createTenantDto.subdomain);
     if (existingBySubdomain) {
       throw new ConflictException(
         'subdomain',
         `Tenant with subdomain '${createTenantDto.subdomain}' already exists`,
-        'This subdomain is already taken. Please choose a different subdomain for your organization.'
+        'This subdomain is already taken. Please choose a different subdomain for your organization.',
       );
     }
 
@@ -78,7 +72,7 @@ export class TenantService {
     if (!tenant) {
       throw new NotFoundException(
         `Tenant with ID '${id}' not found`,
-        'We couldn\'t find the organization you\'re looking for. Please check the ID and try again.'
+        "We couldn't find the organization you're looking for. Please check the ID and try again.",
       );
     }
 
@@ -94,7 +88,7 @@ export class TenantService {
     if (!tenant) {
       throw new NotFoundException(
         `Tenant with subdomain '${subdomain}' not found`,
-        'We couldn\'t find an organization with this subdomain. Please check the subdomain and try again.'
+        "We couldn't find an organization with this subdomain. Please check the subdomain and try again.",
       );
     }
 
@@ -104,62 +98,38 @@ export class TenantService {
   /**
    * Update tenant
    */
-  async update(
-    id: string,
-    updateTenantDto: UpdateTenantDto,
-  ): Promise<TenantResponseDto> {
+  async update(id: string, updateTenantDto: UpdateTenantDto): Promise<TenantResponseDto> {
     // Check if tenant exists
     const existing = await this.tenantRepository.findByIdWithConfig(id);
     if (!existing) {
       throw new NotFoundException(
         `Tenant with ID '${id}' not found`,
-        'We couldn\'t find the organization you\'re trying to update. Please check the ID and try again.'
+        "We couldn't find the organization you're trying to update. Please check the ID and try again.",
       );
     }
 
     // Validate subdomain uniqueness (if changing)
-    if (
-      updateTenantDto.subdomain &&
-      updateTenantDto.subdomain !== existing.subdomain
-    ) {
-      const existingBySubdomain = await this.tenantRepository.findBySubdomain(
-        updateTenantDto.subdomain,
-      );
+    if (updateTenantDto.subdomain && updateTenantDto.subdomain !== existing.subdomain) {
+      const existingBySubdomain = await this.tenantRepository.findBySubdomain(updateTenantDto.subdomain);
       if (existingBySubdomain) {
         throw new ConflictException(
           'subdomain',
           `Tenant with subdomain '${updateTenantDto.subdomain}' already exists`,
-          'This subdomain is already taken. Please choose a different subdomain for your organization.'
+          'This subdomain is already taken. Please choose a different subdomain for your organization.',
         );
       }
     }
 
     // Extract database config fields from update DTO
-    const {
-      dbHost,
-      dbPort,
-      dbUsername,
-      dbPassword,
-      dbName,
-      dbSchema,
-      dbSslMode,
-      connectionPoolSize,
-      ...tenantData
-    } = updateTenantDto;
+    const { dbHost, dbPort, dbUsername, dbPassword, dbName, dbSchema, dbSslMode, connectionPoolSize, ...tenantData } =
+      updateTenantDto;
 
     // Update tenant (business data only)
     const tenant = await this.tenantRepository.update(id, tenantData);
 
     // Update database configuration if any DB fields are provided
     const hasDbConfigFields =
-      dbHost ||
-      dbPort ||
-      dbUsername ||
-      dbPassword ||
-      dbName ||
-      dbSchema ||
-      dbSslMode ||
-      connectionPoolSize;
+      dbHost || dbPort || dbUsername || dbPassword || dbName || dbSchema || dbSslMode || connectionPoolSize;
 
     if (hasDbConfigFields) {
       const configExists = await this.configService.exists(id);
@@ -206,7 +176,7 @@ export class TenantService {
     if (!existing) {
       throw new NotFoundException(
         `Tenant with ID '${id}' not found`,
-        'We couldn\'t find the organization you\'re trying to archive. Please check the ID and try again.'
+        "We couldn't find the organization you're trying to archive. Please check the ID and try again.",
       );
     }
 
@@ -227,7 +197,7 @@ export class TenantService {
         throw new BadRequestException(
           'dbSchema',
           'dbSchema is required when database type is SHARED',
-          'A database schema is required for shared database configuration. Please provide a schema name.'
+          'A database schema is required for shared database configuration. Please provide a schema name.',
         );
       }
     } else if (dto.dbType === 'DEDICATED') {
@@ -236,7 +206,7 @@ export class TenantService {
         throw new BadRequestException(
           'dbHost',
           'dbHost, dbName, dbUsername, and dbPassword are required for DEDICATED database type',
-          'Complete database connection details are required for dedicated database configuration. Please provide host, name, username, and password.'
+          'Complete database connection details are required for dedicated database configuration. Please provide host, name, username, and password.',
         );
       }
     }

@@ -1,23 +1,16 @@
-import * as schema from '@/db/schema';
-import { relations } from '@/db/schema';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import * as schema from '@/db/schema';
+import { relations } from '@/db/schema';
 
 import './db/schema.registry';
 
 import { RouterModule } from '@nestjs/core';
-
+import { AuthConfigModule, DatabaseModule, type DatabaseModuleOptions, LoggerModule } from '@vritti/api-sdk';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { validate } from './config/env.validation';
 import { CsrfController } from './csrf.controller';
-
-import {
-  AuthConfigModule,
-  DatabaseModule,
-  DatabaseModuleOptions,
-  LoggerModule,
-} from '@vritti/api-sdk';
 import { CloudApiModule } from './modules/cloud-api/cloud-api.module';
 
 @Module({
@@ -73,9 +66,7 @@ import { CloudApiModule } from './modules/cloud-api/cloud-api.module';
             password: config.getOrThrow<string>('PRIMARY_DB_PASSWORD'),
             database: config.getOrThrow<string>('PRIMARY_DB_DATABASE'),
             schema: config.get<string>('PRIMARY_DB_SCHEMA'),
-            sslMode: config.get<'require' | 'prefer' | 'disable' | 'no-verify'>(
-              'PRIMARY_DB_SSL_MODE',
-            ),
+            sslMode: config.get<'require' | 'prefer' | 'disable' | 'no-verify'>('PRIMARY_DB_SSL_MODE'),
           },
 
           drizzleSchema: schema,

@@ -1,7 +1,7 @@
-import { Session, sessions, SessionTypeValues, SessionType } from '@/db/schema';
 import { Injectable, Logger } from '@nestjs/common';
-import { UnauthorizedException, getConfig, getRefreshCookieOptions } from '@vritti/api-sdk';
+import { getConfig, getRefreshCookieOptions, UnauthorizedException } from '@vritti/api-sdk';
 import { and, eq } from '@vritti/api-sdk/drizzle-orm';
+import { type Session, type SessionType, SessionTypeValues, sessions } from '@/db/schema';
 import { SessionTokenResponseDto } from '../dto/session-token-response.dto';
 import { SessionRepository } from '../repositories/session.repository';
 import { JwtAuthService } from './jwt.service';
@@ -126,13 +126,9 @@ export class SessionService {
     });
 
     // Calculate expiresIn in seconds
-    const expiresIn = Math.floor(
-      (accessTokenExpiresAt.getTime() - Date.now()) / 1000,
-    );
+    const expiresIn = Math.floor((accessTokenExpiresAt.getTime() - Date.now()) / 1000);
 
-    this.logger.log(
-      `Created unified ${sessionType} session for user: ${userId}`,
-    );
+    this.logger.log(`Created unified ${sessionType} session for user: ${userId}`);
 
     return {
       session,
@@ -159,10 +155,7 @@ export class SessionService {
     }
 
     // Check if refresh token is expired
-    if (
-      session.refreshTokenExpiresAt &&
-      new Date() > session.refreshTokenExpiresAt
-    ) {
+    if (session.refreshTokenExpiresAt && new Date() > session.refreshTokenExpiresAt) {
       await this.sessionRepository.update(session.id, { isActive: false });
       return null;
     }
@@ -216,9 +209,7 @@ export class SessionService {
       refreshTokenExpiresAt: newRefreshTokenExpiresAt,
     });
 
-    const expiresIn = Math.floor(
-      (newAccessTokenExpiresAt.getTime() - Date.now()) / 1000,
-    );
+    const expiresIn = Math.floor((newAccessTokenExpiresAt.getTime() - Date.now()) / 1000);
 
     this.logger.log(`Refreshed session for user: ${session.userId}`);
 
@@ -265,15 +256,9 @@ export class SessionService {
         : this.jwtService.getAccessTokenExpiryTime();
 
     // Update session with new access token only (no refresh rotation)
-    await this.sessionRepository.updateAccessToken(
-      session.id,
-      newAccessToken,
-      newAccessTokenExpiresAt,
-    );
+    await this.sessionRepository.updateAccessToken(session.id, newAccessToken, newAccessTokenExpiresAt);
 
-    const expiresIn = Math.floor(
-      (newAccessTokenExpiresAt.getTime() - Date.now()) / 1000,
-    );
+    const expiresIn = Math.floor((newAccessTokenExpiresAt.getTime() - Date.now()) / 1000);
 
     this.logger.log(`Recovered session for user: ${session.userId}`);
 
@@ -344,10 +329,7 @@ export class SessionService {
     }
 
     if (session.type !== SessionTypeValues.ONBOARDING) {
-      throw new UnauthorizedException(
-        'Invalid session type',
-        'This is not an onboarding session.',
-      );
+      throw new UnauthorizedException('Invalid session type', 'This is not an onboarding session.');
     }
 
     if (!session.isActive) {
@@ -379,10 +361,7 @@ export class SessionService {
     const session = await this.sessionRepository.findById(sessionId);
 
     if (!session) {
-      throw new UnauthorizedException(
-        'Session not found',
-        'No active session found. Please sign up or log in again.',
-      );
+      throw new UnauthorizedException('Session not found', 'No active session found. Please sign up or log in again.');
     }
 
     if (!session.isActive) {
@@ -394,10 +373,7 @@ export class SessionService {
 
     if (new Date() > session.accessTokenExpiresAt) {
       await this.sessionRepository.update(session.id, { isActive: false });
-      throw new UnauthorizedException(
-        'Session expired',
-        'Your session has expired. Please sign up or log in again.',
-      );
+      throw new UnauthorizedException('Session expired', 'Your session has expired. Please sign up or log in again.');
     }
 
     if (session.type === SessionTypeValues.ONBOARDING) {
@@ -410,15 +386,9 @@ export class SessionService {
         );
       }
 
-      const expiresIn = Math.floor(
-        (session.accessTokenExpiresAt.getTime() - Date.now()) / 1000,
-      );
+      const expiresIn = Math.floor((session.accessTokenExpiresAt.getTime() - Date.now()) / 1000);
 
-      return SessionTokenResponseDto.forCloud(
-        session.accessToken,
-        session.refreshToken,
-        expiresIn > 0 ? expiresIn : 0,
-      );
+      return SessionTokenResponseDto.forCloud(session.accessToken, session.refreshToken, expiresIn > 0 ? expiresIn : 0);
     }
   }
 
@@ -436,9 +406,7 @@ export class SessionService {
         and(eq(sessions.userId, userId), eq(sessions.type, SessionTypeValues.ONBOARDING))!,
       );
 
-      this.logger.log(
-        `Deleted ${sessionList.length} onboarding sessions for user: ${userId}`,
-      );
+      this.logger.log(`Deleted ${sessionList.length} onboarding sessions for user: ${userId}`);
     }
   }
 
@@ -465,10 +433,7 @@ export class SessionService {
     }
 
     // Check if refresh token is expired
-    if (
-      session.refreshTokenExpiresAt &&
-      new Date() > session.refreshTokenExpiresAt
-    ) {
+    if (session.refreshTokenExpiresAt && new Date() > session.refreshTokenExpiresAt) {
       await this.sessionRepository.update(session.id, { isActive: false });
       throw new UnauthorizedException(
         'Refresh token expired. Please login again',
@@ -478,10 +443,7 @@ export class SessionService {
 
     // Ensure refresh token exists (should always be present for cloud sessions)
     if (!session.refreshToken) {
-      throw new UnauthorizedException(
-        'Invalid session type',
-        'This session does not support token refresh.',
-      );
+      throw new UnauthorizedException('Invalid session type', 'This session does not support token refresh.');
     }
 
     // Generate new access token with existing refresh token binding
@@ -489,11 +451,7 @@ export class SessionService {
     const newAccessTokenExpiresAt = this.jwtService.getAccessTokenExpiryTime();
 
     // Update session
-    await this.sessionRepository.updateAccessToken(
-      session.id,
-      newAccessToken,
-      newAccessTokenExpiresAt,
-    );
+    await this.sessionRepository.updateAccessToken(session.id, newAccessToken, newAccessTokenExpiresAt);
 
     this.logger.log(`Refreshed access token for user: ${payload.userId}`);
 

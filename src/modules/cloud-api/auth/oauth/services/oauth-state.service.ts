@@ -1,9 +1,9 @@
+import * as crypto from 'node:crypto';
 import { Injectable, Logger } from '@nestjs/common';
-import { UnauthorizedException } from '@vritti/api-sdk';
 import { ConfigService } from '@nestjs/config';
-import { OAuthProviderType } from '@/db/schema';
-import * as crypto from 'crypto';
-import { OAuthStateData } from '../interfaces/oauth-state.interface';
+import { UnauthorizedException } from '@vritti/api-sdk';
+import type { OAuthProviderType } from '@/db/schema';
+import type { OAuthStateData } from '../interfaces/oauth-state.interface';
 import { OAuthStateRepository } from '../repositories/oauth-state.repository';
 
 /**
@@ -31,11 +31,7 @@ export class OAuthStateService {
    * @param codeVerifier - PKCE code verifier
    * @returns Signed state token
    */
-  async generateState(
-    provider: OAuthProviderType,
-    userId: string | undefined,
-    codeVerifier: string,
-  ): Promise<string> {
+  async generateState(provider: OAuthProviderType, userId: string | undefined, codeVerifier: string): Promise<string> {
     // Generate cryptographically secure random state token
     const stateToken = crypto.randomBytes(32).toString('hex');
 
@@ -55,9 +51,7 @@ export class OAuthStateService {
       expiresAt,
     });
 
-    this.logger.log(
-      `Generated OAuth state for provider: ${provider}, userId: ${userId || 'none'}`,
-    );
+    this.logger.log(`Generated OAuth state for provider: ${provider}, userId: ${userId || 'none'}`);
 
     return signedStateToken;
   }
@@ -74,7 +68,7 @@ export class OAuthStateService {
       this.logger.warn('Invalid OAuth state token signature');
       throw new UnauthorizedException(
         'Invalid state token',
-        'The authentication request could not be verified. Please try logging in again.'
+        'The authentication request could not be verified. Please try logging in again.',
       );
     }
 
@@ -85,7 +79,7 @@ export class OAuthStateService {
       this.logger.warn('OAuth state token not found in database');
       throw new UnauthorizedException(
         'Invalid or expired state token',
-        'Your authentication session has expired or is invalid. Please try logging in again.'
+        'Your authentication session has expired or is invalid. Please try logging in again.',
       );
     }
 
@@ -96,16 +90,14 @@ export class OAuthStateService {
       this.logger.warn('OAuth state token expired');
       throw new UnauthorizedException(
         'State token expired',
-        'Your authentication session has expired. Please try logging in again.'
+        'Your authentication session has expired. Please try logging in again.',
       );
     }
 
     // Delete state (one-time use)
     await this.stateRepository.delete(stateRecord.id);
 
-    this.logger.log(
-      `Validated and consumed OAuth state for provider: ${stateRecord.provider}`,
-    );
+    this.logger.log(`Validated and consumed OAuth state for provider: ${stateRecord.provider}`);
 
     // Return state data
     return {
@@ -155,9 +147,6 @@ export class OAuthStateService {
     const expectedSignature = hmac.digest('hex');
 
     // Use constant-time comparison to prevent timing attacks
-    return crypto.timingSafeEqual(
-      Buffer.from(providedSignature, 'hex'),
-      Buffer.from(expectedSignature, 'hex'),
-    );
+    return crypto.timingSafeEqual(Buffer.from(providedSignature, 'hex'), Buffer.from(expectedSignature, 'hex'));
   }
 }

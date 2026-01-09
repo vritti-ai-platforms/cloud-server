@@ -1,8 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConflictException, NotFoundException } from '@vritti/api-sdk';
-import { User } from '@/db/schema';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import type { User } from '@/db/schema';
+import type { CreateUserDto } from './dto/create-user.dto';
+import type { UpdateUserDto } from './dto/update-user.dto';
 import { UserResponseDto } from './dto/user-response.dto';
 import { UserRepository } from './user.repository';
 
@@ -17,19 +17,14 @@ export class UserService {
    * @param createUserDto - User creation data
    * @param passwordHash - Optional pre-hashed password (hashed by encryption service)
    */
-  async create(
-    createUserDto: CreateUserDto,
-    passwordHash?: string,
-  ): Promise<UserResponseDto> {
+  async create(createUserDto: CreateUserDto, passwordHash?: string): Promise<UserResponseDto> {
     // Validate email uniqueness
-    const existingUser = await this.userRepository.findByEmail(
-      createUserDto.email,
-    );
+    const existingUser = await this.userRepository.findByEmail(createUserDto.email);
     if (existingUser) {
       throw new ConflictException(
         'email',
         `User with email '${createUserDto.email}' already exists`,
-        'An account with this email address already exists. Please use a different email or log in to your existing account.'
+        'An account with this email address already exists. Please use a different email or log in to your existing account.',
       );
     }
 
@@ -61,7 +56,7 @@ export class UserService {
     if (!user) {
       throw new NotFoundException(
         `User with ID '${id}' not found`,
-        'We couldn\'t find the user you\'re looking for. Please check the user ID and try again.'
+        "We couldn't find the user you're looking for. Please check the user ID and try again.",
       );
     }
 
@@ -85,16 +80,13 @@ export class UserService {
   /**
    * Update user
    */
-  async update(
-    id: string,
-    updateUserDto: UpdateUserDto,
-  ): Promise<UserResponseDto> {
+  async update(id: string, updateUserDto: UpdateUserDto): Promise<UserResponseDto> {
     // Check if user exists
     const existing = await this.userRepository.findById(id);
     if (!existing) {
       throw new NotFoundException(
         `User with ID '${id}' not found`,
-        'We couldn\'t find the user you\'re trying to update. Please check the user ID and try again.'
+        "We couldn't find the user you're trying to update. Please check the user ID and try again.",
       );
     }
 
@@ -119,28 +111,16 @@ export class UserService {
    */
   async markEmailVerified(id: string): Promise<UserResponseDto> {
     const user = await this.userRepository.markEmailVerified(id);
-    this.logger.log(
-      `Marked email verified for user: ${user.email} (${user.id})`,
-    );
+    this.logger.log(`Marked email verified for user: ${user.email} (${user.id})`);
     return UserResponseDto.from(user);
   }
 
   /**
    * Mark phone as verified
    */
-  async markPhoneVerified(
-    id: string,
-    phone: string,
-    phoneCountry: string,
-  ): Promise<UserResponseDto> {
-    const user = await this.userRepository.markPhoneVerified(
-      id,
-      phone,
-      phoneCountry,
-    );
-    this.logger.log(
-      `Marked phone verified for user: ${user.email} (${user.id})`,
-    );
+  async markPhoneVerified(id: string, phone: string, phoneCountry: string): Promise<UserResponseDto> {
+    const user = await this.userRepository.markPhoneVerified(id, phone, phoneCountry);
+    this.logger.log(`Marked phone verified for user: ${user.email} (${user.id})`);
     return UserResponseDto.from(user);
   }
 
@@ -153,7 +133,7 @@ export class UserService {
     if (!existing) {
       throw new NotFoundException(
         `User with ID '${id}' not found`,
-        'We couldn\'t find the user you\'re trying to deactivate. Please check the user ID and try again.'
+        "We couldn't find the user you're trying to deactivate. Please check the user ID and try again.",
       );
     }
 

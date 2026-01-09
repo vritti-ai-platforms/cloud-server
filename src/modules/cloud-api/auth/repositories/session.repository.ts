@@ -1,7 +1,7 @@
-import { Session, sessions } from '@/db/schema';
 import { Injectable } from '@nestjs/common';
 import { PrimaryBaseRepository, PrimaryDatabaseService } from '@vritti/api-sdk';
 import { and, eq, lt } from '@vritti/api-sdk/drizzle-orm';
+import { type Session, sessions } from '@/db/schema';
 
 @Injectable()
 export class SessionRepository extends PrimaryBaseRepository<typeof sessions> {
@@ -14,8 +14,7 @@ export class SessionRepository extends PrimaryBaseRepository<typeof sessions> {
    */
   async findActiveByUserId(userId: string): Promise<Session[]> {
     return this.model.findMany({
-      where: (cols, { eq, and }) =>
-        and(eq(cols.userId, userId), eq(cols.isActive, true)),
+      where: (cols, { eq, and }) => and(eq(cols.userId, userId), eq(cols.isActive, true)),
       orderBy: { createdAt: 'desc' },
     });
   }
@@ -23,11 +22,7 @@ export class SessionRepository extends PrimaryBaseRepository<typeof sessions> {
   /**
    * Update session access token
    */
-  async updateAccessToken(
-    id: string,
-    accessToken: string,
-    accessTokenExpiresAt: Date,
-  ): Promise<Session> {
+  async updateAccessToken(id: string, accessToken: string, accessTokenExpiresAt: Date): Promise<Session> {
     return this.update(id, {
       accessToken,
       accessTokenExpiresAt,
@@ -38,10 +33,9 @@ export class SessionRepository extends PrimaryBaseRepository<typeof sessions> {
    * Invalidate all sessions for a user
    */
   async invalidateAllByUserId(userId: string): Promise<number> {
-    const result = await this.updateMany(
-      and(eq(sessions.userId, userId), eq(sessions.isActive, true))!,
-      { isActive: false },
-    );
+    const result = await this.updateMany(and(eq(sessions.userId, userId), eq(sessions.isActive, true))!, {
+      isActive: false,
+    });
     return result.count;
   }
 
@@ -49,9 +43,7 @@ export class SessionRepository extends PrimaryBaseRepository<typeof sessions> {
    * Delete expired sessions
    */
   async deleteExpired(): Promise<number> {
-    const result = await this.deleteMany(
-      lt(sessions.refreshTokenExpiresAt, new Date()),
-    );
+    const result = await this.deleteMany(lt(sessions.refreshTokenExpiresAt, new Date()));
     return result.count;
   }
 }

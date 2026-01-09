@@ -1,10 +1,4 @@
-import {
-  Controller,
-  Get,
-  HttpCode,
-  HttpStatus,
-  Res,
-} from '@nestjs/common';
+import { Controller, Get, HttpCode, HttpStatus, Res } from '@nestjs/common';
 import { Public } from '@vritti/api-sdk';
 import type { FastifyReply } from 'fastify';
 

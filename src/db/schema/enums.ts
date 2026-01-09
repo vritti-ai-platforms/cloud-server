@@ -2,11 +2,7 @@ import { cloudSchema } from './cloud-schema';
 
 // Tenant-related enums
 export const databaseTypeEnum = cloudSchema.enum('DatabaseType', ['SHARED', 'DEDICATED']);
-export const tenantStatusEnum = cloudSchema.enum('TenantStatus', [
-  'ACTIVE',
-  'SUSPENDED',
-  'ARCHIVED',
-]);
+export const tenantStatusEnum = cloudSchema.enum('TenantStatus', ['ACTIVE', 'SUSPENDED', 'ARCHIVED']);
 
 // User account enums
 export const accountStatusEnum = cloudSchema.enum('AccountStatus', [
@@ -26,16 +22,9 @@ export const onboardingStepEnum = cloudSchema.enum('OnboardingStep', [
 ]);
 
 // Verification enums
-export const verificationMethodEnum = cloudSchema.enum('VerificationMethod', [
-  'WHATSAPP_QR',
-  'SMS_QR',
-  'MANUAL_OTP',
-]);
+export const verificationMethodEnum = cloudSchema.enum('VerificationMethod', ['WHATSAPP_QR', 'SMS_QR', 'MANUAL_OTP']);
 
-export const twoFactorMethodEnum = cloudSchema.enum('TwoFactorMethod', [
-  'TOTP',
-  'PASSKEY',
-]);
+export const twoFactorMethodEnum = cloudSchema.enum('TwoFactorMethod', ['TOTP', 'PASSKEY']);
 
 // OAuth enums
 export const oauthProviderTypeEnum = cloudSchema.enum('OAuthProviderType', [
@@ -54,11 +43,9 @@ export type DatabaseType = (typeof databaseTypeEnum.enumValues)[number];
 export type TenantStatus = (typeof tenantStatusEnum.enumValues)[number];
 export type AccountStatus = (typeof accountStatusEnum.enumValues)[number];
 export type OnboardingStep = (typeof onboardingStepEnum.enumValues)[number];
-export type VerificationMethod =
-  (typeof verificationMethodEnum.enumValues)[number];
+export type VerificationMethod = (typeof verificationMethodEnum.enumValues)[number];
 export type TwoFactorMethod = (typeof twoFactorMethodEnum.enumValues)[number];
-export type OAuthProviderType =
-  (typeof oauthProviderTypeEnum.enumValues)[number];
+export type OAuthProviderType = (typeof oauthProviderTypeEnum.enumValues)[number];
 export type SessionType = (typeof sessionTypeEnum.enumValues)[number];
 
 // Runtime enum value objects for use in code

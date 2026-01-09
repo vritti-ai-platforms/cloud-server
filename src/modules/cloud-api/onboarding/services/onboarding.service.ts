@@ -1,6 +1,6 @@
-import { OnboardingStepValues } from '@/db/schema';
 import { Injectable, Logger } from '@nestjs/common';
 import { BadRequestException } from '@vritti/api-sdk';
+import { OnboardingStepValues } from '@/db/schema';
 import { EncryptionService } from '../../../../services';
 import { UserService } from '../../user/user.service';
 import { OnboardingStatusResponseDto } from '../dto/onboarding-status-response.dto';
@@ -39,7 +39,7 @@ export class OnboardingService {
     if (!user) {
       throw new BadRequestException(
         'User not found',
-        'We couldn\'t find your account. Please check your information or register.'
+        "We couldn't find your account. Please check your information or register.",
       );
     }
 
@@ -47,7 +47,7 @@ export class OnboardingService {
     if (user.onboardingStep !== OnboardingStepValues.SET_PASSWORD) {
       throw new BadRequestException(
         'User is not on SET_PASSWORD onboarding step',
-        'You cannot set a password at this stage. Please complete the previous onboarding steps first.'
+        'You cannot set a password at this stage. Please complete the previous onboarding steps first.',
       );
     }
 
@@ -56,12 +56,12 @@ export class OnboardingService {
     if (fullUser?.passwordHash) {
       throw new BadRequestException(
         'User already has a password',
-        'Your account already has a password set. Please use the forgot password feature if you need to change it.'
+        'Your account already has a password set. Please use the forgot password feature if you need to change it.',
       );
     }
 
     // Hash password
-    const passwordHash = await this.encryptionService.hashPassword(password);
+    const _passwordHash = await this.encryptionService.hashPassword(password);
 
     // Update user with password and move to next onboarding step
     // await this.userService.updatePassword(userId, passwordHash);
@@ -84,7 +84,7 @@ export class OnboardingService {
     if (!user) {
       throw new BadRequestException(
         'User not found',
-        'We couldn\'t find your account. Please check your information or register.'
+        "We couldn't find your account. Please check your information or register.",
       );
     }
 

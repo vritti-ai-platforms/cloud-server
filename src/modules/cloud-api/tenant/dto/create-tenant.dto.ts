@@ -1,15 +1,4 @@
-import {
-  IsString,
-  IsEnum,
-  IsOptional,
-  IsInt,
-  Min,
-  Max,
-  MinLength,
-  MaxLength,
-  Matches,
-  IsIn,
-} from 'class-validator';
+import { IsEnum, IsIn, IsInt, IsOptional, IsString, Matches, Max, MaxLength, Min, MinLength } from 'class-validator';
 import type { DatabaseType, TenantStatus } from '@/db/schema';
 import { DatabaseTypeValues, TenantStatusValues } from '@/db/schema';
 
@@ -18,8 +7,7 @@ export class CreateTenantDto {
   @MinLength(2)
   @MaxLength(50)
   @Matches(/^[a-z0-9-]+$/, {
-    message:
-      'Subdomain must contain only lowercase letters, numbers, and hyphens',
+    message: 'Subdomain must contain only lowercase letters, numbers, and hyphens',
   })
   subdomain: string;
 

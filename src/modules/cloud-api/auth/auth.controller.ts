@@ -1,31 +1,27 @@
 import {
-  Controller,
-  Post,
   Body,
-  UseGuards,
-  Req,
-  Res,
+  Controller,
   Get,
-  Logger,
-  Ip,
   Headers,
   HttpCode,
   HttpStatus,
+  Ip,
+  Logger,
+  Post,
+  Req,
+  Res,
+  UseGuards,
 } from '@nestjs/common';
-import { AuthService } from './services/auth.service';
-import {
-  SessionService,
-  REFRESH_COOKIE_NAME,
-  REFRESH_COOKIE_OPTIONS,
-} from './services/session.service';
-import { LoginDto } from './dto/login.dto';
-import { SignupDto } from './dto/signup.dto';
-import { AuthResponseDto } from './dto/auth-response.dto';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { Public, UnauthorizedException } from '@vritti/api-sdk';
-import { OnboardingStatusResponseDto } from '../onboarding/dto/onboarding-status-response.dto';
-import { User, SessionTypeValues } from '@/db/schema';
-import type { FastifyRequest, FastifyReply } from 'fastify';
+import type { FastifyReply, FastifyRequest } from 'fastify';
+import { SessionTypeValues, type User } from '@/db/schema';
+import type { OnboardingStatusResponseDto } from '../onboarding/dto/onboarding-status-response.dto';
+import type { AuthResponseDto } from './dto/auth-response.dto';
+import type { LoginDto } from './dto/login.dto';
+import type { SignupDto } from './dto/signup.dto';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { AuthService } from './services/auth.service';
+import { REFRESH_COOKIE_NAME, REFRESH_COOKIE_OPTIONS, SessionService } from './services/session.service';
 
 /** Request with authenticated user from JwtAuthGuard */
 interface AuthenticatedRequest extends FastifyRequest {
@@ -66,13 +62,12 @@ export class AuthController {
     const response = await this.authService.signup(signupDto);
 
     // Create unified onboarding session with both tokens
-    const { accessToken, refreshToken, expiresIn } =
-      await this.sessionService.createUnifiedSession(
-        response.userId,
-        SessionTypeValues.ONBOARDING,
-        ipAddress,
-        userAgent,
-      );
+    const { accessToken, refreshToken, expiresIn } = await this.sessionService.createUnifiedSession(
+      response.userId,
+      SessionTypeValues.ONBOARDING,
+      ipAddress,
+      userAgent,
+    );
 
     // Set refresh token in httpOnly cookie
     reply.setCookie(REFRESH_COOKIE_NAME, refreshToken, REFRESH_COOKIE_OPTIONS);
@@ -95,16 +90,11 @@ export class AuthController {
    */
   @Get('token')
   @Public()
-  async getToken(
-    @Req() request: FastifyRequest,
-  ): Promise<{ accessToken: string; expiresIn: number }> {
+  async getToken(@Req() request: FastifyRequest): Promise<{ accessToken: string; expiresIn: number }> {
     const refreshToken = request.cookies?.[REFRESH_COOKIE_NAME];
 
     if (!refreshToken) {
-      throw new UnauthorizedException(
-        'No session found',
-        'No active session found. Please sign up or log in again.',
-      );
+      throw new UnauthorizedException('No session found', 'No active session found. Please sign up or log in again.');
     }
 
     this.logger.log('GET /auth/token - Recovering session from cookie');
@@ -157,10 +147,7 @@ export class AuthController {
     const refreshToken = request.cookies?.[REFRESH_COOKIE_NAME];
 
     if (!refreshToken) {
-      throw new UnauthorizedException(
-        'No session found',
-        'No active session found. Please sign up or log in again.',
-      );
+      throw new UnauthorizedException('No session found', 'No active session found. Please sign up or log in again.');
     }
 
     this.logger.log('POST /auth/refresh - Refreshing session with rotation');

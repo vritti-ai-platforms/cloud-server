@@ -1,12 +1,4 @@
-import {
-  IsString,
-  IsInt,
-  IsOptional,
-  Min,
-  Max,
-  MinLength,
-  IsIn,
-} from 'class-validator';
+import { IsIn, IsInt, IsOptional, IsString, Max, Min, MinLength } from 'class-validator';
 
 /**
  * DTO for creating tenant database configuration

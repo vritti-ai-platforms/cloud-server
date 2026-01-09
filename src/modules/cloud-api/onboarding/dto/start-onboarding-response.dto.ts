@@ -1,4 +1,4 @@
-import { OnboardingStep } from '@/db/schema';
+import type { OnboardingStep } from '@/db/schema';
 
 export class StartOnboardingResponseDto {
   success: boolean;

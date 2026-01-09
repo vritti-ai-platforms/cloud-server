@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsEnum, IsBoolean } from 'class-validator';
+import { IsBoolean, IsEnum, IsOptional, IsString } from 'class-validator';
 import type { AccountStatus, OnboardingStep } from '@/db/schema';
 import { AccountStatusValues, OnboardingStepValues } from '@/db/schema';
 

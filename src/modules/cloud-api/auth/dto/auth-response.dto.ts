@@ -1,5 +1,5 @@
-import { UserResponseDto } from '../../user/dto/user-response.dto';
-import { OnboardingStep } from '@/db/schema';
+import type { OnboardingStep } from '@/db/schema';
+import type { UserResponseDto } from '../../user/dto/user-response.dto';
 
 export class AuthResponseDto {
   accessToken?: string;

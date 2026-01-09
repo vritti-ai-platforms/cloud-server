@@ -1,14 +1,6 @@
-import {
-  uuid,
-  varchar,
-  text,
-  boolean,
-  timestamp,
-  integer,
-  index,
-} from '@vritti/api-sdk/drizzle-pg-core';
+import { boolean, index, integer, text, timestamp, uuid, varchar } from '@vritti/api-sdk/drizzle-pg-core';
 import { cloudSchema } from './cloud-schema';
-import { verificationMethodEnum, twoFactorMethodEnum } from './enums';
+import { twoFactorMethodEnum, verificationMethodEnum } from './enums';
 import { users } from './user';
 
 /**
@@ -26,14 +18,10 @@ export const emailVerifications = cloudSchema.table(
     attempts: integer('attempts').notNull().default(0),
     isVerified: boolean('is_verified').notNull().default(false),
     expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
-    createdAt: timestamp('created_at', { withTimezone: true })
-      .notNull()
-      .defaultNow(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     verifiedAt: timestamp('verified_at', { withTimezone: true }),
   },
-  (table) => [
-    index('email_verifications_user_id_email_idx').on(table.userId, table.email),
-  ],
+  (table) => [index('email_verifications_user_id_email_idx').on(table.userId, table.email)],
 );
 
 /**
@@ -56,16 +44,12 @@ export const mobileVerifications = cloudSchema.table(
     qrScannedAt: timestamp('qr_scanned_at', { withTimezone: true }),
     qrVerificationId: varchar('qr_verification_id', { length: 255 }).unique(),
     expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
-    createdAt: timestamp('created_at', { withTimezone: true })
-      .notNull()
-      .defaultNow(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     verifiedAt: timestamp('verified_at', { withTimezone: true }),
   },
   (table) => [
     index('mobile_verifications_user_id_phone_idx').on(table.userId, table.phone),
-    index('mobile_verifications_qr_verification_id_idx').on(
-      table.qrVerificationId,
-    ),
+    index('mobile_verifications_qr_verification_id_idx').on(table.qrVerificationId),
   ],
 );
 
@@ -88,18 +72,14 @@ export const twoFactorAuth = cloudSchema.table(
     }).unique(),
     passkeyPublicKey: text('passkey_public_key'),
     passkeyCounter: integer('passkey_counter'),
-    createdAt: timestamp('created_at', { withTimezone: true })
-      .notNull()
-      .defaultNow(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true })
       .notNull()
       .defaultNow()
       .$onUpdate(() => new Date()),
     lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
   },
-  (table) => [
-    index('two_factor_auth_user_id_method_idx').on(table.userId, table.method),
-  ],
+  (table) => [index('two_factor_auth_user_id_method_idx').on(table.userId, table.method)],
 );
 
 // Type exports

@@ -1,10 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { OAuthProviderTypeValues } from '@/db/schema';
 import axios from 'axios';
-import { IOAuthProvider } from './interfaces/oauth-provider.interface';
-import { OAuthTokens, OAuthTokenExchangePayload } from './interfaces/oauth-tokens.interface';
-import { OAuthUserProfile } from './interfaces/oauth-user-profile.interface';
+import { OAuthProviderTypeValues } from '@/db/schema';
+import type { IOAuthProvider } from './interfaces/oauth-provider.interface';
+import type { OAuthTokenExchangePayload, OAuthTokens } from './interfaces/oauth-tokens.interface';
+import type { OAuthUserProfile } from './interfaces/oauth-user-profile.interface';
 
 /**
  * Microsoft OAuth 2.0 Provider (Azure AD / Microsoft Account)
@@ -17,22 +17,14 @@ export class MicrosoftOAuthProvider implements IOAuthProvider {
   private readonly clientSecret: string;
   private readonly redirectUri: string;
 
-  private readonly AUTHORIZATION_URL =
-    'https://login.microsoftonline.com/common/oauth2/v2.0/authorize';
-  private readonly TOKEN_URL =
-    'https://login.microsoftonline.com/common/oauth2/v2.0/token';
+  private readonly AUTHORIZATION_URL = 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize';
+  private readonly TOKEN_URL = 'https://login.microsoftonline.com/common/oauth2/v2.0/token';
   private readonly USER_INFO_URL = 'https://graph.microsoft.com/v1.0/me';
 
   constructor(private readonly configService: ConfigService) {
-    this.clientId = this.configService.getOrThrow<string>(
-      'MICROSOFT_CLIENT_ID',
-    );
-    this.clientSecret = this.configService.getOrThrow<string>(
-      'MICROSOFT_CLIENT_SECRET',
-    );
-    this.redirectUri = this.configService.getOrThrow<string>(
-      'MICROSOFT_CALLBACK_URL',
-    );
+    this.clientId = this.configService.getOrThrow<string>('MICROSOFT_CLIENT_ID');
+    this.clientSecret = this.configService.getOrThrow<string>('MICROSOFT_CLIENT_SECRET');
+    this.redirectUri = this.configService.getOrThrow<string>('MICROSOFT_CALLBACK_URL');
   }
 
   /**
@@ -62,10 +54,7 @@ export class MicrosoftOAuthProvider implements IOAuthProvider {
   /**
    * Exchange authorization code for tokens
    */
-  async exchangeCodeForToken(
-    code: string,
-    codeVerifier?: string,
-  ): Promise<OAuthTokens> {
+  async exchangeCodeForToken(code: string, codeVerifier?: string): Promise<OAuthTokens> {
     try {
       const data: OAuthTokenExchangePayload = {
         code,
@@ -92,10 +81,7 @@ export class MicrosoftOAuthProvider implements IOAuthProvider {
         idToken: response.data.id_token,
       };
     } catch (error) {
-      this.logger.error(
-        'Failed to exchange Microsoft authorization code',
-        error,
-      );
+      this.logger.error('Failed to exchange Microsoft authorization code', error);
       throw new Error('Failed to exchange authorization code');
     }
   }
@@ -113,9 +99,7 @@ export class MicrosoftOAuthProvider implements IOAuthProvider {
 
       const data = response.data;
 
-      this.logger.log(
-        `Retrieved Microsoft profile for user: ${data.userPrincipalName}`,
-      );
+      this.logger.log(`Retrieved Microsoft profile for user: ${data.userPrincipalName}`);
 
       return {
         provider: OAuthProviderTypeValues.MICROSOFT,

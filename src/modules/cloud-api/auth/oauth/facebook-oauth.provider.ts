@@ -1,10 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { OAuthProviderTypeValues } from '@/db/schema';
 import axios from 'axios';
-import { IOAuthProvider } from './interfaces/oauth-provider.interface';
-import { OAuthTokens, FacebookTokenParams } from './interfaces/oauth-tokens.interface';
-import { OAuthUserProfile } from './interfaces/oauth-user-profile.interface';
+import { OAuthProviderTypeValues } from '@/db/schema';
+import type { IOAuthProvider } from './interfaces/oauth-provider.interface';
+import type { FacebookTokenParams, OAuthTokens } from './interfaces/oauth-tokens.interface';
+import type { OAuthUserProfile } from './interfaces/oauth-user-profile.interface';
 
 /**
  * Facebook OAuth 2.0 Provider
@@ -17,20 +17,14 @@ export class FacebookOAuthProvider implements IOAuthProvider {
   private readonly clientSecret: string;
   private readonly redirectUri: string;
 
-  private readonly AUTHORIZATION_URL =
-    'https://www.facebook.com/v18.0/dialog/oauth';
-  private readonly TOKEN_URL =
-    'https://graph.facebook.com/v18.0/oauth/access_token';
+  private readonly AUTHORIZATION_URL = 'https://www.facebook.com/v18.0/dialog/oauth';
+  private readonly TOKEN_URL = 'https://graph.facebook.com/v18.0/oauth/access_token';
   private readonly USER_INFO_URL = 'https://graph.facebook.com/v18.0/me';
 
   constructor(private readonly configService: ConfigService) {
     this.clientId = this.configService.getOrThrow<string>('FACEBOOK_CLIENT_ID');
-    this.clientSecret = this.configService.getOrThrow<string>(
-      'FACEBOOK_CLIENT_SECRET',
-    );
-    this.redirectUri = this.configService.getOrThrow<string>(
-      'FACEBOOK_CALLBACK_URL',
-    );
+    this.clientSecret = this.configService.getOrThrow<string>('FACEBOOK_CLIENT_SECRET');
+    this.redirectUri = this.configService.getOrThrow<string>('FACEBOOK_CALLBACK_URL');
   }
 
   /**
@@ -59,10 +53,7 @@ export class FacebookOAuthProvider implements IOAuthProvider {
   /**
    * Exchange authorization code for tokens
    */
-  async exchangeCodeForToken(
-    code: string,
-    codeVerifier?: string,
-  ): Promise<OAuthTokens> {
+  async exchangeCodeForToken(code: string, codeVerifier?: string): Promise<OAuthTokens> {
     try {
       const params: FacebookTokenParams = {
         code,
@@ -82,10 +73,7 @@ export class FacebookOAuthProvider implements IOAuthProvider {
         expiresIn: response.data.expires_in,
       };
     } catch (error) {
-      this.logger.error(
-        'Failed to exchange Facebook authorization code',
-        error,
-      );
+      this.logger.error('Failed to exchange Facebook authorization code', error);
       throw new Error('Failed to exchange authorization code');
     }
   }

@@ -1,14 +1,12 @@
-import { JwtModuleOptions } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
+import type { ConfigService } from '@nestjs/config';
+import type { JwtModuleOptions } from '@nestjs/jwt';
 
 /**
  * JWT Configuration Factory
  * Creates JWT module options using ConfigService
  * Used for both onboarding tokens and auth tokens
  */
-export const jwtConfigFactory = (
-  configService: ConfigService,
-): JwtModuleOptions => ({
+export const jwtConfigFactory = (configService: ConfigService): JwtModuleOptions => ({
   secret: configService.getOrThrow<string>('JWT_SECRET'),
   signOptions: {
     issuer: 'vritti-api',
@@ -38,12 +36,10 @@ export const getTokenExpiry = (configService: ConfigService): TokenExpiry => ({
   ONBOARDING: '24h',
 
   // Access token: from env, default 15 minutes
-  ACCESS: (configService.get<string>('JWT_ACCESS_EXPIRY') ??
-    '15m') as TokenExpiryString,
+  ACCESS: (configService.get<string>('JWT_ACCESS_EXPIRY') ?? '15m') as TokenExpiryString,
 
   // Refresh token: from env, default 30 days
-  REFRESH: (configService.get<string>('JWT_REFRESH_EXPIRY') ??
-    '30d') as TokenExpiryString,
+  REFRESH: (configService.get<string>('JWT_REFRESH_EXPIRY') ?? '30d') as TokenExpiryString,
 
   // Password reset token: default 15 minutes
   PASSWORD_RESET: '15m',

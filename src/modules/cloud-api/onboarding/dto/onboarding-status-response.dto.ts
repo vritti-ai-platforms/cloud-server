@@ -1,4 +1,4 @@
-import { User, AccountStatus, OnboardingStep } from '@/db/schema';
+import type { AccountStatus, OnboardingStep, User } from '@/db/schema';
 
 export class OnboardingStatusResponseDto {
   userId: string;
@@ -31,11 +31,7 @@ export class OnboardingStatusResponseDto {
   /**
    * Create from User model
    */
-  static fromUser(
-    user: User,
-    onboardingToken?: string,
-    isNewUser: boolean = false,
-  ): OnboardingStatusResponseDto {
+  static fromUser(user: User, onboardingToken?: string, isNewUser: boolean = false): OnboardingStatusResponseDto {
     // Determine signup method: 'oauth' if no password hash, 'email' otherwise
     const signupMethod: 'email' | 'oauth' = user.passwordHash === null ? 'oauth' : 'email';
 

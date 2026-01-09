@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { JwtService as NestJwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { type JwtSignOptions, JwtService as NestJwtService } from '@nestjs/jwt';
 import { hashToken } from '@vritti/api-sdk';
 import { getTokenExpiry, TokenType } from '../../../../config/jwt.config';
 
@@ -15,7 +15,7 @@ export class JwtAuthService {
 
   constructor(
     private readonly jwtService: NestJwtService,
-    private readonly configService: ConfigService,
+    readonly configService: ConfigService,
   ) {
     this.tokenExpiry = getTokenExpiry(configService);
   }
@@ -69,6 +69,13 @@ export class JwtAuthService {
         expiresIn: this.tokenExpiry.ONBOARDING,
       },
     );
+  }
+
+  /**
+   * Sign a JWT payload with custom options
+   */
+  sign(payload: object, options?: JwtSignOptions): string {
+    return this.jwtService.sign(payload, options);
   }
 
   /**

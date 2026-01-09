@@ -1,11 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { UnauthorizedException } from '@vritti/api-sdk';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
+import { UnauthorizedException } from '@vritti/api-sdk';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { AuthService } from '../services/auth.service';
-import { UserResponseDto } from '../../user/dto/user-response.dto';
 import { TokenType } from '../../../../config/jwt.config';
+import type { UserResponseDto } from '../../user/dto/user-response.dto';
+import { AuthService } from '../services/auth.service';
 
 /**
  * JWT Strategy for Passport
@@ -17,7 +17,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   constructor(
     private readonly authService: AuthService,
-    private readonly configService: ConfigService,
+    readonly configService: ConfigService,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -35,7 +35,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     if (payload.type !== TokenType.ACCESS) {
       throw new UnauthorizedException(
         'Invalid token type. Expected access token',
-        'Invalid authentication token. Please log in again.'
+        'Invalid authentication token. Please log in again.',
       );
     }
 

@@ -1,12 +1,7 @@
-import {
-  Injectable,
-  CanActivate,
-  ExecutionContext,
-  Logger,
-} from '@nestjs/common';
-import { ForbiddenException } from '@vritti/api-sdk';
+import { type CanActivate, type ExecutionContext, Injectable, Logger } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { AccountStatus } from '@/db/schema';
+import { ForbiddenException } from '@vritti/api-sdk';
+import type { AccountStatus } from '@/db/schema';
 
 /**
  * Account Status Guard
@@ -21,10 +16,7 @@ export class AccountStatusGuard implements CanActivate {
 
   canActivate(context: ExecutionContext): boolean {
     // Get required statuses from decorator
-    const requiredStatuses = this.reflector.get<AccountStatus[]>(
-      'accountStatuses',
-      context.getHandler(),
-    );
+    const requiredStatuses = this.reflector.get<AccountStatus[]>('accountStatuses', context.getHandler());
 
     // If no required statuses specified, allow access
     if (!requiredStatuses || requiredStatuses.length === 0) {
@@ -35,10 +27,7 @@ export class AccountStatusGuard implements CanActivate {
     const user = request.user; // Set by JwtAuthGuard
 
     if (!user) {
-      throw new ForbiddenException(
-        'User not authenticated',
-        'You must be logged in to access this resource.'
-      );
+      throw new ForbiddenException('User not authenticated', 'You must be logged in to access this resource.');
     }
 
     // Check if user's account status matches required status
@@ -48,7 +37,7 @@ export class AccountStatusGuard implements CanActivate {
       );
       throw new ForbiddenException(
         `Account status must be ${requiredStatuses.join(' or ')}. Current status: ${user.accountStatus}`,
-        `You don't have permission to access this resource. Your account status is ${user.accountStatus}.`
+        `You don't have permission to access this resource. Your account status is ${user.accountStatus}.`,
       );
     }
 

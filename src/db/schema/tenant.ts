@@ -1,10 +1,4 @@
-import {
-  uuid,
-  varchar,
-  text,
-  integer,
-  timestamp,
-} from '@vritti/api-sdk/drizzle-pg-core';
+import { integer, text, timestamp, uuid, varchar } from '@vritti/api-sdk/drizzle-pg-core';
 import { cloudSchema } from './cloud-schema';
 import { databaseTypeEnum, tenantStatusEnum } from './enums';
 
@@ -18,9 +12,7 @@ export const tenants = cloudSchema.table('tenants', {
   description: text('description'),
   dbType: databaseTypeEnum('db_type').notNull().default('SHARED'),
   status: tenantStatusEnum('status').notNull().default('ACTIVE'),
-  createdAt: timestamp('created_at', { withTimezone: true })
-    .notNull()
-    .defaultNow(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true })
     .notNull()
     .defaultNow()
@@ -45,9 +37,7 @@ export const tenantDatabaseConfigs = cloudSchema.table('tenant_database_configs'
   dbSchema: varchar('db_schema', { length: 255 }),
   dbSslMode: varchar('db_ssl_mode', { length: 50 }).notNull().default('require'),
   connectionPoolSize: integer('connection_pool_size').notNull().default(10),
-  createdAt: timestamp('created_at', { withTimezone: true })
-    .notNull()
-    .defaultNow(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true })
     .notNull()
     .defaultNow()
