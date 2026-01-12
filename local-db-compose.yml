@@ -1,0 +1,17 @@
+version: '1.0'
+services:
+  postgres:
+    image: postgres:17
+    container_name: vritti-postgres-17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: localdev
+      POSTGRES_DB: saas_db
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+volumes:
+  pgdata:
