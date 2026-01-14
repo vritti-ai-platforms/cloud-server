@@ -1,0 +1,10 @@
+onlyBuiltDependencies:
+  - '@compodoc/compodoc'
+  - '@nestjs/core'
+  - '@swc/core'
+  - bcrypt
+  - esbuild
+  - unrs-resolver
+
+overrides:
+  '@vritti/api-sdk': link:../api-sdk

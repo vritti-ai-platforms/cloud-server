@@ -2,12 +2,12 @@ import fastifyCookie from '@fastify/cookie';
 import fastifyCsrfProtection from '@fastify/csrf-protection';
 import { BadRequestException, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { NestFactory, Reflector } from '@nestjs/core';
+import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
 import {
+  configureApiSdk,
   CorrelationIdMiddleware,
   CsrfGuard,
-  configureApiSdk,
   HttpExceptionFilter,
   HttpLoggerInterceptor,
   LoggerService,
@@ -88,7 +88,7 @@ async function bootstrap() {
   const correlationMiddleware = app.get(CorrelationIdMiddleware);
   const fastifyInstance = app.getHttpAdapter().getInstance();
   fastifyInstance.addHook('onRequest', async (request, reply) => {
-    await correlationMiddleware.onRequest(request as any, reply as any);
+    await correlationMiddleware.onRequest(request, reply);
   });
 
   // Register HTTP logger interceptor for request/response logging
@@ -96,7 +96,7 @@ async function bootstrap() {
   app.useGlobalInterceptors(httpLoggerInterceptor);
 
   // Register global CSRF guard
-  app.useGlobalGuards(new CsrfGuard(app.get(Reflector)));
+  app.useGlobalGuards(new CsrfGuard());
 
   // Enable global validation pipe
   app.useGlobalPipes(
