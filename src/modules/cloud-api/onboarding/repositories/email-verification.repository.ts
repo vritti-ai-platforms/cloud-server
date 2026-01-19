@@ -14,7 +14,7 @@ export class EmailVerificationRepository extends PrimaryBaseRepository<typeof em
    */
   async findLatestByUserId(userId: string): Promise<EmailVerification | undefined> {
     const results = await this.findMany({
-      where: (cols, { eq, and }) => and(eq(cols.userId, userId), eq(cols.isVerified, false)),
+      where: { userId, isVerified: false },
       orderBy: { createdAt: 'desc' },
       limit: 1,
     });

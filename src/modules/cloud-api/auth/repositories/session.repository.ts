@@ -14,7 +14,7 @@ export class SessionRepository extends PrimaryBaseRepository<typeof sessions> {
    */
   async findActiveByUserId(userId: string): Promise<Session[]> {
     return this.model.findMany({
-      where: (cols, { eq, and }) => and(eq(cols.userId, userId), eq(cols.isActive, true)),
+      where: { userId, isActive: true },
       orderBy: { createdAt: 'desc' },
     });
   }

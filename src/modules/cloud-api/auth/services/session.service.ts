@@ -398,7 +398,7 @@ export class SessionService {
    */
   async deleteOnboardingSessions(userId: string): Promise<void> {
     const sessionList = await this.sessionRepository.findMany({
-      where: and(eq(sessions.userId, userId), eq(sessions.type, SessionTypeValues.ONBOARDING)),
+      where: { userId, type: SessionTypeValues.ONBOARDING },
     });
 
     if (sessionList.length > 0) {
