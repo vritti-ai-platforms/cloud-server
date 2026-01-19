@@ -10,16 +10,21 @@ import { JwtAuthService } from './jwt.service';
 // Use { fieldName: value } instead of eq(table.field, value)
 
 /**
- * Refresh cookie name - derived from api-sdk config
- * Uses config defaults if configureApiSdk() hasn't been called yet
+ * Get refresh cookie name - derived from api-sdk config
+ * This is a getter function to ensure it's evaluated AFTER configureApiSdk() is called
  */
-export const REFRESH_COOKIE_NAME = getConfig().cookie.refreshCookieName;
+export function getRefreshCookieName(): string {
+  return getConfig().cookie.refreshCookieName;
+}
 
 /**
- * Refresh cookie options - derived from api-sdk config
- * Uses config defaults if configureApiSdk() hasn't been called yet
+ * Get refresh cookie options - derived from api-sdk config
+ * This is a getter function to ensure it's evaluated AFTER configureApiSdk() is called
+ * (Module-level constants would be evaluated before main.ts runs configureApiSdk)
  */
-export const REFRESH_COOKIE_OPTIONS = getRefreshCookieOptions();
+export function getRefreshCookieOptionsFromConfig() {
+  return getRefreshCookieOptions();
+}
 
 @Injectable()
 export class SessionService {

@@ -21,7 +21,7 @@ import type { LoginDto } from './dto/login.dto';
 import type { SignupDto } from './dto/signup.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { AuthService } from './services/auth.service';
-import { REFRESH_COOKIE_NAME, REFRESH_COOKIE_OPTIONS, SessionService } from './services/session.service';
+import { getRefreshCookieName, getRefreshCookieOptionsFromConfig, SessionService } from './services/session.service';
 
 /** Request with authenticated user from JwtAuthGuard */
 interface AuthenticatedRequest extends FastifyRequest {
@@ -69,8 +69,8 @@ export class AuthController {
       userAgent,
     );
 
-    // Set refresh token in httpOnly cookie
-    reply.setCookie(REFRESH_COOKIE_NAME, refreshToken, REFRESH_COOKIE_OPTIONS);
+    // Set refresh token in httpOnly cookie (use getter functions to ensure config is loaded)
+    reply.setCookie(getRefreshCookieName(), refreshToken, getRefreshCookieOptionsFromConfig());
 
     this.logger.log(`Created unified onboarding session for user: ${response.userId}`);
 
@@ -91,7 +91,7 @@ export class AuthController {
   @Get('token')
   @Public()
   async getToken(@Req() request: FastifyRequest): Promise<{ accessToken: string; expiresIn: number }> {
-    const refreshToken = request.cookies?.[REFRESH_COOKIE_NAME];
+    const refreshToken = request.cookies?.[getRefreshCookieName()];
 
     if (!refreshToken) {
       throw new UnauthorizedException('No session found', 'No active session found. Please sign up or log in again.');
@@ -121,9 +121,9 @@ export class AuthController {
     // Authenticate user and get response
     const response = await this.authService.login(loginDto, ipAddress, userAgent);
 
-    // Set refresh token in httpOnly cookie
+    // Set refresh token in httpOnly cookie (use getter functions to ensure config is loaded)
     if (response.refreshToken) {
-      reply.setCookie(REFRESH_COOKIE_NAME, response.refreshToken, REFRESH_COOKIE_OPTIONS);
+      reply.setCookie(getRefreshCookieName(), response.refreshToken, getRefreshCookieOptionsFromConfig());
     }
 
     // Remove refreshToken from response (it's in the cookie)
@@ -144,7 +144,7 @@ export class AuthController {
     @Req() request: FastifyRequest,
     @Res({ passthrough: true }) reply: FastifyReply,
   ): Promise<{ accessToken: string; expiresIn: number }> {
-    const refreshToken = request.cookies?.[REFRESH_COOKIE_NAME];
+    const refreshToken = request.cookies?.[getRefreshCookieName()];
 
     if (!refreshToken) {
       throw new UnauthorizedException('No session found', 'No active session found. Please sign up or log in again.');
@@ -154,8 +154,8 @@ export class AuthController {
 
     const result = await this.sessionService.refreshSession(refreshToken);
 
-    // Update cookie with rotated refresh token
-    reply.setCookie(REFRESH_COOKIE_NAME, result.refreshToken, REFRESH_COOKIE_OPTIONS);
+    // Update cookie with rotated refresh token (use getter functions to ensure config is loaded)
+    reply.setCookie(getRefreshCookieName(), result.refreshToken, getRefreshCookieOptionsFromConfig());
 
     return {
       accessToken: result.accessToken,
@@ -181,7 +181,7 @@ export class AuthController {
     await this.authService.logout(accessToken);
 
     // Clear refresh token cookie
-    reply.clearCookie(REFRESH_COOKIE_NAME, { path: '/' });
+    reply.clearCookie(getRefreshCookieName(), { path: '/' });
 
     return {
       message: 'Successfully logged out',
@@ -203,7 +203,7 @@ export class AuthController {
     const count = await this.authService.logoutAll(userId);
 
     // Clear refresh token cookie
-    reply.clearCookie(REFRESH_COOKIE_NAME, { path: '/' });
+    reply.clearCookie(getRefreshCookieName(), { path: '/' });
 
     return {
       message: `Successfully logged out from ${count} device(s)`,

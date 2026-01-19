@@ -5,7 +5,7 @@ import { relations } from '@/db/schema';
 
 import './db/schema.registry';
 
-import { RouterModule } from '@nestjs/core';
+import { Reflector, RouterModule } from '@nestjs/core';
 import { AuthConfigModule, DatabaseModule, type DatabaseModuleOptions, LoggerModule } from '@vritti/api-sdk';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';

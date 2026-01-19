@@ -1,9 +1,11 @@
 import { Controller, Get, Logger, Param, Query, Redirect, Request, Res } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { BadRequestException, Onboarding, Public } from '@vritti/api-sdk';
 import type { FastifyReply } from 'fastify';
-import { type OAuthProviderType, OAuthProviderTypeValues } from '@/db/schema';
+import { type OAuthProviderType, OAuthProviderTypeValues, OnboardingStepValues, SessionTypeValues } from '@/db/schema';
 import type { OAuthResponseDto } from './oauth/dto/oauth-response.dto';
 import { OAuthService } from './oauth/services/oauth.service';
+import { getRefreshCookieName, getRefreshCookieOptionsFromConfig, SessionService } from './services/session.service';
 
 /**
  * OAuth Controller
@@ -13,7 +15,11 @@ import { OAuthService } from './oauth/services/oauth.service';
 export class AuthOAuthController {
   private readonly logger = new Logger(AuthOAuthController.name);
 
-  constructor(private readonly oauthService: OAuthService) {}
+  constructor(
+    private readonly oauthService: OAuthService,
+    private readonly sessionService: SessionService,
+    private readonly configService: ConfigService,
+  ) {}
 
   /**
    * Handle OAuth callback
@@ -45,8 +51,21 @@ export class AuthOAuthController {
     try {
       const response: OAuthResponseDto = await this.oauthService.handleCallback(provider, code, state);
 
-      // Redirect to frontend with onboarding token
-      const frontendUrl = this.getFrontendRedirectUrl(response);
+      // Determine session type based on onboarding status
+      const isFullyOnboarded = response.user.onboardingStep === OnboardingStepValues.COMPLETE;
+      const sessionType = isFullyOnboarded ? SessionTypeValues.CLOUD : SessionTypeValues.ONBOARDING;
+
+      // Create session with refresh token
+      const { accessToken, refreshToken, expiresIn } = await this.sessionService.createUnifiedSession(
+        response.user.id,
+        sessionType,
+      );
+
+      // Set refresh token cookie (use getter functions to ensure config is loaded)
+      res.setCookie(getRefreshCookieName(), refreshToken, getRefreshCookieOptionsFromConfig());
+
+      // Redirect to frontend with access token
+      const frontendUrl = this.getFrontendRedirectUrl(response, accessToken, expiresIn);
       res.redirect(frontendUrl, 302);
     } catch (error) {
       this.logger.error('OAuth callback error', error);
@@ -107,7 +126,7 @@ export class AuthOAuthController {
   private validateProvider(providerStr: string): OAuthProviderType {
     const upperProvider = providerStr.toUpperCase();
 
-    if (!Object.values(OAuthProviderTypeValues).includes(upperProvider as any)) {
+    if (!Object.values(OAuthProviderTypeValues).includes(upperProvider as OAuthProviderType)) {
       throw new BadRequestException(
         'provider',
         `Invalid OAuth provider: ${providerStr}`,
@@ -121,10 +140,11 @@ export class AuthOAuthController {
   /**
    * Get frontend redirect URL after successful OAuth
    */
-  private getFrontendRedirectUrl(response: OAuthResponseDto): string {
-    const baseUrl = 'http://cloud.localhost:3001'; // TODO: Get from config
+  private getFrontendRedirectUrl(response: OAuthResponseDto, accessToken: string, expiresIn: number): string {
+    const baseUrl = this.configService.get<string>('FRONTEND_BASE_URL', 'http://cloud.localhost:3012');
     const params = new URLSearchParams({
-      token: response.onboardingToken,
+      token: accessToken,
+      expiresIn: String(expiresIn),
       isNewUser: String(response.isNewUser),
       requiresPassword: String(response.requiresPasswordSetup),
       step: response.user.onboardingStep,
@@ -137,7 +157,7 @@ export class AuthOAuthController {
    * Get frontend error URL
    */
   private getFrontendErrorUrl(errorMessage: string): string {
-    const baseUrl = 'http://localhost:5173'; // TODO: Get from config
+    const baseUrl = this.configService.get<string>('FRONTEND_BASE_URL', 'http://cloud.localhost:3012');
     const params = new URLSearchParams({
       error: errorMessage,
     });

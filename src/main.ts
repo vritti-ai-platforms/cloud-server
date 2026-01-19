@@ -22,6 +22,8 @@ async function bootstrap() {
       refreshCookieName: process.env.REFRESH_COOKIE_NAME ?? 'vritti_refresh',
       refreshCookieSecure: process.env.NODE_ENV === 'production',
       refreshCookieMaxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+      refreshCookieSameSite: 'strict', // Required for OAuth redirects (strict breaks cross-origin redirects)
+      refreshCookieDomain: 'cloud.local.vrittiai.com', // Set to cloud.local.vrittiai.com for local development
     },
     jwt: {
       validateTokenBinding: true,
@@ -120,7 +122,10 @@ async function bootstrap() {
     origin: [
       'http://localhost:5173', // Host app
       'http://localhost:3001', // Auth MF
+      'http://localhost:3012', // Host app main port
       'http://localhost:5174', // Other possible ports
+      'http://local.vrittiai.com:3012', // local.vrittiai.com main port
+      'http://cloud.local.vrittiai.com:3012', // Cloud subdomain main port
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
