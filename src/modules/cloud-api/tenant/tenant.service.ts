@@ -3,8 +3,8 @@ import { BadRequestException, ConflictException, NotFoundException } from '@vrit
 import type { CreateTenantDto } from './dto/create-tenant.dto';
 import { TenantResponseDto } from './dto/tenant-response.dto';
 import type { UpdateTenantDto } from './dto/update-tenant.dto';
-import { TenantDatabaseConfigService } from './tenant-database-config.service';
 import { TenantRepository } from './tenant.repository';
+import { TenantDatabaseConfigService } from './tenant-database-config.service';
 
 @Injectable()
 export class TenantService {

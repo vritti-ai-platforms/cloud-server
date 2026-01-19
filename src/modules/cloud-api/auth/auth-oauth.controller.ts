@@ -1,7 +1,7 @@
-import { type OAuthProviderType, OAuthProviderTypeValues } from '@/db/schema';
 import { Controller, Get, Logger, Param, Query, Redirect, Request, Res } from '@nestjs/common';
 import { BadRequestException, Onboarding, Public } from '@vritti/api-sdk';
 import type { FastifyReply } from 'fastify';
+import { type OAuthProviderType, OAuthProviderTypeValues } from '@/db/schema';
 import type { OAuthResponseDto } from './oauth/dto/oauth-response.dto';
 import { OAuthService } from './oauth/services/oauth.service';
 

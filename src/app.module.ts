@@ -1,7 +1,7 @@
-import * as schema from '@/db/schema';
-import { relations } from '@/db/schema';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import * as schema from '@/db/schema';
+import { relations } from '@/db/schema';
 
 import './db/schema.registry';
 
