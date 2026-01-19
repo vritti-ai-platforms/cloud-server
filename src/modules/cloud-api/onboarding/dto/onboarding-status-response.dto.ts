@@ -31,7 +31,7 @@ export class OnboardingStatusResponseDto {
   /**
    * Create from User model
    */
-  static fromUser(user: User, onboardingToken?: string, isNewUser: boolean = false): OnboardingStatusResponseDto {
+  static fromUser(user: User, isNewUser: boolean = false): OnboardingStatusResponseDto {
     // Determine signup method: 'oauth' if no password hash, 'email' otherwise
     const signupMethod: 'email' | 'oauth' = user.passwordHash === null ? 'oauth' : 'email';
 
@@ -45,7 +45,6 @@ export class OnboardingStatusResponseDto {
       accountStatus: user.accountStatus,
       emailVerified: user.emailVerified,
       phoneVerified: user.phoneVerified,
-      onboardingToken,
       isNewUser,
       signupMethod,
     });

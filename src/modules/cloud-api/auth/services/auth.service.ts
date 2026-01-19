@@ -225,14 +225,9 @@ export class AuthService {
       }
     }
 
-    // Generate onboarding token
-    const onboardingToken = this.generateOnboardingToken(user.id);
-
-    // OTP sending removed - now handled by POST /onboarding/start endpoint
-
     this.logger.log(`Resuming onboarding for user: ${user.email} (${user.id})`);
 
-    return OnboardingStatusResponseDto.fromUser(user, onboardingToken, false);
+    return OnboardingStatusResponseDto.fromUser(user, false);
   }
 
   /**
@@ -255,13 +250,12 @@ export class AuthService {
     // OTP sending removed - now handled by POST /onboarding/start endpoint
 
     // Generate onboarding token
-    const onboardingToken = this.generateOnboardingToken(userResponse.id);
 
     this.logger.log(`Created new user and started onboarding: ${userResponse.email} (${userResponse.id})`);
 
     // Get fresh user data to return
     const user = await this.userService.findByEmail(dto.email);
-    return OnboardingStatusResponseDto.fromUser(user!, onboardingToken, true);
+    return OnboardingStatusResponseDto.fromUser(user!, true);
   }
 
   /**
