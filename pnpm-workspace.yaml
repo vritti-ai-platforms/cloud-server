@@ -6,5 +6,5 @@ onlyBuiltDependencies:
   - esbuild
   - unrs-resolver
 
-overrides:
-  '@vritti/api-sdk': link:../api-sdk
+# overrides:
+#   '@vritti/api-sdk': link:../api-sdk
