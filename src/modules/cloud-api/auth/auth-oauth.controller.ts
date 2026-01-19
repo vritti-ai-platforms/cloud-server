@@ -1,7 +1,7 @@
+import { type OAuthProviderType, OAuthProviderTypeValues } from '@/db/schema';
 import { Controller, Get, Logger, Param, Query, Redirect, Request, Res } from '@nestjs/common';
 import { BadRequestException, Onboarding, Public } from '@vritti/api-sdk';
 import type { FastifyReply } from 'fastify';
-import { type OAuthProviderType, OAuthProviderTypeValues } from '@/db/schema';
 import type { OAuthResponseDto } from './oauth/dto/oauth-response.dto';
 import { OAuthService } from './oauth/services/oauth.service';
 
@@ -16,46 +16,12 @@ export class AuthOAuthController {
   constructor(private readonly oauthService: OAuthService) {}
 
   /**
-   * Initiate OAuth flow
-   * GET /auth/oauth/:provider
-   * Public endpoint - redirects to OAuth provider
-   */
-  @Get(':provider')
-  @Public()
-  @Redirect()
-  async initiateOAuth(@Param('provider') providerStr: string): Promise<{ url: string }> {
-    const provider = this.validateProvider(providerStr);
-
-    this.logger.log(`Initiating OAuth flow for provider: ${provider}`);
-
-    const { url } = await this.oauthService.initiateOAuth(provider);
-
-    return { url };
-  }
-
-  /**
-   * Link OAuth provider to existing user
-   * GET /auth/oauth/:provider/link
-   * Requires onboarding token - user must be authenticated
-   */
-  @Get(':provider/link')
-  @Onboarding()
-  @Redirect()
-  async linkOAuthProvider(@Param('provider') providerStr: string, @Request() req): Promise<{ url: string }> {
-    const provider = this.validateProvider(providerStr);
-    const userId = req.user.id;
-
-    this.logger.log(`Linking OAuth provider: ${provider} for user: ${userId}`);
-
-    const { url } = await this.oauthService.initiateOAuth(provider, userId);
-
-    return { url };
-  }
-
-  /**
    * Handle OAuth callback
    * GET /auth/oauth/:provider/callback
    * Public endpoint - receives authorization code from provider
+   *
+   * NOTE: This route MUST be defined BEFORE the generic :provider route
+   * to ensure NestJS matches it correctly (routes are matched in definition order)
    */
   @Get(':provider/callback')
   @Public()
@@ -89,6 +55,50 @@ export class AuthOAuthController {
       const errorUrl = this.getFrontendErrorUrl(error.message);
       res.redirect(errorUrl, 302);
     }
+  }
+
+  /**
+   * Link OAuth provider to existing user
+   * GET /auth/oauth/:provider/link
+   * Requires onboarding token - user must be authenticated
+   *
+   * NOTE: This route MUST be defined BEFORE the generic :provider route
+   */
+  @Get(':provider/link')
+  @Onboarding()
+  @Redirect()
+  async linkOAuthProvider(@Param('provider') providerStr: string, @Request() req): Promise<{ url: string }> {
+    const provider = this.validateProvider(providerStr);
+    const userId = req.user.id;
+
+    this.logger.log(`Linking OAuth provider: ${provider} for user: ${userId}`);
+
+    const { url } = await this.oauthService.initiateOAuth(provider, userId);
+
+    return { url };
+  }
+
+  /**
+   * Initiate OAuth flow
+   * GET /auth/oauth/:provider
+   * Public endpoint - redirects to OAuth provider
+   *
+   * NOTE: This generic route MUST be defined LAST because NestJS matches routes
+   * in definition order. If this were first, it would match all requests
+   * (including /callback and /link) before more specific routes are checked.
+   */
+  @Get(':provider')
+  @Public()
+  @Redirect()
+  async initiateOAuth(@Param('provider') providerStr: string): Promise<{ url: string }> {
+    const provider = this.validateProvider(providerStr);
+
+    this.logger.log(`Initiating OAuth flow for provider: ${provider}`);
+
+    const { url } = await this.oauthService.initiateOAuth(provider);
+    this.logger.log(`Redirecting to URL: ${url}`);
+
+    return { url };
   }
 
   /**

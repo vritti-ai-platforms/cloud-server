@@ -1,7 +1,7 @@
-import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
 import * as schema from '@/db/schema';
 import { relations } from '@/db/schema';
+import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 
 import './db/schema.registry';
 
@@ -11,7 +11,10 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { validate } from './config/env.validation';
 import { CsrfController } from './csrf.controller';
-import { CloudApiModule } from './modules/cloud-api/cloud-api.module';
+import { AuthModule } from './modules/cloud-api/auth/auth.module';
+import { OnboardingModule } from './modules/cloud-api/onboarding/onboarding.module';
+import { TenantModule } from './modules/cloud-api/tenant/tenant.module';
+import { UserModule } from './modules/cloud-api/user/user.module';
 
 @Module({
   imports: [
@@ -83,11 +86,16 @@ import { CloudApiModule } from './modules/cloud-api/cloud-api.module';
     // Authentication module (Global guard + JWT)
     // Must be imported after DatabaseModule since VrittiAuthGuard depends on its services
     AuthConfigModule.forRootAsync(),
-    CloudApiModule,
+    // Cloud API modules
+    TenantModule,
+    UserModule,
+    OnboardingModule,
+    AuthModule,
+    // Cloud API routes with 'cloud-api' prefix
     RouterModule.register([
       {
         path: 'cloud-api',
-        module: CloudApiModule,
+        children: [TenantModule, UserModule, OnboardingModule, AuthModule],
       },
     ]),
   ],
