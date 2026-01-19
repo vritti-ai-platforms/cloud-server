@@ -1,23 +1,11 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Logger, Post, Request } from '@nestjs/common';
-import { Onboarding } from '@vritti/api-sdk';
-import type { FastifyRequest } from 'fastify';
+import { Body, Controller, Get, HttpCode, HttpStatus, Logger, Post } from '@nestjs/common';
+import { Onboarding, UserId } from '@vritti/api-sdk';
 import type { OnboardingStatusResponseDto } from '../dto/onboarding-status-response.dto';
 import type { SetPasswordDto } from '../dto/set-password.dto';
 import type { StartOnboardingResponseDto } from '../dto/start-onboarding-response.dto';
 import type { VerifyEmailDto } from '../dto/verify-email.dto';
 import { EmailVerificationService } from '../services/email-verification.service';
 import { OnboardingService } from '../services/onboarding.service';
-
-/**
- * Authenticated request interface with user information
- */
-interface AuthenticatedRequest extends FastifyRequest {
-  user: {
-    id: string;
-    email: string;
-    type: string;
-  };
-}
 
 /**
  * Onboarding Controller
@@ -41,10 +29,9 @@ export class OnboardingController {
   @Onboarding()
   @HttpCode(HttpStatus.OK)
   async verifyEmail(
-    @Request() req: AuthenticatedRequest,
+    @UserId() userId: string,
     @Body() verifyEmailDto: VerifyEmailDto,
   ): Promise<{ success: boolean; message: string }> {
-    const userId: string = req.user.id;
     this.logger.log(`POST /onboarding/verify-email - User: ${userId}`);
 
     await this.emailVerificationService.verifyOtp(userId, verifyEmailDto.otp);
@@ -63,8 +50,7 @@ export class OnboardingController {
   @Post('resend-email-otp')
   @Onboarding()
   @HttpCode(HttpStatus.OK)
-  async resendEmailOtp(@Request() req: AuthenticatedRequest): Promise<{ success: boolean; message: string }> {
-    const userId: string = req.user.id;
+  async resendEmailOtp(@UserId() userId: string): Promise<{ success: boolean; message: string }> {
     this.logger.log(`POST /onboarding/resend-email-otp - User: ${userId}`);
 
     await this.emailVerificationService.resendOtp(userId);
@@ -82,8 +68,7 @@ export class OnboardingController {
    */
   @Get('status')
   @Onboarding()
-  async getStatus(@Request() req: AuthenticatedRequest): Promise<OnboardingStatusResponseDto> {
-    const userId: string = req.user.id;
+  async getStatus(@UserId() userId: string): Promise<OnboardingStatusResponseDto> {
     this.logger.log(`GET /onboarding/status - User: ${userId}`);
 
     return await this.onboardingService.getStatus(userId);
@@ -98,8 +83,7 @@ export class OnboardingController {
   @Post('start')
   @Onboarding()
   @HttpCode(HttpStatus.OK)
-  async startOnboarding(@Request() req: AuthenticatedRequest): Promise<StartOnboardingResponseDto> {
-    const userId: string = req.user.id;
+  async startOnboarding(@UserId() userId: string): Promise<StartOnboardingResponseDto> {
     this.logger.log(`POST /onboarding/start - User: ${userId}`);
 
     return await this.onboardingService.startOnboarding(userId);
@@ -114,10 +98,9 @@ export class OnboardingController {
   @Onboarding()
   @HttpCode(HttpStatus.OK)
   async setPassword(
-    @Request() req: AuthenticatedRequest,
+    @UserId() userId: string,
     @Body() setPasswordDto: SetPasswordDto,
   ): Promise<{ success: boolean; message: string }> {
-    const userId: string = req.user.id;
     const password: string = setPasswordDto.password;
     this.logger.log(`POST /onboarding/set-password - User: ${userId}`);
 

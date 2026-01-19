@@ -12,7 +12,7 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
-import { Public, UnauthorizedException } from '@vritti/api-sdk';
+import { Public, UnauthorizedException, UserId } from '@vritti/api-sdk';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { SessionTypeValues, type User } from '@/db/schema';
 import type { OnboardingStatusResponseDto } from '../onboarding/dto/onboarding-status-response.dto';
@@ -197,11 +197,9 @@ export class AuthController {
   @Post('logout-all')
   @UseGuards(JwtAuthGuard)
   async logoutAll(
-    @Req() request: AuthenticatedRequest,
+    @UserId() userId: string,
     @Res({ passthrough: true }) reply: FastifyReply,
   ): Promise<{ message: string }> {
-    const userId = request.user.id; // Set by JwtAuthGuard
-
     const count = await this.authService.logoutAll(userId);
 
     // Clear refresh token cookie
