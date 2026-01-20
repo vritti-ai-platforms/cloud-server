@@ -10,7 +10,6 @@ import {
   Post,
   Req,
   Res,
-  UseGuards,
 } from '@nestjs/common';
 import { Public, UnauthorizedException, UserId } from '@vritti/api-sdk';
 import type { FastifyReply, FastifyRequest } from 'fastify';
@@ -19,11 +18,10 @@ import type { OnboardingStatusResponseDto } from '../onboarding/dto/onboarding-s
 import type { AuthResponseDto } from './dto/auth-response.dto';
 import type { LoginDto } from './dto/login.dto';
 import type { SignupDto } from './dto/signup.dto';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { AuthService } from './services/auth.service';
 import { getRefreshCookieName, getRefreshCookieOptionsFromConfig, SessionService } from './services/session.service';
 
-/** Request with authenticated user from JwtAuthGuard */
+/** Request with authenticated user from VrittiAuthGuard */
 interface AuthenticatedRequest extends FastifyRequest {
   user: User;
 }
@@ -166,11 +164,10 @@ export class AuthController {
   /**
    * Logout from current device
    * POST /auth/logout
-   * Requires: JWT access token
+   * Requires: JWT access token (protected by VrittiAuthGuard)
    * Invalidates session and clears refresh token cookie
    */
   @Post('logout')
-  @UseGuards(JwtAuthGuard)
   async logout(
     @Req() request: FastifyRequest,
     @Res({ passthrough: true }) reply: FastifyReply,
@@ -191,11 +188,10 @@ export class AuthController {
   /**
    * Logout from all devices
    * POST /auth/logout-all
-   * Requires: JWT access token
+   * Requires: JWT access token (protected by VrittiAuthGuard)
    * Invalidates all sessions and clears refresh token cookie
    */
   @Post('logout-all')
-  @UseGuards(JwtAuthGuard)
   async logoutAll(
     @UserId() userId: string,
     @Res({ passthrough: true }) reply: FastifyReply,
@@ -213,11 +209,10 @@ export class AuthController {
   /**
    * Get current user info
    * GET /auth/me
-   * Requires: JWT access token
+   * Requires: JWT access token (protected by VrittiAuthGuard)
    */
   @Get('me')
-  @UseGuards(JwtAuthGuard)
   async getCurrentUser(@Req() request: AuthenticatedRequest): Promise<User> {
-    return request.user; // User info set by JwtAuthGuard
+    return request.user; // User info set by VrittiAuthGuard
   }
 }

@@ -1,15 +1,12 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
-import { PassportModule } from '@nestjs/passport';
 import { jwtConfigFactory } from '../../../config/jwt.config';
 import { ServicesModule } from '../../../services';
 import { OnboardingModule } from '../onboarding/onboarding.module';
 import { UserModule } from '../user/user.module';
 import { AuthController } from './auth.controller';
 import { AuthOAuthController } from './auth-oauth.controller';
-import { AccountStatusGuard } from './guards/account-status.guard';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { AppleOAuthProvider } from './oauth/apple-oauth.provider';
 import { FacebookOAuthProvider } from './oauth/facebook-oauth.provider';
 import { GoogleOAuthProvider } from './oauth/google-oauth.provider';
@@ -24,7 +21,6 @@ import { SessionRepository } from './repositories/session.repository';
 import { AuthService } from './services/auth.service';
 import { JwtAuthService } from './services/jwt.service';
 import { SessionService } from './services/session.service';
-import { JwtStrategy } from './strategies/jwt.strategy';
 
 /**
  * Auth Module
@@ -32,7 +28,6 @@ import { JwtStrategy } from './strategies/jwt.strategy';
  */
 @Module({
   imports: [
-    PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       inject: [ConfigService],
       useFactory: jwtConfigFactory,
@@ -47,9 +42,6 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     JwtAuthService,
     SessionService,
     SessionRepository,
-    JwtStrategy,
-    JwtAuthGuard,
-    AccountStatusGuard,
     // OAuth providers
     OAuthService,
     OAuthStateService,
@@ -61,6 +53,6 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     FacebookOAuthProvider,
     TwitterOAuthProvider,
   ],
-  exports: [AuthService, JwtAuthService, SessionService, JwtAuthGuard, AccountStatusGuard],
+  exports: [AuthService, JwtAuthService, SessionService],
 })
 export class AuthModule {}
