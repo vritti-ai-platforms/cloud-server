@@ -33,7 +33,11 @@ export class EmailVerificationRepository extends PrimaryBaseRepository<typeof em
       })
       .where(eq(emailVerifications.id, id))
       .returning()) as EmailVerification[];
-    return results[0]!;
+    const result = results[0];
+    if (!result) {
+      throw new Error(`Failed to increment attempts: email verification ${id} not found`);
+    }
+    return result;
   }
 
   /**
@@ -50,9 +54,11 @@ export class EmailVerificationRepository extends PrimaryBaseRepository<typeof em
    * Delete expired email verifications
    */
   async deleteExpired(): Promise<number> {
-    const result = await this.deleteMany(
-      and(lt(emailVerifications.expiresAt, new Date()), eq(emailVerifications.isVerified, false))!,
-    );
+    const condition = and(lt(emailVerifications.expiresAt, new Date()), eq(emailVerifications.isVerified, false));
+    if (!condition) {
+      return 0;
+    }
+    const result = await this.deleteMany(condition);
     return result.count;
   }
 }

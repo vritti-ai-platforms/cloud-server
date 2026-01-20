@@ -407,9 +407,10 @@ export class SessionService {
     });
 
     if (sessionList.length > 0) {
-      await this.sessionRepository.deleteMany(
-        and(eq(sessions.userId, userId), eq(sessions.type, SessionTypeValues.ONBOARDING))!,
-      );
+      const condition = and(eq(sessions.userId, userId), eq(sessions.type, SessionTypeValues.ONBOARDING));
+      if (condition) {
+        await this.sessionRepository.deleteMany(condition);
+      }
 
       this.logger.log(`Deleted ${sessionList.length} onboarding sessions for user: ${userId}`);
     }

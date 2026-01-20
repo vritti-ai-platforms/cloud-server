@@ -129,11 +129,17 @@ export class AuthService {
     const payload = this.jwtService.verifyRefreshToken(refreshToken);
 
     // Get user
-    const _user = await this.userService.findByEmail(''); // We need user by ID
     const userResponse = await this.userService.findById(payload.userId);
 
     // Get fresh user data
     const freshUser = await this.userService.findByEmail(userResponse.email);
+
+    if (!freshUser) {
+      throw new UnauthorizedException(
+        'User not found',
+        'Your account could not be found. Please log in again.',
+      );
+    }
 
     this.logger.log(`Token refreshed for user: ${payload.userId}`);
 
@@ -142,7 +148,7 @@ export class AuthService {
       refreshToken: tokens.refreshToken,
       tokenType: 'Bearer',
       expiresIn: this.jwtService.getAccessTokenExpiryInSeconds(),
-      user: UserResponseDto.from(freshUser!),
+      user: UserResponseDto.from(freshUser),
     });
   }
 
@@ -255,7 +261,13 @@ export class AuthService {
 
     // Get fresh user data to return
     const user = await this.userService.findByEmail(dto.email);
-    return OnboardingStatusResponseDto.fromUser(user!, true);
+    if (!user) {
+      throw new BadRequestException(
+        'User creation failed',
+        'Failed to create user account. Please try again.',
+      );
+    }
+    return OnboardingStatusResponseDto.fromUser(user, true);
   }
 
   /**

@@ -26,7 +26,14 @@ export class OnboardingService {
     // Convert UserResponseDto back to User-like object for fromUser method
     const user = await this.userService.findByEmail(userResponse.email);
 
-    return OnboardingStatusResponseDto.fromUser(user!);
+    if (!user) {
+      throw new BadRequestException(
+        'User not found',
+        "We couldn't find your account. Please check your information or register.",
+      );
+    }
+
+    return OnboardingStatusResponseDto.fromUser(user);
   }
 
   /**

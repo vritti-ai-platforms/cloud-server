@@ -37,12 +37,9 @@ export class TenantService {
 
     // Create database configuration if DEDICATED type
     if (createTenantDto.dbType === 'DEDICATED') {
+      const dbConfig = this.assertDedicatedDbConfig(createTenantDto);
       await this.configService.create(tenant.id, {
-        dbHost: createTenantDto.dbHost!,
-        dbPort: createTenantDto.dbPort!,
-        dbUsername: createTenantDto.dbUsername!,
-        dbPassword: createTenantDto.dbPassword!,
-        dbName: createTenantDto.dbName!,
+        ...dbConfig,
         dbSchema: createTenantDto.dbSchema,
         dbSslMode: createTenantDto.dbSslMode,
         connectionPoolSize: createTenantDto.connectionPoolSize,
@@ -148,12 +145,9 @@ export class TenantService {
         });
       } else if (tenant.dbType === 'DEDICATED') {
         // Create new config if tenant is DEDICATED and config doesn't exist
+        const dbConfig = this.assertDedicatedDbConfig({ dbHost, dbPort, dbUsername, dbPassword, dbName });
         await this.configService.create(id, {
-          dbHost: dbHost!,
-          dbPort: dbPort!,
-          dbUsername: dbUsername!,
-          dbPassword: dbPassword!,
-          dbName: dbName!,
+          ...dbConfig,
           dbSchema,
           dbSslMode,
           connectionPoolSize,
@@ -185,6 +179,32 @@ export class TenantService {
     this.logger.log(`Archived tenant: ${tenant.subdomain} (${tenant.id})`);
 
     return TenantResponseDto.from(tenant);
+  }
+
+  /**
+   * Assert that all required DEDICATED database config fields are present
+   */
+  private assertDedicatedDbConfig(dto: Partial<Pick<CreateTenantDto, 'dbHost' | 'dbPort' | 'dbUsername' | 'dbPassword' | 'dbName'>>): {
+    dbHost: string;
+    dbPort: number;
+    dbUsername: string;
+    dbPassword: string;
+    dbName: string;
+  } {
+    if (!dto.dbHost || !dto.dbPort || !dto.dbUsername || !dto.dbPassword || !dto.dbName) {
+      throw new BadRequestException(
+        'dbHost',
+        'Complete database configuration is required for DEDICATED type',
+        'Please provide all database connection details.',
+      );
+    }
+    return {
+      dbHost: dto.dbHost,
+      dbPort: dto.dbPort,
+      dbUsername: dto.dbUsername,
+      dbPassword: dto.dbPassword,
+      dbName: dto.dbName,
+    };
   }
 
   /**

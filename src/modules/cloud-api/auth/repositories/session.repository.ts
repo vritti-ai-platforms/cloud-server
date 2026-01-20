@@ -33,7 +33,11 @@ export class SessionRepository extends PrimaryBaseRepository<typeof sessions> {
    * Invalidate all sessions for a user
    */
   async invalidateAllByUserId(userId: string): Promise<number> {
-    const result = await this.updateMany(and(eq(sessions.userId, userId), eq(sessions.isActive, true))!, {
+    const condition = and(eq(sessions.userId, userId), eq(sessions.isActive, true));
+    if (!condition) {
+      return 0;
+    }
+    const result = await this.updateMany(condition, {
       isActive: false,
     });
     return result.count;
