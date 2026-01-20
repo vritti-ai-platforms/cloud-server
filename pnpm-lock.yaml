@@ -56,6 +56,9 @@ importers:
       fastify:
         specifier: 5.6.2
         version: 5.6.2
+      fastify-raw-body:
+        specifier: ^5.0.0
+        version: 5.0.0
       nodemailer:
         specifier: ^7.0.10
         version: 7.0.12
@@ -3711,6 +3714,10 @@ packages:
   fastify-plugin@5.1.0:
     resolution: {integrity: sha512-FAIDA8eovSt5qcDgcBvDuX/v0Cjz0ohGhENZ/wpc3y+oZCY2afZ9Baqql3g/lC+OHRnciQol4ww7tuthOb9idw==}
 
+  fastify-raw-body@5.0.0:
+    resolution: {integrity: sha512-2qfoaQ3BQDhZ1gtbkKZd6n0kKxJISJGM6u/skD9ljdWItAscjXrtZ1lnjr7PavmXX9j4EyCPmBDiIsLn07d5vA==}
+    engines: {node: '>= 10'}
+
   fastify@5.6.2:
     resolution: {integrity: sha512-dPugdGnsvYkBlENLhCgX8yhyGCsCPrpA8lFWbTNU428l+YOnLgYHR69hzV8HWPC79n536EqzqQtvhtdaCE0dKg==}
 
@@ -5166,6 +5173,9 @@ packages:
   schema-utils@4.3.3:
     resolution: {integrity: sha512-eflK8wEtyOE6+hsaRVPxvUKYCpRgzLqDTb8krvAsRIwOGlHoSgYLgBXoubGgLd2fT41/OUYdb48v4k4WWHQurA==}
     engines: {node: '>= 10.13.0'}
+
+  secure-json-parse@2.7.0:
+    resolution: {integrity: sha512-6aU+Rwsezw7VR8/nyvKTx8QpWH9FrcYiXXlqC4z5d5XQBDRqtbfsRjnwGyqbi3gddNtWHuEk9OANUotL26qKUw==}
 
   secure-json-parse@4.1.0:
     resolution: {integrity: sha512-l4KnYfEyqYJxDwlNVyRfO2E4NTHfMKAWdUuA8J0yve2Dz/E/PdBepY03RvyJpssIpRFwJoCD55wA+mEDs6ByWA==}
@@ -10151,6 +10161,12 @@ snapshots:
 
   fastify-plugin@5.1.0: {}
 
+  fastify-raw-body@5.0.0:
+    dependencies:
+      fastify-plugin: 5.1.0
+      raw-body: 3.0.2
+      secure-json-parse: 2.7.0
+
   fastify@5.6.2:
     dependencies:
       '@fastify/ajv-compiler': 4.0.5
@@ -11760,6 +11776,8 @@ snapshots:
       ajv: 8.17.1
       ajv-formats: 2.1.1(ajv@8.17.1)
       ajv-keywords: 5.1.0(ajv@8.17.1)
+
+  secure-json-parse@2.7.0: {}
 
   secure-json-parse@4.1.0: {}
 

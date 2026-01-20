@@ -1,5 +1,6 @@
 import fastifyCookie from '@fastify/cookie';
 import fastifyCsrfProtection from '@fastify/csrf-protection';
+import fastifyRawBody from 'fastify-raw-body';
 import { BadRequestException, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
@@ -64,6 +65,14 @@ async function bootstrap() {
   // Register cookie support
   await app.register(fastifyCookie, {
     secret: configService.getOrThrow<string>('COOKIE_SECRET'),
+  });
+
+  // Register raw body plugin for webhook signature validation
+  await app.register(fastifyRawBody, {
+    field: 'rawBody',
+    global: false, // Only add rawBody where needed
+    encoding: 'utf8',
+    runFirst: true, // Run before other hooks
   });
 
   // Register CSRF protection
