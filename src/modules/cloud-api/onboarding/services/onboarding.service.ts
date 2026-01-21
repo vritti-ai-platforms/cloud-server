@@ -19,21 +19,15 @@ export class OnboardingService {
 
   /**
    * Get current onboarding status for a user
+   *
+   * Optimized: Uses single DB query - findById returns UserResponseDto with all required fields
+   * (id, email, firstName, lastName, onboardingStep, accountStatus, emailVerified, phoneVerified, hasPassword)
+   * Note: findById throws NotFoundException if user doesn't exist, so no explicit null check needed
    */
   async getStatus(userId: string): Promise<OnboardingStatusResponseDto> {
     const userResponse = await this.userService.findById(userId);
 
-    // Convert UserResponseDto back to User-like object for fromUser method
-    const user = await this.userService.findByEmail(userResponse.email);
-
-    if (!user) {
-      throw new BadRequestException(
-        'User not found',
-        "We couldn't find your account. Please check your information or register.",
-      );
-    }
-
-    return OnboardingStatusResponseDto.fromUser(user);
+    return OnboardingStatusResponseDto.fromUserResponseDto(userResponse);
   }
 
   /**
@@ -59,8 +53,8 @@ export class OnboardingService {
     }
 
     // Verify user doesn't already have a password
-    const fullUser = await this.userService.findByEmail(user.email);
-    if (fullUser?.passwordHash) {
+    // Uses hasPassword field from UserResponseDto (computed from passwordHash !== null)
+    if (user.hasPassword) {
       throw new BadRequestException(
         'User already has a password',
         'Your account already has a password set. Please use the forgot password feature if you need to change it.',
@@ -83,17 +77,13 @@ export class OnboardingService {
   /**
    * Start onboarding process - sends OTP based on current step
    * Called when user clicks "Start Onboarding" or "Resume Onboarding" button
+   *
+   * Optimized: Uses single DB query - UserResponseDto contains all required fields
+   * (id, email, emailVerified, onboardingStep, firstName)
    */
   async startOnboarding(userId: string): Promise<StartOnboardingResponseDto> {
-    const userResponse = await this.userService.findById(userId);
-    const user = await this.userService.findByEmail(userResponse.email);
-
-    if (!user) {
-      throw new BadRequestException(
-        'User not found',
-        "We couldn't find your account. Please check your information or register.",
-      );
-    }
+    // Single DB query - findById throws NotFoundException if user doesn't exist
+    const user = await this.userService.findById(userId);
 
     let otpSentTo: 'email' | 'phone' | null = null;
     let otpDestination: string | undefined;
@@ -102,7 +92,12 @@ export class OnboardingService {
     switch (user.onboardingStep) {
       case OnboardingStepValues.EMAIL_VERIFICATION:
         if (!user.emailVerified) {
-          await this.emailVerificationService.sendVerificationOtp(user.id, user.email);
+          // Pass firstName to avoid redundant DB query in sendVerificationOtp
+          await this.emailVerificationService.sendVerificationOtp(
+            user.id,
+            user.email,
+            user.firstName,
+          );
           otpSentTo = 'email';
           otpDestination = this.maskEmail(user.email);
           message = 'Verification code sent to your email';

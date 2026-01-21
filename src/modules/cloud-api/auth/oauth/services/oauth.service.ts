@@ -4,6 +4,26 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { BadRequestException, ConflictException, UnauthorizedException } from '@vritti/api-sdk';
 import { type OAuthProviderType, OAuthProviderTypeValues, OnboardingStepValues, type User } from '@/db/schema';
+
+/**
+ * Validates and converts a provider string to OAuthProviderType
+ * @param providerStr - The raw provider string from the request
+ * @returns The validated OAuthProviderType
+ * @throws BadRequestException if provider is invalid
+ */
+function validateProviderString(providerStr: string): OAuthProviderType {
+  const upperProvider = providerStr.toUpperCase();
+
+  if (!Object.values(OAuthProviderTypeValues).includes(upperProvider as OAuthProviderType)) {
+    throw new BadRequestException(
+      'provider',
+      `Invalid OAuth provider: ${providerStr}`,
+      'The selected login method is not supported. Please choose a different option.',
+    );
+  }
+
+  return upperProvider as OAuthProviderType;
+}
 import { getTokenExpiry, TokenType } from '../../../../../config/jwt.config';
 import { UserRepository } from '../../../user/user.repository';
 import { UserService } from '../../../user/user.service';
@@ -58,11 +78,12 @@ export class OAuthService {
 
   /**
    * Initiate OAuth flow
-   * @param provider - OAuth provider type
+   * @param providerStr - OAuth provider string (will be validated)
    * @param userId - Optional user ID (for linking OAuth to existing user)
    * @returns Authorization URL and state token
    */
-  async initiateOAuth(provider: OAuthProviderType, userId?: string): Promise<{ url: string; state: string }> {
+  async initiateOAuth(providerStr: string, userId?: string): Promise<{ url: string; state: string }> {
+    const provider = validateProviderString(providerStr);
     const oauthProvider = this.getProvider(provider);
 
     // Generate PKCE code verifier and challenge
@@ -82,12 +103,14 @@ export class OAuthService {
 
   /**
    * Handle OAuth callback
-   * @param provider - OAuth provider type
+   * @param providerStr - OAuth provider string (will be validated)
    * @param code - Authorization code from provider
    * @param state - State token from OAuth flow
    * @returns OAuth response with onboarding token
    */
-  async handleCallback(provider: OAuthProviderType, code: string, state: string): Promise<OAuthResponseDto> {
+  async handleCallback(providerStr: string, code: string, state: string): Promise<OAuthResponseDto> {
+    const provider = validateProviderString(providerStr);
+
     // Validate and consume state token
     const stateData = await this.oauthStateService.validateAndConsumeState(state);
 
@@ -146,7 +169,7 @@ export class OAuthService {
 
     if (existingUser) {
       // Check if onboarding is complete
-      if (existingUser.onboardingComplete) {
+      if (existingUser.onboardingStep === OnboardingStepValues.COMPLETE) {
         throw new ConflictException(
           'email',
           'User already exists with this email. Please login with password.',

@@ -19,21 +19,19 @@ export class TenantService {
    * Create a new tenant
    */
   async create(createTenantDto: CreateTenantDto): Promise<TenantResponseDto> {
-    // Validate subdomain uniqueness
-    const existingBySubdomain = await this.tenantRepository.findBySubdomain(createTenantDto.subdomain);
-    if (existingBySubdomain) {
-      throw new ConflictException(
-        'subdomain',
-        `Tenant with subdomain '${createTenantDto.subdomain}' already exists`,
-        'This subdomain is already taken. Please choose a different subdomain for your organization.',
-      );
-    }
-
     // Validate database configuration based on dbType
     this.validateDatabaseConfig(createTenantDto);
 
     // Create tenant (business data only)
-    const tenant = await this.tenantRepository.create(createTenantDto);
+    // Subdomain uniqueness is enforced by database constraint - no pre-check needed
+    // This approach is race-condition safe and more performant (1 query instead of 2)
+    let tenant;
+    try {
+      tenant = await this.tenantRepository.create(createTenantDto);
+    } catch (error) {
+      this.handleUniqueConstraintError(error, 'subdomain', createTenantDto.subdomain);
+      throw error;
+    }
 
     // Create database configuration if DEDICATED type
     if (createTenantDto.dbType === 'DEDICATED') {
@@ -96,7 +94,9 @@ export class TenantService {
    * Update tenant
    */
   async update(id: string, updateTenantDto: UpdateTenantDto): Promise<TenantResponseDto> {
-    // Check if tenant exists
+    // Check if tenant exists and get current data including config
+    // This single query provides both existence check AND config existence check,
+    // avoiding a separate configService.exists() call later
     const existing = await this.tenantRepository.findByIdWithConfig(id);
     if (!existing) {
       throw new NotFoundException(
@@ -105,31 +105,31 @@ export class TenantService {
       );
     }
 
-    // Validate subdomain uniqueness (if changing)
-    if (updateTenantDto.subdomain && updateTenantDto.subdomain !== existing.subdomain) {
-      const existingBySubdomain = await this.tenantRepository.findBySubdomain(updateTenantDto.subdomain);
-      if (existingBySubdomain) {
-        throw new ConflictException(
-          'subdomain',
-          `Tenant with subdomain '${updateTenantDto.subdomain}' already exists`,
-          'This subdomain is already taken. Please choose a different subdomain for your organization.',
-        );
-      }
-    }
-
     // Extract database config fields from update DTO
     const { dbHost, dbPort, dbUsername, dbPassword, dbName, dbSchema, dbSslMode, connectionPoolSize, ...tenantData } =
       updateTenantDto;
 
     // Update tenant (business data only)
-    const tenant = await this.tenantRepository.update(id, tenantData);
+    // Subdomain uniqueness is enforced by database constraint - no pre-check needed
+    // This approach is race-condition safe and more performant
+    let tenant;
+    try {
+      tenant = await this.tenantRepository.update(id, tenantData);
+    } catch (error) {
+      if (updateTenantDto.subdomain) {
+        this.handleUniqueConstraintError(error, 'subdomain', updateTenantDto.subdomain);
+      }
+      throw error;
+    }
 
     // Update database configuration if any DB fields are provided
     const hasDbConfigFields =
       dbHost || dbPort || dbUsername || dbPassword || dbName || dbSchema || dbSslMode || connectionPoolSize;
 
     if (hasDbConfigFields) {
-      const configExists = await this.configService.exists(id);
+      // Reuse databaseConfig from initial findByIdWithConfig query to check if config exists
+      // This eliminates a separate configService.exists() database call
+      const configExists = !!(existing as { databaseConfig?: unknown }).databaseConfig;
 
       if (configExists) {
         // Update existing config
@@ -157,24 +157,39 @@ export class TenantService {
 
     this.logger.log(`Updated tenant: ${tenant.subdomain} (${tenant.id})`);
 
-    // Return tenant with updated config
-    return this.findById(id);
+    // Fetch updated tenant with config for response
+    // Call findByIdWithConfig directly instead of going through findById method
+    // to get fresh data after updates (needed because tenant and config may have changed)
+    const updatedTenant = await this.tenantRepository.findByIdWithConfig(id);
+
+    // This should never happen since we just updated the tenant, but handle defensively
+    if (!updatedTenant) {
+      throw new NotFoundException(
+        `Tenant with ID '${id}' not found after update`,
+        'An unexpected error occurred while retrieving the updated organization.',
+      );
+    }
+
+    return TenantResponseDto.from(updatedTenant);
   }
 
   /**
    * Archive tenant (soft delete)
+   *
+   * Uses single DELETE query with RETURNING clause to both delete and retrieve the record.
+   * If no record exists, delete() returns undefined, which we handle by throwing NotFoundException.
+   * This eliminates the redundant SELECT query that was previously used for existence checking.
    */
   async archive(id: string): Promise<TenantResponseDto> {
-    // Check if tenant exists
-    const existing = await this.tenantRepository.findById(id);
-    if (!existing) {
+    const tenant = await this.tenantRepository.delete(id);
+
+    // If no tenant was deleted (record didn't exist), throw NotFoundException
+    if (!tenant) {
       throw new NotFoundException(
         `Tenant with ID '${id}' not found`,
         "We couldn't find the organization you're trying to archive. Please check the ID and try again.",
       );
     }
-
-    const tenant = await this.tenantRepository.delete(id);
 
     this.logger.log(`Archived tenant: ${tenant.subdomain} (${tenant.id})`);
 
@@ -229,6 +244,30 @@ export class TenantService {
           'Complete database connection details are required for dedicated database configuration. Please provide host, name, username, and password.',
         );
       }
+    }
+  }
+
+  /**
+   * Handle PostgreSQL unique constraint violation errors
+   * Converts database-level constraint errors to user-friendly ConflictException
+   *
+   * @param error - The error thrown by the database operation
+   * @param field - The field that has the unique constraint
+   * @param value - The value that caused the conflict
+   * @throws ConflictException if the error is a unique constraint violation
+   */
+  private handleUniqueConstraintError(error: unknown, field: string, value: string): void {
+    // PostgreSQL unique constraint violation error code is 23505
+    if (
+      error instanceof Error &&
+      'code' in error &&
+      (error as Error & { code: string }).code === '23505'
+    ) {
+      throw new ConflictException(
+        field,
+        `Tenant with ${field} '${value}' already exists`,
+        `This ${field} is already taken. Please choose a different ${field} for your organization.`,
+      );
     }
   }
 }

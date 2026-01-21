@@ -7,10 +7,8 @@ export const tenantStatusEnum = cloudSchema.enum('TenantStatus', ['ACTIVE', 'SUS
 // User account enums
 export const accountStatusEnum = cloudSchema.enum('AccountStatus', [
   'PENDING_VERIFICATION',
-  'PENDING_MOBILE',
   'ACTIVE',
-  'SUSPENDED',
-  'DEACTIVATED',
+  'INACTIVE',
 ]);
 
 export const onboardingStepEnum = cloudSchema.enum('OnboardingStep', [
@@ -62,10 +60,8 @@ export const TenantStatusValues = {
 
 export const AccountStatusValues = {
   PENDING_VERIFICATION: 'PENDING_VERIFICATION' as const,
-  PENDING_MOBILE: 'PENDING_MOBILE' as const,
   ACTIVE: 'ACTIVE' as const,
-  SUSPENDED: 'SUSPENDED' as const,
-  DEACTIVATED: 'DEACTIVATED' as const,
+  INACTIVE: 'INACTIVE' as const,
 };
 
 export const OnboardingStepValues = {

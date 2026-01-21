@@ -60,17 +60,10 @@ export class OtpService {
   /**
    * Validate OTP attempts and expiry
    * Throws BadRequestException if validation fails
+   *
+   * Note: isVerified check is handled at repository level (findLatestByUserId filters by isVerified: false)
    */
-  validateOtpAttempt(verification: { attempts: number; expiresAt: Date; isVerified: boolean }): void {
-    // Check if already verified
-    if (verification.isVerified) {
-      throw new BadRequestException(
-        'code',
-        'OTP already verified',
-        'This verification code has already been used. You can proceed to the next step.',
-      );
-    }
-
+  validateOtpAttempt(verification: { attempts: number; expiresAt: Date }): void {
     // Check if expired
     if (this.isOtpExpired(verification.expiresAt)) {
       throw new BadRequestException(

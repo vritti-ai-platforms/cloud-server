@@ -169,18 +169,14 @@ export class SessionService {
   }
 
   /**
-   * Refresh session - generates new accessToken and rotates refreshToken
-   * Called by POST /auth/refresh endpoint
+   * Get session by refresh token or throw UnauthorizedException
+   * Use this method when you need to throw an exception for invalid sessions
    *
-   * @param refreshToken - The current refresh token from cookie
-   * @returns New accessToken, new refreshToken, and expiresIn
-   * @throws UnauthorizedException if session is invalid
+   * @param refreshToken - The refresh token from cookie
+   * @returns Session if valid
+   * @throws UnauthorizedException if session is invalid or not found
    */
-  async refreshSession(refreshToken: string): Promise<{
-    accessToken: string;
-    refreshToken: string;
-    expiresIn: number;
-  }> {
+  async getSessionByRefreshTokenOrThrow(refreshToken: string): Promise<Session> {
     const session = await this.getSessionByRefreshToken(refreshToken);
 
     if (!session) {
@@ -189,6 +185,32 @@ export class SessionService {
         'Your session has expired or is invalid. Please log in again.',
       );
     }
+
+    return session;
+  }
+
+  /**
+   * Refresh session - generates new accessToken and rotates refreshToken
+   * Called by POST /auth/refresh endpoint
+   *
+   * @param refreshToken - The current refresh token from cookie (may be undefined if cookie is missing)
+   * @returns New accessToken, new refreshToken, and expiresIn
+   * @throws UnauthorizedException if refresh token is missing or session is invalid
+   */
+  async refreshSession(refreshToken: string | undefined): Promise<{
+    accessToken: string;
+    refreshToken: string;
+    expiresIn: number;
+  }> {
+    // Handle missing refresh token (no cookie present)
+    if (!refreshToken) {
+      throw new UnauthorizedException(
+        'No session found',
+        'No active session found. Please sign up or log in again.',
+      );
+    }
+
+    const session = await this.getSessionByRefreshTokenOrThrow(refreshToken);
 
     // Always rotate refresh token for security (generate FIRST for token binding)
     const newRefreshToken = this.jwtService.generateRefreshToken(session.userId);
@@ -231,22 +253,23 @@ export class SessionService {
    *
    * The new access token is bound to the existing refresh token.
    *
-   * @param refreshToken - The current refresh token from cookie
+   * @param refreshToken - The current refresh token from cookie (may be undefined if cookie is missing)
    * @returns New accessToken and expiresIn (same refresh token)
-   * @throws UnauthorizedException if session is invalid
+   * @throws UnauthorizedException if refresh token is missing or session is invalid
    */
-  async recoverSession(refreshToken: string): Promise<{
+  async recoverSession(refreshToken: string | undefined): Promise<{
     accessToken: string;
     expiresIn: number;
   }> {
-    const session = await this.getSessionByRefreshToken(refreshToken);
-
-    if (!session) {
+    // Handle missing refresh token (no cookie present)
+    if (!refreshToken) {
       throw new UnauthorizedException(
-        'Invalid session',
-        'Your session has expired or is invalid. Please log in again.',
+        'No session found',
+        'No active session found. Please sign up or log in again.',
       );
     }
+
+    const session = await this.getSessionByRefreshTokenOrThrow(refreshToken);
 
     // Generate new access token with existing refresh token binding
     const newAccessToken =
@@ -469,6 +492,17 @@ export class SessionService {
 
   /**
    * Invalidate a session (logout)
+   *
+   * Note on session lookup: While VrittiAuthGuard has already validated the JWT token
+   * (signature, expiration, and refresh token binding), it does NOT query the database
+   * for the session record. This database lookup is necessary and NOT a duplicate because:
+   *
+   * 1. VrittiAuthGuard only validates the JWT cryptographically - it doesn't check session state
+   * 2. We need the session ID to update the isActive flag in the database
+   * 3. Looking up by accessToken (not userId) ensures we only invalidate the current
+   *    device's session, not all sessions for the user (that's what logoutAll is for)
+   *
+   * The guard provides authentication, this method provides session state management.
    */
   async invalidateSession(accessToken: string): Promise<void> {
     const session = await this.sessionRepository.findOne({

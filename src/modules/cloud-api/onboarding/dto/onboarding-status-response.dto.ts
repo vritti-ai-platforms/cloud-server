@@ -1,4 +1,6 @@
 import type { AccountStatus, OnboardingStep, User } from '@/db/schema';
+import { OnboardingStepValues } from '@/db/schema';
+import type { UserResponseDto } from '../../user/dto/user-response.dto';
 
 export class OnboardingStatusResponseDto {
   userId: string;
@@ -41,10 +43,36 @@ export class OnboardingStatusResponseDto {
       firstName: user.firstName,
       lastName: user.lastName,
       currentStep: user.onboardingStep,
-      onboardingComplete: user.onboardingComplete,
+      onboardingComplete: user.onboardingStep === OnboardingStepValues.COMPLETE,
       accountStatus: user.accountStatus,
       emailVerified: user.emailVerified,
       phoneVerified: user.phoneVerified,
+      isNewUser,
+      signupMethod,
+    });
+  }
+
+  /**
+   * Create from UserResponseDto
+   * Optimized version that avoids redundant DB queries by using UserResponseDto directly
+   */
+  static fromUserResponseDto(
+    userResponse: UserResponseDto,
+    isNewUser: boolean = false,
+  ): OnboardingStatusResponseDto {
+    // Determine signup method: 'oauth' if no password, 'email' otherwise
+    const signupMethod: 'email' | 'oauth' = userResponse.hasPassword ? 'email' : 'oauth';
+
+    return new OnboardingStatusResponseDto({
+      userId: userResponse.id,
+      email: userResponse.email,
+      firstName: userResponse.firstName,
+      lastName: userResponse.lastName,
+      currentStep: userResponse.onboardingStep,
+      onboardingComplete: userResponse.onboardingStep === OnboardingStepValues.COMPLETE,
+      accountStatus: userResponse.accountStatus,
+      emailVerified: userResponse.emailVerified,
+      phoneVerified: userResponse.phoneVerified,
       isNewUser,
       signupMethod,
     });

@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { BadRequestException, UnauthorizedException } from '@vritti/api-sdk';
-import { AccountStatusValues, type User } from '@/db/schema';
+import { AccountStatusValues, OnboardingStepValues, SessionTypeValues, type User } from '@/db/schema';
 import { TokenType } from '../../../../config/jwt.config';
 import { EncryptionService } from '../../../../services';
 import { OnboardingStatusResponseDto } from '../../onboarding/dto/onboarding-status-response.dto';
@@ -38,26 +38,25 @@ export class AuthService {
       );
     }
 
+    // Verify password (single check for all login flows)
+    if (!user.passwordHash) {
+      throw new UnauthorizedException(
+        'Invalid credentials',
+        'The email or password you entered is incorrect. Please check your credentials and try again.',
+      );
+    }
+
+    const isPasswordValid = await this.encryptionService.comparePassword(dto.password, user.passwordHash);
+
+    if (!isPasswordValid) {
+      throw new UnauthorizedException(
+        'Invalid credentials',
+        'The email or password you entered is incorrect. Please check your credentials and try again.',
+      );
+    }
+
     // Check if onboarding is complete
-    if (!user.onboardingComplete) {
-      // User needs to complete onboarding
-      // Verify password first
-      if (!user.passwordHash) {
-        throw new UnauthorizedException(
-          'Invalid credentials',
-          'The email or password you entered is incorrect. Please check your credentials and try again.',
-        );
-      }
-
-      const isPasswordValid = await this.encryptionService.comparePassword(dto.password, user.passwordHash);
-
-      if (!isPasswordValid) {
-        throw new UnauthorizedException(
-          'Invalid credentials',
-          'The email or password you entered is incorrect. Please check your credentials and try again.',
-        );
-      }
-
+    if (user.onboardingStep !== OnboardingStepValues.COMPLETE) {
       // Generate onboarding token
       const onboardingToken = this.generateOnboardingToken(user.id);
 
@@ -80,25 +79,13 @@ export class AuthService {
       );
     }
 
-    // Verify password
-    if (!user.passwordHash) {
-      throw new UnauthorizedException(
-        'Invalid credentials',
-        'The email or password you entered is incorrect. Please check your credentials and try again.',
-      );
-    }
-
-    const isPasswordValid = await this.encryptionService.comparePassword(dto.password, user.passwordHash);
-
-    if (!isPasswordValid) {
-      throw new UnauthorizedException(
-        'Invalid credentials',
-        'The email or password you entered is incorrect. Please check your credentials and try again.',
-      );
-    }
-
     // Create session and generate tokens
-    const { accessToken, refreshToken } = await this.sessionService.createSession(user.id, ipAddress, userAgent);
+    const { accessToken, refreshToken } = await this.sessionService.createUnifiedSession(
+      user.id,
+      SessionTypeValues.CLOUD,
+      ipAddress,
+      userAgent,
+    );
 
     // Delete all onboarding sessions (user has completed onboarding)
     await this.sessionService.deleteOnboardingSessions(user.id);
@@ -195,7 +182,7 @@ export class AuthService {
     const existingUser = await this.userService.findByEmail(dto.email);
 
     if (existingUser) {
-      if (!existingUser.onboardingComplete) {
+      if (existingUser.onboardingStep !== OnboardingStepValues.COMPLETE) {
         // Resume onboarding
         return await this.resumeOnboarding(existingUser, dto.password);
       }
@@ -243,7 +230,7 @@ export class AuthService {
     // Hash password
     const passwordHash = await this.encryptionService.hashPassword(dto.password);
 
-    // Create user
+    // Create user (skip email check since signup() already verified email doesn't exist)
     const userResponse = await this.userService.create(
       {
         email: dto.email,
@@ -251,6 +238,7 @@ export class AuthService {
         lastName: dto.lastName,
       },
       passwordHash,
+      true, // skipEmailCheck - signup() already validated email uniqueness
     );
 
     // OTP sending removed - now handled by POST /onboarding/start endpoint

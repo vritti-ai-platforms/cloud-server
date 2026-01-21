@@ -11,7 +11,7 @@ export class UserResponseDto {
   emailVerified: boolean;
   phoneVerified: boolean;
   onboardingStep: OnboardingStep;
-  onboardingComplete: boolean;
+  hasPassword: boolean;
 
   // Phone number
   phone?: string | null;
@@ -48,7 +48,7 @@ export class UserResponseDto {
       emailVerified: user.emailVerified,
       phoneVerified: user.phoneVerified,
       onboardingStep: user.onboardingStep,
-      onboardingComplete: user.onboardingComplete,
+      hasPassword: user.passwordHash !== null,
       phone: user.phone,
       phoneCountry: user.phoneCountry,
       profilePictureUrl: user.profilePictureUrl,

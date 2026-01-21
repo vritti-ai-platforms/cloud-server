@@ -95,7 +95,7 @@ export class UserRepository extends PrimaryBaseRepository<typeof users> {
   }
 
   /**
-   * Delete user (soft delete by setting status to DEACTIVATED)
+   * Delete user (soft delete by setting status to INACTIVE)
    *
    * This method performs a soft delete by changing the account status rather than
    * removing the record from the database. For hard delete (permanent removal),
@@ -106,6 +106,6 @@ export class UserRepository extends PrimaryBaseRepository<typeof users> {
    */
   async delete(id: string): Promise<User> {
     this.logger.log(`Deactivating user: ${id}`);
-    return this.update(id, { accountStatus: AccountStatusValues.DEACTIVATED });
+    return this.update(id, { accountStatus: AccountStatusValues.INACTIVE });
   }
 }

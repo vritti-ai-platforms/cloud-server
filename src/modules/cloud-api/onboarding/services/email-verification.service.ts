@@ -1,11 +1,21 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { BadRequestException, UnauthorizedException } from '@vritti/api-sdk';
 import { eq } from '@vritti/api-sdk/drizzle-orm';
-import { AccountStatusValues, emailVerifications, OnboardingStepValues } from '@/db/schema';
+import { emailVerifications, OnboardingStepValues } from '@/db/schema';
 import { EmailService } from '../../../../services';
 import { UserService } from '../../user/user.service';
 import { EmailVerificationRepository } from '../repositories/email-verification.repository';
 import { OtpService } from './otp.service';
+
+/**
+ * Options for sending verification OTP
+ * Used to pass user data and avoid redundant database queries
+ */
+export interface SendVerificationOtpOptions {
+  userId: string;
+  email: string;
+  firstName?: string | null;
+}
 
 @Injectable()
 export class EmailVerificationService {
@@ -20,8 +30,11 @@ export class EmailVerificationService {
 
   /**
    * Send email verification OTP to user
+   * @param userId - User ID
+   * @param email - User's email address
+   * @param firstName - Optional first name for email personalization (avoids extra DB query if provided)
    */
-  async sendVerificationOtp(userId: string, email: string): Promise<void> {
+  async sendVerificationOtp(userId: string, email: string, firstName?: string | null): Promise<void> {
     // Generate OTP
     const otp = this.otpService.generateOtp();
     // Security: Never log OTP values in production - GDPR/PCI compliance
@@ -37,12 +50,9 @@ export class EmailVerificationService {
       expiresAt,
     });
 
-    // Get user details for personalization
-    const user = await this.userService.findById(userId);
-
     // Fire and forget - don't block response waiting for email
     this.emailService
-      .sendVerificationEmail(email, otp, user.firstName || undefined)
+      .sendVerificationEmail(email, otp, firstName || undefined)
       .then(() => {
         this.logger.log(`Sent email verification OTP to ${email} for user ${userId}`);
       })
@@ -90,7 +100,6 @@ export class EmailVerificationService {
     // Update onboarding step to MOBILE_VERIFICATION
     await this.userService.update(userId, {
       onboardingStep: OnboardingStepValues.MOBILE_VERIFICATION,
-      accountStatus: AccountStatusValues.PENDING_MOBILE,
     });
 
     this.logger.log(`Email verified successfully for user ${userId}`);
@@ -113,8 +122,8 @@ export class EmailVerificationService {
     // Delete old verifications
     await this.emailVerificationRepo.deleteMany(eq(emailVerifications.userId, userId));
 
-    // Send new OTP
-    await this.sendVerificationOtp(userId, userResponse.email);
+    // Send new OTP - pass firstName to avoid redundant DB query
+    await this.sendVerificationOtp(userId, userResponse.email, userResponse.firstName);
 
     this.logger.log(`Resent email verification OTP for user ${userId}`);
   }

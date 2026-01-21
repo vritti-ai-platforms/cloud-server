@@ -15,7 +15,6 @@ export const users = cloudSchema.table('users', {
   emailVerified: boolean('email_verified').notNull().default(false),
   phoneVerified: boolean('phone_verified').notNull().default(false),
   onboardingStep: onboardingStepEnum('onboarding_step').notNull().default('EMAIL_VERIFICATION'),
-  onboardingComplete: boolean('onboarding_complete').notNull().default(false),
   phone: varchar('phone', { length: 20 }),
   phoneCountry: varchar('phone_country', { length: 5 }),
   profilePictureUrl: text('profile_picture_url'),

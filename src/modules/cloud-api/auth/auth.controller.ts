@@ -1,30 +1,15 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Headers,
-  HttpCode,
-  HttpStatus,
-  Ip,
-  Logger,
-  Post,
-  Req,
-  Res,
-} from '@nestjs/common';
-import { Public, UnauthorizedException, UserId } from '@vritti/api-sdk';
+import { Body, Controller, Get, Headers, HttpCode, HttpStatus, Ip, Logger, Post, Req, Res } from '@nestjs/common';
+import { Public, UserId } from '@vritti/api-sdk';
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import { SessionTypeValues, type User } from '@/db/schema';
+import { SessionTypeValues } from '@/db/schema';
 import type { OnboardingStatusResponseDto } from '../onboarding/dto/onboarding-status-response.dto';
+import { UserResponseDto } from '../user/dto/user-response.dto';
+import { UserService } from '../user/user.service';
 import type { AuthResponseDto } from './dto/auth-response.dto';
 import type { LoginDto } from './dto/login.dto';
 import type { SignupDto } from './dto/signup.dto';
 import { AuthService } from './services/auth.service';
 import { getRefreshCookieName, getRefreshCookieOptionsFromConfig, SessionService } from './services/session.service';
-
-/** Request with authenticated user from VrittiAuthGuard */
-interface AuthenticatedRequest extends FastifyRequest {
-  user: User;
-}
 
 /**
  * Auth Controller
@@ -37,6 +22,7 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly sessionService: SessionService,
+    private readonly userService: UserService,
   ) {}
 
   /**
@@ -91,12 +77,9 @@ export class AuthController {
   async getToken(@Req() request: FastifyRequest): Promise<{ accessToken: string; expiresIn: number }> {
     const refreshToken = request.cookies?.[getRefreshCookieName()];
 
-    if (!refreshToken) {
-      throw new UnauthorizedException('No session found', 'No active session found. Please sign up or log in again.');
-    }
-
     this.logger.log('GET /auth/token - Recovering session from cookie');
 
+    // Service layer handles all validation including missing/invalid refresh token
     return await this.sessionService.recoverSession(refreshToken);
   }
 
@@ -144,12 +127,9 @@ export class AuthController {
   ): Promise<{ accessToken: string; expiresIn: number }> {
     const refreshToken = request.cookies?.[getRefreshCookieName()];
 
-    if (!refreshToken) {
-      throw new UnauthorizedException('No session found', 'No active session found. Please sign up or log in again.');
-    }
-
     this.logger.log('POST /auth/refresh - Refreshing session with rotation');
 
+    // Service layer handles all validation including missing/invalid refresh token
     const result = await this.sessionService.refreshSession(refreshToken);
 
     // Update cookie with rotated refresh token (use getter functions to ensure config is loaded)
@@ -166,6 +146,16 @@ export class AuthController {
    * POST /auth/logout
    * Requires: JWT access token (protected by VrittiAuthGuard)
    * Invalidates session and clears refresh token cookie
+   *
+   * Note on authentication flow:
+   * 1. VrittiAuthGuard validates the JWT token (signature, expiration, token binding)
+   *    - This is cryptographic validation only, no database query
+   *    - Sets request.user = { id: userId } for downstream use
+   * 2. SessionService.invalidateSession() queries the database to find and deactivate the session
+   *    - This database lookup is necessary (not duplicate) because the guard doesn't query sessions
+   *    - We look up by accessToken to invalidate only THIS device's session
+   *
+   * The guard provides authentication, the service provides session state management.
    */
   @Post('logout')
   async logout(
@@ -210,9 +200,14 @@ export class AuthController {
    * Get current user info
    * GET /auth/me
    * Requires: JWT access token (protected by VrittiAuthGuard)
+   *
+   * Note: VrittiAuthGuard validates the JWT and attaches { id: userId } to request.user.
+   * We use @UserId() decorator to extract the userId and fetch the full user data.
+   * This is a single database query since the guard only validates the JWT signature,
+   * not the user existence in the database.
    */
   @Get('me')
-  async getCurrentUser(@Req() request: AuthenticatedRequest): Promise<User> {
-    return request.user; // User info set by VrittiAuthGuard
+  async getCurrentUser(@UserId() userId: string): Promise<UserResponseDto> {
+    return this.userService.findById(userId);
   }
 }

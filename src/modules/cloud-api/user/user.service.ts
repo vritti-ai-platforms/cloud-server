@@ -16,16 +16,23 @@ export class UserService {
    * Create a new user
    * @param createUserDto - User creation data
    * @param passwordHash - Optional pre-hashed password (hashed by encryption service)
+   * @param skipEmailCheck - Skip email uniqueness validation (use when caller has already verified)
    */
-  async create(createUserDto: CreateUserDto, passwordHash?: string): Promise<UserResponseDto> {
-    // Validate email uniqueness
-    const existingUser = await this.userRepository.findByEmail(createUserDto.email);
-    if (existingUser) {
-      throw new ConflictException(
-        'email',
-        `User with email '${createUserDto.email}' already exists`,
-        'An account with this email address already exists. Please use a different email or log in to your existing account.',
-      );
+  async create(
+    createUserDto: CreateUserDto,
+    passwordHash?: string,
+    skipEmailCheck = false,
+  ): Promise<UserResponseDto> {
+    // Validate email uniqueness (skip if caller has already verified)
+    if (!skipEmailCheck) {
+      const existingUser = await this.userRepository.findByEmail(createUserDto.email);
+      if (existingUser) {
+        throw new ConflictException(
+          'email',
+          `User with email '${createUserDto.email}' already exists`,
+          'An account with this email address already exists. Please use a different email or log in to your existing account.',
+        );
+      }
     }
 
     // Create user

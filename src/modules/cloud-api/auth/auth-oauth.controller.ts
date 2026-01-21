@@ -2,7 +2,7 @@ import { Controller, Get, Logger, Param, Query, Redirect, Request, Res } from '@
 import { ConfigService } from '@nestjs/config';
 import { BadRequestException, Onboarding, Public } from '@vritti/api-sdk';
 import type { FastifyReply } from 'fastify';
-import { type OAuthProviderType, OAuthProviderTypeValues, OnboardingStepValues, SessionTypeValues } from '@/db/schema';
+import { OnboardingStepValues, SessionTypeValues } from '@/db/schema';
 import type { OAuthResponseDto } from './oauth/dto/oauth-response.dto';
 import { OAuthService } from './oauth/services/oauth.service';
 import { getRefreshCookieName, getRefreshCookieOptionsFromConfig, SessionService } from './services/session.service';
@@ -32,13 +32,11 @@ export class AuthOAuthController {
   @Get(':provider/callback')
   @Public()
   async handleOAuthCallback(
-    @Param('provider') providerStr: string,
+    @Param('provider') provider: string,
     @Query('code') code: string,
     @Query('state') state: string,
     @Res() res: FastifyReply,
   ): Promise<void> {
-    const provider = this.validateProvider(providerStr);
-
     if (!code || !state) {
       throw new BadRequestException(
         'Missing code or state parameter',
@@ -86,8 +84,7 @@ export class AuthOAuthController {
   @Get(':provider/link')
   @Onboarding()
   @Redirect()
-  async linkOAuthProvider(@Param('provider') providerStr: string, @Request() req): Promise<{ url: string }> {
-    const provider = this.validateProvider(providerStr);
+  async linkOAuthProvider(@Param('provider') provider: string, @Request() req): Promise<{ url: string }> {
     const userId = req.user.id;
 
     this.logger.log(`Linking OAuth provider: ${provider} for user: ${userId}`);
@@ -109,32 +106,13 @@ export class AuthOAuthController {
   @Get(':provider')
   @Public()
   @Redirect()
-  async initiateOAuth(@Param('provider') providerStr: string): Promise<{ url: string }> {
-    const provider = this.validateProvider(providerStr);
-
+  async initiateOAuth(@Param('provider') provider: string): Promise<{ url: string }> {
     this.logger.log(`Initiating OAuth flow for provider: ${provider}`);
 
     const { url } = await this.oauthService.initiateOAuth(provider);
     this.logger.log(`Redirecting to URL: ${url}`);
 
     return { url };
-  }
-
-  /**
-   * Validate and parse OAuth provider
-   */
-  private validateProvider(providerStr: string): OAuthProviderType {
-    const upperProvider = providerStr.toUpperCase();
-
-    if (!Object.values(OAuthProviderTypeValues).includes(upperProvider as OAuthProviderType)) {
-      throw new BadRequestException(
-        'provider',
-        `Invalid OAuth provider: ${providerStr}`,
-        'The selected login method is not supported. Please choose a different option.',
-      );
-    }
-
-    return upperProvider as OAuthProviderType;
   }
 
   /**

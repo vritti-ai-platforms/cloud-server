@@ -46,8 +46,4 @@ export class UpdateUserDto {
   @IsEnum(OnboardingStepValues)
   @IsOptional()
   onboardingStep?: OnboardingStep;
-
-  @IsBoolean()
-  @IsOptional()
-  onboardingComplete?: boolean;
 }
