@@ -1,7 +1,7 @@
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Logger, Param, Patch, Post } from '@nestjs/common';
-import type { CreateTenantDto } from './dto/create-tenant.dto';
+import { CreateTenantDto } from './dto/create-tenant.dto';
 import type { TenantResponseDto } from './dto/tenant-response.dto';
-import type { UpdateTenantDto } from './dto/update-tenant.dto';
+import { UpdateTenantDto } from './dto/update-tenant.dto';
 import { TenantService } from './tenant.service';
 
 @Controller('tenants')
