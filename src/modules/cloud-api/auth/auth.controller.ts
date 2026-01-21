@@ -6,8 +6,8 @@ import type { OnboardingStatusResponseDto } from '../onboarding/dto/onboarding-s
 import { UserResponseDto } from '../user/dto/user-response.dto';
 import { UserService } from '../user/user.service';
 import type { AuthResponseDto } from './dto/auth-response.dto';
-import type { LoginDto } from './dto/login.dto';
-import type { SignupDto } from './dto/signup.dto';
+import { LoginDto } from './dto/login.dto';
+import { SignupDto } from './dto/signup.dto';
 import { AuthService } from './services/auth.service';
 import { getRefreshCookieName, getRefreshCookieOptionsFromConfig, SessionService } from './services/session.service';
 

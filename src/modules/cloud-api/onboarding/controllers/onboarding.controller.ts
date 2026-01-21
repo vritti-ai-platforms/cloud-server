@@ -1,9 +1,9 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Logger, Post } from '@nestjs/common';
 import { Onboarding, UserId } from '@vritti/api-sdk';
 import type { OnboardingStatusResponseDto } from '../dto/onboarding-status-response.dto';
-import type { SetPasswordDto } from '../dto/set-password.dto';
+import { SetPasswordDto } from '../dto/set-password.dto';
 import type { StartOnboardingResponseDto } from '../dto/start-onboarding-response.dto';
-import type { VerifyEmailDto } from '../dto/verify-email.dto';
+import { VerifyEmailDto } from '../dto/verify-email.dto';
 import { EmailVerificationService } from '../services/email-verification.service';
 import { OnboardingService } from '../services/onboarding.service';
 
