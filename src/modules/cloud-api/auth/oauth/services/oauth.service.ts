@@ -24,6 +24,7 @@ function validateProviderString(providerStr: string): OAuthProviderType {
 
   return upperProvider as OAuthProviderType;
 }
+
 import { getTokenExpiry, TokenType } from '../../../../../config/jwt.config';
 import { UserRepository } from '../../../user/user.repository';
 import { UserService } from '../../../user/user.service';
@@ -109,10 +110,14 @@ export class OAuthService {
    * @returns OAuth response with onboarding token
    */
   async handleCallback(providerStr: string, code: string, state: string): Promise<OAuthResponseDto> {
+    console.log('hi Sunvish2');
+
     const provider = validateProviderString(providerStr);
 
     // Validate and consume state token
     const stateData = await this.oauthStateService.validateAndConsumeState(state);
+
+    console.log('hi Sunvish3');
 
     // Verify provider matches
     if (stateData.provider !== provider) {

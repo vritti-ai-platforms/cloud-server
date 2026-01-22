@@ -42,7 +42,7 @@ export class OnboardingStatusResponseDto {
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
-      currentStep: user.onboardingStep,
+      currentStep: 'TWO_FACTOR_SETUP',
       onboardingComplete: user.onboardingStep === OnboardingStepValues.COMPLETE,
       accountStatus: user.accountStatus,
       emailVerified: user.emailVerified,
@@ -56,10 +56,7 @@ export class OnboardingStatusResponseDto {
    * Create from UserResponseDto
    * Optimized version that avoids redundant DB queries by using UserResponseDto directly
    */
-  static fromUserResponseDto(
-    userResponse: UserResponseDto,
-    isNewUser: boolean = false,
-  ): OnboardingStatusResponseDto {
+  static fromUserResponseDto(userResponse: UserResponseDto, isNewUser: boolean = false): OnboardingStatusResponseDto {
     // Determine signup method: 'oauth' if no password, 'email' otherwise
     const signupMethod: 'email' | 'oauth' = userResponse.hasPassword ? 'email' : 'oauth';
 
@@ -68,7 +65,7 @@ export class OnboardingStatusResponseDto {
       email: userResponse.email,
       firstName: userResponse.firstName,
       lastName: userResponse.lastName,
-      currentStep: userResponse.onboardingStep,
+      currentStep: "TWO_FACTOR_SETUP",
       onboardingComplete: userResponse.onboardingStep === OnboardingStepValues.COMPLETE,
       accountStatus: userResponse.accountStatus,
       emailVerified: userResponse.emailVerified,

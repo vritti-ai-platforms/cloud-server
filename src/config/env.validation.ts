@@ -121,6 +121,19 @@ class EnvironmentVariables {
   @IsOptional()
   @Transform(({ value }) => value === 'true')
   MASK_PII: boolean = false;
+
+  // WebAuthn Configuration
+  @IsString()
+  @IsOptional()
+  WEBAUTHN_RP_NAME: string = 'Vritti';
+
+  @IsString()
+  @IsOptional()
+  WEBAUTHN_RP_ID: string = 'localhost';
+
+  @IsString()
+  @IsOptional()
+  WEBAUTHN_ORIGIN: string = 'http://localhost:3012';
 }
 
 /**
