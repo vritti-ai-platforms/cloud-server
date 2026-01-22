@@ -101,7 +101,7 @@ export class WebAuthnService {
       })),
       authenticatorSelection: {
         residentKey: 'preferred', // Discoverable credential for passwordless
-        userVerification: 'preferred', // Biometric/PIN when available
+        userVerification: 'required', // Require biometric/PIN verification
         authenticatorAttachment: 'platform', // Prefer built-in (Touch ID, Face ID)
       },
       supportedAlgorithmIDs: [-7, -257], // ES256, RS256
@@ -121,7 +121,7 @@ export class WebAuthnService {
       expectedChallenge,
       expectedOrigin: this.origin,
       expectedRPID: this.rpID,
-      requireUserVerification: false, // Allow devices without biometrics
+      requireUserVerification: true, // Require biometric/PIN verification
     });
 
     if (!verification.verified || !verification.registrationInfo) {
