@@ -132,6 +132,48 @@ export class UserService {
   }
 
   /**
+   * Set password hash for OAuth users and advance to next onboarding step
+   * Used during onboarding when OAuth user sets their password
+   *
+   * @param id - User ID
+   * @param passwordHash - Hashed password (already hashed by caller)
+   */
+  async setPasswordHash(id: string, passwordHash: string): Promise<UserResponseDto> {
+    const user = await this.userRepository.setPasswordHash(id, passwordHash);
+    this.logger.log(`Set password for user: ${user.email} (${user.id})`);
+    return UserResponseDto.from(user);
+  }
+
+  /**
+   * Complete onboarding for a user
+   * This marks the phone as verified and sets onboarding step to COMPLETE (skipping MFA)
+   * Used after successful mobile verification via WhatsApp webhook
+   *
+   * @param id - User ID
+   * @param phone - Verified phone number
+   * @param phoneCountry - Phone country code (e.g., 'IN', 'US') - optional for QR-based verification
+   */
+  async completeOnboarding(id: string, phone: string, phoneCountry?: string): Promise<UserResponseDto> {
+    const user = await this.userRepository.completeOnboarding(id, phone, phoneCountry);
+    this.logger.log(`Completed onboarding for user: ${user.email} (${user.id})`);
+    return UserResponseDto.from(user);
+  }
+
+  /**
+   * Mark phone as verified and advance to MFA setup step
+   * Used after mobile verification - user still needs to complete MFA setup
+   *
+   * @param id - User ID
+   * @param phone - Verified phone number
+   * @param phoneCountry - Phone country code (optional for QR-based verification)
+   */
+  async markPhoneVerifiedAndAdvanceToMfa(id: string, phone: string, phoneCountry?: string): Promise<UserResponseDto> {
+    const user = await this.userRepository.markPhoneVerifiedAndAdvanceToMfa(id, phone, phoneCountry);
+    this.logger.log(`Marked phone verified and advanced to MFA for user: ${user.email} (${user.id})`);
+    return UserResponseDto.from(user);
+  }
+
+  /**
    * Deactivate user (soft delete)
    */
   async deactivate(id: string): Promise<UserResponseDto> {

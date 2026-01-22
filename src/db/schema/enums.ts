@@ -20,7 +20,11 @@ export const onboardingStepEnum = cloudSchema.enum('OnboardingStep', [
 ]);
 
 // Verification enums
-export const verificationMethodEnum = cloudSchema.enum('VerificationMethod', ['WHATSAPP_QR', 'SMS_QR', 'MANUAL_OTP']);
+export const verificationMethodEnum = cloudSchema.enum('VerificationMethod', [
+  'WHATSAPP_QR',   // User sends token to WhatsApp via QR code
+  'SMS_QR',        // User sends token via SMS via QR code
+  'MANUAL_OTP',    // User enters OTP received via SMS
+]);
 
 export const twoFactorMethodEnum = cloudSchema.enum('TwoFactorMethod', ['TOTP', 'PASSKEY']);
 

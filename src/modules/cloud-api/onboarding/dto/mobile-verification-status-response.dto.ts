@@ -28,13 +28,15 @@ export class MobileVerificationStatusResponseDto {
 
   /**
    * Phone number being verified
+   * May be null for QR methods until webhook receives it
    */
-  phone: string;
+  phone?: string | null;
 
   /**
    * Phone country code
+   * May be null for QR methods
    */
-  phoneCountry: string;
+  phoneCountry?: string | null;
 
   /**
    * Verification expiration timestamp
@@ -50,4 +52,10 @@ export class MobileVerificationStatusResponseDto {
    * Instructions for the user
    */
   instructions?: string;
+
+  /**
+   * WhatsApp business number for QR code generation
+   * Frontend uses this to build the universal link
+   */
+  whatsappNumber?: string;
 }

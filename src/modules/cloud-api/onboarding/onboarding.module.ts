@@ -5,7 +5,13 @@ import { jwtConfigFactory } from '../../../config/jwt.config';
 import { ServicesModule } from '../../../services';
 import { UserModule } from '../user/user.module';
 import { OnboardingController } from './controllers/onboarding.controller';
-import { WhatsAppWebhookController } from './controllers/whatsapp-webhook.controller';
+import { VerificationWebhookController } from './controllers/verification-webhook.controller';
+import {
+  SMSInboundProvider,
+  SMSOtpProvider,
+  VerificationProviderFactory,
+  WhatsAppProvider,
+} from './providers';
 import { EmailVerificationRepository } from './repositories/email-verification.repository';
 import { MobileVerificationRepository } from './repositories/mobile-verification.repository';
 import { EmailVerificationService } from './services/email-verification.service';
@@ -22,7 +28,7 @@ import { OtpService } from './services/otp.service';
     ServicesModule,
     UserModule, // Import UserModule to use UserService
   ],
-  controllers: [OnboardingController, WhatsAppWebhookController],
+  controllers: [OnboardingController, VerificationWebhookController],
   providers: [
     // Core services
     OnboardingService,
@@ -30,10 +36,21 @@ import { OtpService } from './services/otp.service';
     MobileVerificationService,
     OtpService,
 
+    // Verification providers
+    WhatsAppProvider,
+    SMSInboundProvider,
+    SMSOtpProvider,
+    VerificationProviderFactory,
+
     // Repositories
     EmailVerificationRepository,
     MobileVerificationRepository,
   ],
-  exports: [OnboardingService, EmailVerificationService, MobileVerificationService],
+  exports: [
+    OnboardingService,
+    EmailVerificationService,
+    MobileVerificationService,
+    VerificationProviderFactory,
+  ],
 })
 export class OnboardingModule {}

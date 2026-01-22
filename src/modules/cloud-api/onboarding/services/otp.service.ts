@@ -21,6 +21,13 @@ export class OtpService {
   }
 
   /**
+   * Generate a verification token for mobile verification
+   */
+  generateVerificationToken(): string {
+    return this.encryptionService.generateVerificationToken();
+  }
+
+  /**
    * Hash an OTP for storage
    */
   async hashOtp(otp: string): Promise<string> {

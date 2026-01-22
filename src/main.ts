@@ -3,16 +3,16 @@ import fastifyCsrfProtection from '@fastify/csrf-protection';
 import fastifyRawBody from 'fastify-raw-body';
 import { BadRequestException, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { NestFactory } from '@nestjs/core';
+import { NestFactory, Reflector } from '@nestjs/core';
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
 import {
   CorrelationIdMiddleware,
-  CsrfGuard,
   configureApiSdk,
   HttpExceptionFilter,
   HttpLoggerInterceptor,
   LoggerService,
 } from '@vritti/api-sdk';
+import { AppCsrfGuard } from './common/guards/csrf.guard';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
@@ -68,9 +68,10 @@ async function bootstrap() {
   });
 
   // Register raw body plugin for webhook signature validation
+  // global: true ensures rawBody is available for all routes (needed for webhooks)
   await app.register(fastifyRawBody, {
     field: 'rawBody',
-    global: false, // Only add rawBody where needed
+    global: true,
     encoding: 'utf8',
     runFirst: true, // Run before other hooks
   });
@@ -106,8 +107,10 @@ async function bootstrap() {
   const httpLoggerInterceptor = app.get(HttpLoggerInterceptor);
   app.useGlobalInterceptors(httpLoggerInterceptor);
 
-  // Register global CSRF guard
-  app.useGlobalGuards(new CsrfGuard());
+  // Register global CSRF guard with @SkipCsrf() decorator support
+  // This allows webhook endpoints to bypass CSRF validation
+  const reflector = app.get(Reflector);
+  app.useGlobalGuards(new AppCsrfGuard(reflector));
 
   // Enable global validation pipe
   app.useGlobalPipes(

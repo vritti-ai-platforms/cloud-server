@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
 
 /**
  * Encryption Service for password and OTP hashing
@@ -79,5 +80,16 @@ export class EncryptionService {
   generateOtp(): string {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     return otp;
+  }
+
+  /**
+   * Generate a short verification token for mobile verification
+   * Format: VER + 6 uppercase hex characters (e.g., "VER1A2B3C")
+   * @returns Verification token string
+   */
+  generateVerificationToken(): string {
+    const bytes = crypto.randomBytes(3);
+    const hex = bytes.toString('hex').toUpperCase();
+    return `VER${hex}`;
   }
 }

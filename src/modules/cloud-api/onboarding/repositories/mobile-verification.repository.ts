@@ -10,11 +10,12 @@ export class MobileVerificationRepository extends PrimaryBaseRepository<typeof m
   }
 
   /**
-   * Find the most recent non-verified mobile verification for a user
+   * Find the most recent mobile verification for a user
+   * Returns latest regardless of verification status so frontend can detect when verification completes
    */
   async findLatestByUserId(userId: string): Promise<MobileVerification | undefined> {
     const results = await this.findMany({
-      where: { userId, isVerified: false },
+      where: { userId },
       orderBy: { createdAt: 'desc' },
       limit: 1,
     });
@@ -89,5 +90,15 @@ export class MobileVerificationRepository extends PrimaryBaseRepository<typeof m
       .where(condition);
 
     return Number(count[0]?.count) > 0;
+  }
+
+  /**
+   * Update phone number for a verification (used when phone comes from webhook)
+   */
+  async updatePhone(id: string, phone: string, phoneCountry?: string): Promise<MobileVerification> {
+    return this.update(id, {
+      phone,
+      ...(phoneCountry ? { phoneCountry } : {}),
+    });
   }
 }

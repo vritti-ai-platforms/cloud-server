@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrimaryBaseRepository, PrimaryDatabaseService } from '@vritti/api-sdk';
-import { AccountStatusValues, type User, users } from '@/db/schema';
+import { AccountStatusValues, OnboardingStepValues, type User, users } from '@/db/schema';
 
 @Injectable()
 export class UserRepository extends PrimaryBaseRepository<typeof users> {
@@ -67,6 +67,59 @@ export class UserRepository extends PrimaryBaseRepository<typeof users> {
       phoneCountry,
       phoneVerified: true,
       phoneVerifiedAt: new Date(),
+    });
+  }
+
+  /**
+   * Set password hash for OAuth users and advance onboarding step
+   * Used during onboarding when OAuth user sets their password
+   *
+   * @param id User ID
+   * @param passwordHash Hashed password
+   */
+  async setPasswordHash(id: string, passwordHash: string): Promise<User> {
+    this.logger.log(`Setting password for user: ${id}`);
+    return this.update(id, {
+      passwordHash,
+      onboardingStep: OnboardingStepValues.MOBILE_VERIFICATION,
+    });
+  }
+
+  /**
+   * Complete onboarding - marks phone as verified and sets onboarding step to COMPLETE
+   * Used after mobile verification to skip MFA and complete onboarding
+   *
+   * @param id User ID
+   * @param phone Verified phone number
+   * @param phoneCountry Phone country code (optional for QR-based verification where country is not known)
+   */
+  async completeOnboarding(id: string, phone: string, phoneCountry?: string): Promise<User> {
+    this.logger.log(`Completing onboarding for user: ${id}`);
+    return this.update(id, {
+      phone,
+      ...(phoneCountry ? { phoneCountry } : {}),
+      phoneVerified: true,
+      phoneVerifiedAt: new Date(),
+      onboardingStep: OnboardingStepValues.COMPLETE,
+    });
+  }
+
+  /**
+   * Mark phone as verified and advance to MFA setup step
+   * Used after mobile verification - user still needs to complete MFA setup
+   *
+   * @param id User ID
+   * @param phone Verified phone number
+   * @param phoneCountry Phone country code (optional for QR-based verification)
+   */
+  async markPhoneVerifiedAndAdvanceToMfa(id: string, phone: string, phoneCountry?: string): Promise<User> {
+    this.logger.log(`Marking phone verified and advancing to MFA for user: ${id}`);
+    return this.update(id, {
+      phone,
+      ...(phoneCountry ? { phoneCountry } : {}),
+      phoneVerified: true,
+      phoneVerifiedAt: new Date(),
+      onboardingStep: OnboardingStepValues.TWO_FACTOR_SETUP,
     });
   }
 

@@ -34,8 +34,9 @@ export const mobileVerifications = cloudSchema.table(
     userId: uuid('user_id')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
-    phone: varchar('phone', { length: 20 }).notNull(),
-    phoneCountry: varchar('phone_country', { length: 5 }).notNull(),
+    // Phone is nullable for QR-based methods where phone comes from webhook
+    phone: varchar('phone', { length: 20 }),
+    phoneCountry: varchar('phone_country', { length: 5 }),
     method: verificationMethodEnum('method').notNull(),
     otp: varchar('otp', { length: 255 }),
     attempts: integer('attempts').notNull().default(0),

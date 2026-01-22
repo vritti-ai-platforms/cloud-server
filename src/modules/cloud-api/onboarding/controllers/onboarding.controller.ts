@@ -6,6 +6,7 @@ import type { OnboardingStatusResponseDto } from '../dto/onboarding-status-respo
 import { SetPasswordDto } from '../dto/set-password.dto';
 import type { StartOnboardingResponseDto } from '../dto/start-onboarding-response.dto';
 import { VerifyEmailDto } from '../dto/verify-email.dto';
+import type { VerifyMobileOtpDto } from '../dto/verify-mobile-otp.dto';
 import { EmailVerificationService } from '../services/email-verification.service';
 import { MobileVerificationService } from '../services/mobile-verification.service';
 import { OnboardingService } from '../services/onboarding.service';
@@ -162,5 +163,27 @@ export class OnboardingController {
     this.logger.log(`POST /onboarding/mobile-verification/resend - User: ${userId}`);
 
     return await this.mobileVerificationService.resendVerification(userId, dto);
+  }
+
+  /**
+   * Verify mobile OTP (for SMS_OTP method)
+   * POST /onboarding/mobile-verification/verify-otp
+   * Requires: Onboarding token in Authorization header + CSRF token
+   */
+  @Post('mobile-verification/verify-otp')
+  @Onboarding()
+  @HttpCode(HttpStatus.OK)
+  async verifyMobileOtp(
+    @UserId() userId: string,
+    @Body() dto: VerifyMobileOtpDto,
+  ): Promise<{ success: boolean; message: string }> {
+    this.logger.log(`POST /onboarding/mobile-verification/verify-otp - User: ${userId}`);
+
+    await this.mobileVerificationService.verifyOtp(userId, dto.otp);
+
+    return {
+      success: true,
+      message: 'Phone number verified successfully',
+    };
   }
 }
