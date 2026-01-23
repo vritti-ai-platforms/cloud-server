@@ -288,7 +288,8 @@ export class TwoFactorAuthService {
     await this.twoFactorAuthRepo.deactivateAllByUserId(userId);
 
     // Store the passkey
-    const credentialIdBase64 = this.webAuthnService.uint8ArrayToBase64url(registrationInfo.credential.id);
+    // In @simplewebauthn/server v13+, credential.id is already a base64url string
+    const credentialIdBase64 = registrationInfo.credential.id;
     const publicKeyBase64 = this.webAuthnService.uint8ArrayToBase64url(registrationInfo.credential.publicKey);
     const transports = (registrationInfo.credential.transports as string[]) || [];
 
