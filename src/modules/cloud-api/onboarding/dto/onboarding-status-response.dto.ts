@@ -65,7 +65,7 @@ export class OnboardingStatusResponseDto {
       email: userResponse.email,
       firstName: userResponse.firstName,
       lastName: userResponse.lastName,
-      currentStep: "TWO_FACTOR_SETUP",
+      currentStep: userResponse.onboardingStep,
       onboardingComplete: userResponse.onboardingStep === OnboardingStepValues.COMPLETE,
       accountStatus: userResponse.accountStatus,
       emailVerified: userResponse.emailVerified,
