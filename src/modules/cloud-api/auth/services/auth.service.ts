@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import { BadRequestException, UnauthorizedException } from '@vritti/api-sdk';
 import { AccountStatusValues, OnboardingStepValues, SessionTypeValues, type User } from '@/db/schema';
 import { TokenType } from '../../../../config/jwt.config';
@@ -9,6 +9,7 @@ import { UserService } from '../../user/user.service';
 import { AuthResponseDto } from '../dto/auth-response.dto';
 import type { LoginDto } from '../dto/login.dto';
 import type { SignupDto } from '../dto/signup.dto';
+import { MfaVerificationService } from '../mfa-verification/mfa-verification.service';
 import { JwtAuthService } from './jwt.service';
 import { SessionService } from './session.service';
 
@@ -21,6 +22,8 @@ export class AuthService {
     private readonly encryptionService: EncryptionService,
     private readonly sessionService: SessionService,
     private readonly jwtService: JwtAuthService,
+    @Inject(forwardRef(() => MfaVerificationService))
+    private readonly mfaVerificationService: MfaVerificationService,
   ) {}
 
   /**
@@ -79,7 +82,28 @@ export class AuthService {
       );
     }
 
-    // Create session and generate tokens
+    // Check if user has 2FA enabled
+    const mfaChallenge = await this.mfaVerificationService.createMfaChallenge(user, {
+      ipAddress,
+      userAgent,
+    });
+
+    if (mfaChallenge) {
+      // User has 2FA enabled - return MFA challenge instead of tokens
+      this.logger.log(`User login requires MFA: ${user.email} (${user.id})`);
+
+      return new AuthResponseDto({
+        requiresMfa: true,
+        mfaChallenge: {
+          sessionId: mfaChallenge.sessionId,
+          availableMethods: mfaChallenge.availableMethods,
+          defaultMethod: mfaChallenge.defaultMethod,
+          maskedPhone: mfaChallenge.maskedPhone,
+        },
+      });
+    }
+
+    // No 2FA - create session and generate tokens
     const { accessToken, refreshToken } = await this.sessionService.createUnifiedSession(
       user.id,
       SessionTypeValues.CLOUD,

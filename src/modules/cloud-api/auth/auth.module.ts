@@ -8,6 +8,7 @@ import { UserModule } from '../user/user.module';
 import { AuthController } from './auth.controller';
 import { AuthOAuthController } from './auth-oauth.controller';
 import { PasskeyAuthController } from './controllers/passkey-auth.controller';
+import { MfaVerificationModule } from './mfa-verification/mfa-verification.module';
 import { AppleOAuthProvider } from './oauth/apple-oauth.provider';
 import { FacebookOAuthProvider } from './oauth/facebook-oauth.provider';
 import { GoogleOAuthProvider } from './oauth/google-oauth.provider';
@@ -37,6 +38,7 @@ import { SessionService } from './services/session.service';
     ServicesModule,
     UserModule,
     forwardRef(() => OnboardingModule),
+    forwardRef(() => MfaVerificationModule),
   ],
   controllers: [AuthController, AuthOAuthController, PasskeyAuthController],
   providers: [

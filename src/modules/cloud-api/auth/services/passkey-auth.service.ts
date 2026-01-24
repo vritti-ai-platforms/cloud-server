@@ -60,9 +60,10 @@ export class PasskeyAuthService {
         userId = user.id;
         const passkeys = await this.twoFactorAuthRepo.findAllPasskeysByUserId(user.id);
         if (passkeys.length > 0) {
+          // Don't pass transports hint - let browser discover the best way
+          // This avoids QR code prompt when 'hybrid' transport is stored
           allowCredentials = passkeys.map((pk) => ({
             id: pk.passkeyCredentialId!,
-            transports: pk.passkeyTransports ? JSON.parse(pk.passkeyTransports) : undefined,
           }));
         }
       }
