@@ -13,8 +13,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { FastifyRequest } from 'fastify';
-import { Public } from '@vritti/api-sdk';
-import { SkipCsrf } from '@/common/decorators/skip-csrf.decorator';
+import { Public, SkipCsrf } from '@vritti/api-sdk';
 import { WhatsAppService } from '@/services';
 import { SMSInboundProvider } from '../providers';
 import { WhatsAppWebhookDto } from '../dto/whatsapp-webhook.dto';

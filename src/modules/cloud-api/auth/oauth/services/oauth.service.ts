@@ -26,7 +26,6 @@ function validateProviderString(providerStr: string): OAuthProviderType {
 }
 import { getTokenExpiry, TokenType } from '../../../../../config/jwt.config';
 import { UserRepository } from '../../../user/user.repository';
-import { UserService } from '../../../user/user.service';
 import { AppleOAuthProvider } from '../apple-oauth.provider';
 import { OAuthResponseDto } from '../dto/oauth-response.dto';
 import { FacebookOAuthProvider } from '../facebook-oauth.provider';
@@ -50,7 +49,6 @@ export class OAuthService {
   private readonly providers: Map<OAuthProviderType, IOAuthProvider>;
 
   constructor(
-    readonly _userService: UserService,
     private readonly userRepository: UserRepository,
     private readonly oauthStateService: OAuthStateService,
     private readonly oauthProviderRepository: OAuthProviderRepository,

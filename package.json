@@ -35,6 +35,7 @@
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.1",
+    "@nestjs/event-emitter": "^3.0.1",
     "@nestjs/jwt": "^11.0.1",
     "@nestjs/mapped-types": "^2.1.0",
     "@nestjs/passport": "^11.0.5",
@@ -50,7 +51,9 @@
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "drizzle-orm": "^1.0.0-beta.3-36e9b9e",
+    "pg": "^8.16.0"
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.3",
@@ -97,5 +100,10 @@
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
+  },
+  "pnpm": {
+    "overrides": {
+      "@vritti/api-sdk": "link:../api-sdk"
+    }
   }
 }

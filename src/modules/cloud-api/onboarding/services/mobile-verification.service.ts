@@ -1,12 +1,14 @@
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { extractCountryFromPhone } from '@/common/utils/phone.utils';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { extractCountryFromPhone, normalizePhoneNumber } from '@vritti/api-sdk';
 import { type VerificationMethod, VerificationMethodValues } from '@/db/schema/enums';
 import { type MobileVerification } from '@/db/schema';
 import { UserService } from '../../user/user.service';
 import { InitiateMobileVerificationDto } from '../dto/initiate-mobile-verification.dto';
 import { MobileVerificationStatusResponseDto } from '../dto/mobile-verification-status-response.dto';
 import { VerificationProviderFactory } from '../providers';
+import { VERIFICATION_EVENTS, MobileVerificationEvent } from '../events/verification.events';
 import { MobileVerificationRepository } from '../repositories/mobile-verification.repository';
 import { OtpService } from './otp.service';
 
@@ -27,6 +29,7 @@ export class MobileVerificationService {
     private readonly userService: UserService,
     private readonly configService: ConfigService,
     private readonly otpService: OtpService,
+    private readonly eventEmitter: EventEmitter2,
   ) {
     this.whatsappBusinessNumber = this.configService.get<string>('WHATSAPP_BUSINESS_NUMBER') || '';
   }
@@ -47,9 +50,6 @@ export class MobileVerificationService {
     dto: InitiateMobileVerificationDto,
   ): Promise<MobileVerificationStatusResponseDto> {
     const user = await this.userService.findById(userId);
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
 
     // Check if already verified
     if (user.phoneVerified) {
@@ -93,7 +93,7 @@ export class MobileVerificationService {
     // Create verification record
     // For QR methods: phone may be null (will come from webhook)
     // For OTP method: phone is required and normalized
-    const normalizedPhone = dto.phone ? this.normalizePhoneNumber(dto.phone) : null;
+    const normalizedPhone = dto.phone ? normalizePhoneNumber(dto.phone) : null;
     const verification = await this.mobileVerificationRepository.create({
       userId,
       phone: normalizedPhone,
@@ -148,19 +148,19 @@ export class MobileVerificationService {
     }
 
     // Check expiry
-    if (verification.expiresAt < new Date()) {
+    if (this.isExpired(verification.expiresAt)) {
       this.logger.warn(`Verification expired for token: ${verificationToken}`);
       return false;
     }
 
     // Check max attempts
-    if (verification.attempts >= this.maxAttempts) {
+    if (this.isMaxAttemptsExceeded(verification.attempts)) {
       this.logger.warn(`Max attempts exceeded for verification: ${verification.id}`);
       return false;
     }
 
     // Normalize phone number from webhook
-    const normalizedWebhookPhone = this.normalizePhoneNumber(phoneNumber);
+    const normalizedWebhookPhone = normalizePhoneNumber(phoneNumber);
 
     // Check if this phone is already verified by another user
     const phoneAlreadyUsed = await this.mobileVerificationRepository.isPhoneVerifiedByOtherUser(
@@ -177,13 +177,26 @@ export class MobileVerificationService {
 
     if (verification.phone) {
       // Phone was provided during initiation - verify it matches
-      const normalizedStoredPhone = this.normalizePhoneNumber(verification.phone);
+      const normalizedStoredPhone = normalizePhoneNumber(verification.phone);
       if (normalizedWebhookPhone !== normalizedStoredPhone) {
         this.logger.warn(
           `Phone number mismatch. Expected: ${normalizedStoredPhone}, Got: ${normalizedWebhookPhone}`,
         );
         // Increment attempts on mismatch
         await this.mobileVerificationRepository.incrementAttempts(verification.id);
+
+        // Emit SSE event for phone mismatch failure
+        this.eventEmitter.emit(
+          VERIFICATION_EVENTS.MOBILE_FAILED,
+          new MobileVerificationEvent(
+            verification.userId,
+            verification.id,
+            'failed',
+            undefined,
+            'Phone number does not match the one provided during verification',
+          ),
+        );
+
         return false;
       }
       phoneToUse = normalizedStoredPhone;
@@ -204,6 +217,18 @@ export class MobileVerificationService {
     await this.userService.markPhoneVerifiedAndAdvanceToMfa(verification.userId, phoneToUse, countryCode);
 
     this.logger.log(`Successfully verified phone ${phoneToUse} (country: ${countryCode}) for user ${verification.userId} - advancing to MFA setup`);
+
+    // Emit SSE event for real-time notification
+    this.eventEmitter.emit(
+      VERIFICATION_EVENTS.MOBILE_VERIFIED,
+      new MobileVerificationEvent(
+        verification.userId,
+        verification.id,
+        'verified',
+        phoneToUse,
+        'Phone number verified successfully',
+      ),
+    );
 
     return true;
   }
@@ -238,13 +263,13 @@ export class MobileVerificationService {
     }
 
     // Check expiry
-    if (verification.expiresAt < new Date()) {
+    if (this.isExpired(verification.expiresAt)) {
       this.logger.warn(`Verification expired for user: ${userId}`);
       throw new BadRequestException('Verification expired. Please request a new verification.');
     }
 
     // Check max attempts
-    if (verification.attempts >= this.maxAttempts) {
+    if (this.isMaxAttemptsExceeded(verification.attempts)) {
       this.logger.warn(`Max attempts exceeded for verification: ${verification.id}`);
       throw new BadRequestException('Maximum verification attempts exceeded. Please request a new verification.');
     }
@@ -286,10 +311,8 @@ export class MobileVerificationService {
    * @returns Verification status
    */
   async getVerificationStatus(userId: string): Promise<MobileVerificationStatusResponseDto> {
-    const user = await this.userService.findById(userId);
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
+    // Validate user exists (findById throws NotFoundException if not found)
+    await this.userService.findById(userId);
 
     const verification = await this.mobileVerificationRepository.findLatestByUserId(userId);
 
@@ -322,12 +345,17 @@ export class MobileVerificationService {
   }
 
   /**
-   * Normalize phone number to E.164 format with + prefix
-   * @param phone Phone number (with or without + prefix)
-   * @returns Phone number in E.164 format
+   * Check if verification has expired
    */
-  private normalizePhoneNumber(phone: string): string {
-    return phone.startsWith('+') ? phone : `+${phone}`;
+  private isExpired(expiresAt: Date): boolean {
+    return expiresAt < new Date();
+  }
+
+  /**
+   * Check if max verification attempts exceeded
+   */
+  private isMaxAttemptsExceeded(attempts: number): boolean {
+    return attempts >= this.maxAttempts;
   }
 
   /**

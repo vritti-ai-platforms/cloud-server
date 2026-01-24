@@ -1,5 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 
 /**
  * SMS Service for sending SMS and WhatsApp messages
@@ -9,7 +8,7 @@ import { ConfigService } from '@nestjs/config';
 export class SmsService {
   private readonly logger = new Logger(SmsService.name);
 
-  constructor(readonly _configService: ConfigService) {
+  constructor() {
     this.logger.warn('SMS service is currently in mock mode');
   }
 

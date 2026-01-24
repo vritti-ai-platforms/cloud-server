@@ -1,10 +1,12 @@
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
+import { SseAuthGuard } from '@vritti/api-sdk';
 import { jwtConfigFactory } from '../../../config/jwt.config';
 import { ServicesModule } from '../../../services';
 import { UserModule } from '../user/user.module';
 import { OnboardingController } from './controllers/onboarding.controller';
+import { VerificationSseController } from './controllers/verification-sse.controller';
 import { VerificationWebhookController } from './controllers/verification-webhook.controller';
 import {
   SMSInboundProvider,
@@ -18,6 +20,8 @@ import { EmailVerificationService } from './services/email-verification.service'
 import { MobileVerificationService } from './services/mobile-verification.service';
 import { OnboardingService } from './services/onboarding.service';
 import { OtpService } from './services/otp.service';
+import { SseConnectionService } from './services/sse-connection.service';
+import { VerificationEventListener } from './services/verification-event.listener';
 
 @Module({
   imports: [
@@ -28,7 +32,7 @@ import { OtpService } from './services/otp.service';
     ServicesModule,
     UserModule, // Import UserModule to use UserService
   ],
-  controllers: [OnboardingController, VerificationWebhookController],
+  controllers: [OnboardingController, VerificationWebhookController, VerificationSseController],
   providers: [
     // Core services
     OnboardingService,
@@ -45,6 +49,11 @@ import { OtpService } from './services/otp.service';
     // Repositories
     EmailVerificationRepository,
     MobileVerificationRepository,
+
+    // SSE services
+    SseConnectionService,
+    VerificationEventListener,
+    SseAuthGuard,
   ],
   exports: [
     OnboardingService,

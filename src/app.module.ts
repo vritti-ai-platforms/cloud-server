@@ -1,11 +1,12 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import * as schema from '@/db/schema';
 import { relations } from '@/db/schema';
 
 import './db/schema.registry';
 
-import { Reflector, RouterModule } from '@nestjs/core';
+import { RouterModule } from '@nestjs/core';
 import { AuthConfigModule, DatabaseModule, type DatabaseModuleOptions, LoggerModule } from '@vritti/api-sdk';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -23,6 +24,8 @@ import { UserModule } from './modules/cloud-api/user/user.module';
       envFilePath: '.env',
       validate,
     }),
+    // Event emitter for SSE real-time updates
+    EventEmitterModule.forRoot(),
     // Logger module configuration with environment presets
     // Presets available: 'development', 'staging', 'production', 'test'
     // All preset values can be overridden with explicit options
