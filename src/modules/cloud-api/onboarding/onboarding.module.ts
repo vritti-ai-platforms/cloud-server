@@ -72,6 +72,8 @@ import { WebAuthnService } from './services/webauthn.service';
     TwoFactorAuthService,
     WebAuthnService,
     TwoFactorAuthRepository,
+    TotpService,
+    OtpService,
   ],
 })
 export class OnboardingModule {}
