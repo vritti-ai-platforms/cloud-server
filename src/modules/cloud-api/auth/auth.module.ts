@@ -7,6 +7,7 @@ import { OnboardingModule } from '../onboarding/onboarding.module';
 import { UserModule } from '../user/user.module';
 import { AuthController } from './auth.controller';
 import { AuthOAuthController } from './auth-oauth.controller';
+import { PasskeyAuthController } from './controllers/passkey-auth.controller';
 import { AppleOAuthProvider } from './oauth/apple-oauth.provider';
 import { FacebookOAuthProvider } from './oauth/facebook-oauth.provider';
 import { GoogleOAuthProvider } from './oauth/google-oauth.provider';
@@ -20,6 +21,7 @@ import { TwitterOAuthProvider } from './oauth/twitter-oauth.provider';
 import { SessionRepository } from './repositories/session.repository';
 import { AuthService } from './services/auth.service';
 import { JwtAuthService } from './services/jwt.service';
+import { PasskeyAuthService } from './services/passkey-auth.service';
 import { SessionService } from './services/session.service';
 
 /**
@@ -36,12 +38,13 @@ import { SessionService } from './services/session.service';
     UserModule,
     forwardRef(() => OnboardingModule),
   ],
-  controllers: [AuthController, AuthOAuthController],
+  controllers: [AuthController, AuthOAuthController, PasskeyAuthController],
   providers: [
     AuthService,
     JwtAuthService,
     SessionService,
     SessionRepository,
+    PasskeyAuthService,
     // OAuth providers
     OAuthService,
     OAuthStateService,

@@ -73,6 +73,7 @@ export const twoFactorAuth = cloudSchema.table(
     }).unique(),
     passkeyPublicKey: text('passkey_public_key'),
     passkeyCounter: integer('passkey_counter'),
+    passkeyTransports: varchar('passkey_transports', { length: 255 }), // JSON array: ["internal","hybrid"]
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true })
       .notNull()

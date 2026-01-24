@@ -6,7 +6,6 @@ import type { OnboardingStatusResponseDto } from '../dto/onboarding-status-respo
 import { SetPasswordDto } from '../dto/set-password.dto';
 import type { StartOnboardingResponseDto } from '../dto/start-onboarding-response.dto';
 import { VerifyEmailDto } from '../dto/verify-email.dto';
-import type { VerifyMobileOtpDto } from '../dto/verify-mobile-otp.dto';
 import { EmailVerificationService } from '../services/email-verification.service';
 import { MobileVerificationService } from '../services/mobile-verification.service';
 import { OnboardingService } from '../services/onboarding.service';

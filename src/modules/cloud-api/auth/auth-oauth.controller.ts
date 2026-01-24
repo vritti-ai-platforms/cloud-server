@@ -47,7 +47,10 @@ export class AuthOAuthController {
     this.logger.log(`Handling OAuth callback for provider: ${provider}`);
 
     try {
+      console.log('hi Sunvish');
       const response: OAuthResponseDto = await this.oauthService.handleCallback(provider, code, state);
+
+      console.log('hi Sunvish1');
 
       // Determine session type based on onboarding status
       const isFullyOnboarded = response.user.onboardingStep === OnboardingStepValues.COMPLETE;

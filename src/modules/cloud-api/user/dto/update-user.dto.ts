@@ -46,4 +46,8 @@ export class UpdateUserDto {
   @IsEnum(OnboardingStepValues)
   @IsOptional()
   onboardingStep?: OnboardingStep;
+
+  @IsString()
+  @IsOptional()
+  passwordHash?: string;
 }

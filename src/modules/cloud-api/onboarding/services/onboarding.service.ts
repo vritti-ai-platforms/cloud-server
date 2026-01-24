@@ -64,8 +64,11 @@ export class OnboardingService {
     // Hash password
     const passwordHash = await this.encryptionService.hashPassword(password);
 
-    // Update user with password and advance to next onboarding step
-    await this.userService.setPasswordHash(userId, passwordHash);
+    // Update user with password and move to MOBILE_VERIFICATION step
+    await this.userService.update(userId, {
+      passwordHash,
+      onboardingStep: OnboardingStepValues.MOBILE_VERIFICATION,
+    });
 
     this.logger.log(`Password set for OAuth user: ${user.email} (${userId})`);
   }
