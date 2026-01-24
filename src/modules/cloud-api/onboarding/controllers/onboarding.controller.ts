@@ -4,6 +4,7 @@ import type { InitiateMobileVerificationDto } from '../dto/initiate-mobile-verif
 import type { MobileVerificationStatusResponseDto } from '../dto/mobile-verification-status-response.dto';
 import type { OnboardingStatusResponseDto } from '../dto/onboarding-status-response.dto';
 import { SetPasswordDto } from '../dto/set-password.dto';
+import { VerifyMobileOtpDto } from '../dto/verify-mobile-otp.dto';
 import type { StartOnboardingResponseDto } from '../dto/start-onboarding-response.dto';
 import { VerifyEmailDto } from '../dto/verify-email.dto';
 import { EmailVerificationService } from '../services/email-verification.service';

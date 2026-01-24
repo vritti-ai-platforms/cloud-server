@@ -69,6 +69,9 @@ import { WebAuthnService } from './services/webauthn.service';
     EmailVerificationService,
     MobileVerificationService,
     VerificationProviderFactory,
-  , TwoFactorAuthService, WebAuthnService, TwoFactorAuthRepository],
+    TwoFactorAuthService,
+    WebAuthnService,
+    TwoFactorAuthRepository,
+  ],
 })
 export class OnboardingModule {}
