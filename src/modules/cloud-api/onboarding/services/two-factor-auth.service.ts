@@ -152,7 +152,7 @@ export class TwoFactorAuthService {
   /**
    * Skip 2FA setup - completes onboarding without 2FA
    */
-  async skip2FASetup(userId: string): Promise<void> {
+  async skip2FASetup(userId: string): Promise<{ success: boolean; message: string }> {
     // Clean up any pending setup
     pendingSetups.delete(userId);
 
@@ -163,6 +163,11 @@ export class TwoFactorAuthService {
     });
 
     this.logger.log(`User ${userId} skipped 2FA setup`);
+
+    return {
+      success: true,
+      message: 'Two-factor authentication setup skipped. You can enable it later in settings.',
+    };
   }
 
   /**

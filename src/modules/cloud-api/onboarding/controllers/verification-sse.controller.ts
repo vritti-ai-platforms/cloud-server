@@ -1,13 +1,7 @@
 import { Controller, Logger, MessageEvent, NotFoundException, Sse, UseGuards } from '@nestjs/common';
-import {
-  ApiOperation,
-  ApiProduces,
-  ApiQuery,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiOperation, ApiProduces, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Public, SkipCsrf, SseAuthGuard, UserId } from '@vritti/api-sdk';
-import { Observable, finalize, map, takeUntil, timer } from 'rxjs';
+import { finalize, map, Observable, takeUntil, timer } from 'rxjs';
 import { MobileVerificationEvent } from '../events/verification.events';
 import { MobileVerificationService } from '../services/mobile-verification.service';
 import { SseConnectionService } from '../services/sse-connection.service';

@@ -8,11 +8,32 @@ export const relations = defineRelations(schema, (r) => ({
       from: r.tenants.id,
       to: r.tenantDatabaseConfigs.tenantId,
     }),
+    company: r.one.companies({
+      from: r.tenants.id,
+      to: r.companies.tenantId,
+    }),
   },
   tenantDatabaseConfigs: {
     tenant: r.one.tenants({
       from: r.tenantDatabaseConfigs.tenantId,
       to: r.tenants.id,
+    }),
+  },
+
+  // Company relations
+  companies: {
+    tenant: r.one.tenants({
+      from: r.companies.tenantId,
+      to: r.tenants.id,
+    }),
+    businessUnits: r.many.businessUnits(),
+  },
+
+  // Business Unit relations
+  businessUnits: {
+    company: r.one.companies({
+      from: r.businessUnits.companyId,
+      to: r.companies.id,
     }),
   },
 
@@ -23,6 +44,7 @@ export const relations = defineRelations(schema, (r) => ({
     twoFactorAuth: r.many.twoFactorAuth(),
     oauthProviders: r.many.oauthProviders(),
     sessions: r.many.sessions(),
+    chatConversations: r.many.chatConversations(),
   },
 
   // Session relations
@@ -62,6 +84,23 @@ export const relations = defineRelations(schema, (r) => ({
     user: r.one.users({
       from: r.twoFactorAuth.userId,
       to: r.users.id,
+    }),
+  },
+
+  // Chat conversation relations
+  chatConversations: {
+    user: r.one.users({
+      from: r.chatConversations.userId,
+      to: r.users.id,
+    }),
+    messages: r.many.chatMessages(),
+  },
+
+  // Chat message relations
+  chatMessages: {
+    conversation: r.one.chatConversations({
+      from: r.chatMessages.conversationId,
+      to: r.chatConversations.id,
     }),
   },
 }));

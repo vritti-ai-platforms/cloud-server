@@ -5,6 +5,9 @@ export * from './cloud-schema';
 // Export all enums
 export * from './enums';
 // Export all tables
+export * from './ai-chat';
+export * from './business-unit';
+export * from './company';
 export * from './tenant';
 export * from './user';
 export * from './verification';

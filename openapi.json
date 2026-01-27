@@ -1984,6 +1984,227 @@
           "MFA"
         ]
       }
+    },
+    "/cloud-api/ai-chat/conversations": {
+      "get": {
+        "operationId": "ChatController_listConversations",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ConversationResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List all conversations for the current user",
+        "tags": [
+          "AI Chat"
+        ]
+      },
+      "post": {
+        "operationId": "ChatController_createConversation",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateConversationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new conversation",
+        "tags": [
+          "AI Chat"
+        ]
+      }
+    },
+    "/cloud-api/ai-chat/conversations/{id}": {
+      "get": {
+        "operationId": "ChatController_getConversation",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Conversation ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationWithMessagesResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Conversation not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a conversation with all messages",
+        "tags": [
+          "AI Chat"
+        ]
+      },
+      "delete": {
+        "operationId": "ChatController_deleteConversation",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Conversation ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Conversation deleted"
+          },
+          "404": {
+            "description": "Conversation not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a conversation",
+        "tags": [
+          "AI Chat"
+        ]
+      }
+    },
+    "/cloud-api/ai-chat/conversations/{id}/messages": {
+      "get": {
+        "operationId": "ChatController_getMessages",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Conversation ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MessageResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Conversation not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get all messages in a conversation",
+        "tags": [
+          "AI Chat"
+        ]
+      },
+      "post": {
+        "description": "Sends a message to the AI assistant and receives a streaming response via SSE.\n\n**Event Types:**\n- `text-delta`: Incremental text from AI\n- `tool-call`: AI is calling a tool\n- `tool-result`: Tool execution result\n- `error`: An error occurred\n- `done`: Response complete",
+        "operationId": "ChatController_sendMessage",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Conversation ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendMessageDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Streaming response"
+          },
+          "404": {
+            "description": "Conversation not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Send a message and receive streaming AI response",
+        "tags": [
+          "AI Chat"
+        ]
+      }
     }
   },
   "info": {
@@ -3030,6 +3251,188 @@
         "required": [
           "sessionId",
           "credential"
+        ]
+      },
+      "ConversationResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique conversation identifier",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "userId": {
+            "type": "string",
+            "description": "User ID who owns this conversation",
+            "example": "550e8400-e29b-41d4-a716-446655440001"
+          },
+          "title": {
+            "type": "object",
+            "description": "Conversation title",
+            "example": "Tenant Management",
+            "nullable": true
+          },
+          "messageCount": {
+            "type": "number",
+            "description": "Number of messages in the conversation",
+            "example": 5
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Creation timestamp",
+            "example": "2024-01-15T10:30:00.000Z"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Last update timestamp",
+            "example": "2024-01-20T14:45:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "userId",
+          "messageCount",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CreateConversationDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Optional title for the conversation",
+            "example": "Tenant Management Questions",
+            "maxLength": 255
+          }
+        }
+      },
+      "MessageResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Message ID"
+          },
+          "conversationId": {
+            "type": "string",
+            "description": "Conversation ID"
+          },
+          "role": {
+            "type": "string",
+            "description": "Message role",
+            "enum": [
+              "user",
+              "assistant",
+              "tool"
+            ]
+          },
+          "content": {
+            "type": "object",
+            "description": "Message content",
+            "nullable": true
+          },
+          "toolCalls": {
+            "type": "object",
+            "description": "Tool calls made by assistant",
+            "nullable": true
+          },
+          "toolCallId": {
+            "type": "object",
+            "description": "Tool call ID for tool results",
+            "nullable": true
+          },
+          "toolName": {
+            "type": "object",
+            "description": "Tool name",
+            "nullable": true
+          },
+          "toolResult": {
+            "type": "object",
+            "description": "Tool execution result",
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Creation timestamp"
+          }
+        },
+        "required": [
+          "id",
+          "conversationId",
+          "role",
+          "createdAt"
+        ]
+      },
+      "ConversationWithMessagesResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique conversation identifier",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "userId": {
+            "type": "string",
+            "description": "User ID who owns this conversation",
+            "example": "550e8400-e29b-41d4-a716-446655440001"
+          },
+          "title": {
+            "type": "object",
+            "description": "Conversation title",
+            "example": "Tenant Management",
+            "nullable": true
+          },
+          "messageCount": {
+            "type": "number",
+            "description": "Number of messages in the conversation",
+            "example": 5
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Creation timestamp",
+            "example": "2024-01-15T10:30:00.000Z"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Last update timestamp",
+            "example": "2024-01-20T14:45:00.000Z"
+          },
+          "messages": {
+            "description": "Messages in the conversation",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MessageResponseDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "userId",
+          "messageCount",
+          "createdAt",
+          "updatedAt",
+          "messages"
+        ]
+      },
+      "SendMessageDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "The message content to send to the AI assistant",
+            "example": "List all active tenants in the system",
+            "minLength": 1,
+            "maxLength": 10000
+          }
+        },
+        "required": [
+          "message"
         ]
       }
     }

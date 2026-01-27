@@ -92,11 +92,7 @@ export class TwoFactorController {
   @ApiResponse({ status: 401, description: 'Unauthorized - Invalid or missing onboarding token' })
   async skip2FASetup(@UserId() userId: string): Promise<{ success: boolean; message: string }> {
     this.logger.log(`POST /onboarding/2fa/skip - User: ${userId}`);
-    await this.twoFactorAuthService.skip2FASetup(userId);
-    return {
-      success: true,
-      message: 'Two-factor authentication setup skipped. You can enable it later in settings.',
-    };
+    return await this.twoFactorAuthService.skip2FASetup(userId);
   }
 
   /**

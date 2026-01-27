@@ -86,10 +86,7 @@ export class AuthOAuthController {
     this.logger.log(`Handling OAuth callback for provider: ${provider}`);
 
     try {
-      console.log('hi Sunvish');
       const response: OAuthResponseDto = await this.oauthService.handleCallback(provider, code, state);
-
-      console.log('hi Sunvish1');
 
       // Determine session type based on onboarding status
       const isFullyOnboarded = response.user.onboardingStep === OnboardingStepValues.COMPLETE;
@@ -211,7 +208,7 @@ export class AuthOAuthController {
       step: response.user.onboardingStep,
     });
 
-    return `${baseUrl}/onboarding/oauth-success?${params.toString()}`;
+    return `${baseUrl}/auth/onboarding/oauth-success?${params.toString()}`;
   }
 
   /**
@@ -223,6 +220,6 @@ export class AuthOAuthController {
       error: errorMessage,
     });
 
-    return `${baseUrl}/onboarding/oauth-error?${params.toString()}`;
+    return `${baseUrl}/auth/onboarding/oauth-error?${params.toString()}`;
   }
 }
