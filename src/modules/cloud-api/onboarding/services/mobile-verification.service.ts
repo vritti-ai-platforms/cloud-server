@@ -87,8 +87,13 @@ export class MobileVerificationService {
       return this.buildStatusResponse(existingVerification);
     }
 
-    // Generate verification token
-    const verificationToken = this.otpService.generateVerificationToken();
+    // Generate appropriate token based on method
+    // MANUAL_OTP: 6-digit numeric OTP for SMS
+    // QR methods: Text token like "VERABC123"
+    const verificationToken =
+      method === VerificationMethodValues.MANUAL_OTP
+        ? this.otpService.generateOtp()
+        : this.otpService.generateVerificationToken();
 
     // Create verification record
     // For QR methods: phone may be null (will come from webhook)
