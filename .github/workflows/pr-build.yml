@@ -1,0 +1,12 @@
+name: PR Build Validation
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    uses: vritti-ai-platforms/infrastructure/.github/workflows/build-backend-image.yml@main
+    with:
+      service_name: vritti-api-nexus
+    secrets: inherit

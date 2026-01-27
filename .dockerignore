@@ -1,0 +1,61 @@
+# Dependencies
+node_modules
+
+# Build output
+dist
+build
+
+# Git
+.git
+.gitignore
+
+# Environment files
+.env
+.env.*
+*.local
+
+# IDE
+.vscode
+.idea
+*.sublime-workspace
+
+# Logs
+logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Test files
+coverage
+.nyc_output
+test
+*.spec.ts
+*.test.ts
+jest.config.*
+
+# Documentation
+*.md
+docs
+documentation
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temp files
+.temp
+.tmp
+*.pid
+*.seed
+*.pid.lock
+
+# Development files
+.yalc
+yalc.lock
+local-db-compose.yml
+
+# Misc
+*.tsbuildinfo

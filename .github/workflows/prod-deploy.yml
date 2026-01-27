@@ -1,0 +1,40 @@
+name: Deploy vritti-api-nexus to Production
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    uses: vritti-ai-platforms/infrastructure/.github/workflows/build-backend-image.yml@main
+    with:
+      service_name: vritti-api-nexus
+    secrets: inherit
+
+  deploy:
+    needs: build
+    uses: vritti-ai-platforms/infrastructure/.github/workflows/deploy-backend-image.yml@main
+    with:
+      service_name: vritti-api
+      image_tag: ghcr.io/${{ github.repository_owner }}/vritti-api-nexus:${{ needs.build.outputs.short_sha }}
+      health_check_url: https://${{ vars.APP_DOMAIN }}/health
+      run_migrations: ${{ vars.RUN_MIGRATIONS == 'true' }}
+    secrets:
+      SERVER_VM_HOST: ${{ secrets.SERVER_VM_HOST }}
+      SERVER_VM_USER: ${{ secrets.SERVER_VM_USER }}
+      SERVER_VM_SSH_KEY: ${{ secrets.SERVER_VM_SSH_KEY }}
+      GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+      DB_DIRECT_URL: ${{ secrets.DB_DIRECT_URL }}
+      # Database Configuration
+      PRIMARY_DB_HOST: ${{ secrets.PRIMARY_DB_HOST }}
+      PRIMARY_DB_USERNAME: ${{ secrets.PRIMARY_DB_USERNAME }}
+      PRIMARY_DB_PASSWORD: ${{ secrets.PRIMARY_DB_PASSWORD }}
+      # Security Secrets
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      COOKIE_SECRET: ${{ secrets.COOKIE_SECRET }}
+      CSRF_HMAC_KEY: ${{ secrets.CSRF_HMAC_KEY }}
+      ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
+      # External Services
+      BREVO_API_KEY: ${{ secrets.BREVO_API_KEY }}
+      SMS_PROVIDER_API_KEY: ${{ secrets.SMS_PROVIDER_API_KEY }}
