@@ -1,4 +1,5 @@
 import { Controller, Get, HttpCode, HttpStatus, Res } from '@nestjs/common';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Public } from '@vritti/api-sdk';
 import type { FastifyReply } from 'fastify';
 
@@ -7,6 +8,7 @@ import type { FastifyReply } from 'fastify';
  *
  * Provides endpoints for CSRF token management
  */
+@ApiTags('CSRF')
 @Controller('csrf')
 export class CsrfController {
   /**
@@ -38,6 +40,26 @@ export class CsrfController {
   @Get('token')
   @Public()
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Get CSRF token',
+    description:
+      'Generates and returns a CSRF token that must be included in all state-changing requests (POST, PUT, PATCH, DELETE). The token should be sent in the X-CSRF-Token header.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'CSRF token generated successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        csrfToken: {
+          type: 'string',
+          description: 'The CSRF token to use in subsequent requests',
+          example: 'abc123xyz789',
+        },
+      },
+      required: ['csrfToken'],
+    },
+  })
   getToken(@Res({ passthrough: true }) reply: FastifyReply): { csrfToken: string } {
     // Generate CSRF token using Fastify's csrf-protection plugin
     // The plugin automatically:

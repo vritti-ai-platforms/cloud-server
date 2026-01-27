@@ -1,3 +1,4 @@
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 import { type VerificationMethod, VerificationMethodValues } from '@/db/schema/enums';
 
@@ -15,6 +16,13 @@ export class InitiateMobileVerificationDto {
    * Optional for QR-based methods (WHATSAPP_QR, SMS_QR) - phone comes from webhook
    * Required for OTP-based method (MANUAL_OTP)
    */
+  @ApiPropertyOptional({
+    description:
+      'Phone number in E.164 format (with + prefix). Optional for QR-based methods, required for OTP-based method.',
+    example: '+919876543210',
+    minLength: 10,
+    maxLength: 20,
+  })
   @IsOptional()
   @IsString()
   @MinLength(10)
@@ -27,6 +35,12 @@ export class InitiateMobileVerificationDto {
    *
    * Optional for QR-based methods
    */
+  @ApiPropertyOptional({
+    description: 'ISO 3166-1 alpha-2 country code for the phone number',
+    example: 'IN',
+    minLength: 2,
+    maxLength: 5,
+  })
   @IsOptional()
   @IsString()
   @MinLength(2)
@@ -37,6 +51,12 @@ export class InitiateMobileVerificationDto {
    * Verification method
    * Defaults to WHATSAPP_QR
    */
+  @ApiPropertyOptional({
+    description: 'Method to use for mobile verification. Defaults to WHATSAPP_QR.',
+    example: 'WHATSAPP_QR',
+    enum: Object.values(VerificationMethodValues),
+    default: VerificationMethodValues.WHATSAPP_QR,
+  })
   @IsEnum(Object.values(VerificationMethodValues))
   @IsOptional()
   method?: VerificationMethod = VerificationMethodValues.WHATSAPP_QR;

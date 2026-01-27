@@ -1,3 +1,4 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import type { OnboardingStep } from '@/db/schema';
 import type { UserResponseDto } from '../../user/dto/user-response.dto';
 
@@ -9,27 +10,92 @@ export type MfaMethodType = 'totp' | 'sms' | 'passkey';
 /**
  * MFA Challenge - returned when login requires multi-factor authentication
  */
-export interface MfaChallengeInfo {
+export class MfaChallengeInfo {
+  @ApiProperty({ description: 'MFA session ID', example: 'mfa_abc123xyz' })
   sessionId: string;
+
+  @ApiProperty({
+    description: 'Available MFA methods',
+    example: ['totp', 'sms'],
+    enum: ['totp', 'sms', 'passkey'],
+    isArray: true,
+  })
   availableMethods: MfaMethodType[];
+
+  @ApiProperty({
+    description: 'Default MFA method',
+    example: 'totp',
+    enum: ['totp', 'sms', 'passkey'],
+  })
   defaultMethod: MfaMethodType;
-  maskedPhone?: string; // e.g., "+1 *** *** 4567"
+
+  @ApiPropertyOptional({
+    description: 'Masked phone number for SMS verification',
+    example: '+1 *** *** 4567',
+  })
+  maskedPhone?: string;
 }
 
 export class AuthResponseDto {
+  @ApiPropertyOptional({
+    description: 'JWT access token',
+    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+  })
   accessToken?: string;
+
+  @ApiPropertyOptional({
+    description: 'Refresh token for obtaining new access tokens',
+    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+  })
   refreshToken?: string;
+
+  @ApiPropertyOptional({
+    description: 'Token type',
+    example: 'Bearer',
+    default: 'Bearer',
+  })
   tokenType?: string;
-  expiresIn?: number; // Access token expiry in seconds
+
+  @ApiPropertyOptional({
+    description: 'Access token expiry in seconds',
+    example: 3600,
+  })
+  expiresIn?: number;
+
+  @ApiPropertyOptional({
+    description: 'User information',
+  })
   user?: UserResponseDto;
 
-  // Onboarding fields (optional - only present when user needs onboarding)
+  @ApiPropertyOptional({
+    description: 'Whether user requires onboarding',
+    example: false,
+  })
   requiresOnboarding?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Token for continuing onboarding flow',
+    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+  })
   onboardingToken?: string;
+
+  @ApiPropertyOptional({
+    description: 'Current onboarding step',
+    example: 'EMAIL_VERIFICATION',
+    enum: ['EMAIL_VERIFICATION', 'PASSWORD_SETUP', 'PHONE_VERIFICATION', 'TWO_FACTOR_SETUP', 'COMPLETE'],
+  })
   onboardingStep?: OnboardingStep;
 
-  // MFA fields (optional - only present when user has 2FA enabled)
+  @ApiPropertyOptional({
+    description: 'Whether MFA verification is required',
+    example: true,
+  })
   requiresMfa?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'MFA challenge information',
+    type: () => MfaChallengeInfo,
+  })
   mfaChallenge?: MfaChallengeInfo;
 
   constructor(partial: Partial<AuthResponseDto>) {

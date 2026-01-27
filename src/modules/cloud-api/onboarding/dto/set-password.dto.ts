@@ -1,9 +1,16 @@
+import { ApiProperty } from '@nestjs/swagger';
 import { IsString, Matches, MinLength } from 'class-validator';
 
 /**
  * DTO for setting password (OAuth users only)
  */
 export class SetPasswordDto {
+  @ApiProperty({
+    description:
+      'User password that must be at least 8 characters and contain at least one lowercase letter, uppercase letter, number, and special character',
+    example: 'SecureP@ss123',
+    minLength: 8,
+  })
   @IsString()
   @MinLength(8, {
     message: 'Password must be at least 8 characters long',

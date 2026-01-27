@@ -1,4 +1,11 @@
 import { Body, Controller, Get, Headers, HttpCode, HttpStatus, Ip, Logger, Post, Req, Res } from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { Public, UserId } from '@vritti/api-sdk';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { SessionTypeValues } from '@/db/schema';
@@ -15,6 +22,7 @@ import { getRefreshCookieName, getRefreshCookieOptionsFromConfig, SessionService
  * Auth Controller
  * Handles user authentication, token refresh, and logout
  */
+@ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   private readonly logger = new Logger(AuthController.name);
@@ -34,6 +42,23 @@ export class AuthController {
   @Post('signup')
   @Public()
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'User signup',
+    description: 'Creates a new user account and initiates the onboarding flow. Returns an access token and sets a refresh token in an httpOnly cookie.',
+  })
+  @ApiBody({ type: SignupDto })
+  @ApiResponse({
+    status: 200,
+    description: 'User created successfully. Returns onboarding status and access token.',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid input data or validation error.',
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'User with this email already exists.',
+  })
   async signup(
     @Body() signupDto: SignupDto,
     @Res({ passthrough: true }) reply: FastifyReply,
@@ -74,6 +99,25 @@ export class AuthController {
    */
   @Get('token')
   @Public()
+  @ApiOperation({
+    summary: 'Recover session token',
+    description: 'Recovers the session by reading the refresh token from the httpOnly cookie and returns a new access token. Does not rotate the refresh token.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Session recovered successfully. Returns new access token.',
+    schema: {
+      type: 'object',
+      properties: {
+        accessToken: { type: 'string', description: 'JWT access token' },
+        expiresIn: { type: 'number', description: 'Token expiry in seconds' },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Invalid or expired refresh token.',
+  })
   async getToken(@Req() request: FastifyRequest): Promise<{ accessToken: string; expiresIn: number }> {
     const refreshToken = request.cookies?.[getRefreshCookieName()];
 
@@ -91,6 +135,27 @@ export class AuthController {
    */
   @Post('login')
   @Public()
+  @ApiOperation({
+    summary: 'User login',
+    description: 'Authenticates the user with email and password. Returns an access token and sets a refresh token in an httpOnly cookie.',
+  })
+  @ApiBody({ type: LoginDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Login successful. Returns access token and user information.',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid input data or validation error.',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Invalid credentials.',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'User not found.',
+  })
   async login(
     @Body() loginDto: LoginDto,
     @Res({ passthrough: true }) reply: FastifyReply,
@@ -121,6 +186,25 @@ export class AuthController {
    */
   @Post('refresh')
   @Public()
+  @ApiOperation({
+    summary: 'Refresh access token',
+    description: 'Generates a new access token and rotates the refresh token for enhanced security. Reads refresh token from httpOnly cookie and updates it with the new rotated token.',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Token refreshed successfully. Returns new access token.',
+    schema: {
+      type: 'object',
+      properties: {
+        accessToken: { type: 'string', description: 'New JWT access token' },
+        expiresIn: { type: 'number', description: 'Token expiry in seconds' },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Invalid or expired refresh token.',
+  })
   async refreshToken(
     @Req() request: FastifyRequest,
     @Res({ passthrough: true }) reply: FastifyReply,
@@ -158,6 +242,25 @@ export class AuthController {
    * The guard provides authentication, the service provides session state management.
    */
   @Post('logout')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Logout from current device',
+    description: 'Invalidates the current session and clears the refresh token cookie. Only logs out from the current device.',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Successfully logged out.',
+    schema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string', example: 'Successfully logged out' },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized. Invalid or missing access token.',
+  })
   async logout(
     @Req() request: FastifyRequest,
     @Res({ passthrough: true }) reply: FastifyReply,
@@ -182,6 +285,25 @@ export class AuthController {
    * Invalidates all sessions and clears refresh token cookie
    */
   @Post('logout-all')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Logout from all devices',
+    description: 'Invalidates all active sessions for the current user across all devices and clears the refresh token cookie.',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Successfully logged out from all devices.',
+    schema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string', example: 'Successfully logged out from 3 device(s)' },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized. Invalid or missing access token.',
+  })
   async logoutAll(
     @UserId() userId: string,
     @Res({ passthrough: true }) reply: FastifyReply,
@@ -207,6 +329,24 @@ export class AuthController {
    * not the user existence in the database.
    */
   @Get('me')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Get current user information',
+    description: 'Returns the profile information of the currently authenticated user.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'User information retrieved successfully.',
+    type: UserResponseDto,
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized. Invalid or missing access token.',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'User not found.',
+  })
   async getCurrentUser(@UserId() userId: string): Promise<UserResponseDto> {
     return this.userService.findById(userId);
   }

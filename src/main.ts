@@ -1,10 +1,13 @@
 import fastifyCookie from '@fastify/cookie';
 import fastifyCsrfProtection from '@fastify/csrf-protection';
 import fastifyRawBody from 'fastify-raw-body';
+import { writeFileSync } from 'fs';
+import { join } from 'path';
 import { BadRequestException, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import {
   CorrelationIdMiddleware,
   configureApiSdk,
@@ -138,6 +141,47 @@ async function bootstrap() {
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token'],
+  });
+
+  // Configure Swagger/OpenAPI documentation
+  const swaggerConfig = new DocumentBuilder()
+    .setTitle('Vritti Cloud API')
+    .setDescription('Internal API for Vritti SaaS Platform')
+    .setVersion('1.0.0')
+    .addBearerAuth({
+      type: 'http',
+      scheme: 'bearer',
+      bearerFormat: 'JWT',
+      description: 'Enter your JWT access token',
+    })
+    .addServer('http://localhost:3000', 'Local Development')
+    .addTag('Health', 'Health check endpoints')
+    .addTag('CSRF', 'CSRF token management')
+    .addTag('Auth', 'Authentication endpoints')
+    .addTag('Auth - OAuth', 'OAuth authentication flows')
+    .addTag('Auth - Passkey', 'Passkey/WebAuthn authentication')
+    .addTag('MFA', 'Multi-factor authentication verification')
+    .addTag('Onboarding', 'User onboarding flow')
+    .addTag('Onboarding - Two-Factor Authentication', '2FA setup during onboarding')
+    .addTag('Onboarding - Verification Events', 'SSE events for verification status')
+    .addTag('Onboarding - Webhooks', 'Webhook handlers for SMS/WhatsApp')
+    .addTag('Tenants', 'Tenant management')
+    .addTag('Users', 'User management')
+    .build();
+
+  const document = SwaggerModule.createDocument(app, swaggerConfig);
+
+  // Export OpenAPI spec to file for Mintlify docs
+  writeFileSync(
+    join(__dirname, '..', 'openapi.json'),
+    JSON.stringify(document, null, 2),
+  );
+
+  // Setup Swagger UI at /api/docs
+  SwaggerModule.setup('api/docs', app, document, {
+    swaggerOptions: {
+      persistAuthorization: true,
+    },
   });
 
   const port = process.env.PORT ?? 3000;

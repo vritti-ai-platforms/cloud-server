@@ -1,6 +1,13 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Logger, Post } from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { Onboarding, UserId } from '@vritti/api-sdk';
-import type { InitiateMobileVerificationDto } from '../dto/initiate-mobile-verification.dto';
+import { InitiateMobileVerificationDto } from '../dto/initiate-mobile-verification.dto';
 import type { MobileVerificationStatusResponseDto } from '../dto/mobile-verification-status-response.dto';
 import type { OnboardingStatusResponseDto } from '../dto/onboarding-status-response.dto';
 import { SetPasswordDto } from '../dto/set-password.dto';
@@ -15,6 +22,8 @@ import { OnboardingService } from '../services/onboarding.service';
  * Onboarding Controller
  * Handles user registration and email verification
  */
+@ApiTags('Onboarding')
+@ApiBearerAuth()
 @Controller('onboarding')
 export class OnboardingController {
   private readonly logger = new Logger(OnboardingController.name);
@@ -33,6 +42,21 @@ export class OnboardingController {
   @Post('verify-email')
   @Onboarding()
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Verify email address using OTP' })
+  @ApiBody({ type: VerifyEmailDto, description: 'Email verification OTP payload' })
+  @ApiResponse({
+    status: 200,
+    description: 'Email verified successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean', example: true },
+        message: { type: 'string', example: 'Email verified successfully' },
+      },
+    },
+  })
+  @ApiResponse({ status: 400, description: 'Invalid or expired OTP' })
+  @ApiResponse({ status: 401, description: 'Unauthorized - Invalid or missing onboarding token' })
   async verifyEmail(
     @UserId() userId: string,
     @Body() verifyEmailDto: VerifyEmailDto,
@@ -55,6 +79,20 @@ export class OnboardingController {
   @Post('resend-email-otp')
   @Onboarding()
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Resend email verification OTP' })
+  @ApiResponse({
+    status: 200,
+    description: 'OTP sent successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean', example: true },
+        message: { type: 'string', example: 'OTP sent successfully' },
+      },
+    },
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized - Invalid or missing onboarding token' })
+  @ApiResponse({ status: 429, description: 'Too many requests - Rate limit exceeded' })
   async resendEmailOtp(@UserId() userId: string): Promise<{ success: boolean; message: string }> {
     this.logger.log(`POST /onboarding/resend-email-otp - User: ${userId}`);
 
@@ -73,6 +111,12 @@ export class OnboardingController {
    */
   @Get('status')
   @Onboarding()
+  @ApiOperation({ summary: 'Get current onboarding status' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns the current onboarding status for the user',
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized - Invalid or missing onboarding token' })
   async getStatus(@UserId() userId: string): Promise<OnboardingStatusResponseDto> {
     this.logger.log(`GET /onboarding/status - User: ${userId}`);
 
@@ -88,6 +132,12 @@ export class OnboardingController {
   @Post('start')
   @Onboarding()
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Start or continue the onboarding process' })
+  @ApiResponse({
+    status: 200,
+    description: 'Onboarding process started, returns current step and sends OTP if needed',
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized - Invalid or missing onboarding token' })
   async startOnboarding(@UserId() userId: string): Promise<StartOnboardingResponseDto> {
     this.logger.log(`POST /onboarding/start - User: ${userId}`);
 
@@ -102,6 +152,21 @@ export class OnboardingController {
   @Post('set-password')
   @Onboarding()
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Set password for OAuth users' })
+  @ApiBody({ type: SetPasswordDto, description: 'New password payload' })
+  @ApiResponse({
+    status: 200,
+    description: 'Password set successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean', example: true },
+        message: { type: 'string', example: 'Password set successfully' },
+      },
+    },
+  })
+  @ApiResponse({ status: 400, description: 'Invalid password format or validation failed' })
+  @ApiResponse({ status: 401, description: 'Unauthorized - Invalid or missing onboarding token' })
   async setPassword(
     @UserId() userId: string,
     @Body() setPasswordDto: SetPasswordDto,
@@ -126,6 +191,14 @@ export class OnboardingController {
   @Post('mobile-verification/initiate')
   @Onboarding()
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Initiate mobile phone verification' })
+  @ApiBody({ type: InitiateMobileVerificationDto, description: 'Mobile verification initiation payload' })
+  @ApiResponse({
+    status: 200,
+    description: 'Mobile verification initiated successfully',
+  })
+  @ApiResponse({ status: 400, description: 'Invalid phone number or verification method' })
+  @ApiResponse({ status: 401, description: 'Unauthorized - Invalid or missing onboarding token' })
   async initiateMobileVerification(
     @UserId() userId: string,
     @Body() dto: InitiateMobileVerificationDto,
@@ -142,6 +215,13 @@ export class OnboardingController {
    */
   @Get('mobile-verification/status')
   @Onboarding()
+  @ApiOperation({ summary: 'Get current mobile verification status' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns the current mobile verification status',
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized - Invalid or missing onboarding token' })
+  @ApiResponse({ status: 404, description: 'No active mobile verification found' })
   async getMobileVerificationStatus(@UserId() userId: string): Promise<MobileVerificationStatusResponseDto> {
     this.logger.log(`GET /onboarding/mobile-verification/status - User: ${userId}`);
 
@@ -156,6 +236,15 @@ export class OnboardingController {
   @Post('mobile-verification/resend')
   @Onboarding()
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Resend mobile verification code' })
+  @ApiBody({ type: InitiateMobileVerificationDto, description: 'Mobile verification resend payload' })
+  @ApiResponse({
+    status: 200,
+    description: 'Mobile verification code resent successfully',
+  })
+  @ApiResponse({ status: 400, description: 'Invalid phone number or verification method' })
+  @ApiResponse({ status: 401, description: 'Unauthorized - Invalid or missing onboarding token' })
+  @ApiResponse({ status: 429, description: 'Too many requests - Rate limit exceeded' })
   async resendMobileVerification(
     @UserId() userId: string,
     @Body() dto: InitiateMobileVerificationDto,
@@ -173,6 +262,21 @@ export class OnboardingController {
   @Post('mobile-verification/verify-otp')
   @Onboarding()
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Verify mobile phone number using OTP' })
+  @ApiBody({ type: VerifyMobileOtpDto, description: 'Mobile OTP verification payload' })
+  @ApiResponse({
+    status: 200,
+    description: 'Phone number verified successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean', example: true },
+        message: { type: 'string', example: 'Phone number verified successfully' },
+      },
+    },
+  })
+  @ApiResponse({ status: 400, description: 'Invalid or expired OTP' })
+  @ApiResponse({ status: 401, description: 'Unauthorized - Invalid or missing onboarding token' })
   async verifyMobileOtp(
     @UserId() userId: string,
     @Body() dto: VerifyMobileOtpDto,

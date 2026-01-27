@@ -1,4 +1,11 @@
 import { Controller, Logger, MessageEvent, NotFoundException, Sse, UseGuards } from '@nestjs/common';
+import {
+  ApiOperation,
+  ApiProduces,
+  ApiQuery,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { Public, SkipCsrf, SseAuthGuard, UserId } from '@vritti/api-sdk';
 import { Observable, finalize, map, takeUntil, timer } from 'rxjs';
 import { MobileVerificationEvent } from '../events/verification.events';
@@ -9,6 +16,7 @@ import { SseConnectionService } from '../services/sse-connection.service';
  * SSE Controller for real-time verification status updates
  * Replaces polling with push-based notifications
  */
+@ApiTags('Onboarding - Verification Events')
 @Controller('onboarding/mobile-verification')
 export class VerificationSseController {
   private readonly logger = new Logger(VerificationSseController.name);
@@ -37,6 +45,50 @@ export class VerificationSseController {
   @Public() // Bypass global VrittiAuthGuard (EventSource can't send headers)
   @SkipCsrf() // Bypass CSRF guard (EventSource can't send CSRF tokens)
   @UseGuards(SseAuthGuard) // Use guard that accepts token via query param & sets CORS headers
+  @ApiOperation({
+    summary: 'Subscribe to mobile verification events via Server-Sent Events',
+    description: `Real-time SSE endpoint for mobile verification status updates.
+    Client connects after initiating verification and receives push notifications when:
+    - Verification succeeds (webhook received valid token)
+    - Verification fails (invalid token, phone mismatch)
+    - Verification expires (10 minute timeout)
+
+    Note: Uses query parameter authentication since EventSource API cannot send headers.`,
+  })
+  @ApiProduces('text/event-stream')
+  @ApiQuery({
+    name: 'token',
+    required: true,
+    description: 'JWT onboarding token for authentication',
+    type: String,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'SSE connection established. Events will be streamed as verification status changes.',
+    content: {
+      'text/event-stream': {
+        schema: {
+          type: 'object',
+          properties: {
+            data: {
+              type: 'object',
+              properties: {
+                type: { type: 'string', enum: ['SUCCESS', 'FAILED', 'EXPIRED'], description: 'Verification status' },
+                verificationId: { type: 'string', description: 'Unique verification identifier' },
+                phone: { type: 'string', description: 'Masked phone number' },
+                message: { type: 'string', description: 'Human-readable status message' },
+                timestamp: { type: 'string', format: 'date-time', description: 'Event timestamp' },
+              },
+            },
+            id: { type: 'string', description: 'Event ID for reconnection' },
+            type: { type: 'string', example: 'verification', description: 'Event type' },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized - Invalid or missing token in query parameter' })
+  @ApiResponse({ status: 404, description: 'Verification already completed or not found' })
   async subscribeToVerificationEvents(@UserId() userId: string): Promise<Observable<MessageEvent>> {
     this.logger.log(`SSE connection requested by user ${userId}`);
 
