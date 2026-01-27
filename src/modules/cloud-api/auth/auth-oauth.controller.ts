@@ -101,7 +101,7 @@ export class AuthOAuthController {
         sessionType,
       );
 
-      // Set refresh token cookie (use getter functions to ensure config is loaded)
+      // Set refresh token cookie (domain from REFRESH_COOKIE_DOMAIN env var)
       res.setCookie(getRefreshCookieName(), refreshToken, getRefreshCookieOptionsFromConfig());
 
       // Redirect to frontend with access token

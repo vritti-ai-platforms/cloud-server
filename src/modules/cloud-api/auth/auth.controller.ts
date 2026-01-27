@@ -78,7 +78,7 @@ export class AuthController {
       userAgent,
     );
 
-    // Set refresh token in httpOnly cookie (use getter functions to ensure config is loaded)
+    // Set refresh token in httpOnly cookie (domain from REFRESH_COOKIE_DOMAIN env var)
     reply.setCookie(getRefreshCookieName(), refreshToken, getRefreshCookieOptionsFromConfig());
 
     this.logger.log(`Created unified onboarding session for user: ${response.userId}`);
@@ -167,7 +167,7 @@ export class AuthController {
     // Authenticate user and get response
     const response = await this.authService.login(loginDto, ipAddress, userAgent);
 
-    // Set refresh token in httpOnly cookie (use getter functions to ensure config is loaded)
+    // Set refresh token in httpOnly cookie (domain from REFRESH_COOKIE_DOMAIN env var)
     if (response.refreshToken) {
       reply.setCookie(getRefreshCookieName(), response.refreshToken, getRefreshCookieOptionsFromConfig());
     }
@@ -216,7 +216,7 @@ export class AuthController {
     // Service layer handles all validation including missing/invalid refresh token
     const result = await this.sessionService.refreshSession(refreshToken);
 
-    // Update cookie with rotated refresh token (use getter functions to ensure config is loaded)
+    // Update cookie with rotated refresh token (domain from REFRESH_COOKIE_DOMAIN env var)
     reply.setCookie(getRefreshCookieName(), result.refreshToken, getRefreshCookieOptionsFromConfig());
 
     return {

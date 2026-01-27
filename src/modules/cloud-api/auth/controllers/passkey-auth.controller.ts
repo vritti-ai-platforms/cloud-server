@@ -9,6 +9,7 @@ import { Public } from '@vritti/api-sdk';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { StartPasskeyAuthDto, VerifyPasskeyAuthDto } from '../dto/verify-passkey-auth.dto';
 import { PasskeyAuthService } from '../services/passkey-auth.service';
+import { getRefreshCookieName, getRefreshCookieOptionsFromConfig } from '../services/session.service';
 
 /**
  * Passkey Authentication Controller
@@ -144,14 +145,8 @@ export class PasskeyAuthController {
       userAgent,
     );
 
-    // Set refresh token cookie (same as regular login)
-    res.setCookie('vritti_refresh', result.session.refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      path: '/',
-      maxAge: 30 * 24 * 60 * 60, // 30 days in seconds
-    });
+    // Set refresh token cookie (domain from REFRESH_COOKIE_DOMAIN env var)
+    res.setCookie(getRefreshCookieName(), result.session.refreshToken, getRefreshCookieOptionsFromConfig());
 
     return {
       accessToken: result.session.accessToken,

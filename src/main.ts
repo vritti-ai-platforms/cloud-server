@@ -26,7 +26,8 @@ async function bootstrap() {
       refreshCookieSecure: process.env.NODE_ENV === 'production',
       refreshCookieMaxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
       refreshCookieSameSite: 'strict', // Required for OAuth redirects (strict breaks cross-origin redirects)
-      refreshCookieDomain: 'cloud.local.vrittiai.com', // Set to cloud.local.vrittiai.com for local development
+      // Cookie domain from env - use leading dot for subdomain sharing (e.g., '.vrittiai.com')
+      refreshCookieDomain: process.env.REFRESH_COOKIE_DOMAIN,
     },
     jwt: {
       validateTokenBinding: true,
