@@ -5,6 +5,10 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   build:
     uses: vritti-ai-platforms/infrastructure/.github/workflows/build-backend-image.yml@main
