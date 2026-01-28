@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Logger, Post } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Logger, Post, Res } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -7,8 +7,11 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { Onboarding, UserId } from '@vritti/api-sdk';
+import type { FastifyReply } from 'fastify';
+import { getRefreshCookieName, getRefreshCookieOptionsFromConfig } from '../../auth/services/session.service';
 import type { BackupCodesResponseDto } from '../dto/backup-codes-response.dto';
 import type { PasskeyRegistrationOptionsDto } from '../dto/passkey-registration-options.dto';
+import type { Skip2FAResponseDto } from '../dto/skip-2fa-response.dto';
 import type { TotpSetupResponseDto } from '../dto/totp-setup-response.dto';
 import type { TwoFactorStatusResponseDto } from '../dto/two-factor-status-response.dto';
 import { VerifyPasskeyDto } from '../dto/verify-passkey.dto';
@@ -64,9 +67,18 @@ export class TwoFactorController {
   async verifyTotpSetup(
     @UserId() userId: string,
     @Body() verifyTotpDto: VerifyTotpDto,
+    @Res({ passthrough: true }) reply: FastifyReply,
   ): Promise<BackupCodesResponseDto> {
     this.logger.log(`POST /onboarding/2fa/totp/verify - User: ${userId}`);
-    return await this.twoFactorAuthService.verifyTotpSetup(userId, verifyTotpDto.token);
+    const { response, refreshToken } = await this.twoFactorAuthService.verifyTotpSetup(userId, verifyTotpDto.token);
+
+    // Set refresh token in httpOnly cookie
+    const cookieName = getRefreshCookieName();
+    const cookieOptions = getRefreshCookieOptionsFromConfig();
+    this.logger.log(`Setting refresh cookie: ${cookieName}, options: ${JSON.stringify(cookieOptions)}`);
+    reply.setCookie(cookieName, refreshToken, cookieOptions);
+
+    return response;
   }
 
   /**
@@ -90,9 +102,20 @@ export class TwoFactorController {
     },
   })
   @ApiResponse({ status: 401, description: 'Unauthorized - Invalid or missing onboarding token' })
-  async skip2FASetup(@UserId() userId: string): Promise<{ success: boolean; message: string }> {
+  async skip2FASetup(
+    @UserId() userId: string,
+    @Res({ passthrough: true }) reply: FastifyReply,
+  ): Promise<Skip2FAResponseDto> {
     this.logger.log(`POST /onboarding/2fa/skip - User: ${userId}`);
-    return await this.twoFactorAuthService.skip2FASetup(userId);
+    const { response, refreshToken } = await this.twoFactorAuthService.skip2FASetup(userId);
+
+    // Set refresh token in httpOnly cookie
+    const cookieName = getRefreshCookieName();
+    const cookieOptions = getRefreshCookieOptionsFromConfig();
+    this.logger.log(`Setting refresh cookie: ${cookieName}, options: ${JSON.stringify(cookieOptions)}`);
+    reply.setCookie(cookieName, refreshToken, cookieOptions);
+
+    return response;
   }
 
   /**
@@ -149,8 +172,17 @@ export class TwoFactorController {
   async verifyPasskeySetup(
     @UserId() userId: string,
     @Body() verifyPasskeyDto: VerifyPasskeyDto,
+    @Res({ passthrough: true }) reply: FastifyReply,
   ): Promise<BackupCodesResponseDto> {
     this.logger.log(`POST /onboarding/2fa/passkey/verify - User: ${userId}`);
-    return await this.twoFactorAuthService.verifyPasskeySetup(userId, verifyPasskeyDto.credential);
+    const { response, refreshToken } = await this.twoFactorAuthService.verifyPasskeySetup(userId, verifyPasskeyDto.credential);
+
+    // Set refresh token in httpOnly cookie
+    const cookieName = getRefreshCookieName();
+    const cookieOptions = getRefreshCookieOptionsFromConfig();
+    this.logger.log(`Setting refresh cookie: ${cookieName}, options: ${JSON.stringify(cookieOptions)}`);
+    reply.setCookie(cookieName, refreshToken, cookieOptions);
+
+    return response;
   }
 }

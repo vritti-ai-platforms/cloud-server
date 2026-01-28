@@ -5,7 +5,7 @@ import { createCompanyTools } from './company.tools';
 
 export interface ToolDependencies {
   tenantService: TenantService;
-  db: PrimaryDatabaseService['db'];
+  db: PrimaryDatabaseService;
 }
 
 export function createAllTools(deps: ToolDependencies) {

@@ -75,6 +75,30 @@ export const membershipStatusEnum = cloudSchema.enum('MembershipStatus', ['ACTIV
 
 export const businessUnitStatusEnum = cloudSchema.enum('BusinessUnitStatus', ['ACTIVE', 'INACTIVE', 'ARCHIVED']);
 
+// Company member roles
+export const companyRoleEnum = cloudSchema.enum('CompanyRole', ['OWNER', 'ADMIN', 'MANAGER', 'MEMBER']);
+
+// Invitation status
+export const invitationStatusEnum = cloudSchema.enum('InvitationStatus', [
+  'PENDING',
+  'ACCEPTED',
+  'DECLINED',
+  'EXPIRED',
+  'REVOKED',
+]);
+
+// Audit action types
+export const auditActionEnum = cloudSchema.enum('AuditAction', [
+  'CREATE',
+  'UPDATE',
+  'DELETE',
+  'LOGIN',
+  'LOGOUT',
+  'INVITE',
+  'JOIN',
+  'LEAVE',
+]);
+
 // TypeScript type exports for use in DTOs and services
 export type DatabaseType = (typeof databaseTypeEnum.enumValues)[number];
 export type TenantStatus = (typeof tenantStatusEnum.enumValues)[number];
@@ -91,6 +115,9 @@ export type DatabaseHealth = (typeof databaseHealthEnum.enumValues)[number];
 export type DatabaseRegion = (typeof databaseRegionEnum.enumValues)[number];
 export type MembershipStatus = (typeof membershipStatusEnum.enumValues)[number];
 export type BusinessUnitStatus = (typeof businessUnitStatusEnum.enumValues)[number];
+export type CompanyRole = (typeof companyRoleEnum.enumValues)[number];
+export type InvitationStatus = (typeof invitationStatusEnum.enumValues)[number];
+export type AuditAction = (typeof auditActionEnum.enumValues)[number];
 
 // Runtime enum value objects for use in code
 export const DatabaseTypeValues = {
@@ -189,4 +216,30 @@ export const BusinessUnitStatusValues = {
   ACTIVE: 'ACTIVE' as const,
   INACTIVE: 'INACTIVE' as const,
   ARCHIVED: 'ARCHIVED' as const,
+};
+
+export const CompanyRoleValues = {
+  OWNER: 'OWNER' as const,
+  ADMIN: 'ADMIN' as const,
+  MANAGER: 'MANAGER' as const,
+  MEMBER: 'MEMBER' as const,
+};
+
+export const InvitationStatusValues = {
+  PENDING: 'PENDING' as const,
+  ACCEPTED: 'ACCEPTED' as const,
+  DECLINED: 'DECLINED' as const,
+  EXPIRED: 'EXPIRED' as const,
+  REVOKED: 'REVOKED' as const,
+};
+
+export const AuditActionValues = {
+  CREATE: 'CREATE' as const,
+  UPDATE: 'UPDATE' as const,
+  DELETE: 'DELETE' as const,
+  LOGIN: 'LOGIN' as const,
+  LOGOUT: 'LOGOUT' as const,
+  INVITE: 'INVITE' as const,
+  JOIN: 'JOIN' as const,
+  LEAVE: 'LEAVE' as const,
 };

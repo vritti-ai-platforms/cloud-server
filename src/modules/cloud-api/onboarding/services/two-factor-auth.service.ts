@@ -1,9 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { BadRequestException } from '@vritti/api-sdk';
-import { AccountStatusValues, OnboardingStepValues } from '@/db/schema';
+import { AccountStatusValues, OnboardingStepValues, SessionTypeValues } from '@/db/schema';
+import { SessionService } from '../../auth/services/session.service';
 import { UserService } from '../../user/user.service';
 import { BackupCodesResponseDto } from '../dto/backup-codes-response.dto';
 import { PasskeyRegistrationOptionsDto } from '../dto/passkey-registration-options.dto';
+import { Skip2FAResponseDto } from '../dto/skip-2fa-response.dto';
 import { TotpSetupResponseDto } from '../dto/totp-setup-response.dto';
 import { TwoFactorStatusResponseDto } from '../dto/two-factor-status-response.dto';
 import { TwoFactorAuthRepository } from '../repositories/two-factor-auth.repository';
@@ -46,6 +48,7 @@ export class TwoFactorAuthService {
     private readonly totpService: TotpService,
     private readonly webAuthnService: WebAuthnService,
     private readonly userService: UserService,
+    private readonly sessionService: SessionService,
   ) {}
 
   /**
@@ -88,7 +91,7 @@ export class TwoFactorAuthService {
    * Verify TOTP setup - validates token and stores secret
    * Returns backup codes on success
    */
-  async verifyTotpSetup(userId: string, token: string): Promise<BackupCodesResponseDto> {
+  async verifyTotpSetup(userId: string, token: string): Promise<{ response: BackupCodesResponseDto; refreshToken: string }> {
     // Get pending setup
     const pending = pendingSetups.get(userId);
     if (!pending) {
@@ -138,21 +141,36 @@ export class TwoFactorAuthService {
       accountStatus: AccountStatusValues.ACTIVE,
     });
 
+    // Create cloud session with access token
+    const { accessToken, refreshToken, expiresIn } = await this.sessionService.createUnifiedSession(
+      userId,
+      SessionTypeValues.CLOUD,
+    );
+
+    // Delete old onboarding sessions
+    await this.sessionService.deleteOnboardingSessions(userId);
+
     this.logger.log(`TOTP setup completed for user: ${userId}`);
 
-    return new BackupCodesResponseDto({
-      success: true,
-      message: 'Two-factor authentication has been enabled successfully.',
-      backupCodes,
-      warning:
-        'Save these backup codes in a secure location. Each code can only be used once and they will not be shown again.',
-    });
+    return {
+      response: new BackupCodesResponseDto({
+        success: true,
+        message: 'Two-factor authentication has been enabled successfully.',
+        backupCodes,
+        warning:
+          'Save these backup codes in a secure location. Each code can only be used once and they will not be shown again.',
+        accessToken,
+        expiresIn,
+        tokenType: 'Bearer',
+      }),
+      refreshToken,
+    };
   }
 
   /**
    * Skip 2FA setup - completes onboarding without 2FA
    */
-  async skip2FASetup(userId: string): Promise<{ success: boolean; message: string }> {
+  async skip2FASetup(userId: string): Promise<{ response: Skip2FAResponseDto; refreshToken: string }> {
     // Clean up any pending setup
     pendingSetups.delete(userId);
 
@@ -162,11 +180,26 @@ export class TwoFactorAuthService {
       accountStatus: AccountStatusValues.ACTIVE,
     });
 
+    // Create cloud session with access token
+    const { accessToken, refreshToken, expiresIn } = await this.sessionService.createUnifiedSession(
+      userId,
+      SessionTypeValues.CLOUD,
+    );
+
+    // Delete old onboarding sessions
+    await this.sessionService.deleteOnboardingSessions(userId);
+
     this.logger.log(`User ${userId} skipped 2FA setup`);
 
     return {
-      success: true,
-      message: 'Two-factor authentication setup skipped. You can enable it later in settings.',
+      response: new Skip2FAResponseDto({
+        success: true,
+        message: 'Two-factor authentication setup skipped. You can enable it later in settings.',
+        accessToken,
+        expiresIn,
+        tokenType: 'Bearer',
+      }),
+      refreshToken,
     };
   }
 
@@ -252,7 +285,7 @@ export class TwoFactorAuthService {
   /**
    * Verify Passkey setup - validates credential and returns backup codes
    */
-  async verifyPasskeySetup(userId: string, credential: RegistrationResponseJSON): Promise<BackupCodesResponseDto> {
+  async verifyPasskeySetup(userId: string, credential: RegistrationResponseJSON): Promise<{ response: BackupCodesResponseDto; refreshToken: string }> {
     // Get pending registration
     const pending = pendingPasskeyRegistrations.get(userId);
     if (!pending) {
@@ -316,14 +349,29 @@ export class TwoFactorAuthService {
       accountStatus: AccountStatusValues.ACTIVE,
     });
 
+    // Create cloud session with access token
+    const { accessToken, refreshToken, expiresIn } = await this.sessionService.createUnifiedSession(
+      userId,
+      SessionTypeValues.CLOUD,
+    );
+
+    // Delete old onboarding sessions
+    await this.sessionService.deleteOnboardingSessions(userId);
+
     this.logger.log(`Passkey setup completed for user: ${userId}`);
 
-    return new BackupCodesResponseDto({
-      success: true,
-      message: 'Passkey has been registered successfully.',
-      backupCodes,
-      warning:
-        'Save these backup codes in a secure location. Each code can only be used once and they will not be shown again.',
-    });
+    return {
+      response: new BackupCodesResponseDto({
+        success: true,
+        message: 'Passkey has been registered successfully.',
+        backupCodes,
+        warning:
+          'Save these backup codes in a secure location. Each code can only be used once and they will not be shown again.',
+        accessToken,
+        expiresIn,
+        tokenType: 'Bearer',
+      }),
+      refreshToken,
+    };
   }
 }

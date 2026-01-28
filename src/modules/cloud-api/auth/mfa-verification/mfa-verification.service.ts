@@ -96,7 +96,7 @@ export class MfaVerificationService {
   /**
    * Verify TOTP code
    */
-  async verifyTotp(sessionId: string, code: string): Promise<MfaVerificationResponseDto> {
+  async verifyTotp(sessionId: string, code: string): Promise<{ response: MfaVerificationResponseDto; refreshToken: string }> {
     const challenge = this.getMfaChallengeOrThrow(sessionId);
 
     if (!challenge.availableMethods.includes('totp')) {
@@ -183,7 +183,7 @@ export class MfaVerificationService {
   /**
    * Verify SMS OTP code
    */
-  async verifySmsOtp(sessionId: string, code: string): Promise<MfaVerificationResponseDto> {
+  async verifySmsOtp(sessionId: string, code: string): Promise<{ response: MfaVerificationResponseDto; refreshToken: string }> {
     const challenge = this.getMfaChallengeOrThrow(sessionId);
 
     if (!challenge.availableMethods.includes('sms')) {
@@ -255,7 +255,7 @@ export class MfaVerificationService {
   /**
    * Verify passkey authentication for MFA
    */
-  async verifyPasskeyMfa(sessionId: string, credential: AuthenticationResponseJSON): Promise<MfaVerificationResponseDto> {
+  async verifyPasskeyMfa(sessionId: string, credential: AuthenticationResponseJSON): Promise<{ response: MfaVerificationResponseDto; refreshToken: string }> {
     const challenge = this.getMfaChallengeOrThrow(sessionId);
 
     if (!challenge.availableMethods.includes('passkey')) {
@@ -364,12 +364,12 @@ export class MfaVerificationService {
   /**
    * Complete MFA verification - create session and return tokens
    */
-  private async completeMfaVerification(challenge: MfaChallenge): Promise<MfaVerificationResponseDto> {
+  private async completeMfaVerification(challenge: MfaChallenge): Promise<{ response: MfaVerificationResponseDto; refreshToken: string }> {
     // Get user
     const user = await this.userService.findById(challenge.userId);
 
     // Create session
-    const { accessToken, expiresIn } = await this.sessionService.createUnifiedSession(
+    const { accessToken, refreshToken, expiresIn } = await this.sessionService.createUnifiedSession(
       challenge.userId,
       SessionTypeValues.CLOUD,
       challenge.ipAddress,
@@ -384,17 +384,20 @@ export class MfaVerificationService {
 
     this.logger.log(`MFA verification completed for user: ${challenge.userId}`);
 
-    return new MfaVerificationResponseDto({
-      accessToken,
-      expiresIn,
-      tokenType: 'Bearer',
-      user: {
-        id: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-      },
-    });
+    return {
+      response: new MfaVerificationResponseDto({
+        accessToken,
+        expiresIn,
+        tokenType: 'Bearer',
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+        },
+      }),
+      refreshToken,
+    };
   }
 
   /**

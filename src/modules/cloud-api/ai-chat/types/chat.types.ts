@@ -5,6 +5,7 @@ export type ChatStreamEvent =
   | { type: 'text-delta'; content: string }
   | { type: 'tool-call'; toolCallId: string; toolName: string; args: unknown }
   | { type: 'tool-result'; toolCallId: string; toolName: string; result: unknown }
+  | { type: 'tool-error'; toolCallId: string; toolName: string; error: string }
   | { type: 'error'; message: string }
   | { type: 'done'; messageId: string };
 

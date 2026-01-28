@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrimaryBaseRepository, PrimaryDatabaseService } from '@vritti/api-sdk';
-import { and, eq, sql } from '@vritti/api-sdk/drizzle-orm';
+import { eq, sql } from '@vritti/api-sdk/drizzle-orm';
 import {
   type ChatConversation,
   type ChatMessage,
@@ -31,11 +31,9 @@ export class ChatRepository extends PrimaryBaseRepository<typeof chatConversatio
     userId: string,
   ): Promise<ChatConversation | undefined> {
     this.logger.debug(`Finding conversation ${conversationId} for user ${userId}`);
+    // Use v2 object-based filter syntax for model.findFirst()
     return this.model.findFirst({
-      where: and(
-        eq(chatConversations.id, conversationId),
-        eq(chatConversations.userId, userId),
-      ),
+      where: { id: conversationId, userId },
     });
   }
 
@@ -44,18 +42,23 @@ export class ChatRepository extends PrimaryBaseRepository<typeof chatConversatio
     userId: string,
   ): Promise<(ChatConversation & { messages: ChatMessage[] }) | undefined> {
     this.logger.debug(`Finding conversation ${conversationId} with messages`);
-    const result = await this.model.findFirst({
-      where: and(
-        eq(chatConversations.id, conversationId),
-        eq(chatConversations.userId, userId),
-      ),
-      with: {
-        messages: {
-          orderBy: { createdAt: 'asc' },
-        },
-      },
+
+    // Use v2 object-based filter syntax for model.findFirst()
+    const conversation = await this.model.findFirst({
+      where: { id: conversationId, userId },
     });
-    return result as (ChatConversation & { messages: ChatMessage[] }) | undefined;
+
+    if (!conversation) {
+      return undefined;
+    }
+
+    // Fetch messages with ordering using direct query
+    const messages = await this.getMessagesByConversationId(conversationId);
+
+    return {
+      ...conversation,
+      messages,
+    };
   }
 
   async createConversation(data: NewChatConversation): Promise<ChatConversation> {

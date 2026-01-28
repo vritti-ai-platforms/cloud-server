@@ -1,9 +1,10 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { SseAuthGuard } from '@vritti/api-sdk';
 import { jwtConfigFactory } from '../../../config/jwt.config';
 import { ServicesModule } from '../../../services';
+import { AuthModule } from '../auth/auth.module';
 import { UserModule } from '../user/user.module';
 import { OnboardingController } from './controllers/onboarding.controller';
 import { TwoFactorController } from './controllers/two-factor.controller';
@@ -36,6 +37,7 @@ import { WebAuthnService } from './services/webauthn.service';
     }),
     ServicesModule,
     UserModule, // Import UserModule to use UserService
+    forwardRef(() => AuthModule), // Import AuthModule to use SessionService
   ],
   controllers: [OnboardingController, VerificationWebhookController, VerificationSseController, TwoFactorController],
   providers: [

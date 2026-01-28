@@ -21,7 +21,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { UserId } from '@vritti/api-sdk';
-import type { Response } from 'express';
+import type { FastifyReply } from 'fastify';
 import { ChatService } from '../services/chat.service';
 import { ConversationService } from '../services/conversation.service';
 import { SendMessageDto } from '../dto/send-message.dto';
@@ -127,9 +127,12 @@ export class ChatController {
     @UserId() userId: string,
     @Param('id', ParseUUIDPipe) conversationId: string,
     @Body() dto: SendMessageDto,
-    @Res() res: Response,
+    @Res() reply: FastifyReply,
   ): Promise<void> {
     this.logger.log(`POST /ai-chat/conversations/${conversationId}/messages - User: ${userId}`);
+
+    // Access raw Node.js response for SSE streaming (Fastify uses reply.raw)
+    const res = reply.raw;
 
     // Set SSE headers
     res.setHeader('Content-Type', 'text/event-stream');

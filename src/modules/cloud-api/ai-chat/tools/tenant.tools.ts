@@ -6,9 +6,8 @@ export function createTenantTools(tenantService: TenantService) {
   return {
     list_tenants: tool({
       description: 'List all tenants in the system. Returns tenant ID, name, subdomain, status, and database type.',
-      parameters: z.object({}),
-      // @ts-ignore - AI SDK tool type inference issue
-      execute: async (): Promise<any> => {
+      inputSchema: z.object({}),
+      execute: async () => {
         const tenants = await tenantService.findAll();
         return {
           success: true,
@@ -27,12 +26,11 @@ export function createTenantTools(tenantService: TenantService) {
 
     get_tenant: tool({
       description: 'Get detailed information about a specific tenant by ID or subdomain.',
-      parameters: z.object({
+      inputSchema: z.object({
         identifier: z.string().describe('The tenant ID (UUID) or subdomain'),
         identifierType: z.enum(['id', 'subdomain']).describe('Type of identifier provided'),
       }),
-      // @ts-ignore - AI SDK tool type inference issue
-      execute: async ({ identifier, identifierType }): Promise<any> => {
+      execute: async ({ identifier, identifierType }) => {
         try {
           const tenant =
             identifierType === 'id'
