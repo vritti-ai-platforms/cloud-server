@@ -11,17 +11,17 @@ permissions:
 
 jobs:
   build:
-    uses: vritti-ai-platforms/infrastructure/.github/workflows/build-backend-image.yml@main
+    uses: vritti-ai-platforms/infrastructure/.github/workflows/reusable-build-backend-image.yml@main
     with:
-      service_name: vritti-api-nexus
+      service_name: api-nexus
     secrets: inherit
 
   deploy:
     needs: build
-    uses: vritti-ai-platforms/infrastructure/.github/workflows/deploy-backend-image.yml@main
+    uses: vritti-ai-platforms/infrastructure/.github/workflows/reusable-deploy-backend-image.yml@main
     with:
-      service_name: vritti-api
-      image_tag: ghcr.io/${{ github.repository_owner }}/vritti-api-nexus:${{ needs.build.outputs.short_sha }}
+      service_name: api-nexus
+      image_tag: ghcr.io/${{ github.repository_owner }}/api-nexus:${{ needs.build.outputs.short_sha }}
       health_check_url: https://${{ vars.APP_DOMAIN }}/health
       run_migrations: ${{ vars.RUN_MIGRATIONS == 'true' }}
     secrets:

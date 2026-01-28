@@ -1,0 +1,19 @@
+name: Build vritti-api-nexus Image (Pipeline 1)
+
+on:
+  workflow_dispatch:  # Manual trigger only
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    name: Build and Push to GHCR
+    uses: vritti-ai-platforms/infrastructure/.github/workflows/reusable-build-backend-image.yml@main
+    with:
+      service_name: vritti-api-nexus
+      dockerfile_path: ./Dockerfile
+      build_context: .
+      node_version: '20'
+    secrets: inherit
