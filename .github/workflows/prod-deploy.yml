@@ -21,7 +21,7 @@ jobs:
     uses: vritti-ai-platforms/infrastructure/.github/workflows/reusable-deploy-backend-image.yml@main
     with:
       service_name: api-nexus
-      image_tag: ghcr.io/${{ github.repository_owner }}/api-nexus:${{ needs.build.outputs.short_sha }}
+      image_tag: ghcr.io/${{ github.repository_owner }}/api-nexus:latest
       health_check_url: https://${{ vars.APP_DOMAIN }}/api/
       run_migrations: ${{ vars.RUN_MIGRATIONS == 'true' }}
     secrets:
