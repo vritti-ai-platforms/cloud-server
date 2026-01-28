@@ -12,7 +12,7 @@ jobs:
     name: Build and Push to GHCR
     uses: vritti-ai-platforms/infrastructure/.github/workflows/reusable-build-backend-image.yml@main
     with:
-      service_name: vritti-api-nexus
+      service_name: api-nexus
       dockerfile_path: ./Dockerfile
       build_context: .
       node_version: '20'

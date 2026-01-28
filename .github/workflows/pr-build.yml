@@ -6,7 +6,7 @@ on:
 
 jobs:
   build:
-    uses: vritti-ai-platforms/infrastructure/.github/workflows/build-backend-image.yml@main
+    uses: vritti-ai-platforms/infrastructure/.github/workflows/reusable-build-backend-image.yml@main
     with:
-      service_name: vritti-api-nexus
+      service_name: api-nexus
     secrets: inherit
