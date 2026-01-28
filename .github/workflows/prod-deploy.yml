@@ -22,14 +22,14 @@ jobs:
     with:
       service_name: api-nexus
       image_tag: ghcr.io/${{ github.repository_owner }}/api-nexus:${{ needs.build.outputs.short_sha }}
-      health_check_url: https://${{ vars.APP_DOMAIN }}/health
+      health_check_url: https://${{ vars.APP_DOMAIN }}/api/
       run_migrations: ${{ vars.RUN_MIGRATIONS == 'true' }}
     secrets:
       SERVER_VM_HOST: ${{ secrets.SERVER_VM_HOST }}
       SERVER_VM_USER: ${{ secrets.SERVER_VM_USER }}
       SERVER_VM_SSH_KEY: ${{ secrets.SERVER_VM_SSH_KEY }}
       GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
-      DB_DIRECT_URL: ${{ secrets.DB_DIRECT_URL }}
+      PRIMARY_DB_DATABASE_DIRECT_URL: ${{ secrets.PRIMARY_DB_DATABASE_DIRECT_URL }}
       # Database Configuration
       PRIMARY_DB_HOST: ${{ secrets.PRIMARY_DB_HOST }}
       PRIMARY_DB_USERNAME: ${{ secrets.PRIMARY_DB_USERNAME }}
