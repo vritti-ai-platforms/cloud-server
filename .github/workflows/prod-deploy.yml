@@ -34,6 +34,7 @@ jobs:
       PRIMARY_DB_HOST: ${{ secrets.PRIMARY_DB_HOST }}
       PRIMARY_DB_USERNAME: ${{ secrets.PRIMARY_DB_USERNAME }}
       PRIMARY_DB_PASSWORD: ${{ secrets.PRIMARY_DB_PASSWORD }}
+      PRIMARY_DB_SSL_MODE: ${{ secrets.PRIMARY_DB_SSL_MODE }}
       # Security Secrets
       JWT_SECRET: ${{ secrets.JWT_SECRET }}
       COOKIE_SECRET: ${{ secrets.COOKIE_SECRET }}
