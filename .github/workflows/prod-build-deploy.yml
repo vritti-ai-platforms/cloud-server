@@ -1,15 +1,23 @@
-name: Deploy vritti-api-nexus Image (Pipeline 1)
+name: Build And Deploy vritti-api-nexus to Production
 
 on:
-  workflow_dispatch:  # Manual trigger only
+  push:
+    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
   packages: write
 
 jobs:
+  build:
+    uses: vritti-ai-platforms/infrastructure/.github/workflows/reusable-build-backend-image.yml@main
+    with:
+      service_name: api-nexus
+    secrets: inherit
+
   deploy:
-    name: Deploy to Production
+    needs: build
     uses: vritti-ai-platforms/infrastructure/.github/workflows/reusable-deploy-backend-image.yml@main
     with:
       service_name: api-nexus
