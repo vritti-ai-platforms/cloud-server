@@ -18,6 +18,11 @@ import { MfaVerificationModule } from './modules/cloud-api/auth/mfa-verification
 import { OnboardingModule } from './modules/cloud-api/onboarding/onboarding.module';
 import { TenantModule } from './modules/cloud-api/tenant/tenant.module';
 import { UserModule } from './modules/cloud-api/user/user.module';
+import { ActivityLogModule } from './modules/cloud-api/activity-log/activity-log.module';
+import { RoleModule } from './modules/cloud-api/role/role.module';
+import { CompanyModule } from './modules/cloud-api/company/company.module';
+import { BusinessUnitModule } from './modules/cloud-api/business-unit/business-unit.module';
+import { CompanyAppModule } from './modules/cloud-api/app/app.module';
 
 @Module({
   imports: [
@@ -98,11 +103,27 @@ import { UserModule } from './modules/cloud-api/user/user.module';
     AuthModule,
     MfaVerificationModule,
     AiChatModule,
+    ActivityLogModule,
+    RoleModule,
+    CompanyModule,
+    BusinessUnitModule,
+    CompanyAppModule,
     // Cloud API routes with 'cloud-api' prefix
     RouterModule.register([
       {
         path: 'cloud-api',
-        children: [TenantModule, UserModule, OnboardingModule, AuthModule, MfaVerificationModule, AiChatModule],
+        children: [
+          TenantModule,
+          UserModule,
+          OnboardingModule,
+          AuthModule,
+          MfaVerificationModule,
+          AiChatModule,
+          RoleModule,
+          CompanyModule,
+          BusinessUnitModule,
+          CompanyAppModule,
+        ],
       },
     ]),
   ],

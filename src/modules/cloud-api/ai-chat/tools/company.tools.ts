@@ -163,9 +163,9 @@ export function createCompanyTools(database: PrimaryDatabaseService) {
       inputSchema: z.object({
         tenantId: z.string().uuid().describe('The tenant ID to create the company for'),
         industry: z
-          .enum(['TECHNOLOGY', 'MANUFACTURING', 'PROFESSIONAL_SERVICES', 'HEALTHCARE'])
+          .enum(['Healthcare', 'Retail', 'F&B', 'Professional Services', 'Manufacturing', 'Education', 'Technology', 'Other'])
           .describe('Industry type'),
-        size: z.enum(['SIZE_11_50', 'SIZE_51_200', 'SIZE_200_PLUS']).describe('Company size'),
+        size: z.enum(['1-10', '11-50', '51-200', '200+']).describe('Company size'),
         timezone: z.string().default('Asia/Kolkata').optional().describe('Timezone (default: Asia/Kolkata)'),
         currency: z.string().default('INR').optional().describe('Currency code (default: INR)'),
       }),
@@ -225,9 +225,9 @@ export function createCompanyTools(database: PrimaryDatabaseService) {
       inputSchema: z.object({
         tenantId: z.string().uuid().describe('The tenant ID'),
         industry: z
-          .enum(['TECHNOLOGY', 'MANUFACTURING', 'PROFESSIONAL_SERVICES', 'HEALTHCARE'])
+          .enum(['Healthcare', 'Retail', 'F&B', 'Professional Services', 'Manufacturing', 'Education', 'Technology', 'Other'])
           .describe('Industry type'),
-        size: z.enum(['SIZE_11_50', 'SIZE_51_200', 'SIZE_200_PLUS']).describe('Company size'),
+        size: z.enum(['1-10', '11-50', '51-200', '200+']).describe('Company size'),
         timezone: z.string().optional().describe('Timezone'),
         currency: z.string().optional().describe('Currency code'),
       }),

@@ -27,7 +27,8 @@
     "db:drop": "set -a && . ./.env && set +a && docker exec -i $(docker ps -q --filter name=postgres) psql -U postgres -d saas_db -c 'DROP SCHEMA IF EXISTS cloud CASCADE;'",
     "db:start": "docker compose -f local-db-compose.yml up -d",
     "db:stop": "docker compose -f local-db-compose.yml down",
-    "db:seed": "NODE_TLS_REJECT_UNAUTHORIZED=0 npx tsx src/db/seed.ts"
+    "db:seed": "NODE_TLS_REJECT_UNAUTHORIZED=0 npx tsx src/db/seed.ts",
+    "db:seed-apps": "NODE_TLS_REJECT_UNAUTHORIZED=0 npx tsx src/db/seed-apps.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.26",

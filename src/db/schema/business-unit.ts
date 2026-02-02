@@ -1,6 +1,6 @@
 import { boolean, index, integer, text, timestamp, uuid, varchar } from '@vritti/api-sdk/drizzle-pg-core';
 import { cloudSchema } from './cloud-schema';
-import { businessUnitStatusEnum } from './enums';
+import { businessUnitStatusEnum, businessUnitTypeEnum } from './enums';
 import { companies } from './company';
 
 /**
@@ -18,6 +18,7 @@ export const businessUnits = cloudSchema.table(
     // Basic information
     name: varchar('name', { length: 255 }).notNull(),
     code: varchar('code', { length: 50 }), // Short code like "HQ", "NBR", "WH1"
+    type: businessUnitTypeEnum('type').notNull().default('OFFICE'), // OUTLET, CLINIC, WAREHOUSE, HUB, HQ, OFFICE, OTHER
     description: text('description'),
     status: businessUnitStatusEnum('status').notNull().default('ACTIVE'),
 

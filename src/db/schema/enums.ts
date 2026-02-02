@@ -45,21 +45,21 @@ export const chatMessageRoleEnum = cloudSchema.enum('ChatMessageRole', ['user', 
 
 // Company enums
 export const industryTypeEnum = cloudSchema.enum('IndustryType', [
-  'HEALTHCARE',
-  'RETAIL',
-  'FOOD_AND_BEVERAGE',
-  'PROFESSIONAL_SERVICES',
-  'MANUFACTURING',
-  'EDUCATION',
-  'TECHNOLOGY',
-  'OTHER',
+  'Healthcare',
+  'Retail',
+  'F&B',
+  'Professional Services',
+  'Manufacturing',
+  'Education',
+  'Technology',
+  'Other',
 ]);
 
 export const companySizeEnum = cloudSchema.enum('CompanySize', [
-  'SIZE_1_10',
-  'SIZE_11_50',
-  'SIZE_51_200',
-  'SIZE_200_PLUS',
+  '1-10',
+  '11-50',
+  '51-200',
+  '200+',
 ]);
 
 export const databaseHealthEnum = cloudSchema.enum('DatabaseHealth', ['HEALTHY', 'DEGRADED', 'DOWN']);
@@ -75,8 +75,28 @@ export const membershipStatusEnum = cloudSchema.enum('MembershipStatus', ['ACTIV
 
 export const businessUnitStatusEnum = cloudSchema.enum('BusinessUnitStatus', ['ACTIVE', 'INACTIVE', 'ARCHIVED']);
 
-// Company member roles
-export const companyRoleEnum = cloudSchema.enum('CompanyRole', ['OWNER', 'ADMIN', 'MANAGER', 'MEMBER']);
+// App enums
+export const appStatusEnum = cloudSchema.enum('AppStatus', ['ACTIVE', 'SUSPENDED', 'TRIAL', 'DISABLED']);
+export const pricingTypeEnum = cloudSchema.enum('PricingType', ['FREE', 'BASIC', 'PREMIUM', 'ENTERPRISE']);
+export const appCategoryEnum = cloudSchema.enum('AppCategory', [
+  'SALES',
+  'FINANCE',
+  'OPERATIONS',
+  'COMMUNICATION',
+  'ANALYTICS',
+  'HR',
+]);
+
+// Business unit type
+export const businessUnitTypeEnum = cloudSchema.enum('BusinessUnitType', [
+  'OUTLET',
+  'CLINIC',
+  'WAREHOUSE',
+  'HUB',
+  'HQ',
+  'OFFICE',
+  'OTHER',
+]);
 
 // Invitation status
 export const invitationStatusEnum = cloudSchema.enum('InvitationStatus', [
@@ -87,17 +107,6 @@ export const invitationStatusEnum = cloudSchema.enum('InvitationStatus', [
   'REVOKED',
 ]);
 
-// Audit action types
-export const auditActionEnum = cloudSchema.enum('AuditAction', [
-  'CREATE',
-  'UPDATE',
-  'DELETE',
-  'LOGIN',
-  'LOGOUT',
-  'INVITE',
-  'JOIN',
-  'LEAVE',
-]);
 
 // TypeScript type exports for use in DTOs and services
 export type DatabaseType = (typeof databaseTypeEnum.enumValues)[number];
@@ -115,9 +124,11 @@ export type DatabaseHealth = (typeof databaseHealthEnum.enumValues)[number];
 export type DatabaseRegion = (typeof databaseRegionEnum.enumValues)[number];
 export type MembershipStatus = (typeof membershipStatusEnum.enumValues)[number];
 export type BusinessUnitStatus = (typeof businessUnitStatusEnum.enumValues)[number];
-export type CompanyRole = (typeof companyRoleEnum.enumValues)[number];
+export type AppStatus = (typeof appStatusEnum.enumValues)[number];
+export type PricingType = (typeof pricingTypeEnum.enumValues)[number];
+export type AppCategory = (typeof appCategoryEnum.enumValues)[number];
+export type BusinessUnitType = (typeof businessUnitTypeEnum.enumValues)[number];
 export type InvitationStatus = (typeof invitationStatusEnum.enumValues)[number];
-export type AuditAction = (typeof auditActionEnum.enumValues)[number];
 
 // Runtime enum value objects for use in code
 export const DatabaseTypeValues = {
@@ -176,21 +187,21 @@ export const ChatMessageRoleValues = {
 };
 
 export const IndustryTypeValues = {
-  HEALTHCARE: 'HEALTHCARE' as const,
-  RETAIL: 'RETAIL' as const,
-  FOOD_AND_BEVERAGE: 'FOOD_AND_BEVERAGE' as const,
-  PROFESSIONAL_SERVICES: 'PROFESSIONAL_SERVICES' as const,
-  MANUFACTURING: 'MANUFACTURING' as const,
-  EDUCATION: 'EDUCATION' as const,
-  TECHNOLOGY: 'TECHNOLOGY' as const,
-  OTHER: 'OTHER' as const,
+  HEALTHCARE: 'Healthcare' as const,
+  RETAIL: 'Retail' as const,
+  F_AND_B: 'F&B' as const,
+  PROFESSIONAL_SERVICES: 'Professional Services' as const,
+  MANUFACTURING: 'Manufacturing' as const,
+  EDUCATION: 'Education' as const,
+  TECHNOLOGY: 'Technology' as const,
+  OTHER: 'Other' as const,
 };
 
 export const CompanySizeValues = {
-  SIZE_1_10: 'SIZE_1_10' as const,
-  SIZE_11_50: 'SIZE_11_50' as const,
-  SIZE_51_200: 'SIZE_51_200' as const,
-  SIZE_200_PLUS: 'SIZE_200_PLUS' as const,
+  SIZE_1_10: '1-10' as const,
+  SIZE_11_50: '11-50' as const,
+  SIZE_51_200: '51-200' as const,
+  SIZE_200_PLUS: '200+' as const,
 };
 
 export const DatabaseHealthValues = {
@@ -218,11 +229,37 @@ export const BusinessUnitStatusValues = {
   ARCHIVED: 'ARCHIVED' as const,
 };
 
-export const CompanyRoleValues = {
-  OWNER: 'OWNER' as const,
-  ADMIN: 'ADMIN' as const,
-  MANAGER: 'MANAGER' as const,
-  MEMBER: 'MEMBER' as const,
+export const AppStatusValues = {
+  ACTIVE: 'ACTIVE' as const,
+  SUSPENDED: 'SUSPENDED' as const,
+  TRIAL: 'TRIAL' as const,
+  DISABLED: 'DISABLED' as const,
+};
+
+export const PricingTypeValues = {
+  FREE: 'FREE' as const,
+  BASIC: 'BASIC' as const,
+  PREMIUM: 'PREMIUM' as const,
+  ENTERPRISE: 'ENTERPRISE' as const,
+};
+
+export const AppCategoryValues = {
+  SALES: 'SALES' as const,
+  FINANCE: 'FINANCE' as const,
+  OPERATIONS: 'OPERATIONS' as const,
+  COMMUNICATION: 'COMMUNICATION' as const,
+  ANALYTICS: 'ANALYTICS' as const,
+  HR: 'HR' as const,
+};
+
+export const BusinessUnitTypeValues = {
+  OUTLET: 'OUTLET' as const,
+  CLINIC: 'CLINIC' as const,
+  WAREHOUSE: 'WAREHOUSE' as const,
+  HUB: 'HUB' as const,
+  HQ: 'HQ' as const,
+  OFFICE: 'OFFICE' as const,
+  OTHER: 'OTHER' as const,
 };
 
 export const InvitationStatusValues = {
@@ -231,15 +268,4 @@ export const InvitationStatusValues = {
   DECLINED: 'DECLINED' as const,
   EXPIRED: 'EXPIRED' as const,
   REVOKED: 'REVOKED' as const,
-};
-
-export const AuditActionValues = {
-  CREATE: 'CREATE' as const,
-  UPDATE: 'UPDATE' as const,
-  DELETE: 'DELETE' as const,
-  LOGIN: 'LOGIN' as const,
-  LOGOUT: 'LOGOUT' as const,
-  INVITE: 'INVITE' as const,
-  JOIN: 'JOIN' as const,
-  LEAVE: 'LEAVE' as const,
 };

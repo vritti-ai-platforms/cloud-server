@@ -24,8 +24,9 @@ export class TenantRepository extends PrimaryBaseRepository<typeof tenants> {
    * Find tenant by ID with database configuration included
    */
   async findByIdWithConfig(id: string) {
+    // Use Drizzle v2 object-based filter syntax for relational queries
     return this.model.findFirst({
-      where: eq(tenants.id, id),
+      where: { id },
       with: { databaseConfig: true },
     });
   }
@@ -35,13 +36,14 @@ export class TenantRepository extends PrimaryBaseRepository<typeof tenants> {
    * @param includeConfig - Whether to include database configuration
    */
   async findBySubdomain(subdomain: string, includeConfig = false) {
+    // Use Drizzle v2 object-based filter syntax for relational queries
     if (!includeConfig) {
       return this.model.findFirst({
-        where: eq(tenants.subdomain, subdomain),
+        where: { subdomain },
       });
     }
     return this.model.findFirst({
-      where: eq(tenants.subdomain, subdomain),
+      where: { subdomain },
       with: { databaseConfig: true },
     });
   }

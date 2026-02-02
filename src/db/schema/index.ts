@@ -11,5 +11,13 @@ export * from './company';
 export * from './tenant';
 export * from './user';
 export * from './verification';
+// New tables for company management
+export * from './app';
+export * from './role';
+export * from './company-member';
+export * from './business-unit-member';
+export * from './invitation';
+export * from './company-app';
+export * from './activity-log';
 // Export relations last (depends on tables above)
 export * from './relations';

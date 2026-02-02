@@ -2205,6 +2205,1065 @@
           "AI Chat"
         ]
       }
+    },
+    "/cloud-api/companies/{companyId}/roles": {
+      "get": {
+        "operationId": "RoleController_findAll",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "description": "Company ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RoleResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List all roles in a company",
+        "tags": [
+          "Roles"
+        ]
+      },
+      "post": {
+        "operationId": "RoleController_create",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "description": "Company ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRoleDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoleResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a custom role",
+        "tags": [
+          "Roles"
+        ]
+      }
+    },
+    "/cloud-api/companies/{companyId}/roles/{id}": {
+      "get": {
+        "operationId": "RoleController_findById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Role ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "description": "Company ID",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoleResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get role details with permissions",
+        "tags": [
+          "Roles"
+        ]
+      },
+      "patch": {
+        "operationId": "RoleController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Role ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "description": "Company ID",
+            "schema": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRoleDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoleResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update a role",
+        "tags": [
+          "Roles"
+        ]
+      },
+      "delete": {
+        "operationId": "RoleController_delete",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Role ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "description": "Company ID",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Role deleted"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a custom role",
+        "tags": [
+          "Roles"
+        ]
+      }
+    },
+    "/cloud-api/permissions": {
+      "get": {
+        "operationId": "PermissionsController_getPermissions",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of all permission codes and their descriptions"
+          }
+        },
+        "summary": "List all available permissions",
+        "tags": [
+          "Permissions"
+        ]
+      }
+    },
+    "/cloud-api/companies": {
+      "get": {
+        "operationId": "CompanyController_findUserCompanies",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CompanyResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List companies the user belongs to",
+        "tags": [
+          "Companies"
+        ]
+      },
+      "post": {
+        "operationId": "CompanyController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCompanyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateCompanyResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new company",
+        "tags": [
+          "Companies"
+        ]
+      }
+    },
+    "/cloud-api/companies/{id}": {
+      "get": {
+        "operationId": "CompanyController_findById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Company ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get company details",
+        "tags": [
+          "Companies"
+        ]
+      },
+      "patch": {
+        "operationId": "CompanyController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Company ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCompanyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update company",
+        "tags": [
+          "Companies"
+        ]
+      },
+      "delete": {
+        "operationId": "CompanyController_delete",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Company ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Company deleted"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete/archive company",
+        "tags": [
+          "Companies"
+        ]
+      }
+    },
+    "/cloud-api/companies/{id}/activity": {
+      "get": {
+        "operationId": "CompanyController_getActivity",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Company ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get company activity logs",
+        "tags": [
+          "Companies"
+        ]
+      }
+    },
+    "/cloud-api/companies/{companyId}/members": {
+      "get": {
+        "operationId": "CompanyMemberController_findAll",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "description": "Company ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CompanyMemberResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List all members of a company",
+        "tags": [
+          "Company Members"
+        ]
+      }
+    },
+    "/cloud-api/companies/{companyId}/members/{id}": {
+      "get": {
+        "operationId": "CompanyMemberController_findById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Member ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "description": "Company ID",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyMemberResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get member details",
+        "tags": [
+          "Company Members"
+        ]
+      },
+      "delete": {
+        "operationId": "CompanyMemberController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Member ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "description": "Company ID",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Member removed"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Remove member from company",
+        "tags": [
+          "Company Members"
+        ]
+      }
+    },
+    "/cloud-api/companies/{companyId}/members/{id}/roles": {
+      "post": {
+        "operationId": "CompanyMemberController_assignRole",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Member ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "description": "Company ID",
+            "schema": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignRoleDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Role assigned"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Assign a role to a member",
+        "tags": [
+          "Company Members"
+        ]
+      }
+    },
+    "/cloud-api/companies/{companyId}/members/{id}/roles/{roleId}": {
+      "delete": {
+        "operationId": "CompanyMemberController_removeRole",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Member ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "roleId",
+            "required": true,
+            "in": "path",
+            "description": "Role ID to remove",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "description": "Company ID",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Role removed"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Remove a role from a member",
+        "tags": [
+          "Company Members"
+        ]
+      }
+    },
+    "/cloud-api/companies/{companyId}/business-units": {
+      "get": {
+        "operationId": "BusinessUnitController_findAll",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "description": "Company ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BusinessUnitResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List all business units in a company",
+        "tags": [
+          "Business Units"
+        ]
+      },
+      "post": {
+        "operationId": "BusinessUnitController_create",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "description": "Company ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBusinessUnitDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessUnitResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a business unit",
+        "tags": [
+          "Business Units"
+        ]
+      }
+    },
+    "/cloud-api/companies/{companyId}/business-units/{id}": {
+      "get": {
+        "operationId": "BusinessUnitController_findById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Business Unit ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "description": "Company ID",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessUnitResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get business unit details",
+        "tags": [
+          "Business Units"
+        ]
+      },
+      "patch": {
+        "operationId": "BusinessUnitController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Business Unit ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "description": "Company ID",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessUnitResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update a business unit",
+        "tags": [
+          "Business Units"
+        ]
+      },
+      "delete": {
+        "operationId": "BusinessUnitController_delete",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Business Unit ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "description": "Company ID",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Business unit deleted"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a business unit",
+        "tags": [
+          "Business Units"
+        ]
+      }
+    },
+    "/cloud-api/companies/{companyId}/apps": {
+      "get": {
+        "operationId": "AppController_findAll",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "description": "Company ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AppResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List all apps with enabled status for a company",
+        "tags": [
+          "Apps"
+        ]
+      }
+    },
+    "/cloud-api/companies/{companyId}/apps/{appId}/enable": {
+      "post": {
+        "operationId": "AppController_enable",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "description": "Company ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "appId",
+            "required": true,
+            "in": "path",
+            "description": "App ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ToggleAppResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Enable an app for a company",
+        "tags": [
+          "Apps"
+        ]
+      }
+    },
+    "/cloud-api/companies/{companyId}/apps/{appId}/disable": {
+      "post": {
+        "operationId": "AppController_disable",
+        "parameters": [
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "description": "Company ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "appId",
+            "required": true,
+            "in": "path",
+            "description": "App ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ToggleAppResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Disable an app for a company",
+        "tags": [
+          "Apps"
+        ]
+      }
+    },
+    "/cloud-api/apps": {
+      "get": {
+        "operationId": "AppCatalogController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AppResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "List all available apps (public catalog)",
+        "tags": [
+          "Apps"
+        ]
+      }
+    },
+    "/cloud-api/apps/{appId}": {
+      "get": {
+        "operationId": "AppCatalogController_findById",
+        "parameters": [
+          {
+            "name": "appId",
+            "required": true,
+            "in": "path",
+            "description": "App ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get app details",
+        "tags": [
+          "Apps"
+        ]
+      }
     }
   },
   "info": {
@@ -3432,6 +4491,757 @@
           }
         },
         "required": [
+          "message"
+        ]
+      },
+      "RoleResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Role ID",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "companyId": {
+            "type": "string",
+            "description": "Company ID this role belongs to",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "name": {
+            "type": "string",
+            "description": "Role name",
+            "example": "Sales Manager"
+          },
+          "description": {
+            "type": "object",
+            "description": "Role description",
+            "example": "Manages the sales team"
+          },
+          "color": {
+            "type": "object",
+            "description": "Hex color code",
+            "example": "#2563EB"
+          },
+          "icon": {
+            "type": "object",
+            "description": "Lucide icon name",
+            "example": "shield"
+          },
+          "isSystem": {
+            "type": "boolean",
+            "description": "Whether this is a system role (cannot be deleted)",
+            "example": false
+          },
+          "userCount": {
+            "type": "number",
+            "description": "Number of users with this role",
+            "example": 5
+          },
+          "permissionCodes": {
+            "description": "Permission codes assigned to this role",
+            "example": [
+              "users.view",
+              "users.create"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Created timestamp"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Updated timestamp"
+          }
+        },
+        "required": [
+          "id",
+          "companyId",
+          "name",
+          "isSystem",
+          "userCount",
+          "permissionCodes",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CreateRoleDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Role name",
+            "example": "Sales Manager",
+            "minLength": 2,
+            "maxLength": 100
+          },
+          "description": {
+            "type": "string",
+            "description": "Role description",
+            "example": "Manages the sales team and has access to CRM",
+            "maxLength": 500
+          },
+          "color": {
+            "type": "string",
+            "description": "Hex color code for the role badge",
+            "example": "#2563EB",
+            "pattern": "^#[0-9A-Fa-f]{6}$"
+          },
+          "icon": {
+            "type": "string",
+            "description": "Lucide icon name for the role",
+            "example": "shield",
+            "maxLength": 50
+          },
+          "permissionCodes": {
+            "description": "Permission codes to assign to this role",
+            "example": [
+              "users.view",
+              "users.create",
+              "business_units.view"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "permissionCodes"
+        ]
+      },
+      "UpdateRoleDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Role name",
+            "example": "Sales Manager",
+            "minLength": 2,
+            "maxLength": 100
+          },
+          "description": {
+            "type": "string",
+            "description": "Role description",
+            "example": "Manages the sales team and has access to CRM",
+            "maxLength": 500
+          },
+          "color": {
+            "type": "string",
+            "description": "Hex color code for the role badge",
+            "example": "#2563EB",
+            "pattern": "^#[0-9A-Fa-f]{6}$"
+          },
+          "icon": {
+            "type": "string",
+            "description": "Lucide icon name for the role",
+            "example": "shield",
+            "maxLength": 50
+          },
+          "permissionCodes": {
+            "description": "Permission codes to assign to this role (replaces existing)",
+            "example": [
+              "users.view",
+              "users.create",
+              "business_units.view"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "TenantSummaryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "subdomain": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "dbType": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "subdomain",
+          "name",
+          "dbType",
+          "status"
+        ]
+      },
+      "CompanyResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "tenantId": {
+            "type": "string"
+          },
+          "industry": {
+            "type": "string"
+          },
+          "size": {
+            "type": "string"
+          },
+          "logoUrl": {
+            "type": "object"
+          },
+          "timezone": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "dbRegion": {
+            "type": "object"
+          },
+          "dbHealth": {
+            "type": "string"
+          },
+          "usersCount": {
+            "type": "number"
+          },
+          "businessUnitsCount": {
+            "type": "number"
+          },
+          "enabledAppsCount": {
+            "type": "number"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "tenant": {
+            "$ref": "#/components/schemas/TenantSummaryDto"
+          }
+        },
+        "required": [
+          "id",
+          "tenantId",
+          "industry",
+          "size",
+          "timezone",
+          "currency",
+          "dbHealth",
+          "usersCount",
+          "businessUnitsCount",
+          "enabledAppsCount",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CreateCompanyDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Company display name",
+            "example": "Acme Corporation",
+            "minLength": 2,
+            "maxLength": 100
+          },
+          "subdomain": {
+            "type": "string",
+            "description": "Unique subdomain for the company",
+            "example": "acme-corp",
+            "minLength": 2,
+            "maxLength": 50,
+            "pattern": "^[a-z0-9-]+$"
+          },
+          "industry": {
+            "type": "string",
+            "description": "Industry type",
+            "enum": [
+              "Healthcare",
+              "Retail",
+              "F&B",
+              "Professional Services",
+              "Manufacturing",
+              "Education",
+              "Technology",
+              "Other"
+            ],
+            "example": "HEALTHCARE"
+          },
+          "size": {
+            "type": "string",
+            "description": "Company size",
+            "enum": [
+              "1-10",
+              "11-50",
+              "51-200",
+              "200+"
+            ],
+            "example": "SIZE_11_50"
+          },
+          "logoUrl": {
+            "type": "string",
+            "description": "Company logo URL",
+            "example": "https://example.com/logo.png"
+          },
+          "dbType": {
+            "type": "string",
+            "description": "Database deployment type",
+            "enum": [
+              "SHARED",
+              "DEDICATED"
+            ],
+            "example": "SHARED"
+          },
+          "dbRegion": {
+            "type": "string",
+            "description": "Database region (required for DEDICATED)",
+            "enum": [
+              "AP_SOUTH_1",
+              "AP_SOUTHEAST_1",
+              "EU_CENTRAL_1",
+              "US_EAST_1"
+            ],
+            "example": "AP_SOUTH_1"
+          },
+          "enabledAppIds": {
+            "description": "App codes or IDs to enable on company creation",
+            "example": [
+              "hrms",
+              "payroll"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "subdomain",
+          "industry",
+          "size",
+          "dbType"
+        ]
+      },
+      "CompanyMemberResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "companyId": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "joinedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "invitedBy": {
+            "type": "object"
+          },
+          "roleIds": {
+            "description": "Roles assigned to this member",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "companyId",
+          "userId",
+          "status",
+          "joinedAt",
+          "roleIds",
+          "createdAt"
+        ]
+      },
+      "CreateCompanyResponseDto": {
+        "type": "object",
+        "properties": {
+          "company": {
+            "$ref": "#/components/schemas/CompanyResponseDto"
+          },
+          "tenant": {
+            "$ref": "#/components/schemas/TenantSummaryDto"
+          },
+          "defaultRoles": {
+            "description": "Default roles created for the company",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "membership": {
+            "description": "Creator membership details",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CompanyMemberResponseDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "company",
+          "tenant",
+          "defaultRoles",
+          "membership"
+        ]
+      },
+      "UpdateCompanyDto": {
+        "type": "object",
+        "properties": {
+          "industry": {
+            "type": "string",
+            "description": "Industry type",
+            "enum": [
+              "Healthcare",
+              "Retail",
+              "F&B",
+              "Professional Services",
+              "Manufacturing",
+              "Education",
+              "Technology",
+              "Other"
+            ],
+            "example": "HEALTHCARE"
+          },
+          "size": {
+            "type": "string",
+            "description": "Company size",
+            "enum": [
+              "1-10",
+              "11-50",
+              "51-200",
+              "200+"
+            ],
+            "example": "SIZE_11_50"
+          },
+          "logoUrl": {
+            "type": "string",
+            "description": "Company logo URL",
+            "example": "https://example.com/logo.png"
+          },
+          "timezone": {
+            "type": "string",
+            "description": "Timezone",
+            "example": "Asia/Kolkata",
+            "maxLength": 50
+          },
+          "currency": {
+            "type": "string",
+            "description": "Currency code",
+            "example": "INR",
+            "maxLength": 3
+          }
+        }
+      },
+      "AssignRoleDto": {
+        "type": "object",
+        "properties": {
+          "roleId": {
+            "type": "string",
+            "description": "Role ID to assign"
+          }
+        },
+        "required": [
+          "roleId"
+        ]
+      },
+      "BusinessUnitResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "companyId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "code": {
+            "type": "object"
+          },
+          "type": {
+            "type": "string"
+          },
+          "description": {
+            "type": "object"
+          },
+          "status": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "object"
+          },
+          "email": {
+            "type": "object"
+          },
+          "addressLine1": {
+            "type": "object"
+          },
+          "addressLine2": {
+            "type": "object"
+          },
+          "city": {
+            "type": "object"
+          },
+          "state": {
+            "type": "object"
+          },
+          "postalCode": {
+            "type": "object"
+          },
+          "country": {
+            "type": "object"
+          },
+          "managerId": {
+            "type": "object"
+          },
+          "employeesCount": {
+            "type": "number"
+          },
+          "enabledAppsCount": {
+            "type": "number"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "companyId",
+          "name",
+          "type",
+          "status",
+          "employeesCount",
+          "enabledAppsCount",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CreateBusinessUnitDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Business unit name",
+            "example": "Downtown Clinic",
+            "minLength": 2,
+            "maxLength": 255
+          },
+          "code": {
+            "type": "string",
+            "description": "Short code",
+            "example": "DTC-01",
+            "maxLength": 50
+          },
+          "type": {
+            "type": "string",
+            "description": "Business unit type",
+            "enum": [
+              "OUTLET",
+              "CLINIC",
+              "WAREHOUSE",
+              "HUB",
+              "HQ",
+              "OFFICE",
+              "OTHER"
+            ],
+            "example": "CLINIC"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description",
+            "maxLength": 1000
+          },
+          "phone": {
+            "type": "string",
+            "description": "Phone number"
+          },
+          "email": {
+            "type": "string",
+            "description": "Email address"
+          },
+          "addressLine1": {
+            "type": "string",
+            "description": "Address line 1"
+          },
+          "addressLine2": {
+            "type": "string",
+            "description": "Address line 2"
+          },
+          "city": {
+            "type": "string",
+            "description": "City"
+          },
+          "state": {
+            "type": "string",
+            "description": "State/Province"
+          },
+          "postalCode": {
+            "type": "string",
+            "description": "Postal code"
+          },
+          "country": {
+            "type": "string",
+            "description": "Country"
+          },
+          "managerId": {
+            "type": "string",
+            "description": "Manager (company member ID)"
+          }
+        },
+        "required": [
+          "name",
+          "type"
+        ]
+      },
+      "AppResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "App ID"
+          },
+          "name": {
+            "type": "string",
+            "description": "App name"
+          },
+          "slug": {
+            "type": "string",
+            "description": "App slug (unique identifier)"
+          },
+          "icon": {
+            "type": "string",
+            "description": "Lucide icon name"
+          },
+          "description": {
+            "type": "object",
+            "description": "App description"
+          },
+          "category": {
+            "type": "string",
+            "description": "App category",
+            "enum": [
+              "HR",
+              "FINANCE",
+              "OPERATIONS",
+              "SALES",
+              "MARKETING",
+              "OTHER"
+            ]
+          },
+          "pricingTier": {
+            "type": "string",
+            "description": "Pricing tier",
+            "enum": [
+              "FREE",
+              "BASIC",
+              "PREMIUM",
+              "ENTERPRISE"
+            ]
+          },
+          "monthlyPrice": {
+            "type": "number",
+            "description": "Monthly price in smallest currency unit"
+          },
+          "isFeatured": {
+            "type": "boolean",
+            "description": "Is featured app"
+          },
+          "isNew": {
+            "type": "boolean",
+            "description": "Is new app"
+          },
+          "recommendedIndustries": {
+            "type": "object",
+            "description": "Recommended industries (JSON array)"
+          },
+          "dependencies": {
+            "type": "object",
+            "description": "Dependencies (JSON array of app IDs)"
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "Whether the app is enabled for the company"
+          },
+          "enabledAt": {
+            "type": "object",
+            "description": "When the app was enabled"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "icon",
+          "category",
+          "pricingTier",
+          "monthlyPrice",
+          "isFeatured",
+          "isNew",
+          "enabled"
+        ]
+      },
+      "ToggleAppResponseDto": {
+        "type": "object",
+        "properties": {
+          "appId": {
+            "type": "string",
+            "description": "App ID"
+          },
+          "companyId": {
+            "type": "string",
+            "description": "Company ID"
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "Whether the app is now enabled"
+          },
+          "message": {
+            "type": "string",
+            "description": "Status message"
+          }
+        },
+        "required": [
+          "appId",
+          "companyId",
+          "enabled",
           "message"
         ]
       }

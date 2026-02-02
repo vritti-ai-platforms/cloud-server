@@ -104,8 +104,8 @@ async function seed() {
     console.log('Inserting companies...');
     const companyData = insertedTenants.map((tenant, index) => ({
       tenantId: tenant.id,
-      industry: (['TECHNOLOGY', 'MANUFACTURING', 'PROFESSIONAL_SERVICES', 'HEALTHCARE', 'TECHNOLOGY'] as const)[index],
-      size: (['SIZE_51_200', 'SIZE_200_PLUS', 'SIZE_11_50', 'SIZE_200_PLUS', 'SIZE_200_PLUS'] as const)[index],
+      industry: (['Technology', 'Manufacturing', 'Professional Services', 'Healthcare', 'Technology'] as const)[index],
+      size: (['51-200', '200+', '11-50', '200+', '200+'] as const)[index],
       timezone: 'Asia/Kolkata',
       currency: 'INR',
       dbRegion: 'AP_SOUTH_1' as const,
