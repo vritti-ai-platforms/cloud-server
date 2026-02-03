@@ -1,13 +1,6 @@
 import { Controller, Get, Logger, Param, Query, Redirect, Request, Res } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import {
-  ApiBearerAuth,
-  ApiOperation,
-  ApiParam,
-  ApiQuery,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { BadRequestException, Onboarding, Public } from '@vritti/api-sdk';
 import type { FastifyReply } from 'fastify';
 import { OnboardingStepValues, SessionTypeValues } from '@/db/schema';
@@ -42,7 +35,8 @@ export class AuthOAuthController {
   @Public()
   @ApiOperation({
     summary: 'Handle OAuth callback',
-    description: 'Receives the authorization code from the OAuth provider after user authorization. Exchanges the code for tokens and creates a session.',
+    description:
+      'Receives the authorization code from the OAuth provider after user authorization. Exchanges the code for tokens and creates a session.',
   })
   @ApiParam({
     name: 'provider',
@@ -86,10 +80,7 @@ export class AuthOAuthController {
     this.logger.log(`Handling OAuth callback for provider: ${provider}`);
 
     try {
-      console.log('hi Sunvish');
       const response: OAuthResponseDto = await this.oauthService.handleCallback(provider, code, state);
-
-      console.log('hi Sunvish1');
 
       // Determine session type based on onboarding status
       const isFullyOnboarded = response.user.onboardingStep === OnboardingStepValues.COMPLETE;
@@ -129,7 +120,8 @@ export class AuthOAuthController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Link OAuth provider to existing account',
-    description: 'Initiates the OAuth flow to link an additional OAuth provider to the authenticated user\'s account. Requires an onboarding token.',
+    description:
+      "Initiates the OAuth flow to link an additional OAuth provider to the authenticated user's account. Requires an onboarding token.",
   })
   @ApiParam({
     name: 'provider',
@@ -173,7 +165,8 @@ export class AuthOAuthController {
   @Redirect()
   @ApiOperation({
     summary: 'Initiate OAuth flow',
-    description: 'Initiates the OAuth authentication flow by redirecting the user to the specified OAuth provider\'s authorization page.',
+    description:
+      "Initiates the OAuth authentication flow by redirecting the user to the specified OAuth provider's authorization page.",
   })
   @ApiParam({
     name: 'provider',
