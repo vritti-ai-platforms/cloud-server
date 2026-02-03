@@ -1,8 +1,5 @@
 import fastifyCookie from '@fastify/cookie';
 import fastifyCsrfProtection from '@fastify/csrf-protection';
-import fastifyRawBody from 'fastify-raw-body';
-import { writeFileSync } from 'fs';
-import { join } from 'path';
 import { BadRequestException, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
@@ -15,19 +12,67 @@ import {
   HttpLoggerInterceptor,
   LoggerService,
 } from '@vritti/api-sdk';
+import fastifyRawBody from 'fastify-raw-body';
+import { readFileSync, writeFileSync } from 'fs';
+import { join } from 'path';
 import { AppModule } from './app.module';
 
-async function bootstrap() {
-  // Configure api-sdk BEFORE creating the NestJS app
-  // This sets up cookie names, JWT settings, and auth guard config
+// ============================================================================
+// Environment Configuration
+// ============================================================================
+
+const ENV = {
+  nodeEnv: process.env.NODE_ENV,
+  useHttps: process.env.USE_HTTPS === 'true',
+  logProvider: process.env.LOG_PROVIDER || 'winston',
+  port: process.env.PORT ?? 3000,
+  host: 'local.vrittiai.com',
+  // Cookie configuration
+  refreshCookieName: process.env.REFRESH_COOKIE_NAME ?? 'vritti_refresh',
+  refreshCookieDomain: process.env.REFRESH_COOKIE_DOMAIN,
+} as const;
+
+const protocol = ENV.useHttps ? 'https' : 'http';
+const baseUrl = `${protocol}://${ENV.host}:${ENV.port}`;
+
+// ============================================================================
+// CORS Configuration
+// ============================================================================
+
+const CORS_ORIGINS = [
+  'http://localhost:5173', // Host app
+  'http://localhost:3001', // Auth MF
+  'http://localhost:3012', // Host app main port
+  'http://localhost:5174', // Other possible ports
+  `http://${ENV.host}:3012`,
+  `http://cloud.${ENV.host}:3012`,
+  `https://${ENV.host}:3012`,
+  `https://cloud.${ENV.host}:3012`,
+];
+
+const CORS_CONFIG = {
+  origin: CORS_ORIGINS,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token'],
+};
+
+// ============================================================================
+// Configuration Functions
+// ============================================================================
+
+/**
+ * Configure api-sdk BEFORE creating the NestJS app
+ * This sets up cookie names, JWT settings, and auth guard config
+ */
+function configureApiSdkSettings() {
   configureApiSdk({
     cookie: {
-      refreshCookieName: process.env.REFRESH_COOKIE_NAME ?? 'vritti_refresh',
-      refreshCookieSecure: process.env.NODE_ENV === 'production',
+      refreshCookieName: ENV.refreshCookieName,
+      refreshCookieSecure: ENV.nodeEnv === 'production',
       refreshCookieMaxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-      refreshCookieSameSite: 'strict', // Required for OAuth redirects (strict breaks cross-origin redirects)
-      // Cookie domain from env - use leading dot for subdomain sharing (e.g., '.vrittiai.com')
-      refreshCookieDomain: process.env.REFRESH_COOKIE_DOMAIN,
+      refreshCookieSameSite: 'strict',
+      refreshCookieDomain: ENV.refreshCookieDomain,
     },
     jwt: {
       validateTokenBinding: true,
@@ -36,24 +81,72 @@ async function bootstrap() {
       tenantHeaderName: 'x-tenant-id',
     },
   });
+}
 
+/**
+ * Create Swagger/OpenAPI configuration
+ */
+function createSwaggerConfig() {
+  return new DocumentBuilder()
+    .setTitle('Vritti Cloud API')
+    .setDescription('Internal API for Vritti SaaS Platform')
+    .setVersion('1.0.0')
+    .addBearerAuth({
+      type: 'http',
+      scheme: 'bearer',
+      bearerFormat: 'JWT',
+      description: 'Enter your JWT access token',
+    })
+    .addServer(baseUrl, 'Local Development')
+    .addTag('Health', 'Health check endpoints')
+    .addTag('CSRF', 'CSRF token management')
+    .addTag('Auth', 'Authentication endpoints')
+    .addTag('Auth - OAuth', 'OAuth authentication flows')
+    .addTag('Auth - Passkey', 'Passkey/WebAuthn authentication')
+    .addTag('MFA', 'Multi-factor authentication verification')
+    .addTag('Onboarding', 'User onboarding flow')
+    .addTag('Onboarding - Two-Factor Authentication', '2FA setup during onboarding')
+    .addTag('Onboarding - Verification Events', 'SSE events for verification status')
+    .addTag('Onboarding - Webhooks', 'Webhook handlers for SMS/WhatsApp')
+    .addTag('Tenants', 'Tenant management')
+    .addTag('Users', 'User management')
+    .build();
+}
+
+// ============================================================================
+// Bootstrap Function
+// ============================================================================
+
+async function bootstrap() {
+  // Configure API SDK settings
+  configureApiSdkSettings();
+
+  // Determine logger configuration
   // When using default provider, let NestJS use its built-in logger to avoid circular reference
   // When using Winston, we need to use LoggerService
-  const logProvider = process.env.LOG_PROVIDER || 'winston';
-  const useBuiltInLogger = logProvider === 'default';
+  const useBuiltInLogger = ENV.logProvider === 'default';
+  const loggerOptions = useBuiltInLogger
+    ? {}
+    : {
+        logger: new LoggerService({
+          environment: ENV.nodeEnv,
+        }),
+      };
 
-  const app = await NestFactory.create<NestFastifyApplication>(
-    AppModule,
-    new FastifyAdapter(),
-    // Only pass custom logger for Winston to avoid circular reference with default provider
-    useBuiltInLogger
-      ? {}
-      : {
-          logger: new LoggerService({
-            environment: process.env.NODE_ENV,
-          }),
-        },
+  // Configure Fastify adapter with HTTPS support when enabled
+  const fastifyAdapter = new FastifyAdapter(
+    ENV.useHttps
+      ? {
+          https: {
+            key: readFileSync('./certs/local.vrittiai.com+4-key.pem'),
+            cert: readFileSync('./certs/local.vrittiai.com+4.pem'),
+          },
+        }
+      : {},
   );
+
+  // Create NestJS application
+  const app = await NestFactory.create<NestFastifyApplication>(AppModule, fastifyAdapter, loggerOptions);
 
   // Get services from DI container
   const configService = app.get(ConfigService);
@@ -85,7 +178,7 @@ async function bootstrap() {
       signed: true,
       httpOnly: true,
       sameSite: 'lax', // IMPORTANT: 'strict' breaks OAuth redirects
-      secure: process.env.NODE_ENV === 'production',
+      secure: ENV.nodeEnv === 'production',
       path: '/', // Cookie must be available for all endpoints
     },
     csrfOpts: {
@@ -128,55 +221,15 @@ async function bootstrap() {
   );
 
   // Enable CORS for frontend applications
-  app.enableCors({
-    origin: [
-      'http://localhost:5173', // Host app
-      'http://localhost:3001', // Auth MF
-      'http://localhost:3012', // Host app main port
-      'http://localhost:5174', // Other possible ports
-      'http://local.vrittiai.com:3012', // local.vrittiai.com main port
-      'http://cloud.local.vrittiai.com:3012', // Cloud subdomain main port
-      'https://local.vrittiai.com:3012', // HTTPS local.vrittiai.com
-      'https://cloud.local.vrittiai.com:3012', // HTTPS cloud subdomain
-    ],
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token'],
-  });
+  app.enableCors(CORS_CONFIG);
 
   // Configure Swagger/OpenAPI documentation
-  const swaggerConfig = new DocumentBuilder()
-    .setTitle('Vritti Cloud API')
-    .setDescription('Internal API for Vritti SaaS Platform')
-    .setVersion('1.0.0')
-    .addBearerAuth({
-      type: 'http',
-      scheme: 'bearer',
-      bearerFormat: 'JWT',
-      description: 'Enter your JWT access token',
-    })
-    .addServer('http://localhost:3000', 'Local Development')
-    .addTag('Health', 'Health check endpoints')
-    .addTag('CSRF', 'CSRF token management')
-    .addTag('Auth', 'Authentication endpoints')
-    .addTag('Auth - OAuth', 'OAuth authentication flows')
-    .addTag('Auth - Passkey', 'Passkey/WebAuthn authentication')
-    .addTag('MFA', 'Multi-factor authentication verification')
-    .addTag('Onboarding', 'User onboarding flow')
-    .addTag('Onboarding - Two-Factor Authentication', '2FA setup during onboarding')
-    .addTag('Onboarding - Verification Events', 'SSE events for verification status')
-    .addTag('Onboarding - Webhooks', 'Webhook handlers for SMS/WhatsApp')
-    .addTag('Tenants', 'Tenant management')
-    .addTag('Users', 'User management')
-    .build();
-
+  const swaggerConfig = createSwaggerConfig();
   const document = SwaggerModule.createDocument(app, swaggerConfig);
 
   // Export OpenAPI spec to file for Mintlify docs
-  writeFileSync(
-    join(__dirname, '..', 'openapi.json'),
-    JSON.stringify(document, null, 2),
-  );
+  const openApiPath = join(process.cwd(), 'openapi.json');
+  writeFileSync(openApiPath, JSON.stringify(document, null, 2));
 
   // Setup Swagger UI at /api/docs
   SwaggerModule.setup('api/docs', app, document, {
@@ -185,11 +238,12 @@ async function bootstrap() {
     },
   });
 
-  const port = process.env.PORT ?? 3000;
-  await app.listen(port, '0.0.0.0');
+  // Start the server
+  await app.listen(ENV.port, '0.0.0.0');
 
   // Get logger from DI container for final bootstrap message
   const logger = app.get(LoggerService);
-  logger.log(`API Nexus running on http://localhost:${port}`, 'Bootstrap');
+  logger.log(`API Nexus running on ${baseUrl}`, 'Bootstrap');
 }
+
 bootstrap();
