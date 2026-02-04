@@ -1,10 +1,5 @@
 import { Body, Controller, HttpCode, HttpStatus, Logger, Post, Req, Res } from '@nestjs/common';
-import {
-  ApiBody,
-  ApiOperation,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Public } from '@vritti/api-sdk';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { StartPasskeyAuthDto, VerifyPasskeyAuthDto } from '../dto/verify-passkey-auth.dto';
@@ -34,7 +29,8 @@ export class PasskeyAuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Start passkey authentication',
-    description: 'Initiates the WebAuthn authentication flow by generating a challenge and authentication options. Optionally accepts an email to limit to the user\'s registered passkeys.',
+    description:
+      "Initiates the WebAuthn authentication flow by generating a challenge and authentication options. Optionally accepts an email to limit to the user's registered passkeys.",
   })
   @ApiBody({ type: StartPasskeyAuthDto })
   @ApiResponse({
@@ -43,7 +39,11 @@ export class PasskeyAuthController {
     schema: {
       type: 'object',
       properties: {
-        sessionId: { type: 'string', description: 'Session ID for the authentication flow', example: 'sess_abc123def456' },
+        sessionId: {
+          type: 'string',
+          description: 'Session ID for the authentication flow',
+          example: 'sess_abc123def456',
+        },
         options: {
           type: 'object',
           description: 'WebAuthn PublicKeyCredentialRequestOptions',
@@ -93,7 +93,8 @@ export class PasskeyAuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Verify passkey authentication',
-    description: 'Verifies the WebAuthn authentication response and creates a user session. Returns an access token and sets a refresh token in an httpOnly cookie.',
+    description:
+      'Verifies the WebAuthn authentication response and creates a user session. Returns an access token and sets a refresh token in an httpOnly cookie.',
   })
   @ApiBody({ type: VerifyPasskeyAuthDto })
   @ApiResponse({
@@ -102,7 +103,11 @@ export class PasskeyAuthController {
     schema: {
       type: 'object',
       properties: {
-        accessToken: { type: 'string', description: 'JWT access token', example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' },
+        accessToken: {
+          type: 'string',
+          description: 'JWT access token',
+          example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+        },
         expiresIn: { type: 'number', description: 'Token expiry in seconds', example: 900 },
         user: {
           type: 'object',
@@ -140,7 +145,7 @@ export class PasskeyAuthController {
 
     const result = await this.passkeyAuthService.verifyAuthentication(
       dto.sessionId,
-      dto.credential as any,
+      dto.credential,
       ipAddress,
       userAgent,
     );

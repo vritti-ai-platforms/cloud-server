@@ -1,22 +1,16 @@
 import { Body, Controller, Get, Headers, HttpCode, HttpStatus, Ip, Logger, Post, Req, Res } from '@nestjs/common';
-import {
-  ApiBearerAuth,
-  ApiBody,
-  ApiOperation,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Public, UserId } from '@vritti/api-sdk';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { SessionTypeValues } from '@/db/schema';
-import type { OnboardingStatusResponseDto } from '../onboarding/dto/onboarding-status-response.dto';
-import { UserResponseDto } from '../user/dto/user-response.dto';
-import { UserService } from '../user/user.service';
-import type { AuthResponseDto } from './dto/auth-response.dto';
-import { LoginDto } from './dto/login.dto';
-import { SignupDto } from './dto/signup.dto';
-import { AuthService } from './services/auth.service';
-import { getRefreshCookieName, getRefreshCookieOptionsFromConfig, SessionService } from './services/session.service';
+import type { OnboardingStatusResponseDto } from '../../onboarding/dto/onboarding-status-response.dto';
+import { UserResponseDto } from '../../user/dto/user-response.dto';
+import { UserService } from '../../user/user.service';
+import type { AuthResponseDto } from '../dto/auth-response.dto';
+import { LoginDto } from '../dto/login.dto';
+import { SignupDto } from '../dto/signup.dto';
+import { AuthService } from '../services/auth.service';
+import { getRefreshCookieName, getRefreshCookieOptionsFromConfig, SessionService } from '../services/session.service';
 
 /**
  * Auth Controller
@@ -44,7 +38,8 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'User signup',
-    description: 'Creates a new user account and initiates the onboarding flow. Returns an access token and sets a refresh token in an httpOnly cookie.',
+    description:
+      'Creates a new user account and initiates the onboarding flow. Returns an access token and sets a refresh token in an httpOnly cookie.',
   })
   @ApiBody({ type: SignupDto })
   @ApiResponse({
@@ -101,7 +96,8 @@ export class AuthController {
   @Public()
   @ApiOperation({
     summary: 'Recover session token',
-    description: 'Recovers the session by reading the refresh token from the httpOnly cookie and returns a new access token. Does not rotate the refresh token.',
+    description:
+      'Recovers the session by reading the refresh token from the httpOnly cookie and returns a new access token. Does not rotate the refresh token.',
   })
   @ApiResponse({
     status: 200,
@@ -137,7 +133,8 @@ export class AuthController {
   @Public()
   @ApiOperation({
     summary: 'User login',
-    description: 'Authenticates the user with email and password. Returns an access token and sets a refresh token in an httpOnly cookie.',
+    description:
+      'Authenticates the user with email and password. Returns an access token and sets a refresh token in an httpOnly cookie.',
   })
   @ApiBody({ type: LoginDto })
   @ApiResponse({
@@ -188,7 +185,8 @@ export class AuthController {
   @Public()
   @ApiOperation({
     summary: 'Refresh access token',
-    description: 'Generates a new access token and rotates the refresh token for enhanced security. Reads refresh token from httpOnly cookie and updates it with the new rotated token.',
+    description:
+      'Generates a new access token and rotates the refresh token for enhanced security. Reads refresh token from httpOnly cookie and updates it with the new rotated token.',
   })
   @ApiResponse({
     status: 201,
@@ -245,7 +243,8 @@ export class AuthController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Logout from current device',
-    description: 'Invalidates the current session and clears the refresh token cookie. Only logs out from the current device.',
+    description:
+      'Invalidates the current session and clears the refresh token cookie. Only logs out from the current device.',
   })
   @ApiResponse({
     status: 201,
@@ -288,7 +287,8 @@ export class AuthController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Logout from all devices',
-    description: 'Invalidates all active sessions for the current user across all devices and clears the refresh token cookie.',
+    description:
+      'Invalidates all active sessions for the current user across all devices and clears the refresh token cookie.',
   })
   @ApiResponse({
     status: 201,
