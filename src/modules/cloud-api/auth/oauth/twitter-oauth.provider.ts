@@ -36,7 +36,7 @@ export class TwitterOAuthProvider implements IOAuthProvider {
       client_id: this.clientId,
       redirect_uri: this.redirectUri,
       response_type: 'code',
-      scope: 'tweet.read users.read offline.access',
+      scope: 'tweet.read users.read offline.access users.email',
       state,
     });
 
@@ -106,7 +106,7 @@ export class TwitterOAuthProvider implements IOAuthProvider {
           Authorization: `Bearer ${accessToken}`,
         },
         params: {
-          'user.fields': 'profile_image_url,name,username',
+          'user.fields': 'profile_image_url,name,username,confirmed_email',
         },
       });
 
@@ -116,7 +116,7 @@ export class TwitterOAuthProvider implements IOAuthProvider {
 
       // Twitter doesn't provide email by default (requires additional permissions)
       // We'll use username@twitter.com as fallback
-      const email = data.email || `${data.username}@twitter.com`;
+      const email = data.confirmed_email;
 
       return {
         provider: OAuthProviderTypeValues.X,
