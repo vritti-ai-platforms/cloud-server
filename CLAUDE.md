@@ -370,16 +370,94 @@ export class UsersService {
 ```
 
 ### Error Handling
-```typescript
-// Automatic transformation to RFC 7807 format via HttpExceptionFilter
-throw new BadRequestException('Invalid email format');
 
-// Response:
+The project uses RFC 7807 Problem Details format for all error responses. All exceptions are automatically transformed by `HttpExceptionFilter` from `@vritti/api-sdk`.
+
+#### Error Response Format
+```json
 {
+  "title": "Bad Request",
+  "status": 400,
+  "detail": "Validation failed",
   "errors": [
-    {
-      "message": "Invalid email format"
-    }
+    { "field": "email", "message": "Invalid email format" },
+    { "message": "General error without specific field" }
   ]
 }
 ```
+
+#### Exception Constructor Patterns
+
+**CRITICAL: Choose the correct pattern based on whether the error is field-specific or general.**
+
+```typescript
+import { BadRequestException, UnauthorizedException, NotFoundException } from '@vritti/api-sdk';
+
+// Pattern 1: General error (no field) - USE FOR AUTH FAILURES, SESSION ERRORS, etc.
+// Frontend displays as root form error
+throw new UnauthorizedException('Your session has expired. Please log in again.');
+// Response: { errors: [{ message: "Your session has expired..." }] }
+
+// Pattern 2: Field-specific error - USE ONLY when error relates to a FORM FIELD
+throw new BadRequestException('email', 'Invalid email format');
+// Response: { errors: [{ field: "email", message: "Invalid email format" }] }
+
+// Pattern 3: Field + detail
+throw new BadRequestException('email', 'Email already exists', 'Please use a different email or login.');
+// Response: { errors: [{ field: "email", message: "Email already exists" }], detail: "Please use..." }
+
+// Pattern 4: Array of errors
+throw new BadRequestException([
+  { field: 'email', message: 'Invalid email' },
+  { field: 'password', message: 'Password too weak' }
+]);
+
+// Pattern 5: Array + detail
+throw new BadRequestException(
+  [{ field: 'code', message: 'Invalid verification code' }],
+  'Please check your authenticator app and try again.'
+);
+```
+
+#### Common Mistakes to AVOID
+
+```typescript
+// WRONG - "Invalid credentials" is NOT a form field name!
+// This error won't display because no form field matches "Invalid credentials"
+throw new UnauthorizedException(
+  'Invalid credentials',  // <-- This becomes field name
+  'The email or password is incorrect.',
+);
+
+// CORRECT - Use message-only pattern for general auth errors
+throw new UnauthorizedException(
+  'The email or password you entered is incorrect. Please check your credentials and try again.',
+);
+
+// WRONG - "Session expired" is NOT a form field
+throw new UnauthorizedException('Session expired', 'Please log in again.');
+
+// CORRECT
+throw new UnauthorizedException('Your session has expired. Please log in again.');
+```
+
+#### When to Use Each Pattern
+
+| Scenario | Pattern | Example |
+|----------|---------|---------|
+| Login failure (wrong password) | Message only | `throw new UnauthorizedException('Invalid email or password.')` |
+| Session expired | Message only | `throw new UnauthorizedException('Session expired. Please log in again.')` |
+| Invalid form field | Field + message | `throw new BadRequestException('email', 'Invalid email format')` |
+| DTO validation (auto) | Field + message | Handled by ValidationPipe automatically |
+| Resource not found | Message only | `throw new NotFoundException('User not found.')` |
+| Account status issue | Message only | `throw new UnauthorizedException('Account is suspended.')` |
+| OTP/Code verification | Field + message | `throw new BadRequestException('code', 'Invalid verification code')` |
+
+#### Frontend Integration
+
+The frontend `mapApiErrorsToForm` function:
+1. If `errors[].field` matches a form field → displays inline on that field
+2. If `errors[].field` doesn't match any field → error is LOST (bug!)
+3. If `errors[]` has no `field` → displays as root form error (if `showRootError={true}`)
+
+**Always ensure your `field` value matches an actual form field name, or omit it entirely.**

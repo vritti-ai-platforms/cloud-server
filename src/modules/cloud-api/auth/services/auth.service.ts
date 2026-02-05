@@ -35,8 +35,9 @@ export class AuthService {
     const user = await this.userService.findByEmail(dto.email);
 
     if (!user) {
+      // Use message-only pattern for general auth errors (not field-specific)
+      // This ensures the error displays as a root form error, not on a specific field
       throw new UnauthorizedException(
-        'Invalid credentials',
         'The email or password you entered is incorrect. Please check your credentials and try again.',
       );
     }
@@ -44,7 +45,6 @@ export class AuthService {
     // Verify password (single check for all login flows)
     if (!user.passwordHash) {
       throw new UnauthorizedException(
-        'Invalid credentials',
         'The email or password you entered is incorrect. Please check your credentials and try again.',
       );
     }
@@ -53,7 +53,6 @@ export class AuthService {
 
     if (!isPasswordValid) {
       throw new UnauthorizedException(
-        'Invalid credentials',
         'The email or password you entered is incorrect. Please check your credentials and try again.',
       );
     }
@@ -77,7 +76,6 @@ export class AuthService {
     // Only ACTIVE users can login
     if (user.accountStatus !== AccountStatusValues.ACTIVE) {
       throw new UnauthorizedException(
-        `Account is ${user.accountStatus.toLowerCase()}. Please contact support`,
         `Your account is ${user.accountStatus.toLowerCase()}. Please contact support for assistance.`,
       );
     }
@@ -147,7 +145,6 @@ export class AuthService {
 
     if (!freshUser) {
       throw new UnauthorizedException(
-        'User not found',
         'Your account could not be found. Please log in again.',
       );
     }
@@ -190,7 +187,6 @@ export class AuthService {
     // Check if account is active
     if (user.accountStatus !== AccountStatusValues.ACTIVE) {
       throw new UnauthorizedException(
-        'Account is not active',
         'Your account is not active. Please contact support for assistance.',
       );
     }
@@ -274,10 +270,7 @@ export class AuthService {
     // Get fresh user data to return
     const user = await this.userService.findByEmail(dto.email);
     if (!user) {
-      throw new BadRequestException(
-        'User creation failed',
-        'Failed to create user account. Please try again.',
-      );
+      throw new BadRequestException('Failed to create user account. Please try again.');
     }
     return OnboardingStatusResponseDto.fromUser(user, true);
   }

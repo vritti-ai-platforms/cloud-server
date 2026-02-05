@@ -1,24 +1,18 @@
 import { Body, Controller, Get, Headers, HttpCode, HttpStatus, Ip, Logger, Post, Req, Res } from '@nestjs/common';
-import {
-  ApiBearerAuth,
-  ApiBody,
-  ApiOperation,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Public, UserId } from '@vritti/api-sdk';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { SessionTypeValues } from '@/db/schema';
-import type { OnboardingStatusResponseDto } from '../onboarding/dto/onboarding-status-response.dto';
-import { UserResponseDto } from '../user/dto/user-response.dto';
-import { UserService } from '../user/user.service';
-import type { AuthResponseDto } from './dto/auth-response.dto';
-import { ForgotPasswordDto, ResetPasswordDto, VerifyResetOtpDto } from './dto/forgot-password.dto';
-import { LoginDto } from './dto/login.dto';
-import { SignupDto } from './dto/signup.dto';
-import { AuthService } from './services/auth.service';
-import { PasswordResetService } from './services/password-reset.service';
-import { getRefreshCookieName, getRefreshCookieOptionsFromConfig, SessionService } from './services/session.service';
+import type { OnboardingStatusResponseDto } from '../../onboarding/dto/onboarding-status-response.dto';
+import { UserService } from '../../user/user.service';
+import type { AuthResponseDto } from '../dto/auth-response.dto';
+import { AuthStatusResponseDto } from '../dto/auth-status-response.dto';
+import { ForgotPasswordDto, ResetPasswordDto, VerifyResetOtpDto } from '../dto/forgot-password.dto';
+import { LoginDto } from '../dto/login.dto';
+import { SignupDto } from '../dto/signup.dto';
+import { AuthService } from '../services/auth.service';
+import { PasswordResetService } from '../services/password-reset.service';
+import { getRefreshCookieName, getRefreshCookieOptionsFromConfig, SessionService } from '../services/session.service';
 
 /**
  * Auth Controller
@@ -47,7 +41,8 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'User signup',
-    description: 'Creates a new user account and initiates the onboarding flow. Returns an access token and sets a refresh token in an httpOnly cookie.',
+    description:
+      'Creates a new user account and initiates the onboarding flow. Returns an access token and sets a refresh token in an httpOnly cookie.',
   })
   @ApiBody({ type: SignupDto })
   @ApiResponse({
@@ -104,7 +99,8 @@ export class AuthController {
   @Public()
   @ApiOperation({
     summary: 'Recover session token',
-    description: 'Recovers the session by reading the refresh token from the httpOnly cookie and returns a new access token. Does not rotate the refresh token.',
+    description:
+      'Recovers the session by reading the refresh token from the httpOnly cookie and returns a new access token. Does not rotate the refresh token.',
   })
   @ApiResponse({
     status: 200,
@@ -140,7 +136,8 @@ export class AuthController {
   @Public()
   @ApiOperation({
     summary: 'User login',
-    description: 'Authenticates the user with email and password. Returns an access token and sets a refresh token in an httpOnly cookie.',
+    description:
+      'Authenticates the user with email and password. Returns an access token and sets a refresh token in an httpOnly cookie.',
   })
   @ApiBody({ type: LoginDto })
   @ApiResponse({
@@ -191,7 +188,8 @@ export class AuthController {
   @Public()
   @ApiOperation({
     summary: 'Refresh access token',
-    description: 'Generates a new access token and rotates the refresh token for enhanced security. Reads refresh token from httpOnly cookie and updates it with the new rotated token.',
+    description:
+      'Generates a new access token and rotates the refresh token for enhanced security. Reads refresh token from httpOnly cookie and updates it with the new rotated token.',
   })
   @ApiResponse({
     status: 201,
@@ -248,7 +246,8 @@ export class AuthController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Logout from current device',
-    description: 'Invalidates the current session and clears the refresh token cookie. Only logs out from the current device.',
+    description:
+      'Invalidates the current session and clears the refresh token cookie. Only logs out from the current device.',
   })
   @ApiResponse({
     status: 201,
@@ -291,7 +290,8 @@ export class AuthController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Logout from all devices',
-    description: 'Invalidates all active sessions for the current user across all devices and clears the refresh token cookie.',
+    description:
+      'Invalidates all active sessions for the current user across all devices and clears the refresh token cookie.',
   })
   @ApiResponse({
     status: 201,
@@ -322,36 +322,62 @@ export class AuthController {
   }
 
   /**
-   * Get current user info
+   * Get current user authentication status
    * GET /auth/me
-   * Requires: JWT access token (protected by VrittiAuthGuard)
+   * Public endpoint - checks authentication via httpOnly cookie
    *
-   * Note: VrittiAuthGuard validates the JWT and attaches { id: userId } to request.user.
-   * We use @UserId() decorator to extract the userId and fetch the full user data.
-   * This is a single database query since the guard only validates the JWT signature,
-   * not the user existence in the database.
+   * Returns { isAuthenticated: true, user, accessToken, expiresIn } if valid session
+   * Returns { isAuthenticated: false } if no valid session (no 401 error)
+   *
+   * This enables the frontend to:
+   * 1. Check auth status on page load without needing an in-memory token
+   * 2. Recover session from httpOnly cookie
+   * 3. Get user data in a single request
    */
   @Get('me')
-  @ApiBearerAuth()
+  @Public()
   @ApiOperation({
-    summary: 'Get current user information',
-    description: 'Returns the profile information of the currently authenticated user.',
+    summary: 'Get current user authentication status',
+    description:
+      'Checks authentication status via httpOnly cookie. Returns user data and access token if authenticated, or { isAuthenticated: false } if not. Never returns a 401 error.',
   })
   @ApiResponse({
     status: 200,
-    description: 'User information retrieved successfully.',
-    type: UserResponseDto,
+    description: 'Authentication status returned.',
+    type: AuthStatusResponseDto,
   })
-  @ApiResponse({
-    status: 401,
-    description: 'Unauthorized. Invalid or missing access token.',
-  })
-  @ApiResponse({
-    status: 404,
-    description: 'User not found.',
-  })
-  async getCurrentUser(@UserId() userId: string): Promise<UserResponseDto> {
-    return this.userService.findById(userId);
+  async getCurrentUser(@Req() request: FastifyRequest): Promise<AuthStatusResponseDto> {
+    const refreshToken = request.cookies?.[getRefreshCookieName()];
+
+    this.logger.log('GET /auth/me - Checking authentication status');
+
+    if (!refreshToken) {
+      this.logger.log('No refresh token cookie - unauthenticated');
+      return new AuthStatusResponseDto({ isAuthenticated: false });
+    }
+
+    try {
+      // Try to recover session from refresh token
+      const { accessToken, expiresIn } = await this.sessionService.recoverSession(refreshToken);
+
+      // Get session to find userId (use OrThrow variant - exception caught below)
+      const session = await this.sessionService.getSessionByRefreshTokenOrThrow(refreshToken);
+      const user = await this.userService.findById(session.userId);
+
+      this.logger.log(`Session recovered for user: ${session.userId} - authenticated`);
+
+      return new AuthStatusResponseDto({
+        isAuthenticated: true,
+        user,
+        accessToken,
+        expiresIn,
+      });
+    } catch (error) {
+      this.logger.log(
+        `Session recovery failed: ${error instanceof Error ? error.message : 'Unknown error'} - unauthenticated`,
+      );
+      return new AuthStatusResponseDto({ isAuthenticated: false });
+    }
   }
 
   // ============================================================================
@@ -368,7 +394,8 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Request password reset',
-    description: 'Sends a password reset OTP to the provided email address. Always returns success to prevent email enumeration.',
+    description:
+      'Sends a password reset OTP to the provided email address. Always returns success to prevent email enumeration.',
   })
   @ApiBody({ type: ForgotPasswordDto })
   @ApiResponse({
@@ -378,7 +405,10 @@ export class AuthController {
       type: 'object',
       properties: {
         success: { type: 'boolean', example: true },
-        message: { type: 'string', example: 'If an account with that email exists, a password reset code has been sent.' },
+        message: {
+          type: 'string',
+          example: 'If an account with that email exists, a password reset code has been sent.',
+        },
       },
     },
   })
@@ -386,9 +416,7 @@ export class AuthController {
     status: 400,
     description: 'Invalid input data.',
   })
-  async forgotPassword(
-    @Body() forgotPasswordDto: ForgotPasswordDto,
-  ): Promise<{ success: boolean; message: string }> {
+  async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto): Promise<{ success: boolean; message: string }> {
     this.logger.log(`POST /auth/forgot-password - Email: ${forgotPasswordDto.email}`);
     return this.passwordResetService.requestPasswordReset(forgotPasswordDto.email);
   }
@@ -424,9 +452,7 @@ export class AuthController {
     status: 401,
     description: 'Invalid OTP.',
   })
-  async verifyResetOtp(
-    @Body() verifyResetOtpDto: VerifyResetOtpDto,
-  ): Promise<{ resetToken: string }> {
+  async verifyResetOtp(@Body() verifyResetOtpDto: VerifyResetOtpDto): Promise<{ resetToken: string }> {
     this.logger.log(`POST /auth/verify-reset-otp - Email: ${verifyResetOtpDto.email}`);
     return this.passwordResetService.verifyResetOtp(verifyResetOtpDto.email, verifyResetOtpDto.otp);
   }
@@ -441,7 +467,8 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Reset password',
-    description: 'Sets a new password using the reset token received after OTP verification. Invalidates all active sessions.',
+    description:
+      'Sets a new password using the reset token received after OTP verification. Invalidates all active sessions.',
   })
   @ApiBody({ type: ResetPasswordDto })
   @ApiResponse({
@@ -451,7 +478,10 @@ export class AuthController {
       type: 'object',
       properties: {
         success: { type: 'boolean', example: true },
-        message: { type: 'string', example: 'Password has been reset successfully. Please login with your new password.' },
+        message: {
+          type: 'string',
+          example: 'Password has been reset successfully. Please login with your new password.',
+        },
       },
     },
   })
@@ -459,9 +489,7 @@ export class AuthController {
     status: 400,
     description: 'Invalid or expired reset token.',
   })
-  async resetPassword(
-    @Body() resetPasswordDto: ResetPasswordDto,
-  ): Promise<{ success: boolean; message: string }> {
+  async resetPassword(@Body() resetPasswordDto: ResetPasswordDto): Promise<{ success: boolean; message: string }> {
     this.logger.log('POST /auth/reset-password');
     return this.passwordResetService.resetPassword(resetPasswordDto.resetToken, resetPasswordDto.newPassword);
   }
