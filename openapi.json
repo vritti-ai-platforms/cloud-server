@@ -1464,33 +1464,22 @@
     },
     "/cloud-api/auth/me": {
       "get": {
-        "description": "Returns the profile information of the currently authenticated user.",
+        "description": "Checks authentication status via httpOnly cookie. Returns user data and access token if authenticated, or { isAuthenticated: false } if not. Never returns a 401 error.",
         "operationId": "AuthController_getCurrentUser",
         "parameters": [],
         "responses": {
           "200": {
-            "description": "User information retrieved successfully.",
+            "description": "Authentication status returned.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UserResponseDto"
+                  "$ref": "#/components/schemas/AuthStatusResponseDto"
                 }
               }
             }
-          },
-          "401": {
-            "description": "Unauthorized. Invalid or missing access token."
-          },
-          "404": {
-            "description": "User not found."
           }
         },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get current user information",
+        "summary": "Get current user authentication status",
         "tags": [
           "Auth"
         ]
@@ -2700,6 +2689,37 @@
         "required": [
           "email",
           "password"
+        ]
+      },
+      "AuthStatusResponseDto": {
+        "type": "object",
+        "properties": {
+          "isAuthenticated": {
+            "type": "boolean",
+            "description": "Whether the user is authenticated",
+            "example": true
+          },
+          "user": {
+            "description": "User information (only present when authenticated)",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserResponseDto"
+              }
+            ]
+          },
+          "accessToken": {
+            "type": "string",
+            "description": "JWT access token (only present when authenticated)",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          },
+          "expiresIn": {
+            "type": "number",
+            "description": "Token expiry in seconds (only present when authenticated)",
+            "example": 3600
+          }
+        },
+        "required": [
+          "isAuthenticated"
         ]
       },
       "StartPasskeyAuthDto": {

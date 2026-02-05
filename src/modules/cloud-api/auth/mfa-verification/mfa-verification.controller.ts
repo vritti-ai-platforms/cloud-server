@@ -1,6 +1,8 @@
-import { Body, Controller, HttpCode, HttpStatus, Logger, Post } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Logger, Post, Res } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Public } from '@vritti/api-sdk';
+import type { FastifyReply } from 'fastify';
+import { getRefreshCookieName, getRefreshCookieOptionsFromConfig } from '../services/session.service';
 import {
   MfaVerificationResponseDto,
   PasskeyMfaOptionsDto,
@@ -42,9 +44,17 @@ export class MfaVerificationController {
   @ApiResponse({ status: 200, description: 'TOTP code verified successfully', type: MfaVerificationResponseDto })
   @ApiResponse({ status: 400, description: 'Invalid TOTP code or malformed request' })
   @ApiResponse({ status: 401, description: 'MFA session expired or invalid' })
-  async verifyTotp(@Body() dto: VerifyMfaTotpDto): Promise<MfaVerificationResponseDto> {
+  async verifyTotp(
+    @Body() dto: VerifyMfaTotpDto,
+    @Res({ passthrough: true }) reply: FastifyReply,
+  ): Promise<MfaVerificationResponseDto> {
     this.logger.log(`POST /auth/mfa/verify-totp - sessionId: ${dto.sessionId}`);
-    return await this.mfaVerificationService.verifyTotp(dto.sessionId, dto.code);
+    const { refreshToken, ...response } = await this.mfaVerificationService.verifyTotp(dto.sessionId, dto.code);
+
+    // Set refresh token in httpOnly cookie
+    reply.setCookie(getRefreshCookieName(), refreshToken, getRefreshCookieOptionsFromConfig());
+
+    return response;
   }
 
   /**
@@ -80,9 +90,17 @@ export class MfaVerificationController {
   @ApiResponse({ status: 200, description: 'SMS OTP verified successfully', type: MfaVerificationResponseDto })
   @ApiResponse({ status: 400, description: 'Invalid OTP code or malformed request' })
   @ApiResponse({ status: 401, description: 'MFA session expired or invalid' })
-  async verifySmsOtp(@Body() dto: VerifySmsOtpDto): Promise<MfaVerificationResponseDto> {
+  async verifySmsOtp(
+    @Body() dto: VerifySmsOtpDto,
+    @Res({ passthrough: true }) reply: FastifyReply,
+  ): Promise<MfaVerificationResponseDto> {
     this.logger.log(`POST /auth/mfa/sms/verify - sessionId: ${dto.sessionId}`);
-    return await this.mfaVerificationService.verifySmsOtp(dto.sessionId, dto.code);
+    const { refreshToken, ...response } = await this.mfaVerificationService.verifySmsOtp(dto.sessionId, dto.code);
+
+    // Set refresh token in httpOnly cookie
+    reply.setCookie(getRefreshCookieName(), refreshToken, getRefreshCookieOptionsFromConfig());
+
+    return response;
   }
 
   /**
@@ -118,8 +136,19 @@ export class MfaVerificationController {
   @ApiResponse({ status: 200, description: 'Passkey verified successfully', type: MfaVerificationResponseDto })
   @ApiResponse({ status: 400, description: 'Invalid passkey credential or malformed request' })
   @ApiResponse({ status: 401, description: 'MFA session expired or invalid' })
-  async verifyPasskeyMfa(@Body() dto: VerifyPasskeyMfaDto): Promise<MfaVerificationResponseDto> {
+  async verifyPasskeyMfa(
+    @Body() dto: VerifyPasskeyMfaDto,
+    @Res({ passthrough: true }) reply: FastifyReply,
+  ): Promise<MfaVerificationResponseDto> {
     this.logger.log(`POST /auth/mfa/passkey/verify - sessionId: ${dto.sessionId}`);
-    return await this.mfaVerificationService.verifyPasskeyMfa(dto.sessionId, dto.credential as any);
+    const { refreshToken, ...response } = await this.mfaVerificationService.verifyPasskeyMfa(
+      dto.sessionId,
+      dto.credential as any,
+    );
+
+    // Set refresh token in httpOnly cookie
+    reply.setCookie(getRefreshCookieName(), refreshToken, getRefreshCookieOptionsFromConfig());
+
+    return response;
   }
 }

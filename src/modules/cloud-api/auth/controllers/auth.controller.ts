@@ -7,6 +7,7 @@ import type { OnboardingStatusResponseDto } from '../../onboarding/dto/onboardin
 import { UserResponseDto } from '../../user/dto/user-response.dto';
 import { UserService } from '../../user/user.service';
 import type { AuthResponseDto } from '../dto/auth-response.dto';
+import { AuthStatusResponseDto } from '../dto/auth-status-response.dto';
 import { LoginDto } from '../dto/login.dto';
 import { SignupDto } from '../dto/signup.dto';
 import { AuthService } from '../services/auth.service';
@@ -319,35 +320,59 @@ export class AuthController {
   }
 
   /**
-   * Get current user info
+   * Get current user authentication status
    * GET /auth/me
-   * Requires: JWT access token (protected by VrittiAuthGuard)
+   * Public endpoint - checks authentication via httpOnly cookie
    *
-   * Note: VrittiAuthGuard validates the JWT and attaches { id: userId } to request.user.
-   * We use @UserId() decorator to extract the userId and fetch the full user data.
-   * This is a single database query since the guard only validates the JWT signature,
-   * not the user existence in the database.
+   * Returns { isAuthenticated: true, user, accessToken, expiresIn } if valid session
+   * Returns { isAuthenticated: false } if no valid session (no 401 error)
+   *
+   * This enables the frontend to:
+   * 1. Check auth status on page load without needing an in-memory token
+   * 2. Recover session from httpOnly cookie
+   * 3. Get user data in a single request
    */
   @Get('me')
-  @ApiBearerAuth()
+  @Public()
   @ApiOperation({
-    summary: 'Get current user information',
-    description: 'Returns the profile information of the currently authenticated user.',
+    summary: 'Get current user authentication status',
+    description:
+      'Checks authentication status via httpOnly cookie. Returns user data and access token if authenticated, or { isAuthenticated: false } if not. Never returns a 401 error.',
   })
   @ApiResponse({
     status: 200,
-    description: 'User information retrieved successfully.',
-    type: UserResponseDto,
+    description: 'Authentication status returned.',
+    type: AuthStatusResponseDto,
   })
-  @ApiResponse({
-    status: 401,
-    description: 'Unauthorized. Invalid or missing access token.',
-  })
-  @ApiResponse({
-    status: 404,
-    description: 'User not found.',
-  })
-  async getCurrentUser(@UserId() userId: string): Promise<UserResponseDto> {
-    return this.userService.findById(userId);
+  async getCurrentUser(@Req() request: FastifyRequest): Promise<AuthStatusResponseDto> {
+    const refreshToken = request.cookies?.[getRefreshCookieName()];
+
+    this.logger.log('GET /auth/me - Checking authentication status');
+
+    if (!refreshToken) {
+      this.logger.log('No refresh token cookie - unauthenticated');
+      return new AuthStatusResponseDto({ isAuthenticated: false });
+    }
+
+    try {
+      // Try to recover session from refresh token
+      const { accessToken, expiresIn } = await this.sessionService.recoverSession(refreshToken);
+
+      // Get session to find userId (use OrThrow variant - exception caught below)
+      const session = await this.sessionService.getSessionByRefreshTokenOrThrow(refreshToken);
+      const user = await this.userService.findById(session.userId);
+
+      this.logger.log(`Session recovered for user: ${session.userId} - authenticated`);
+
+      return new AuthStatusResponseDto({
+        isAuthenticated: true,
+        user,
+        accessToken,
+        expiresIn,
+      });
+    } catch (error) {
+      this.logger.log(`Session recovery failed: ${error instanceof Error ? error.message : 'Unknown error'} - unauthenticated`);
+      return new AuthStatusResponseDto({ isAuthenticated: false });
+    }
   }
 }

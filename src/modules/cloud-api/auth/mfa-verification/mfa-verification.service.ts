@@ -95,12 +95,13 @@ export class MfaVerificationService {
 
   /**
    * Verify TOTP code
+   * Returns refreshToken for controller to set as httpOnly cookie
    */
-  async verifyTotp(sessionId: string, code: string): Promise<MfaVerificationResponseDto> {
+  async verifyTotp(sessionId: string, code: string): Promise<MfaVerificationResponseDto & { refreshToken: string }> {
     const challenge = this.getMfaChallengeOrThrow(sessionId);
 
     if (!challenge.availableMethods.includes('totp')) {
-      throw new BadRequestException('TOTP not available', 'TOTP verification is not available for this session.');
+      throw new BadRequestException('TOTP verification is not available for this session.');
     }
 
     // Get user's 2FA configuration
@@ -110,10 +111,7 @@ export class MfaVerificationService {
     );
 
     if (!twoFactorAuth || !twoFactorAuth.totpSecret) {
-      throw new UnauthorizedException(
-        'TOTP not configured',
-        'TOTP authentication is not properly configured for your account.',
-      );
+      throw new UnauthorizedException('TOTP authentication is not properly configured for your account.');
     }
 
     // Verify the TOTP code
@@ -145,17 +143,14 @@ export class MfaVerificationService {
     const challenge = this.getMfaChallengeOrThrow(sessionId);
 
     if (!challenge.availableMethods.includes('sms')) {
-      throw new BadRequestException('SMS not available', 'SMS verification is not available for this session.');
+      throw new BadRequestException('SMS verification is not available for this session.');
     }
 
     // Get user to find phone number
     const user = await this.userService.findById(challenge.userId);
 
     if (!user || !user.phone || !user.phoneVerified) {
-      throw new BadRequestException(
-        'Phone not verified',
-        'SMS verification is not available because your phone number is not verified.',
-      );
+      throw new BadRequestException('SMS verification is not available because your phone number is not verified.');
     }
 
     // Generate OTP
@@ -182,19 +177,17 @@ export class MfaVerificationService {
 
   /**
    * Verify SMS OTP code
+   * Returns refreshToken for controller to set as httpOnly cookie
    */
-  async verifySmsOtp(sessionId: string, code: string): Promise<MfaVerificationResponseDto> {
+  async verifySmsOtp(sessionId: string, code: string): Promise<MfaVerificationResponseDto & { refreshToken: string }> {
     const challenge = this.getMfaChallengeOrThrow(sessionId);
 
     if (!challenge.availableMethods.includes('sms')) {
-      throw new BadRequestException('SMS not available', 'SMS verification is not available for this session.');
+      throw new BadRequestException('SMS verification is not available for this session.');
     }
 
     if (!challenge.smsOtpHash) {
-      throw new BadRequestException(
-        'No OTP sent',
-        'Please request a new verification code before attempting to verify.',
-      );
+      throw new BadRequestException('Please request a new verification code before attempting to verify.');
     }
 
     // Verify the OTP
@@ -219,20 +212,14 @@ export class MfaVerificationService {
     const challenge = this.getMfaChallengeOrThrow(sessionId);
 
     if (!challenge.availableMethods.includes('passkey')) {
-      throw new BadRequestException(
-        'Passkey not available',
-        'Passkey verification is not available for this session.',
-      );
+      throw new BadRequestException('Passkey verification is not available for this session.');
     }
 
     // Get user's passkeys
     const passkeys = await this.twoFactorAuthRepo.findAllPasskeysByUserId(challenge.userId);
 
     if (passkeys.length === 0) {
-      throw new UnauthorizedException(
-        'No passkeys registered',
-        'You do not have any passkeys registered for authentication.',
-      );
+      throw new UnauthorizedException('You do not have any passkeys registered for authentication.');
     }
 
     // Generate authentication options
@@ -254,40 +241,32 @@ export class MfaVerificationService {
 
   /**
    * Verify passkey authentication for MFA
+   * Returns refreshToken for controller to set as httpOnly cookie
    */
-  async verifyPasskeyMfa(sessionId: string, credential: AuthenticationResponseJSON): Promise<MfaVerificationResponseDto> {
+  async verifyPasskeyMfa(
+    sessionId: string,
+    credential: AuthenticationResponseJSON,
+  ): Promise<MfaVerificationResponseDto & { refreshToken: string }> {
     const challenge = this.getMfaChallengeOrThrow(sessionId);
 
     if (!challenge.availableMethods.includes('passkey')) {
-      throw new BadRequestException(
-        'Passkey not available',
-        'Passkey verification is not available for this session.',
-      );
+      throw new BadRequestException('Passkey verification is not available for this session.');
     }
 
     if (!challenge.passkeyChallenge) {
-      throw new BadRequestException(
-        'No passkey challenge',
-        'Please start passkey authentication before attempting to verify.',
-      );
+      throw new BadRequestException('Please start passkey authentication before attempting to verify.');
     }
 
     // Find passkey by credential ID
     const passkey = await this.twoFactorAuthRepo.findByCredentialId(credential.id);
 
     if (!passkey) {
-      throw new UnauthorizedException(
-        'Passkey not found',
-        'This passkey is not registered with your account.',
-      );
+      throw new UnauthorizedException('This passkey is not registered with your account.');
     }
 
     // Verify the passkey belongs to the user
     if (passkey.userId !== challenge.userId) {
-      throw new UnauthorizedException(
-        'Invalid passkey',
-        'This passkey does not belong to your account.',
-      );
+      throw new UnauthorizedException('This passkey does not belong to your account.');
     }
 
     // Verify authentication
@@ -363,13 +342,16 @@ export class MfaVerificationService {
 
   /**
    * Complete MFA verification - create session and return tokens
+   * Returns refreshToken separately for controller to set as httpOnly cookie
    */
-  private async completeMfaVerification(challenge: MfaChallenge): Promise<MfaVerificationResponseDto> {
+  private async completeMfaVerification(
+    challenge: MfaChallenge,
+  ): Promise<MfaVerificationResponseDto & { refreshToken: string }> {
     // Get user
     const user = await this.userService.findById(challenge.userId);
 
-    // Create session
-    const { accessToken, expiresIn } = await this.sessionService.createUnifiedSession(
+    // Create session - capture refreshToken for cookie
+    const { accessToken, refreshToken, expiresIn } = await this.sessionService.createUnifiedSession(
       challenge.userId,
       SessionTypeValues.CLOUD,
       challenge.ipAddress,
@@ -384,17 +366,20 @@ export class MfaVerificationService {
 
     this.logger.log(`MFA verification completed for user: ${challenge.userId}`);
 
-    return new MfaVerificationResponseDto({
-      accessToken,
-      expiresIn,
-      tokenType: 'Bearer',
-      user: {
-        id: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-      },
-    });
+    return {
+      ...new MfaVerificationResponseDto({
+        accessToken,
+        expiresIn,
+        tokenType: 'Bearer',
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+        },
+      }),
+      refreshToken, // Include for controller to set as cookie
+    };
   }
 
   /**

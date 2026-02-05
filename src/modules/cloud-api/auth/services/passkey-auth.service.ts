@@ -100,28 +100,19 @@ export class PasskeyAuthService {
     // Get pending authentication
     const pending = pendingAuthentications.get(sessionId);
     if (!pending) {
-      throw new BadRequestException(
-        'No pending authentication found',
-        'Your login session has expired. Please try again.',
-      );
+      throw new BadRequestException('Your login session has expired. Please try again.');
     }
 
     // Check expiry
     if (new Date() > pending.expiresAt) {
       pendingAuthentications.delete(sessionId);
-      throw new BadRequestException(
-        'Authentication session expired',
-        'Your login session has expired. Please try again.',
-      );
+      throw new BadRequestException('Your login session has expired. Please try again.');
     }
 
     // Find passkey by credential ID
     const passkey = await this.twoFactorAuthRepo.findByCredentialId(credential.id);
     if (!passkey) {
-      throw new UnauthorizedException(
-        'Passkey not found',
-        'This passkey is not registered. Please use a different login method.',
-      );
+      throw new UnauthorizedException('This passkey is not registered. Please use a different login method.');
     }
 
     // Verify authentication
@@ -140,7 +131,7 @@ export class PasskeyAuthService {
       );
     } catch (error) {
       this.logger.error(`Passkey authentication failed: ${(error as Error).message}`);
-      throw new UnauthorizedException('Authentication failed', 'Could not verify your passkey. Please try again.');
+      throw new UnauthorizedException('Could not verify your passkey. Please try again.');
     }
 
     // Update counter (replay protection)
@@ -153,7 +144,7 @@ export class PasskeyAuthService {
     // Get user
     const user = await this.userService.findById(passkey.userId);
     if (!user) {
-      throw new UnauthorizedException('User not found');
+      throw new UnauthorizedException('User account not found.');
     }
 
     // Create session
