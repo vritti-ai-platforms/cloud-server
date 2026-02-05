@@ -13,9 +13,11 @@ import type { OnboardingStatusResponseDto } from '../onboarding/dto/onboarding-s
 import { UserResponseDto } from '../user/dto/user-response.dto';
 import { UserService } from '../user/user.service';
 import type { AuthResponseDto } from './dto/auth-response.dto';
+import { ForgotPasswordDto, ResetPasswordDto, VerifyResetOtpDto } from './dto/forgot-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { SignupDto } from './dto/signup.dto';
 import { AuthService } from './services/auth.service';
+import { PasswordResetService } from './services/password-reset.service';
 import { getRefreshCookieName, getRefreshCookieOptionsFromConfig, SessionService } from './services/session.service';
 
 /**
@@ -31,6 +33,7 @@ export class AuthController {
     private readonly authService: AuthService,
     private readonly sessionService: SessionService,
     private readonly userService: UserService,
+    private readonly passwordResetService: PasswordResetService,
   ) {}
 
   /**
@@ -349,5 +352,117 @@ export class AuthController {
   })
   async getCurrentUser(@UserId() userId: string): Promise<UserResponseDto> {
     return this.userService.findById(userId);
+  }
+
+  // ============================================================================
+  // Password Reset Endpoints
+  // ============================================================================
+
+  /**
+   * Request password reset
+   * POST /auth/forgot-password
+   * Sends a 6-digit OTP to the user's email
+   */
+  @Post('forgot-password')
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Request password reset',
+    description: 'Sends a password reset OTP to the provided email address. Always returns success to prevent email enumeration.',
+  })
+  @ApiBody({ type: ForgotPasswordDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Password reset email sent (if account exists).',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean', example: true },
+        message: { type: 'string', example: 'If an account with that email exists, a password reset code has been sent.' },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid input data.',
+  })
+  async forgotPassword(
+    @Body() forgotPasswordDto: ForgotPasswordDto,
+  ): Promise<{ success: boolean; message: string }> {
+    this.logger.log(`POST /auth/forgot-password - Email: ${forgotPasswordDto.email}`);
+    return this.passwordResetService.requestPasswordReset(forgotPasswordDto.email);
+  }
+
+  /**
+   * Verify password reset OTP
+   * POST /auth/verify-reset-otp
+   * Validates the OTP and returns a reset token
+   */
+  @Post('verify-reset-otp')
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Verify password reset OTP',
+    description: 'Validates the OTP sent to the user email and returns a reset token for setting a new password.',
+  })
+  @ApiBody({ type: VerifyResetOtpDto })
+  @ApiResponse({
+    status: 200,
+    description: 'OTP verified successfully. Returns reset token.',
+    schema: {
+      type: 'object',
+      properties: {
+        resetToken: { type: 'string', description: 'Token to use for resetting the password' },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'No reset request found or OTP expired.',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Invalid OTP.',
+  })
+  async verifyResetOtp(
+    @Body() verifyResetOtpDto: VerifyResetOtpDto,
+  ): Promise<{ resetToken: string }> {
+    this.logger.log(`POST /auth/verify-reset-otp - Email: ${verifyResetOtpDto.email}`);
+    return this.passwordResetService.verifyResetOtp(verifyResetOtpDto.email, verifyResetOtpDto.otp);
+  }
+
+  /**
+   * Reset password
+   * POST /auth/reset-password
+   * Sets a new password using the reset token
+   */
+  @Post('reset-password')
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Reset password',
+    description: 'Sets a new password using the reset token received after OTP verification. Invalidates all active sessions.',
+  })
+  @ApiBody({ type: ResetPasswordDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Password reset successfully.',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean', example: true },
+        message: { type: 'string', example: 'Password has been reset successfully. Please login with your new password.' },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid or expired reset token.',
+  })
+  async resetPassword(
+    @Body() resetPasswordDto: ResetPasswordDto,
+  ): Promise<{ success: boolean; message: string }> {
+    this.logger.log('POST /auth/reset-password');
+    return this.passwordResetService.resetPassword(resetPasswordDto.resetToken, resetPasswordDto.newPassword);
   }
 }

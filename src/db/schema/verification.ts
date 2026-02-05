@@ -84,6 +84,30 @@ export const twoFactorAuth = cloudSchema.table(
   (table) => [index('two_factor_auth_user_id_method_idx').on(table.userId, table.method)],
 );
 
+/**
+ * Password resets - tracks OTP for forgot password flow 
+ */
+export const passwordResets = cloudSchema.table(
+    'password_resets',
+    {
+      id: uuid('id').primaryKey().defaultRandom(),
+      userId: uuid('user_id')
+        .notNull()
+        .references(() => users.id, { onDelete: 'cascade' }),
+      email: varchar('email', { length: 255 }).notNull(),
+      otp: varchar('otp', { length: 255 }).notNull(),
+      resetToken: varchar('reset_token', { length: 255 }),
+      attempts: integer('attempts').notNull().default(0),
+      isVerified: boolean('is_verified').notNull().default(false),
+      isUsed: boolean('is_used').notNull().default(false),
+      expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+      createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+      verifiedAt: timestamp('verified_at', { withTimezone: true }),
+      usedAt: timestamp('used_at', { withTimezone: true }),
+    },
+    (table) => [index('password_resets_user_id_email_idx').on(table.userId, table.email)],
+  );
+
 // Type exports
 export type EmailVerification = typeof emailVerifications.$inferSelect;
 export type NewEmailVerification = typeof emailVerifications.$inferInsert;
@@ -91,3 +115,5 @@ export type MobileVerification = typeof mobileVerifications.$inferSelect;
 export type NewMobileVerification = typeof mobileVerifications.$inferInsert;
 export type TwoFactorAuth = typeof twoFactorAuth.$inferSelect;
 export type NewTwoFactorAuth = typeof twoFactorAuth.$inferInsert;
+export type PasswordReset = typeof passwordResets.$inferSelect;
+export type NewPasswordReset = typeof passwordResets.$inferInsert;

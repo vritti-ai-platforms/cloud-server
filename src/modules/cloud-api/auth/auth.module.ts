@@ -19,8 +19,10 @@ import { OAuthStateRepository } from './oauth/repositories/oauth-state.repositor
 import { OAuthService } from './oauth/services/oauth.service';
 import { OAuthStateService } from './oauth/services/oauth-state.service';
 import { TwitterOAuthProvider } from './oauth/twitter-oauth.provider';
+import { PasswordResetRepository } from './repositories/password-reset.repository';
 import { SessionRepository } from './repositories/session.repository';
 import { AuthService } from './services/auth.service';
+import { PasswordResetService } from './services/password-reset.service';
 import { JwtAuthService } from './services/jwt.service';
 import { PasskeyAuthService } from './services/passkey-auth.service';
 import { SessionService } from './services/session.service';
@@ -47,6 +49,9 @@ import { SessionService } from './services/session.service';
     SessionService,
     SessionRepository,
     PasskeyAuthService,
+    // Password reset
+    PasswordResetService,
+    PasswordResetRepository,
     // OAuth providers
     OAuthService,
     OAuthStateService,
