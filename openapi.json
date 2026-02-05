@@ -2170,7 +2170,7 @@
   ],
   "servers": [
     {
-      "url": "https://local.vrittiai.com:3000",
+      "url": "http://local.vrittiai.com:3000",
       "description": "Local Development"
     }
   ],
