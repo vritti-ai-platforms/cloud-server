@@ -155,7 +155,7 @@ export class PasskeyAuthController {
 
     return {
       accessToken: result.session.accessToken,
-      expiresIn: 900, // 15 minutes
+      expiresIn: result.session.expiresIn,
       user: {
         id: result.user.id,
         email: result.user.email,

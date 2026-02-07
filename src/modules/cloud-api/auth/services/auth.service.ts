@@ -124,8 +124,6 @@ export class AuthService {
     // Return auth response
     return new AuthResponseDto({
       accessToken,
-      refreshToken,
-      tokenType: 'Bearer',
       expiresIn: this.jwtService.getAccessTokenExpiryInSeconds(),
       user: UserResponseDto.from(user),
     });
@@ -158,8 +156,6 @@ export class AuthService {
 
     return new AuthResponseDto({
       accessToken: tokens.accessToken,
-      refreshToken: tokens.refreshToken,
-      tokenType: 'Bearer',
       expiresIn: this.jwtService.getAccessTokenExpiryInSeconds(),
       user: UserResponseDto.from(freshUser),
     });
