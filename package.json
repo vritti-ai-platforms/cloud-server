@@ -56,7 +56,7 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",
     "drizzle-orm": "^1.0.0-beta.3-36e9b9e",
-    "fastify": "5.6.2",
+    "fastify": "5.7.4",
     "fastify-raw-body": "^5.0.0",
     "otplib": "12.0.1",
     "pg": "^8.16.0",
