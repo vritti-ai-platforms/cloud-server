@@ -28,7 +28,7 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          claude_args: "--max-turns 15"
+          claude_args: "--max-turns 15 --dangerously-skip-permissions"
 
   claude-auto-review:
     if: github.event_name == 'pull_request'
@@ -42,9 +42,8 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          show_full_output: "true"
           prompt: |
-            Review this pull request and post your review as a comment.
+            Review this pull request and post your review as a PR comment using gh pr comment.
             Focus on bugs, security issues, code quality, and performance.
             Be concise and actionable.
-          claude_args: "--max-turns 10"
+          claude_args: "--max-turns 10 --dangerously-skip-permissions"
