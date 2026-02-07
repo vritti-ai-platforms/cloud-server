@@ -2,7 +2,7 @@ import * as crypto from 'node:crypto';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { BadRequestException, ConflictException, UnauthorizedException } from '@vritti/api-sdk';
+import { BadRequestException, UnauthorizedException } from '@vritti/api-sdk';
 import { type OAuthProviderType, OAuthProviderTypeValues, OnboardingStepValues, type User } from '@/db/schema';
 
 /**
@@ -158,9 +158,7 @@ export class OAuthService {
     if (linkToUserId) {
       const user = await this.userRepository.findById(linkToUserId);
       if (!user) {
-        throw new BadRequestException(
-          "We couldn't find your account. Please check your information or register.",
-        );
+        throw new BadRequestException("We couldn't find your account. Please check your information or register.");
       }
       return { user, isNewUser: false };
     }
@@ -169,17 +167,12 @@ export class OAuthService {
     const existingUser = await this.userRepository.findByEmail(profile.email);
 
     if (existingUser) {
-      // Check if onboarding is complete
-      if (existingUser.onboardingStep === OnboardingStepValues.COMPLETE) {
-        throw new ConflictException({
-          label: 'Account Exists',
-          detail: 'An account with this email already exists. Please log in using your password instead.',
-          errors: [{ field: 'email', message: 'Already registered' }],
-        });
-      }
-
-      // Return existing incomplete user
-      this.logger.log(`Found existing incomplete user for email: ${profile.email}`);
+      // Allow OAuth signin for both incomplete and completed users
+      // For completed users: OAuth provider will be linked, CLOUD session created, redirected to dashboard
+      // For incomplete users: OAuth provider will be linked, ONBOARDING session created, redirected to onboarding
+      this.logger.log(
+        `Found existing user for email: ${profile.email}, onboardingStep: ${existingUser.onboardingStep}`,
+      );
       return { user: existingUser, isNewUser: false };
     }
 
@@ -233,9 +226,7 @@ export class OAuthService {
   private getProvider(provider: OAuthProviderType): IOAuthProvider {
     const oauthProvider = this.providers.get(provider);
     if (!oauthProvider) {
-      throw new BadRequestException(
-        'The selected login method is not available. Please choose a different option.',
-      );
+      throw new BadRequestException('The selected login method is not available. Please choose a different option.');
     }
     return oauthProvider;
   }
