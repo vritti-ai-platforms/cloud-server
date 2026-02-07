@@ -30,7 +30,7 @@ export class AuthService {
    * User login
    * Only ACTIVE users can login
    */
-  async login(dto: LoginDto, ipAddress?: string, userAgent?: string): Promise<AuthResponseDto> {
+  async login(dto: LoginDto, ipAddress?: string, userAgent?: string): Promise<AuthResponseDto & { refreshToken?: string }> {
     // Find user by email
     const user = await this.userService.findByEmail(dto.email);
 
@@ -121,12 +121,15 @@ export class AuthService {
 
     this.logger.log(`User logged in: ${user.email} (${user.id})`);
 
-    // Return auth response
-    return new AuthResponseDto({
-      accessToken,
-      expiresIn: this.jwtService.getAccessTokenExpiryInSeconds(),
-      user: UserResponseDto.from(user),
-    });
+    // Return auth response with refreshToken for controller to set as cookie
+    return {
+      ...new AuthResponseDto({
+        accessToken,
+        expiresIn: this.jwtService.getAccessTokenExpiryInSeconds(),
+        user: UserResponseDto.from(user),
+      }),
+      refreshToken,
+    };
   }
 
   /**

@@ -164,18 +164,15 @@ export class AuthController {
   ): Promise<AuthResponseDto> {
     this.logger.log(`Login attempt for email: ${loginDto.email}`);
 
-    // Authenticate user and get response
-    const response = await this.authService.login(loginDto, ipAddress, userAgent);
+    // Authenticate user and get response (refreshToken returned separately for cookie)
+    const { refreshToken, ...response } = await this.authService.login(loginDto, ipAddress, userAgent);
 
     // Set refresh token in httpOnly cookie (domain from REFRESH_COOKIE_DOMAIN env var)
-    if (response.refreshToken) {
-      reply.setCookie(getRefreshCookieName(), response.refreshToken, getRefreshCookieOptionsFromConfig());
+    if (refreshToken) {
+      reply.setCookie(getRefreshCookieName(), refreshToken, getRefreshCookieOptionsFromConfig());
     }
 
-    // Remove refreshToken from response (it's in the cookie)
-    const { refreshToken: _, ...responseWithoutRefresh } = response;
-
-    return responseWithoutRefresh as AuthResponseDto;
+    return response;
   }
 
   /**
