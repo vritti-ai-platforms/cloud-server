@@ -3,6 +3,7 @@ import fastifyCsrfProtection from '@fastify/csrf-protection';
 import { BadRequestException, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
+import { type MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import {
@@ -30,6 +31,8 @@ const ENV = {
   // Cookie configuration
   refreshCookieName: process.env.REFRESH_COOKIE_NAME ?? 'vritti_refresh',
   refreshCookieDomain: process.env.REFRESH_COOKIE_DOMAIN,
+  // RabbitMQ configuration
+  rabbitmqUrl: process.env.RABBITMQ_URL,
 } as const;
 
 const protocol = ENV.useHttps ? 'https' : 'http';
@@ -238,12 +241,34 @@ async function bootstrap() {
     },
   });
 
-  // Start the server
+  // Connect RabbitMQ microservice (only if RABBITMQ_URL is configured)
+  if (ENV.rabbitmqUrl) {
+    app.connectMicroservice<MicroserviceOptions>({
+      transport: Transport.RMQ,
+      options: {
+        urls: [ENV.rabbitmqUrl],
+        queue: 'api_nexus_queue',
+        queueOptions: {
+          durable: true,
+        },
+        noAck: false,
+      },
+    });
+
+    // Start microservices BEFORE HTTP server
+    await app.startAllMicroservices();
+  }
+
+  // Start the HTTP server
   await app.listen(ENV.port, '0.0.0.0');
 
   // Get logger from DI container for final bootstrap message
   const logger = app.get(LoggerService);
   logger.log(`API Nexus running on ${baseUrl}`, 'Bootstrap');
+
+  if (ENV.rabbitmqUrl) {
+    logger.log('RabbitMQ microservice connected', 'Bootstrap');
+  }
 }
 
 bootstrap();

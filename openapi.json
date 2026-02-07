@@ -23,6 +23,43 @@
         ]
       }
     },
+    "/test/ping-integrations": {
+      "get": {
+        "operationId": "AppController_pingIntegrations",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Returns a pong response from the integrations microservice",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "pong"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time",
+                      "example": "2026-02-07T12:00:00.000Z"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "timestamp"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "summary": "Ping integrations microservice via RabbitMQ",
+        "tags": [
+          "Health"
+        ]
+      }
+    },
     "/csrf/token": {
       "get": {
         "description": "Generates and returns a CSRF token that must be included in all state-changing requests (POST, PUT, PATCH, DELETE). The token should be sent in the X-CSRF-Token header.",
@@ -2170,7 +2207,7 @@
   ],
   "servers": [
     {
-      "url": "https://local.vrittiai.com:3000",
+      "url": "http://local.vrittiai.com:3001",
       "description": "Local Development"
     }
   ],

@@ -12,6 +12,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { validate } from './config/env.validation';
 import { CsrfController } from './csrf.controller';
+import { RmqModule } from './rmq';
 import { AuthModule } from './modules/cloud-api/auth/auth.module';
 import { MfaVerificationModule } from './modules/cloud-api/auth/mfa-verification/mfa-verification.module';
 import { OnboardingModule } from './modules/cloud-api/onboarding/onboarding.module';
@@ -90,6 +91,8 @@ import { UserModule } from './modules/cloud-api/user/user.module';
     // Authentication module (Global guard + JWT)
     // Must be imported after DatabaseModule since VrittiAuthGuard depends on its services
     AuthConfigModule.forRootAsync(),
+    // RabbitMQ client for inter-service communication
+    RmqModule,
     // Cloud API modules
     TenantModule,
     UserModule,

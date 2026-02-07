@@ -155,6 +155,11 @@ class EnvironmentVariables {
   @IsString()
   @IsOptional()
   WEBAUTHN_ORIGIN: string = 'http://localhost:3012';
+
+  // RabbitMQ Configuration
+  @IsString()
+  @IsOptional()
+  RABBITMQ_URL: string;
 }
 
 /**
