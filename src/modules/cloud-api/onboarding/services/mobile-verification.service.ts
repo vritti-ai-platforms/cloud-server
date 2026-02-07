@@ -1,7 +1,7 @@
-import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { extractCountryFromPhone, normalizePhoneNumber } from '@vritti/api-sdk';
+import { BadRequestException, NotFoundException, extractCountryFromPhone, normalizePhoneNumber } from '@vritti/api-sdk';
 import { type VerificationMethod, VerificationMethodValues } from '@/db/schema/enums';
 import { type MobileVerification } from '@/db/schema';
 import { UserService } from '../../user/user.service';
@@ -258,7 +258,9 @@ export class MobileVerificationService {
     // Validate it's MANUAL_OTP method (the only OTP-based method)
     if (verification.method !== VerificationMethodValues.MANUAL_OTP) {
       this.logger.warn(`Invalid verification method for OTP: ${verification.method}`);
-      throw new BadRequestException('This verification does not support OTP entry. Please use the correct verification method.');
+      throw new BadRequestException(
+        'This verification does not support OTP entry. Please use the correct verification method.',
+      );
     }
 
     // Check if already verified
@@ -287,7 +289,16 @@ export class MobileVerificationService {
       this.logger.warn(`OTP mismatch for user ${userId}. Expected: ${storedToken}, Got: ${normalizedOtp}`);
       // Increment attempts on mismatch
       await this.mobileVerificationRepository.incrementAttempts(verification.id);
-      throw new BadRequestException('Invalid OTP. Please try again.');
+      throw new BadRequestException({
+        label: 'Invalid Code',
+        detail: 'Invalid OTP. Please try again.',
+        errors: [
+          {
+            field: 'code',
+            message: 'Invalid OTP',
+          },
+        ],
+      });
     }
 
     // Mark as verified

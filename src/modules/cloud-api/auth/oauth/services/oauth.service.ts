@@ -15,11 +15,11 @@ function validateProviderString(providerStr: string): OAuthProviderType {
   const upperProvider = providerStr.toUpperCase();
 
   if (!Object.values(OAuthProviderTypeValues).includes(upperProvider as OAuthProviderType)) {
-    throw new BadRequestException(
-      'provider',
-      `Invalid OAuth provider: ${providerStr}`,
-      'The selected login method is not supported. Please choose a different option.',
-    );
+    throw new BadRequestException({
+      label: 'Invalid Provider',
+      detail: 'The selected login method is not supported. Please choose a different option.',
+      errors: [{ field: 'provider', message: 'Unsupported provider' }],
+    });
   }
 
   return upperProvider as OAuthProviderType;
@@ -120,7 +120,6 @@ export class OAuthService {
     // Verify provider matches
     if (stateData.provider !== provider) {
       throw new UnauthorizedException(
-        'Provider mismatch',
         'The authentication provider does not match your request. Please try logging in again.',
       );
     }
@@ -160,7 +159,6 @@ export class OAuthService {
       const user = await this.userRepository.findById(linkToUserId);
       if (!user) {
         throw new BadRequestException(
-          'User not found',
           "We couldn't find your account. Please check your information or register.",
         );
       }
@@ -173,11 +171,11 @@ export class OAuthService {
     if (existingUser) {
       // Check if onboarding is complete
       if (existingUser.onboardingStep === OnboardingStepValues.COMPLETE) {
-        throw new ConflictException(
-          'email',
-          'User already exists with this email. Please login with password.',
-          'An account with this email already exists. Please log in using your password instead.',
-        );
+        throw new ConflictException({
+          label: 'Account Exists',
+          detail: 'An account with this email already exists. Please log in using your password instead.',
+          errors: [{ field: 'email', message: 'Already registered' }],
+        });
       }
 
       // Return existing incomplete user
@@ -236,7 +234,6 @@ export class OAuthService {
     const oauthProvider = this.providers.get(provider);
     if (!oauthProvider) {
       throw new BadRequestException(
-        `Unsupported OAuth provider: ${provider}`,
         'The selected login method is not available. Please choose a different option.',
       );
     }

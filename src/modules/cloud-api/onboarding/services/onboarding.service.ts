@@ -38,16 +38,12 @@ export class OnboardingService {
     const user = await this.userService.findById(userId);
 
     if (!user) {
-      throw new BadRequestException(
-        'User not found',
-        "We couldn't find your account. Please check your information or register.",
-      );
+      throw new BadRequestException("We couldn't find your account. Please check your information or register.");
     }
 
     // Verify user is on SET_PASSWORD step
     if (user.onboardingStep !== OnboardingStepValues.SET_PASSWORD) {
       throw new BadRequestException(
-        'User is not on SET_PASSWORD onboarding step',
         'You cannot set a password at this stage. Please complete the previous onboarding steps first.',
       );
     }
@@ -56,7 +52,6 @@ export class OnboardingService {
     // Uses hasPassword field from UserResponseDto (computed from passwordHash !== null)
     if (user.hasPassword) {
       throw new BadRequestException(
-        'User already has a password',
         'Your account already has a password set. Please use the forgot password feature if you need to change it.',
       );
     }

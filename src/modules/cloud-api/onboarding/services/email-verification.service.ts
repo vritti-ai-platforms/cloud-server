@@ -70,7 +70,6 @@ export class EmailVerificationService {
 
     if (!verification) {
       throw new BadRequestException(
-        'No verification request found. Please request a new OTP',
         "We couldn't find a verification code for your account. Please request a new code to continue.",
       );
     }
@@ -84,11 +83,16 @@ export class EmailVerificationService {
     if (!isValid) {
       // Increment failed attempts
       await this.emailVerificationRepo.incrementAttempts(verification.id);
-      throw new UnauthorizedException(
-        'code',
-        'Invalid OTP. Please try again',
-        'The verification code you entered is incorrect. Please check the code and try again.',
-      );
+      throw new UnauthorizedException({
+        label: 'Invalid Code',
+        detail: 'The verification code you entered is incorrect. Please check the code and try again.',
+        errors: [
+          {
+            field: 'code',
+            message: 'Invalid verification code',
+          },
+        ],
+      });
     }
 
     // Mark verification as complete
@@ -114,7 +118,6 @@ export class EmailVerificationService {
 
     if (userResponse.emailVerified) {
       throw new BadRequestException(
-        'Email already verified',
         'Your email has already been verified. You can proceed to the next step.',
       );
     }

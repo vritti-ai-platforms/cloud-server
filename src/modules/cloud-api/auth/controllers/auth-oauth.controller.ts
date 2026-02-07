@@ -71,10 +71,10 @@ export class AuthOAuthController {
     @Res() res: FastifyReply,
   ): Promise<void> {
     if (!code || !state) {
-      throw new BadRequestException(
-        'Missing code or state parameter',
-        'The authentication request is incomplete. Please try logging in again.',
-      );
+      throw new BadRequestException({
+        label: 'Incomplete OAuth Request',
+        detail: 'The authentication request is incomplete. Please try logging in again.',
+      });
     }
 
     this.logger.log(`Handling OAuth callback for provider: ${provider}`);

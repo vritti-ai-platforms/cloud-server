@@ -101,7 +101,10 @@ export class MfaVerificationService {
     const challenge = this.getMfaChallengeOrThrow(sessionId);
 
     if (!challenge.availableMethods.includes('totp')) {
-      throw new BadRequestException('TOTP verification is not available for this session.');
+      throw new BadRequestException({
+        label: 'Method Not Available',
+        detail: 'TOTP verification is not available for this session.',
+      });
     }
 
     // Get user's 2FA configuration
@@ -111,7 +114,10 @@ export class MfaVerificationService {
     );
 
     if (!twoFactorAuth || !twoFactorAuth.totpSecret) {
-      throw new UnauthorizedException('TOTP authentication is not properly configured for your account.');
+      throw new UnauthorizedException({
+        label: 'TOTP Not Configured',
+        detail: 'TOTP authentication is not properly configured for your account.',
+      });
     }
 
     // Verify the TOTP code
@@ -121,11 +127,11 @@ export class MfaVerificationService {
       // Try backup code
       const backupResult = await this.tryBackupCode(code, twoFactorAuth);
       if (!backupResult.valid) {
-        throw new BadRequestException(
-          'code',
-          'Invalid verification code',
-          'The code you entered is incorrect. Please check your authenticator app and try again.',
-        );
+        throw new BadRequestException({
+          label: 'Invalid Code',
+          errors: [{ field: 'code', message: 'Invalid verification code' }],
+          detail: 'The code you entered is incorrect. Please check your authenticator app and try again.',
+        });
       }
     }
 
@@ -143,14 +149,20 @@ export class MfaVerificationService {
     const challenge = this.getMfaChallengeOrThrow(sessionId);
 
     if (!challenge.availableMethods.includes('sms')) {
-      throw new BadRequestException('SMS verification is not available for this session.');
+      throw new BadRequestException({
+        label: 'Method Not Available',
+        detail: 'SMS verification is not available for this session.',
+      });
     }
 
     // Get user to find phone number
     const user = await this.userService.findById(challenge.userId);
 
     if (!user || !user.phone || !user.phoneVerified) {
-      throw new BadRequestException('SMS verification is not available because your phone number is not verified.');
+      throw new BadRequestException({
+        label: 'Phone Not Verified',
+        detail: 'SMS verification is not available because your phone number is not verified.',
+      });
     }
 
     // Generate OTP
@@ -183,22 +195,28 @@ export class MfaVerificationService {
     const challenge = this.getMfaChallengeOrThrow(sessionId);
 
     if (!challenge.availableMethods.includes('sms')) {
-      throw new BadRequestException('SMS verification is not available for this session.');
+      throw new BadRequestException({
+        label: 'Method Not Available',
+        detail: 'SMS verification is not available for this session.',
+      });
     }
 
     if (!challenge.smsOtpHash) {
-      throw new BadRequestException('Please request a new verification code before attempting to verify.');
+      throw new BadRequestException({
+        label: 'Code Not Requested',
+        detail: 'Please request a new verification code before attempting to verify.',
+      });
     }
 
     // Verify the OTP
     const isValid = await this.otpService.verifyOtp(code, challenge.smsOtpHash);
 
     if (!isValid) {
-      throw new BadRequestException(
-        'code',
-        'Invalid verification code',
-        'The code you entered is incorrect. Please check your SMS and try again.',
-      );
+      throw new BadRequestException({
+        label: 'Invalid Code',
+        errors: [{ field: 'code', message: 'Invalid verification code' }],
+        detail: 'The code you entered is incorrect. Please check your SMS and try again.',
+      });
     }
 
     // Complete MFA verification
@@ -212,14 +230,20 @@ export class MfaVerificationService {
     const challenge = this.getMfaChallengeOrThrow(sessionId);
 
     if (!challenge.availableMethods.includes('passkey')) {
-      throw new BadRequestException('Passkey verification is not available for this session.');
+      throw new BadRequestException({
+        label: 'Method Not Available',
+        detail: 'Passkey verification is not available for this session.',
+      });
     }
 
     // Get user's passkeys
     const passkeys = await this.twoFactorAuthRepo.findAllPasskeysByUserId(challenge.userId);
 
     if (passkeys.length === 0) {
-      throw new UnauthorizedException('You do not have any passkeys registered for authentication.');
+      throw new UnauthorizedException({
+        label: 'No Passkeys Registered',
+        detail: 'You do not have any passkeys registered for authentication.',
+      });
     }
 
     // Generate authentication options
@@ -250,23 +274,35 @@ export class MfaVerificationService {
     const challenge = this.getMfaChallengeOrThrow(sessionId);
 
     if (!challenge.availableMethods.includes('passkey')) {
-      throw new BadRequestException('Passkey verification is not available for this session.');
+      throw new BadRequestException({
+        label: 'Method Not Available',
+        detail: 'Passkey verification is not available for this session.',
+      });
     }
 
     if (!challenge.passkeyChallenge) {
-      throw new BadRequestException('Please start passkey authentication before attempting to verify.');
+      throw new BadRequestException({
+        label: 'Authentication Not Started',
+        detail: 'Please start passkey authentication before attempting to verify.',
+      });
     }
 
     // Find passkey by credential ID
     const passkey = await this.twoFactorAuthRepo.findByCredentialId(credential.id);
 
     if (!passkey) {
-      throw new UnauthorizedException('This passkey is not registered with your account.');
+      throw new UnauthorizedException({
+        label: 'Passkey Not Found',
+        detail: 'This passkey is not registered with your account.',
+      });
     }
 
     // Verify the passkey belongs to the user
     if (passkey.userId !== challenge.userId) {
-      throw new UnauthorizedException('This passkey does not belong to your account.');
+      throw new UnauthorizedException({
+        label: 'Passkey Mismatch',
+        detail: 'This passkey does not belong to your account.',
+      });
     }
 
     // Verify authentication
@@ -287,10 +323,10 @@ export class MfaVerificationService {
       await this.twoFactorAuthRepo.updatePasskeyCounter(passkey.id, verification.authenticationInfo.newCounter);
     } catch (error) {
       this.logger.error(`Passkey MFA verification failed: ${(error as Error).message}`);
-      throw new UnauthorizedException(
-        'Authentication failed',
-        'Could not verify your passkey. Please try again.',
-      );
+      throw new UnauthorizedException({
+        label: 'Passkey Verification Failed',
+        detail: 'Could not verify your passkey. Please try again.',
+      });
     }
 
     // Complete MFA verification
@@ -304,10 +340,10 @@ export class MfaVerificationService {
     const challenge = this.mfaChallengeStore.get(sessionId);
 
     if (!challenge) {
-      throw new BadRequestException(
-        'Invalid or expired session',
-        'Your MFA session has expired or is invalid. Please log in again.',
-      );
+      throw new BadRequestException({
+        label: 'Session Expired',
+        detail: 'Your MFA session has expired or is invalid. Please log in again.',
+      });
     }
 
     return challenge;

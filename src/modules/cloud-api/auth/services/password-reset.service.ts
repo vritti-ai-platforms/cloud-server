@@ -83,10 +83,10 @@ export class PasswordResetService {
     const resetRequest = await this.passwordResetRepo.findLatestByEmail(email);
 
     if (!resetRequest) {
-      throw new BadRequestException(
-        'No password reset request found. Please request a new code.',
-        "We couldn't find a password reset request for this email. Please request a new code to continue.",
-      );
+      throw new BadRequestException({
+        label: 'Reset Request Not Found',
+        detail: "We couldn't find a password reset request for this email. Please request a new code to continue.",
+      });
     }
 
     // Validate OTP attempt (expiry and max attempts)
@@ -98,11 +98,11 @@ export class PasswordResetService {
     if (!isValid) {
       // Increment failed attempts
       await this.passwordResetRepo.incrementAttempts(resetRequest.id);
-      throw new UnauthorizedException(
-        'code',
-        'Invalid code. Please try again.',
-        'The code you entered is incorrect. Please check the code and try again.',
-      );
+      throw new UnauthorizedException({
+        label: 'Invalid Code',
+        detail: 'The code you entered is incorrect. Please check the code and try again.',
+        errors: [{ field: 'code', message: 'Invalid code' }],
+      });
     }
 
     // Generate reset token
@@ -124,10 +124,10 @@ export class PasswordResetService {
     const resetRequest = await this.passwordResetRepo.findByResetToken(resetToken);
 
     if (!resetRequest) {
-      throw new BadRequestException(
-        'Invalid or expired reset token.',
-        'This password reset link is invalid or has expired. Please request a new password reset.',
-      );
+      throw new BadRequestException({
+        label: 'Invalid Reset Token',
+        detail: 'This password reset link is invalid or has expired. Please request a new password reset.',
+      });
     }
 
     // Check if reset token has expired (10 minutes from verification)
@@ -136,10 +136,10 @@ export class PasswordResetService {
       expiryTime.setMinutes(expiryTime.getMinutes() + this.RESET_TOKEN_EXPIRY_MINUTES);
 
       if (new Date() > expiryTime) {
-        throw new BadRequestException(
-          'Reset token has expired.',
-          'Your password reset session has expired. Please request a new password reset.',
-        );
+        throw new BadRequestException({
+          label: 'Reset Token Expired',
+          detail: 'Your password reset session has expired. Please request a new password reset.',
+        });
       }
     }
 

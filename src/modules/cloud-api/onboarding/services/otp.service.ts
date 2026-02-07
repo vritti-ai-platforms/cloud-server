@@ -73,20 +73,20 @@ export class OtpService {
   validateOtpAttempt(verification: { attempts: number; expiresAt: Date }): void {
     // Check if expired
     if (this.isOtpExpired(verification.expiresAt)) {
-      throw new BadRequestException(
-        'code',
-        'OTP has expired. Please request a new one',
-        'Your verification code has expired. Please request a new code to continue.',
-      );
+      throw new BadRequestException({
+        label: 'Code Expired',
+        detail: 'Your verification code has expired. Please request a new code to continue.',
+        errors: [{ field: 'code', message: 'Verification code expired' }],
+      });
     }
 
     // Check if max attempts exceeded
     if (this.isMaxAttemptsExceeded(verification.attempts)) {
-      throw new BadRequestException(
-        'code',
-        'Maximum verification attempts exceeded. Please request a new OTP',
-        'You have exceeded the maximum number of verification attempts. Please request a new code to try again.',
-      );
+      throw new BadRequestException({
+        label: 'Too Many Attempts',
+        detail: 'You have exceeded the maximum number of verification attempts. Please request a new code to try again.',
+        errors: [{ field: 'code', message: 'Maximum attempts exceeded' }],
+      });
     }
   }
 }

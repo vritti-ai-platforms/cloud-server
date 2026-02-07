@@ -321,7 +321,7 @@ src/
 ### Shared Services
 - **@vritti/api-sdk** - Shared module library
   - `LoggerService` - Structured logging
-  - `HttpExceptionFilter` - RFC 7807 error format
+  - `HttpExceptionFilter` - RFC 9457 error format
   - `HttpLoggerInterceptor` - Request/response logging
   - `CorrelationIdMiddleware` - Request tracking
   - JWT guards and decorators
@@ -371,17 +371,16 @@ export class UsersService {
 
 ### Error Handling
 
-The project uses RFC 7807 Problem Details format for all error responses. All exceptions are automatically transformed by `HttpExceptionFilter` from `@vritti/api-sdk`.
+The project uses RFC 9457 Problem Details format for all error responses. All exceptions are automatically transformed by `HttpExceptionFilter` from `@vritti/api-sdk`.
 
 #### Error Response Format
 ```json
 {
-  "title": "Bad Request",
+  "title": "Invalid Code",
   "status": 400,
-  "detail": "Validation failed",
+  "detail": "The verification code you entered is incorrect. Please check the code and try again.",
   "errors": [
-    { "field": "email", "message": "Invalid email format" },
-    { "message": "General error without specific field" }
+    { "field": "code", "message": "Invalid verification code" }
   ]
 }
 ```
@@ -393,30 +392,85 @@ The project uses RFC 7807 Problem Details format for all error responses. All ex
 ```typescript
 import { BadRequestException, UnauthorizedException, NotFoundException } from '@vritti/api-sdk';
 
-// Pattern 1: General error (no field) - USE FOR AUTH FAILURES, SESSION ERRORS, etc.
-// Frontend displays as root form error
+// Pattern 1: Simple string - for general errors without field context
 throw new UnauthorizedException('Your session has expired. Please log in again.');
-// Response: { errors: [{ message: "Your session has expired..." }] }
 
 // Pattern 2: Field-specific error - USE ONLY when error relates to a FORM FIELD
 throw new BadRequestException('email', 'Invalid email format');
-// Response: { errors: [{ field: "email", message: "Invalid email format" }] }
 
-// Pattern 3: Field + detail
-throw new BadRequestException('email', 'Email already exists', 'Please use a different email or login.');
-// Response: { errors: [{ field: "email", message: "Email already exists" }], detail: "Please use..." }
-
-// Pattern 4: Array of errors
+// Pattern 3: Array of field errors
 throw new BadRequestException([
   { field: 'email', message: 'Invalid email' },
   { field: 'password', message: 'Password too weak' }
 ]);
 
-// Pattern 5: Array + detail
-throw new BadRequestException(
-  [{ field: 'code', message: 'Invalid verification code' }],
-  'Please check your authenticator app and try again.'
-);
+// Pattern 4: ProblemOptions object - PREFERRED for rich error context
+// Use when you need label, detail, AND/OR field errors together
+throw new BadRequestException({
+  label: 'Invalid Code',
+  detail: 'The verification code you entered is incorrect. Please check the code and try again.',
+  errors: [{ field: 'code', message: 'Invalid verification code' }],
+});
+```
+
+#### ProblemOptions Quality Rules
+
+The frontend renders `label` as **AlertTitle** and `detail` as **AlertDescription**, shown together on screen. Follow these rules:
+
+**Rule 1: Label and detail must NOT repeat each other**
+```typescript
+// WRONG - detail repeats the label
+label: 'Session Expired',
+detail: 'Your session has expired. Your 2FA setup session has expired. Please start again.',
+
+// CORRECT - detail adds actionable info beyond the label
+label: 'Session Expired',
+detail: 'Please start the setup process again.',
+```
+
+**Rule 2: `errors[].message` must be SHORT (2-5 words), never duplicate detail**
+```typescript
+// WRONG
+detail: 'The verification code is incorrect. Please try again.',
+errors: [{ field: 'code', message: 'The verification code is incorrect. Please try again.' }],
+
+// CORRECT
+detail: 'The verification code is incorrect. Please try again.',
+errors: [{ field: 'code', message: 'Invalid verification code' }],
+```
+
+**Rule 3: Every ProblemOptions with `errors[]` MUST have a `label`**
+```typescript
+// WRONG - missing label, UI shows generic "Bad Request"
+throw new BadRequestException({
+  detail: 'The code has expired.',
+  errors: [{ field: 'code', message: 'Code expired' }],
+});
+
+// CORRECT
+throw new BadRequestException({
+  label: 'Code Expired',
+  detail: 'Your verification code has expired. Please request a new code.',
+  errors: [{ field: 'code', message: 'Code expired' }],
+});
+```
+
+**Rule 4: One error per field, don't use ProblemOptions for simple cases**
+```typescript
+// WRONG - two errors on same field
+errors: [
+  { field: 'password', message: 'Invalid password' },
+  { field: 'password', message: 'A password is already set' },
+]
+
+// CORRECT - one error per field
+errors: [{ field: 'password', message: 'Invalid password' }]
+
+// Overkill - ProblemOptions not needed for simple case
+throw new NotFoundException({ detail: 'User not found.' });
+
+// Better
+throw new NotFoundException('User not found.');
 ```
 
 #### Common Mistakes to AVOID
@@ -434,30 +488,41 @@ throw new UnauthorizedException(
   'The email or password you entered is incorrect. Please check your credentials and try again.',
 );
 
-// WRONG - "Session expired" is NOT a form field
-throw new UnauthorizedException('Session expired', 'Please log in again.');
+// WRONG - label and detail say the same thing
+throw new BadRequestException({
+  label: 'Unsupported Verification Method',
+  detail: 'Unsupported verification method: sms',
+});
 
-// CORRECT
-throw new UnauthorizedException('Your session has expired. Please log in again.');
+// CORRECT - detail adds value beyond the label
+throw new BadRequestException({
+  label: 'Unsupported Verification Method',
+  detail: "The method 'sms' is not available. Please use a different verification method.",
+});
 ```
 
 #### When to Use Each Pattern
 
 | Scenario | Pattern | Example |
 |----------|---------|---------|
-| Login failure (wrong password) | Message only | `throw new UnauthorizedException('Invalid email or password.')` |
-| Session expired | Message only | `throw new UnauthorizedException('Session expired. Please log in again.')` |
-| Invalid form field | Field + message | `throw new BadRequestException('email', 'Invalid email format')` |
+| Login failure | Simple string | `throw new UnauthorizedException('Invalid email or password.')` |
+| Session expired | Simple string | `throw new UnauthorizedException('Session expired.')` |
+| Resource not found | Simple string | `throw new NotFoundException('User not found.')` |
 | DTO validation (auto) | Field + message | Handled by ValidationPipe automatically |
-| Resource not found | Message only | `throw new NotFoundException('User not found.')` |
-| Account status issue | Message only | `throw new UnauthorizedException('Account is suspended.')` |
-| OTP/Code verification | Field + message | `throw new BadRequestException('code', 'Invalid verification code')` |
+| Form field error with heading | ProblemOptions | `{ label: 'Invalid Code', detail: '...', errors: [{ field: 'code', message: 'Invalid code' }] }` |
+| Rich error with heading | ProblemOptions | `{ label: '2FA Already Enabled', detail: 'Please disable your current method first.' }` |
 
 #### Frontend Integration
 
-The frontend `mapApiErrorsToForm` function:
+The frontend renders exceptions as follows:
+- **`label`** → `AlertTitle` (heading text)
+- **`detail`** → `AlertDescription` (body text)
+- **`errors[].field`** → inline error on matching form field
+- **`errors[]` without `field`** → root form error (if `showRootError={true}`)
+
+The `mapApiErrorsToForm` function:
 1. If `errors[].field` matches a form field → displays inline on that field
 2. If `errors[].field` doesn't match any field → error is LOST (bug!)
-3. If `errors[]` has no `field` → displays as root form error (if `showRootError={true}`)
+3. If `errors[]` has no `field` → displays as root form error
 
 **Always ensure your `field` value matches an actual form field name, or omit it entirely.**

@@ -29,10 +29,10 @@ export class TenantDatabaseConfigService {
     // Check if config already exists
     const existing = await this.configRepository.findByTenantId(tenantId);
     if (existing) {
-      throw new BadRequestException(
-        `Database configuration already exists for tenant: ${tenantId}`,
-        'A database configuration already exists for this organization. Please update the existing configuration instead.',
-      );
+      throw new BadRequestException({
+        label: 'Database Configuration Exists',
+        detail: 'A database configuration already exists for this organization. Please update the existing configuration instead.',
+      });
     }
 
     // Validate configuration
@@ -65,10 +65,10 @@ export class TenantDatabaseConfigService {
   async getByTenantId(tenantId: string): Promise<TenantDatabaseConfigResponseDto> {
     const config = await this.configRepository.findByTenantId(tenantId);
     if (!config) {
-      throw new NotFoundException(
-        `Database configuration not found for tenant: ${tenantId}`,
-        'No database configuration exists for this organization. Please create one first.',
-      );
+      throw new NotFoundException({
+        label: 'Database Configuration Not Found',
+        detail: 'No database configuration exists for this organization. Please create one first.',
+      });
     }
 
     return TenantDatabaseConfigResponseDto.from(config);
@@ -87,10 +87,10 @@ export class TenantDatabaseConfigService {
     // Check if config exists
     const existing = await this.configRepository.findByTenantId(tenantId);
     if (!existing) {
-      throw new NotFoundException(
-        `Database configuration not found for tenant: ${tenantId}`,
-        'No database configuration exists for this organization. Please create one first.',
-      );
+      throw new NotFoundException({
+        label: 'Database Configuration Not Found',
+        detail: 'No database configuration exists for this organization. Please create one first.',
+      });
     }
 
     // Validate updated configuration
@@ -121,10 +121,10 @@ export class TenantDatabaseConfigService {
     // Check if config exists
     const existing = await this.configRepository.findByTenantId(tenantId);
     if (!existing) {
-      throw new NotFoundException(
-        `Database configuration not found for tenant: ${tenantId}`,
-        'No database configuration exists for this organization. There is nothing to delete.',
-      );
+      throw new NotFoundException({
+        label: 'Database Configuration Not Found',
+        detail: 'No database configuration exists for this organization. There is nothing to delete.',
+      });
     }
 
     await this.configRepository.deleteByTenantId(tenantId);
@@ -148,29 +148,44 @@ export class TenantDatabaseConfigService {
   private validateDatabaseConfig(dto: Partial<CreateTenantDatabaseConfigDto>): void {
     // Validate host
     if (dto.dbHost && !this.isValidHost(dto.dbHost)) {
-      throw new BadRequestException(
-        'dbHost',
-        'Invalid database host format',
-        'The database host format is invalid. Please provide a valid hostname, IP address, or localhost.',
-      );
+      throw new BadRequestException({
+        label: 'Invalid Database Host',
+        detail: 'The database host format is invalid. Please provide a valid hostname, IP address, or localhost.',
+        errors: [
+          {
+            field: 'dbHost',
+            message: 'Invalid database host format',
+          },
+        ],
+      });
     }
 
     // Validate port
     if (dto.dbPort && (dto.dbPort < 1 || dto.dbPort > 65535)) {
-      throw new BadRequestException(
-        'dbPort',
-        'Database port must be between 1 and 65535',
-        'The database port must be a valid port number between 1 and 65535.',
-      );
+      throw new BadRequestException({
+        label: 'Invalid Database Port',
+        detail: 'The database port must be a valid port number between 1 and 65535.',
+        errors: [
+          {
+            field: 'dbPort',
+            message: 'Database port must be between 1 and 65535',
+          },
+        ],
+      });
     }
 
     // Validate connection pool size
     if (dto.connectionPoolSize && (dto.connectionPoolSize < 1 || dto.connectionPoolSize > 100)) {
-      throw new BadRequestException(
-        'connectionPoolSize',
-        'Connection pool size must be between 1 and 100',
-        'The connection pool size must be between 1 and 100 connections.',
-      );
+      throw new BadRequestException({
+        label: 'Invalid Connection Pool Size',
+        detail: 'The connection pool size must be between 1 and 100 connections.',
+        errors: [
+          {
+            field: 'connectionPoolSize',
+            message: 'Connection pool size must be between 1 and 100',
+          },
+        ],
+      });
     }
 
     // TODO: Add connection testing logic here

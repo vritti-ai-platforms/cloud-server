@@ -100,19 +100,28 @@ export class PasskeyAuthService {
     // Get pending authentication
     const pending = pendingAuthentications.get(sessionId);
     if (!pending) {
-      throw new BadRequestException('Your login session has expired. Please try again.');
+      throw new BadRequestException({
+        label: 'Session Not Found',
+        detail: 'Your login session has expired. Please try again.',
+      });
     }
 
     // Check expiry
     if (new Date() > pending.expiresAt) {
       pendingAuthentications.delete(sessionId);
-      throw new BadRequestException('Your login session has expired. Please try again.');
+      throw new BadRequestException({
+        label: 'Session Expired',
+        detail: 'Your login session has expired. Please try again.',
+      });
     }
 
     // Find passkey by credential ID
     const passkey = await this.twoFactorAuthRepo.findByCredentialId(credential.id);
     if (!passkey) {
-      throw new UnauthorizedException('This passkey is not registered. Please use a different login method.');
+      throw new UnauthorizedException({
+        label: 'Passkey Not Registered',
+        detail: 'This passkey is not registered. Please use a different login method.',
+      });
     }
 
     // Verify authentication
@@ -131,7 +140,10 @@ export class PasskeyAuthService {
       );
     } catch (error) {
       this.logger.error(`Passkey authentication failed: ${(error as Error).message}`);
-      throw new UnauthorizedException('Could not verify your passkey. Please try again.');
+      throw new UnauthorizedException({
+        label: 'Passkey Verification Failed',
+        detail: 'Could not verify your passkey. Please try again.',
+      });
     }
 
     // Update counter (replay protection)
@@ -144,7 +156,10 @@ export class PasskeyAuthService {
     // Get user
     const user = await this.userService.findById(passkey.userId);
     if (!user) {
-      throw new UnauthorizedException('User account not found.');
+      throw new UnauthorizedException({
+        label: 'User Not Found',
+        detail: 'User account not found.',
+      });
     }
 
     // Create session

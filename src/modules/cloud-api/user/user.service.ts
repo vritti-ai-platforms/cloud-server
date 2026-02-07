@@ -27,11 +27,11 @@ export class UserService {
     if (!skipEmailCheck) {
       const existingUser = await this.userRepository.findByEmail(createUserDto.email);
       if (existingUser) {
-        throw new ConflictException(
-          'email',
-          `User with email '${createUserDto.email}' already exists`,
-          'An account with this email address already exists. Please use a different email or log in to your existing account.',
-        );
+        throw new ConflictException({
+          label: 'Email Taken',
+          detail: 'An account with this email address already exists. Please use a different email or log in to your existing account.',
+          errors: [{ field: 'email', message: 'Already registered' }],
+        });
       }
     }
 
@@ -61,10 +61,10 @@ export class UserService {
     const user = await this.userRepository.findById(id);
 
     if (!user) {
-      throw new NotFoundException(
-        `User with ID '${id}' not found`,
-        "We couldn't find the user you're looking for. Please check the user ID and try again.",
-      );
+      throw new NotFoundException({
+        label: 'User Not Found',
+        detail: "We couldn't find the user you're looking for. Please check the user ID and try again.",
+      });
     }
 
     return UserResponseDto.from(user);
@@ -91,10 +91,10 @@ export class UserService {
     // Check if user exists
     const existing = await this.userRepository.findById(id);
     if (!existing) {
-      throw new NotFoundException(
-        `User with ID '${id}' not found`,
-        "We couldn't find the user you're trying to update. Please check the user ID and try again.",
-      );
+      throw new NotFoundException({
+        label: 'User Not Found',
+        detail: "We couldn't find the user you're trying to update. Please check the user ID and try again.",
+      });
     }
 
     // Update user
@@ -180,10 +180,10 @@ export class UserService {
     // Check if user exists
     const existing = await this.userRepository.findById(id);
     if (!existing) {
-      throw new NotFoundException(
-        `User with ID '${id}' not found`,
-        "We couldn't find the user you're trying to deactivate. Please check the user ID and try again.",
-      );
+      throw new NotFoundException({
+        label: 'User Not Found',
+        detail: "We couldn't find the user you're trying to deactivate. Please check the user ID and try again.",
+      });
     }
 
     const user = await this.userRepository.delete(id);

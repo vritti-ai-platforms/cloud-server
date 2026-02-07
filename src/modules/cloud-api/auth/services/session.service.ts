@@ -180,10 +180,10 @@ export class SessionService {
     const session = await this.getSessionByRefreshToken(refreshToken);
 
     if (!session) {
-      throw new UnauthorizedException(
-        'Invalid session',
-        'Your session has expired or is invalid. Please log in again.',
-      );
+      throw new UnauthorizedException({
+        label: 'Invalid Session',
+        detail: 'Your session has expired or is invalid. Please log in again.',
+      });
     }
 
     return session;
@@ -204,10 +204,10 @@ export class SessionService {
   }> {
     // Handle missing refresh token (no cookie present)
     if (!refreshToken) {
-      throw new UnauthorizedException(
-        'No session found',
-        'No active session found. Please sign up or log in again.',
-      );
+      throw new UnauthorizedException({
+        label: 'No Session Found',
+        detail: 'No active session found. Please sign up or log in again.',
+      });
     }
 
     const session = await this.getSessionByRefreshTokenOrThrow(refreshToken);
@@ -263,10 +263,10 @@ export class SessionService {
   }> {
     // Handle missing refresh token (no cookie present)
     if (!refreshToken) {
-      throw new UnauthorizedException(
-        'No session found',
-        'No active session found. Please sign up or log in again.',
-      );
+      throw new UnauthorizedException({
+        label: 'No Session Found',
+        detail: 'No active session found. Please sign up or log in again.',
+      });
     }
 
     const session = await this.getSessionByRefreshTokenOrThrow(refreshToken);
@@ -350,21 +350,33 @@ export class SessionService {
     const session = await this.sessionRepository.findById(sessionId);
 
     if (!session) {
-      throw new UnauthorizedException('No active onboarding session found. Please sign up again.');
+      throw new UnauthorizedException({
+        label: 'Onboarding Session Not Found',
+        detail: 'No active onboarding session found. Please sign up again.',
+      });
     }
 
     if (session.type !== SessionTypeValues.ONBOARDING) {
-      throw new UnauthorizedException('This is not an onboarding session.');
+      throw new UnauthorizedException({
+        label: 'Invalid Session Type',
+        detail: 'This is not an onboarding session.',
+      });
     }
 
     if (!session.isActive) {
-      throw new UnauthorizedException('Your onboarding session has been invalidated. Please sign up again.');
+      throw new UnauthorizedException({
+        label: 'Onboarding Session Invalidated',
+        detail: 'Your onboarding session has been invalidated. Please sign up again.',
+      });
     }
 
     // Check if token is expired
     if (new Date() > session.accessTokenExpiresAt) {
       await this.sessionRepository.update(session.id, { isActive: false });
-      throw new UnauthorizedException('Your onboarding session has expired. Please sign up again.');
+      throw new UnauthorizedException({
+        label: 'Onboarding Session Expired',
+        detail: 'Your onboarding session has expired. Please sign up again.',
+      });
     }
 
     return {
@@ -380,23 +392,35 @@ export class SessionService {
     const session = await this.sessionRepository.findById(sessionId);
 
     if (!session) {
-      throw new UnauthorizedException('No active session found. Please sign up or log in again.');
+      throw new UnauthorizedException({
+        label: 'Session Not Found',
+        detail: 'No active session found. Please sign up or log in again.',
+      });
     }
 
     if (!session.isActive) {
-      throw new UnauthorizedException('Your session has been invalidated. Please sign up or log in again.');
+      throw new UnauthorizedException({
+        label: 'Session Invalidated',
+        detail: 'Your session has been invalidated. Please sign up or log in again.',
+      });
     }
 
     if (new Date() > session.accessTokenExpiresAt) {
       await this.sessionRepository.update(session.id, { isActive: false });
-      throw new UnauthorizedException('Your session has expired. Please sign up or log in again.');
+      throw new UnauthorizedException({
+        label: 'Session Expired',
+        detail: 'Your session has expired. Please sign up or log in again.',
+      });
     }
 
     if (session.type === SessionTypeValues.ONBOARDING) {
       return SessionTokenResponseDto.forOnboarding(session.accessToken);
     } else {
       if (!session.refreshToken) {
-        throw new UnauthorizedException('Cloud session is missing refresh token. Please log in again.');
+        throw new UnauthorizedException({
+          label: 'Missing Refresh Token',
+          detail: 'Cloud session is missing refresh token. Please log in again.',
+        });
       }
 
       const expiresIn = Math.floor((session.accessTokenExpiresAt.getTime() - Date.now()) / 1000);
@@ -440,18 +464,27 @@ export class SessionService {
     });
 
     if (!session || !session.isActive) {
-      throw new UnauthorizedException('Your session has expired. Please log in again.');
+      throw new UnauthorizedException({
+        label: 'Session Expired',
+        detail: 'Your session has expired. Please log in again.',
+      });
     }
 
     // Check if refresh token is expired
     if (session.refreshTokenExpiresAt && new Date() > session.refreshTokenExpiresAt) {
       await this.sessionRepository.update(session.id, { isActive: false });
-      throw new UnauthorizedException('Your session has expired. Please log in again.');
+      throw new UnauthorizedException({
+        label: 'Session Expired',
+        detail: 'Your session has expired. Please log in again.',
+      });
     }
 
     // Ensure refresh token exists (should always be present for cloud sessions)
     if (!session.refreshToken) {
-      throw new UnauthorizedException('This session does not support token refresh.');
+      throw new UnauthorizedException({
+        label: 'Token Refresh Not Supported',
+        detail: 'This session does not support token refresh.',
+      });
     }
 
     // Generate new access token with existing refresh token binding
@@ -519,18 +552,18 @@ export class SessionService {
     });
 
     if (!session || !session.isActive) {
-      throw new UnauthorizedException(
-        'Invalid or expired access token',
-        'Your session is invalid or has expired. Please log in again.',
-      );
+      throw new UnauthorizedException({
+        label: 'Invalid Access Token',
+        detail: 'Your session is invalid or has expired. Please log in again.',
+      });
     }
 
     // Check if access token is expired
     if (new Date() > session.accessTokenExpiresAt) {
-      throw new UnauthorizedException(
-        'Access token expired. Please refresh',
-        'Your session has expired. Please refresh your access token.',
-      );
+      throw new UnauthorizedException({
+        label: 'Access Token Expired',
+        detail: 'Your session has expired. Please refresh your access token.',
+      });
     }
 
     return session;

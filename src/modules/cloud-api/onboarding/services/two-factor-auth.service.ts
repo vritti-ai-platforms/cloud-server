@@ -58,10 +58,10 @@ export class TwoFactorAuthService {
     // Check if user already has active 2FA
     const existing = await this.twoFactorAuthRepo.findActiveByUserId(userId);
     if (existing) {
-      throw new BadRequestException(
-        'Two-factor authentication is already enabled',
-        'You already have two-factor authentication set up. Please disable it first if you want to set up a new method.',
-      );
+      throw new BadRequestException({
+        label: '2FA Already Enabled',
+        detail: 'Please disable your current method before setting up a new one.',
+      });
     }
 
     // Generate new secret
@@ -92,10 +92,10 @@ export class TwoFactorAuthService {
     // Get pending setup
     const pending = pendingSetups.get(userId);
     if (!pending) {
-      throw new BadRequestException(
-        'No pending 2FA setup found',
-        'Your 2FA setup session has expired. Please start the setup process again.',
-      );
+      throw new BadRequestException({
+        label: 'No Pending Setup',
+        detail: 'Your setup session has expired. Please start the process again.',
+      });
     }
 
 
@@ -103,20 +103,20 @@ export class TwoFactorAuthService {
     // Check if expired
     if (new Date() > pending.expiresAt) {
       pendingSetups.delete(userId);
-      throw new BadRequestException(
-        '2FA setup session expired',
-        'Your 2FA setup session has expired. Please start the setup process again.',
-      );
+      throw new BadRequestException({
+        label: 'Session Expired',
+        detail: 'Please start the setup process again.',
+      });
     }
 
     // Verify the token
     const isValid = this.totpService.verifyToken(token, pending.secret);
     if (!isValid) {
-      throw new BadRequestException(
-        'code',
-        'Invalid verification code',
-        'The code you entered is incorrect. Please check your authenticator app and try again.',
-      );
+      throw new BadRequestException({
+        label: 'Invalid Code',
+        detail: 'The code you entered is incorrect. Please check your authenticator app and try again.',
+        errors: [{ field: 'code', message: 'Incorrect code' }],
+      });
     }
 
     // Generate backup codes
@@ -210,10 +210,10 @@ export class TwoFactorAuthService {
     // Check if user already has active 2FA
     const existing = await this.twoFactorAuthRepo.findActiveByUserId(userId);
     if (existing) {
-      throw new BadRequestException(
-        'Two-factor authentication is already enabled',
-        'You already have two-factor authentication set up. Please disable it first if you want to set up a new method.',
-      );
+      throw new BadRequestException({
+        label: '2FA Already Enabled',
+        detail: 'Please disable your current method before setting up a new one.',
+      });
     }
 
     // Get existing passkeys to exclude (prevent re-registration)
@@ -251,19 +251,19 @@ export class TwoFactorAuthService {
     // Get pending registration
     const pending = pendingPasskeyRegistrations.get(userId);
     if (!pending) {
-      throw new BadRequestException(
-        'No pending passkey setup found',
-        'Your passkey setup session has expired. Please start the setup process again.',
-      );
+      throw new BadRequestException({
+        label: 'No Pending Setup',
+        detail: 'Your setup session has expired. Please start the process again.',
+      });
     }
 
     // Check if expired
     if (new Date() > pending.expiresAt) {
       pendingPasskeyRegistrations.delete(userId);
-      throw new BadRequestException(
-        'Passkey setup session expired',
-        'Your passkey setup session has expired. Please start the setup process again.',
-      );
+      throw new BadRequestException({
+        label: 'Session Expired',
+        detail: 'Please start the setup process again.',
+      });
     }
 
     // Verify the registration
@@ -272,12 +272,18 @@ export class TwoFactorAuthService {
       verification = await this.webAuthnService.verifyRegistration(credential as any, pending.challenge);
     } catch (error) {
       this.logger.error(`Passkey verification failed: ${(error as Error).message}`);
-      throw new BadRequestException('Passkey verification failed', 'Could not verify your passkey. Please try again.');
+      throw new BadRequestException({
+        label: 'Passkey Verification Failed',
+        detail: 'Could not verify your passkey. Please try again.',
+      });
     }
 
     const { registrationInfo } = verification;
     if (!registrationInfo) {
-      throw new BadRequestException('Passkey verification failed', 'Could not verify your passkey. Please try again.');
+      throw new BadRequestException({
+        label: 'Passkey Verification Failed',
+        detail: 'Could not verify your passkey. Please try again.',
+      });
     }
 
     // Generate backup codes (same as TOTP)

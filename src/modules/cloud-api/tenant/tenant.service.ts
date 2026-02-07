@@ -65,10 +65,10 @@ export class TenantService {
     const tenant = await this.tenantRepository.findByIdWithConfig(id);
 
     if (!tenant) {
-      throw new NotFoundException(
-        `Tenant with ID '${id}' not found`,
-        "We couldn't find the organization you're looking for. Please check the ID and try again.",
-      );
+      throw new NotFoundException({
+        label: 'Tenant Not Found',
+        detail: "We couldn't find the organization you're looking for. Please check the ID and try again.",
+      });
     }
 
     return TenantResponseDto.from(tenant);
@@ -81,10 +81,10 @@ export class TenantService {
     const tenant = await this.tenantRepository.findBySubdomain(subdomain, true); // Include config
 
     if (!tenant) {
-      throw new NotFoundException(
-        `Tenant with subdomain '${subdomain}' not found`,
-        "We couldn't find an organization with this subdomain. Please check the subdomain and try again.",
-      );
+      throw new NotFoundException({
+        label: 'Tenant Not Found',
+        detail: "We couldn't find an organization with this subdomain. Please check the subdomain and try again.",
+      });
     }
 
     return TenantResponseDto.from(tenant);
@@ -99,10 +99,10 @@ export class TenantService {
     // avoiding a separate configService.exists() call later
     const existing = await this.tenantRepository.findByIdWithConfig(id);
     if (!existing) {
-      throw new NotFoundException(
-        `Tenant with ID '${id}' not found`,
-        "We couldn't find the organization you're trying to update. Please check the ID and try again.",
-      );
+      throw new NotFoundException({
+        label: 'Tenant Not Found',
+        detail: "We couldn't find the organization you're trying to update. Please check the ID and try again.",
+      });
     }
 
     // Extract database config fields from update DTO
@@ -164,10 +164,10 @@ export class TenantService {
 
     // This should never happen since we just updated the tenant, but handle defensively
     if (!updatedTenant) {
-      throw new NotFoundException(
-        `Tenant with ID '${id}' not found after update`,
-        'An unexpected error occurred while retrieving the updated organization.',
-      );
+      throw new NotFoundException({
+        label: 'Tenant Retrieval Failed',
+        detail: 'An unexpected error occurred while retrieving the updated organization.',
+      });
     }
 
     return TenantResponseDto.from(updatedTenant);
@@ -185,10 +185,10 @@ export class TenantService {
 
     // If no tenant was deleted (record didn't exist), throw NotFoundException
     if (!tenant) {
-      throw new NotFoundException(
-        `Tenant with ID '${id}' not found`,
-        "We couldn't find the organization you're trying to archive. Please check the ID and try again.",
-      );
+      throw new NotFoundException({
+        label: 'Tenant Not Found',
+        detail: "We couldn't find the organization you're trying to archive. Please check the ID and try again.",
+      });
     }
 
     this.logger.log(`Archived tenant: ${tenant.subdomain} (${tenant.id})`);
@@ -207,11 +207,11 @@ export class TenantService {
     dbName: string;
   } {
     if (!dto.dbHost || !dto.dbPort || !dto.dbUsername || !dto.dbPassword || !dto.dbName) {
-      throw new BadRequestException(
-        'dbHost',
-        'Complete database configuration is required for DEDICATED type',
-        'Please provide all database connection details.',
-      );
+      throw new BadRequestException({
+        label: 'Missing Configuration',
+        detail: 'Please provide all database connection details.',
+        errors: [{ field: 'dbHost', message: 'Configuration required' }],
+      });
     }
     return {
       dbHost: dto.dbHost,
@@ -229,20 +229,20 @@ export class TenantService {
     if (dto.dbType === 'SHARED') {
       // For SHARED, dbSchema is required
       if (!dto.dbSchema) {
-        throw new BadRequestException(
-          'dbSchema',
-          'dbSchema is required when database type is SHARED',
-          'A database schema is required for shared database configuration. Please provide a schema name.',
-        );
+        throw new BadRequestException({
+          label: 'Missing Configuration',
+          detail: 'A database schema is required for shared database configuration. Please provide a schema name.',
+          errors: [{ field: 'dbSchema', message: 'Schema required' }],
+        });
       }
     } else if (dto.dbType === 'DEDICATED') {
       // For DEDICATED, full database connection details are required
       if (!dto.dbHost || !dto.dbName || !dto.dbUsername || !dto.dbPassword) {
-        throw new BadRequestException(
-          'dbHost',
-          'dbHost, dbName, dbUsername, and dbPassword are required for DEDICATED database type',
-          'Complete database connection details are required for dedicated database configuration. Please provide host, name, username, and password.',
-        );
+        throw new BadRequestException({
+          label: 'Missing Configuration',
+          detail: 'Complete database connection details are required for dedicated database configuration. Please provide host, name, username, and password.',
+          errors: [{ field: 'dbHost', message: 'Connection details required' }],
+        });
       }
     }
   }
@@ -263,11 +263,11 @@ export class TenantService {
       'code' in error &&
       (error as Error & { code: string }).code === '23505'
     ) {
-      throw new ConflictException(
-        field,
-        `Tenant with ${field} '${value}' already exists`,
-        `This ${field} is already taken. Please choose a different ${field} for your organization.`,
-      );
+      throw new ConflictException({
+        label: 'Already Taken',
+        detail: `This ${field} is already taken. Please choose a different ${field} for your organization.`,
+        errors: [{ field, message: `Duplicate ${field}` }],
+      });
     }
   }
 }

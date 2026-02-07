@@ -1,4 +1,5 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException } from '@vritti/api-sdk';
 import { type VerificationMethod, VerificationMethodValues } from '@/db/schema/enums';
 import { SMSInboundProvider } from './sms-inbound.provider';
 import { SMSOtpProvider } from './sms-otp.provider';
@@ -40,7 +41,10 @@ export class VerificationProviderFactory {
 
       default:
         this.logger.error(`Unsupported verification method: ${method}`);
-        throw new BadRequestException(`Unsupported verification method: ${method}`);
+        throw new BadRequestException({
+          label: 'Unsupported Verification Method',
+          detail: `The method '${method}' is not available. Please use a different verification method.`,
+        });
     }
   }
 
@@ -102,6 +106,9 @@ export class VerificationProviderFactory {
       return this.smsInboundProvider;
     }
 
-    throw new BadRequestException('No verification providers are configured');
+    throw new BadRequestException({
+      label: 'No Providers Available',
+      detail: 'Please configure at least one verification provider before proceeding.',
+    });
   }
 }

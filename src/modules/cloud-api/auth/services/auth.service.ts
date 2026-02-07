@@ -37,24 +37,27 @@ export class AuthService {
     if (!user) {
       // Use message-only pattern for general auth errors (not field-specific)
       // This ensures the error displays as a root form error, not on a specific field
-      throw new UnauthorizedException(
-        'The email or password you entered is incorrect. Please check your credentials and try again.',
-      );
+      throw new UnauthorizedException({
+        label: 'Invalid Credentials',
+        detail: 'The email or password you entered is incorrect. Please check your credentials and try again.',
+      });
     }
 
     // Verify password (single check for all login flows)
     if (!user.passwordHash) {
-      throw new UnauthorizedException(
-        'The email or password you entered is incorrect. Please check your credentials and try again.',
-      );
+      throw new UnauthorizedException({
+        label: 'Invalid Credentials',
+        detail: 'The email or password you entered is incorrect. Please check your credentials and try again.',
+      });
     }
 
     const isPasswordValid = await this.encryptionService.comparePassword(dto.password, user.passwordHash);
 
     if (!isPasswordValid) {
-      throw new UnauthorizedException(
-        'The email or password you entered is incorrect. Please check your credentials and try again.',
-      );
+      throw new UnauthorizedException({
+        label: 'Invalid Credentials',
+        detail: 'The email or password you entered is incorrect. Please check your credentials and try again.',
+      });
     }
 
     // Check if onboarding is complete
@@ -75,9 +78,10 @@ export class AuthService {
 
     // Only ACTIVE users can login
     if (user.accountStatus !== AccountStatusValues.ACTIVE) {
-      throw new UnauthorizedException(
-        `Your account is ${user.accountStatus.toLowerCase()}. Please contact support for assistance.`,
-      );
+      throw new UnauthorizedException({
+        label: 'Account Unavailable',
+        detail: `Your account is ${user.accountStatus.toLowerCase()}. Please contact support for assistance.`,
+      });
     }
 
     // Check if user has 2FA enabled
@@ -144,9 +148,10 @@ export class AuthService {
     const freshUser = await this.userService.findByEmail(userResponse.email);
 
     if (!freshUser) {
-      throw new UnauthorizedException(
-        'Your account could not be found. Please log in again.',
-      );
+      throw new UnauthorizedException({
+        label: 'Account Not Found',
+        detail: 'Your account could not be found. Please log in again.',
+      });
     }
 
     this.logger.log(`Token refreshed for user: ${payload.userId}`);
@@ -186,9 +191,10 @@ export class AuthService {
 
     // Check if account is active
     if (user.accountStatus !== AccountStatusValues.ACTIVE) {
-      throw new UnauthorizedException(
-        'Your account is not active. Please contact support for assistance.',
-      );
+      throw new UnauthorizedException({
+        label: 'Account Inactive',
+        detail: 'Your account is not active. Please contact support for assistance.',
+      });
     }
 
     return user;
@@ -207,11 +213,11 @@ export class AuthService {
         return await this.resumeOnboarding(existingUser, dto.password);
       }
       // Onboarding complete → error
-      throw new BadRequestException(
-        'email',
-        'User Already Exists with this email. Please login.',
-        'Your account has already been set up. Please proceed to login.',
-      );
+      throw new BadRequestException({
+        label: 'Account Exists',
+        detail: 'An account with this email already exists. Please log in instead.',
+        errors: [{ field: 'email', message: 'Already registered' }],
+      });
     }
 
     // New user
@@ -228,13 +234,11 @@ export class AuthService {
     if (!shouldSkipPasswordCheck && user.passwordHash) {
       const isPasswordValid = await this.encryptionService.comparePassword(password, user.passwordHash);
       if (!isPasswordValid) {
-        throw new BadRequestException(
-          [
-            { field: 'password', message: 'Invalid password' },
-            { message: 'A password is already set for this account' },
-          ],
-          'The password you entered is incorrect. This account already has a password set. Please enter the correct password to continue.',
-        );
+        throw new BadRequestException({
+          label: 'Invalid Password',
+          detail: 'The password you entered is incorrect. Please enter the correct password to continue.',
+          errors: [{ field: 'password', message: 'Invalid password' }],
+        });
       }
     }
 
@@ -270,7 +274,10 @@ export class AuthService {
     // Get fresh user data to return
     const user = await this.userService.findByEmail(dto.email);
     if (!user) {
-      throw new BadRequestException('Failed to create user account. Please try again.');
+      throw new BadRequestException({
+        label: 'Account Creation Failed',
+        detail: 'Failed to create user account. Please try again.',
+      });
     }
     return OnboardingStatusResponseDto.fromUser(user, true);
   }

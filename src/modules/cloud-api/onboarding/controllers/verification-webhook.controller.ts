@@ -144,7 +144,7 @@ export class VerificationWebhookController {
       }
 
       this.logger.warn(`WhatsApp webhook verification failed. Mode: ${hubMode}, Token match: ${hubVerifyToken === this.whatsappVerifyToken}`);
-      throw new UnauthorizedException('Invalid verification token');
+      throw new UnauthorizedException('Invalid WhatsApp verification token');
     }
 
     if (provider === 'sms') {
@@ -155,7 +155,7 @@ export class VerificationWebhookController {
       }
 
       this.logger.warn(`SMS webhook verification failed. Token match: ${smsVerifyToken === this.smsVerifyToken}`);
-      throw new UnauthorizedException('Invalid verification token');
+      throw new UnauthorizedException('Invalid SMS verification token');
     }
 
     throw new BadRequestException(`Unsupported provider: ${provider}`);
@@ -286,7 +286,7 @@ export class VerificationWebhookController {
 
     if (!isValid) {
       this.logger.error('Invalid WhatsApp webhook signature');
-      throw new UnauthorizedException('Invalid webhook signature');
+      throw new UnauthorizedException('Invalid WhatsApp webhook signature');
     }
 
     this.logger.log('WhatsApp webhook signature validated successfully');
@@ -312,7 +312,7 @@ export class VerificationWebhookController {
 
     if (!isValid) {
       this.logger.error('Invalid SMS webhook signature');
-      throw new UnauthorizedException('Invalid webhook signature');
+      throw new UnauthorizedException('Invalid SMS webhook signature');
     }
 
     this.logger.log('SMS webhook signature validated successfully');
