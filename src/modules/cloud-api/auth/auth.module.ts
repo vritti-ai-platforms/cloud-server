@@ -38,7 +38,7 @@ import { SessionService } from './services/session.service';
       useFactory: jwtConfigFactory,
     }),
     ServicesModule,
-    UserModule,
+    forwardRef(() => UserModule),
     forwardRef(() => OnboardingModule),
     forwardRef(() => MfaVerificationModule),
   ],

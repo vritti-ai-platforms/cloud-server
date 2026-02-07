@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { BadRequestException } from '@vritti/api-sdk';
 import { EncryptionService } from '../../../../services';
+import { TIME_CONSTANTS } from '../../../../constants/time-constants';
 
 /**
  * OTP Service
@@ -8,8 +9,8 @@ import { EncryptionService } from '../../../../services';
  */
 @Injectable()
 export class OtpService {
-  private readonly OTP_EXPIRY_MINUTES = 5;
-  private readonly MAX_ATTEMPTS = 3;
+  private readonly OTP_EXPIRY_MINUTES = TIME_CONSTANTS.OTP_EXPIRY_MINUTES;
+  private readonly MAX_ATTEMPTS = TIME_CONSTANTS.MAX_OTP_ATTEMPTS;
 
   constructor(private readonly encryptionService: EncryptionService) {}
 

@@ -1,14 +1,31 @@
-import { Body, Controller, Get, Headers, HttpCode, HttpStatus, Ip, Logger, Post, Req, Res } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Public, UserId } from '@vritti/api-sdk';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Headers,
+  HttpCode,
+  HttpStatus,
+  Ip,
+  Logger,
+  Param,
+  Post,
+  Req,
+  Res,
+} from '@nestjs/common';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { NotFoundException, Public, UnauthorizedException, UserId } from '@vritti/api-sdk';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { SessionTypeValues } from '@/db/schema';
 import type { OnboardingStatusResponseDto } from '../../onboarding/dto/onboarding-status-response.dto';
 import { UserService } from '../../user/user.service';
 import type { AuthResponseDto } from '../dto/auth-response.dto';
 import { AuthStatusResponseDto } from '../dto/auth-status-response.dto';
+import { ChangePasswordDto } from '../dto/change-password.dto';
 import { ForgotPasswordDto, ResetPasswordDto, VerifyResetOtpDto } from '../dto/forgot-password.dto';
 import { LoginDto } from '../dto/login.dto';
+import { SessionResponseDto } from '../dto/session-response.dto';
 import { SignupDto } from '../dto/signup.dto';
 import { AuthService } from '../services/auth.service';
 import { PasswordResetService } from '../services/password-reset.service';
@@ -489,5 +506,144 @@ export class AuthController {
   async resetPassword(@Body() resetPasswordDto: ResetPasswordDto): Promise<{ success: boolean; message: string }> {
     this.logger.log('POST /auth/reset-password');
     return this.passwordResetService.resetPassword(resetPasswordDto.resetToken, resetPasswordDto.newPassword);
+  }
+
+  /**
+   * Change password
+   * POST /auth/password/change
+   * Requires: JWT access token (protected by VrittiAuthGuard)
+   * Validates current password before updating to new password
+   */
+  @Post('password/change')
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Change password',
+    description: "Change the authenticated user's password. Requires current password verification.",
+  })
+  @ApiBody({ type: ChangePasswordDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Password changed successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string', example: 'Password changed successfully' },
+      },
+    },
+  })
+  @ApiResponse({ status: 400, description: 'Invalid current password or validation error' })
+  @ApiResponse({ status: 401, description: 'Unauthorized - Invalid or missing authentication' })
+  async changePassword(@UserId() userId: string, @Body() dto: ChangePasswordDto): Promise<{ message: string }> {
+    this.logger.log(`POST /auth/password/change - Changing password for user: ${userId}`);
+
+    await this.authService.changePassword(userId, dto.currentPassword, dto.newPassword);
+
+    return { message: 'Password changed successfully' };
+  }
+
+  /**
+   * List active sessions
+   * GET /auth/sessions
+   * Requires: JWT access token (protected by VrittiAuthGuard)
+   * Returns all active sessions for the authenticated user
+   */
+  @Get('sessions')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'List active sessions',
+    description: 'Get all active sessions for the authenticated user across all devices.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Active sessions retrieved successfully',
+    type: [SessionResponseDto],
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized - Invalid or missing authentication' })
+  async getSessions(@UserId() userId: string, @Req() request: FastifyRequest): Promise<SessionResponseDto[]> {
+    this.logger.log(`GET /auth/sessions - Fetching sessions for user: ${userId}`);
+
+    // Get current access token from request
+    const authHeader = request.headers.authorization;
+    const currentAccessToken = authHeader?.replace('Bearer ', '') || '';
+
+    // Get all active sessions
+    const sessions = await this.sessionService.getUserActiveSessions(userId);
+
+    // Transform to response DTOs
+    return sessions.map((session) => SessionResponseDto.from(session, currentAccessToken));
+  }
+
+  /**
+   * Revoke a specific session
+   * DELETE /auth/sessions/:id
+   * Requires: JWT access token (protected by VrittiAuthGuard)
+   * Invalidates a specific session by ID (cannot revoke current session)
+   */
+  @Delete('sessions/:id')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Revoke a specific session',
+    description: 'Invalidate a specific session by ID. Cannot revoke the current session.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Session ID to revoke',
+    example: '550e8400-e29b-41d4-a716-446655440000',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Session revoked successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string', example: 'Session revoked successfully' },
+      },
+    },
+  })
+  @ApiResponse({ status: 400, description: 'Cannot revoke current session' })
+  @ApiResponse({ status: 401, description: 'Unauthorized - Invalid or missing authentication' })
+  @ApiResponse({ status: 404, description: 'Session not found' })
+  async revokeSession(
+    @UserId() userId: string,
+    @Param('id') sessionId: string,
+    @Req() request: FastifyRequest,
+  ): Promise<{ message: string }> {
+    this.logger.log(`DELETE /auth/sessions/${sessionId} - Revoking session for user: ${userId}`);
+
+    // Get current access token
+    const authHeader = request.headers.authorization;
+    const currentAccessToken = authHeader?.replace('Bearer ', '') || '';
+
+    // Find the current session
+    const currentSession = await this.sessionService.validateAccessToken(currentAccessToken);
+
+    // Prevent revoking current session
+    if (currentSession.id === sessionId) {
+      throw new BadRequestException('sessionId', 'You cannot revoke your current session. Use logout instead.');
+    }
+
+    // Find all sessions for the user
+    const sessions = await this.sessionService.getUserActiveSessions(userId);
+    const targetSession = sessions.find((s) => s.id === sessionId);
+
+    if (!targetSession) {
+      throw new NotFoundException(
+        'Session not found',
+        'The session you are trying to revoke does not exist or has already been revoked.',
+      );
+    }
+
+    // Verify session belongs to user
+    if (targetSession.userId !== userId) {
+      throw new UnauthorizedException('Unauthorized', 'You do not have permission to revoke this session.');
+    }
+
+    // Invalidate the session
+    await this.sessionService.invalidateSession(targetSession.accessToken);
+
+    this.logger.log(`Session ${sessionId} revoked for user: ${userId}`);
+
+    return { message: 'Session revoked successfully' };
   }
 }

@@ -11,6 +11,7 @@ import { VerificationProviderFactory } from '../providers';
 import { VERIFICATION_EVENTS, MobileVerificationEvent } from '../events/verification.events';
 import { MobileVerificationRepository } from '../repositories/mobile-verification.repository';
 import { OtpService } from './otp.service';
+import { TIME_CONSTANTS } from '../../../../constants/time-constants';
 
 /**
  * Mobile Verification Service
@@ -19,8 +20,8 @@ import { OtpService } from './otp.service';
 @Injectable()
 export class MobileVerificationService {
   private readonly logger = new Logger(MobileVerificationService.name);
-  private readonly verificationExpiryMinutes = 10; // 10 minutes
-  private readonly maxAttempts = 5;
+  private readonly verificationExpiryMinutes = TIME_CONSTANTS.MOBILE_VERIFICATION_EXPIRY_MINUTES;
+  private readonly maxAttempts = TIME_CONSTANTS.MAX_MOBILE_VERIFICATION_ATTEMPTS;
   private readonly whatsappBusinessNumber: string;
 
   constructor(

@@ -346,6 +346,236 @@ This is an automated message, please do not reply.
   }
 
   /**
+   * Send email change notification to old email with revert link
+   * @param oldEmail Old email address
+   * @param newEmail New email address
+   * @param revertToken Revert token for the change
+   * @param revertExpiresAt Expiry date of revert token
+   * @param firstName Optional recipient first name for personalization
+   */
+  async sendEmailChangeNotification(
+    oldEmail: string,
+    newEmail: string,
+    revertToken: string,
+    revertExpiresAt: Date,
+    firstName?: string,
+  ): Promise<void> {
+    const displayName = firstName || 'there';
+    const subject = 'Your Email Address Has Been Changed - Vritti AI Cloud';
+
+    // Calculate hours until expiry
+    const hoursUntilExpiry = Math.floor((revertExpiresAt.getTime() - Date.now()) / (1000 * 60 * 60));
+
+    // TODO: Replace with actual frontend URL from config
+    const revertLink = `https://local.vrittiai.com:3012/settings/profile/revert-email?token=${revertToken}`;
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5;">
+          <table role="presentation" style="width: 100%; border-collapse: collapse;">
+            <tr>
+              <td style="padding: 40px 20px;">
+                <table role="presentation" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                  <!-- Header -->
+                  <tr>
+                    <td style="padding: 40px 40px 20px; text-align: center; border-bottom: 1px solid #e0e0e0;">
+                      <h1 style="margin: 0; color: #1a1a1a; font-size: 24px; font-weight: 600;">Email Address Changed</h1>
+                    </td>
+                  </tr>
+
+                  <!-- Content -->
+                  <tr>
+                    <td style="padding: 40px;">
+                      <p style="margin: 0 0 20px; color: #333333; font-size: 16px; line-height: 1.6;">
+                        Hello <strong>${displayName}</strong>,
+                      </p>
+                      <p style="margin: 0 0 30px; color: #333333; font-size: 16px; line-height: 1.6;">
+                        We're writing to inform you that your Vritti AI Cloud email address has been successfully changed.
+                      </p>
+
+                      <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 30px 0;">
+                        <p style="margin: 0 0 10px; color: #666666; font-size: 14px;">
+                          <strong>Previous Email:</strong>
+                        </p>
+                        <p style="margin: 0 0 20px; color: #333333; font-size: 16px; font-family: monospace;">
+                          ${oldEmail}
+                        </p>
+                        <p style="margin: 0 0 10px; color: #666666; font-size: 14px;">
+                          <strong>New Email:</strong>
+                        </p>
+                        <p style="margin: 0; color: #333333; font-size: 16px; font-family: monospace;">
+                          ${newEmail}
+                        </p>
+                      </div>
+
+                      <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 20px; margin: 30px 0; border-radius: 4px;">
+                        <p style="margin: 0 0 15px; color: #856404; font-size: 14px; line-height: 1.6;">
+                          <strong>Didn't make this change?</strong>
+                        </p>
+                        <p style="margin: 0 0 20px; color: #856404; font-size: 14px; line-height: 1.6;">
+                          If you did not authorize this change, you can revert it within the next <strong>${hoursUntilExpiry} hours</strong> by clicking the button below:
+                        </p>
+                        <div style="text-align: center;">
+                          <a href="${revertLink}" style="display: inline-block; padding: 12px 30px; background-color: #dc3545; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 14px;">
+                            Revert Email Change
+                          </a>
+                        </div>
+                      </div>
+
+                      <p style="margin: 30px 0 0; color: #666666; font-size: 14px; line-height: 1.6;">
+                        If you made this change, you can safely ignore this email.
+                      </p>
+                    </td>
+                  </tr>
+
+                  <!-- Footer -->
+                  <tr>
+                    <td style="padding: 30px 40px; border-top: 1px solid #e0e0e0; text-align: center;">
+                      <p style="margin: 0; color: #999999; font-size: 12px; line-height: 1.5;">
+                        Vritti AI Cloud - Cloud Management Platform
+                      </p>
+                      <p style="margin: 8px 0 0; color: #999999; font-size: 12px; line-height: 1.5;">
+                        This is an automated message, please do not reply.
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+      </html>
+    `;
+
+    const textContent = `
+Hello ${displayName},
+
+We're writing to inform you that your Vritti AI Cloud email address has been successfully changed.
+
+Previous Email: ${oldEmail}
+New Email: ${newEmail}
+
+DIDN'T MAKE THIS CHANGE?
+
+If you did not authorize this change, you can revert it within the next ${hoursUntilExpiry} hours by visiting:
+${revertLink}
+
+If you made this change, you can safely ignore this email.
+
+---
+Vritti AI Cloud - Cloud Management Platform
+This is an automated message, please do not reply.
+    `.trim();
+
+    await this.sendEmail({
+      to: [{ email: oldEmail, name: displayName }],
+      subject,
+      htmlContent,
+      textContent,
+    });
+
+    this.logger.log(`Email change notification sent to ${oldEmail}`);
+  }
+
+  /**
+   * Send email revert confirmation
+   * @param email Email address that was restored
+   * @param firstName Optional recipient first name for personalization
+   */
+  async sendEmailRevertConfirmation(email: string, firstName?: string): Promise<void> {
+    const displayName = firstName || 'there';
+    const subject = 'Email Address Change Reverted - Vritti AI Cloud';
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5;">
+          <table role="presentation" style="width: 100%; border-collapse: collapse;">
+            <tr>
+              <td style="padding: 40px 20px;">
+                <table role="presentation" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                  <!-- Header -->
+                  <tr>
+                    <td style="padding: 40px 40px 20px; text-align: center; border-bottom: 1px solid #e0e0e0;">
+                      <h1 style="margin: 0; color: #1a1a1a; font-size: 24px; font-weight: 600;">Email Change Reverted</h1>
+                    </td>
+                  </tr>
+
+                  <!-- Content -->
+                  <tr>
+                    <td style="padding: 40px;">
+                      <p style="margin: 0 0 20px; color: #333333; font-size: 16px; line-height: 1.6;">
+                        Hello <strong>${displayName}</strong>,
+                      </p>
+                      <p style="margin: 0 0 30px; color: #333333; font-size: 16px; line-height: 1.6;">
+                        Your recent email address change has been successfully reverted. Your email is now:
+                      </p>
+
+                      <div style="background-color: #d4edda; padding: 20px; border-radius: 8px; margin: 30px 0; text-align: center;">
+                        <p style="margin: 0; color: #155724; font-size: 18px; font-weight: 600; font-family: monospace;">
+                          ${email}
+                        </p>
+                      </div>
+
+                      <p style="margin: 30px 0 20px; color: #666666; font-size: 14px; line-height: 1.6;">
+                        If you did not request this revert, please contact our support team immediately.
+                      </p>
+                    </td>
+                  </tr>
+
+                  <!-- Footer -->
+                  <tr>
+                    <td style="padding: 30px 40px; border-top: 1px solid #e0e0e0; text-align: center;">
+                      <p style="margin: 0; color: #999999; font-size: 12px; line-height: 1.5;">
+                        Vritti AI Cloud - Cloud Management Platform
+                      </p>
+                      <p style="margin: 8px 0 0; color: #999999; font-size: 12px; line-height: 1.5;">
+                        This is an automated message, please do not reply.
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+      </html>
+    `;
+
+    const textContent = `
+Hello ${displayName},
+
+Your recent email address change has been successfully reverted. Your email is now:
+
+${email}
+
+If you did not request this revert, please contact our support team immediately.
+
+---
+Vritti AI Cloud - Cloud Management Platform
+This is an automated message, please do not reply.
+    `.trim();
+
+    await this.sendEmail({
+      to: [{ email, name: displayName }],
+      subject,
+      htmlContent,
+      textContent,
+    });
+
+    this.logger.log(`Email revert confirmation sent to ${email}`);
+  }
+
+  /**
    * Verify Brevo API connection (useful for health checks)
    * @returns true if connection is successful, false otherwise
    */

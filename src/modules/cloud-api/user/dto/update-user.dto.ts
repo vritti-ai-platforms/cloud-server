@@ -21,6 +21,14 @@ export class UpdateUserDto {
   lastName?: string;
 
   @ApiPropertyOptional({
+    description: 'The email address of the user',
+    example: 'user@example.com',
+  })
+  @IsString()
+  @IsOptional()
+  email?: string;
+
+  @ApiPropertyOptional({
     description: 'The phone number of the user',
     example: '+14155552671',
   })
