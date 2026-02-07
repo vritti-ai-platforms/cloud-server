@@ -41,11 +41,10 @@ export class RateLimitService {
       this.logger.warn(
         `User ${userId} exceeded daily ${changeType} change request limit (${rateLimit.requestCount}/${this.MAX_REQUESTS_PER_DAY})`,
       );
-      throw new BadRequestException(
-        'rate_limit_exceeded',
-        `You have exceeded the maximum number of ${changeType} change requests for today`,
-        `You can only make ${this.MAX_REQUESTS_PER_DAY} ${changeType} change requests per day. Please try again tomorrow.`,
-      );
+      throw new BadRequestException({
+        label: 'Rate Limit Exceeded',
+        detail: `You can only make ${this.MAX_REQUESTS_PER_DAY} ${changeType} change requests per day. Please try again tomorrow.`,
+      });
     }
 
     // Increment count

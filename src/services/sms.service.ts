@@ -35,6 +35,7 @@ export class SmsService {
       // });
 
       // Security: Never log OTP values in production - GDPR/PCI compliance
+      console.log(_message);
       this.logger.warn(`[MOCK] SMS verification would be sent to ${phoneNumber}`);
     } catch (error) {
       this.logger.error(`Failed to send SMS to ${phoneNumber}:`, error);

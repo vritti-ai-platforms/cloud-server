@@ -629,14 +629,13 @@ export class AuthController {
 
     if (!targetSession) {
       throw new NotFoundException(
-        'Session not found',
         'The session you are trying to revoke does not exist or has already been revoked.',
       );
     }
 
     // Verify session belongs to user
     if (targetSession.userId !== userId) {
-      throw new UnauthorizedException('Unauthorized', 'You do not have permission to revoke this session.');
+      throw new UnauthorizedException('You do not have permission to revoke this session.');
     }
 
     // Invalidate the session

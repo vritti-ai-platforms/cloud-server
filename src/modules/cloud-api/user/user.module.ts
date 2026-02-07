@@ -1,14 +1,15 @@
 import { forwardRef, Module } from '@nestjs/common';
-import { EmailService, EncryptionService } from '@/services';
+import { EmailService, EncryptionService, SmsService } from '@/services';
 import { AuthModule } from '../auth/auth.module';
 import { OnboardingModule } from '../onboarding/onboarding.module';
 import { ContactChangeController } from './controllers/contact-change.controller';
+import { UserController } from './controllers/user.controller';
 import { ChangeRequestRateLimitRepository } from './repositories/change-request-rate-limit.repository';
 import { EmailChangeRequestRepository } from './repositories/email-change-request.repository';
 import { PhoneChangeRequestRepository } from './repositories/phone-change-request.repository';
 import { EmailChangeService } from './services/email-change.service';
+import { PhoneChangeService } from './services/phone-change.service';
 import { RateLimitService } from './services/rate-limit.service';
-import { UserController } from './user.controller';
 import { UserRepository } from './user.repository';
 import { UserService } from './user.service';
 
@@ -19,11 +20,13 @@ import { UserService } from './user.service';
     UserService,
     UserRepository,
     EmailChangeService,
+    PhoneChangeService,
     RateLimitService,
     EmailChangeRequestRepository,
     PhoneChangeRequestRepository,
     ChangeRequestRateLimitRepository,
     EmailService,
+    SmsService,
     EncryptionService,
   ],
   exports: [UserService, UserRepository],

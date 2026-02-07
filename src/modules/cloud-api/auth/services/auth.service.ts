@@ -306,19 +306,16 @@ export class AuthService {
     const user = await this.userService.findByEmail(userResponse.email);
 
     if (!user) {
-      throw new UnauthorizedException(
-        'User not found',
-        "We couldn't find your account. Please log in again.",
-      );
+      throw new UnauthorizedException("We couldn't find your account. Please log in again.");
     }
 
     // Verify current password
     if (!user.passwordHash) {
-      throw new BadRequestException(
-        'password',
-        'No password set for this account',
-        'Your account does not have a password set. Please use password recovery or OAuth sign-in.',
-      );
+      throw new BadRequestException({
+        label: 'No Password Set',
+        detail: 'Your account does not have a password set. Please use password recovery or OAuth sign-in.',
+        errors: [{ field: 'password', message: 'No password set' }],
+      });
     }
 
     const isCurrentPasswordValid = await this.encryptionService.comparePassword(
@@ -327,20 +324,17 @@ export class AuthService {
     );
 
     if (!isCurrentPasswordValid) {
-      throw new UnauthorizedException(
-        'Invalid current password',
-        'The current password you entered is incorrect. Please try again.',
-      );
+      throw new UnauthorizedException('The current password you entered is incorrect. Please try again.');
     }
 
     // Ensure new password is different
     const isSamePassword = await this.encryptionService.comparePassword(newPassword, user.passwordHash);
     if (isSamePassword) {
-      throw new BadRequestException(
-        'newPassword',
-        'New password must be different from current password',
-        'Your new password must be different from your current password.',
-      );
+      throw new BadRequestException({
+        label: 'Password Already In Use',
+        detail: 'Your new password must be different from your current password.',
+        errors: [{ field: 'newPassword', message: 'Password already in use' }],
+      });
     }
 
     // Hash new password

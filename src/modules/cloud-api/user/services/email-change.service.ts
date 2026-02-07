@@ -35,11 +35,10 @@ export class EmailChangeService {
     const user = await this.userService.findById(userId);
 
     if (!user.emailVerified) {
-      throw new BadRequestException(
-        'email_not_verified',
-        'Your email is not verified',
-        'You must verify your current email address before you can change it.',
-      );
+      throw new BadRequestException({
+        label: 'Email Not Verified',
+        detail: 'You must verify your current email address before you can change it.',
+      });
     }
 
     // Send OTP to current email
@@ -48,7 +47,10 @@ export class EmailChangeService {
     // Get the created verification record
     const verification = await this.emailVerificationRepo.findLatestByUserId(userId);
     if (!verification) {
-      throw new Error('Failed to create email verification');
+      throw new BadRequestException({
+        label: 'Verification Creation Failed',
+        detail: 'Unable to create email verification. Please try again.',
+      });
     }
 
     this.logger.log(`Identity verification OTP sent to ${user.email} for user ${userId}`);
@@ -72,11 +74,10 @@ export class EmailChangeService {
     const verification = await this.emailVerificationRepo.findById(verificationId);
 
     if (!verification || verification.userId !== userId) {
-      throw new BadRequestException(
-        'verification_not_found',
-        'Verification not found',
-        'The verification code you provided is invalid or has expired.',
-      );
+      throw new BadRequestException({
+        label: 'Verification Not Found',
+        detail: 'The verification code you provided is invalid or has expired.',
+      });
     }
 
     // Validate OTP attempt (expiry and max attempts)
@@ -88,11 +89,16 @@ export class EmailChangeService {
     if (!isValid) {
       // Increment failed attempts
       await this.emailVerificationRepo.incrementAttempts(verification.id);
-      throw new UnauthorizedException(
-        'code',
-        'Invalid verification code',
-        'The verification code you entered is incorrect. Please check the code and try again.',
-      );
+      throw new UnauthorizedException({
+        label: 'Invalid Code',
+        detail: 'The verification code you entered is incorrect. Please check the code and try again.',
+        errors: [
+          {
+            field: 'code',
+            message: 'Invalid verification code',
+          },
+        ],
+      });
     }
 
     // Mark verification as complete
@@ -136,38 +142,34 @@ export class EmailChangeService {
     const changeRequest = await this.emailChangeRequestRepo.findById(changeRequestId);
 
     if (!changeRequest || changeRequest.userId !== userId) {
-      throw new BadRequestException(
-        'change_request_not_found',
-        'Change request not found',
-        'Your email change request is invalid or has expired. Please start the process again.',
-      );
+      throw new BadRequestException({
+        label: 'Change Request Not Found',
+        detail: 'Your email change request is invalid or has expired. Please start the process again.',
+      });
     }
 
     if (changeRequest.isCompleted) {
-      throw new BadRequestException(
-        'change_request_completed',
-        'Change request already completed',
-        'This email change request has already been completed.',
-      );
+      throw new BadRequestException({
+        label: 'Change Request Already Completed',
+        detail: 'This email change request has already been completed.',
+      });
     }
 
     // Check if new email is same as current
     if (newEmail.toLowerCase() === changeRequest.oldEmail.toLowerCase()) {
-      throw new BadRequestException(
-        'same_email',
-        'New email cannot be the same as current email',
-        'Please enter a different email address than your current one.',
-      );
+      throw new BadRequestException({
+        label: 'Same Email',
+        detail: 'Please enter a different email address than your current one.',
+      });
     }
 
     // Check if new email is already in use
     const existingUser = await this.userService.findByEmail(newEmail);
     if (existingUser) {
-      throw new BadRequestException(
-        'email_in_use',
-        'Email address already in use',
-        'This email address is already associated with another account. Please use a different email.',
-      );
+      throw new BadRequestException({
+        label: 'Email Already In Use',
+        detail: 'This email address is already associated with another account. Please use a different email.',
+      });
     }
 
     // Update change request with new email
@@ -185,7 +187,10 @@ export class EmailChangeService {
     // Get the created verification record
     const verification = await this.emailVerificationRepo.findLatestByUserId(userId);
     if (!verification) {
-      throw new Error('Failed to create email verification');
+      throw new BadRequestException({
+        label: 'Verification Creation Failed',
+        detail: 'Unable to create email verification. Please try again.',
+      });
     }
 
     // Update change request with new email verification ID
@@ -215,38 +220,34 @@ export class EmailChangeService {
     const changeRequest = await this.emailChangeRequestRepo.findById(changeRequestId);
 
     if (!changeRequest || changeRequest.userId !== userId) {
-      throw new BadRequestException(
-        'change_request_not_found',
-        'Change request not found',
-        'Your email change request is invalid or has expired. Please start the process again.',
-      );
+      throw new BadRequestException({
+        label: 'Change Request Not Found',
+        detail: 'Your email change request is invalid or has expired. Please start the process again.',
+      });
     }
 
     if (changeRequest.isCompleted) {
-      throw new BadRequestException(
-        'change_request_completed',
-        'Change request already completed',
-        'This email change request has already been completed.',
-      );
+      throw new BadRequestException({
+        label: 'Change Request Already Completed',
+        detail: 'This email change request has already been completed.',
+      });
     }
 
     if (!changeRequest.newEmail) {
-      throw new BadRequestException(
-        'new_email_missing',
-        'New email not provided',
-        'Please provide a new email address before verifying.',
-      );
+      throw new BadRequestException({
+        label: 'New Email Not Provided',
+        detail: 'Please provide a new email address before verifying.',
+      });
     }
 
     // Find verification
     const verification = await this.emailVerificationRepo.findById(verificationId);
 
     if (!verification || verification.userId !== userId) {
-      throw new BadRequestException(
-        'verification_not_found',
-        'Verification not found',
-        'The verification code you provided is invalid or has expired.',
-      );
+      throw new BadRequestException({
+        label: 'Verification Not Found',
+        detail: 'The verification code you provided is invalid or has expired.',
+      });
     }
 
     // Validate OTP attempt (expiry and max attempts)
@@ -258,11 +259,16 @@ export class EmailChangeService {
     if (!isValid) {
       // Increment failed attempts
       await this.emailVerificationRepo.incrementAttempts(verification.id);
-      throw new UnauthorizedException(
-        'code',
-        'Invalid verification code',
-        'The verification code you entered is incorrect. Please check the code and try again.',
-      );
+      throw new UnauthorizedException({
+        label: 'Invalid Code',
+        detail: 'The verification code you entered is incorrect. Please check the code and try again.',
+        errors: [
+          {
+            field: 'code',
+            message: 'Invalid verification code',
+          },
+        ],
+      });
     }
 
     // Mark verification as complete
@@ -318,29 +324,26 @@ export class EmailChangeService {
     const changeRequest = await this.emailChangeRequestRepo.findCompletedByRevertToken(revertToken);
 
     if (!changeRequest) {
-      throw new BadRequestException(
-        'invalid_token',
-        'Invalid or expired revert token',
-        'The revert link you used is invalid or has expired. Please contact support if you need assistance.',
-      );
+      throw new BadRequestException({
+        label: 'Invalid Revert Token',
+        detail: 'The revert link you used is invalid or has expired. Please contact support if you need assistance.',
+      });
     }
 
     // Check token not expired
     if (changeRequest.revertExpiresAt && new Date() > changeRequest.revertExpiresAt) {
-      throw new BadRequestException(
-        'token_expired',
-        'Revert token has expired',
-        'The revert link has expired. You can no longer revert this email change. Please contact support if you need assistance.',
-      );
+      throw new BadRequestException({
+        label: 'Revert Token Expired',
+        detail: 'The revert link has expired. You can no longer revert this email change. Please contact support if you need assistance.',
+      });
     }
 
     // Check not already reverted
     if (changeRequest.revertedAt) {
-      throw new BadRequestException(
-        'already_reverted',
-        'Email change already reverted',
-        'This email change has already been reverted.',
-      );
+      throw new BadRequestException({
+        label: 'Already Reverted',
+        detail: 'This email change has already been reverted.',
+      });
     }
 
     // Restore old email
@@ -376,19 +379,17 @@ export class EmailChangeService {
     const verification = await this.emailVerificationRepo.findById(verificationId);
 
     if (!verification || verification.userId !== userId) {
-      throw new BadRequestException(
-        'verification_not_found',
-        'Verification not found',
-        'The verification you are trying to resend is invalid or has expired.',
-      );
+      throw new BadRequestException({
+        label: 'Verification Not Found',
+        detail: 'The verification you are trying to resend is invalid or has expired.',
+      });
     }
 
     if (verification.isVerified) {
-      throw new BadRequestException(
-        'already_verified',
-        'Verification already completed',
-        'This verification has already been completed.',
-      );
+      throw new BadRequestException({
+        label: 'Verification Already Completed',
+        detail: 'This verification has already been completed.',
+      });
     }
 
     // Delete old verification
@@ -401,7 +402,10 @@ export class EmailChangeService {
     // Get the new verification record
     const newVerification = await this.emailVerificationRepo.findLatestByUserId(userId);
     if (!newVerification) {
-      throw new Error('Failed to create email verification');
+      throw new BadRequestException({
+        label: 'Verification Creation Failed',
+        detail: 'Unable to create email verification. Please try again.',
+      });
     }
 
     this.logger.log(`Resent OTP for user ${userId} to ${verification.email}`);

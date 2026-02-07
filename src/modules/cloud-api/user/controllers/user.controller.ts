@@ -1,17 +1,10 @@
 import { Body, Controller, Delete, Get, Logger, Param, Put } from '@nestjs/common';
-import {
-  ApiBearerAuth,
-  ApiBody,
-  ApiOperation,
-  ApiParam,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { UserId } from '@vritti/api-sdk';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { UserResponseDto } from './dto/user-response.dto';
-import { UserService } from './user.service';
-import { SessionService } from '../auth/services/session.service';
+import { SessionService } from '../../auth/services/session.service';
+import { UpdateUserDto } from '../dto/update-user.dto';
+import { UserResponseDto } from '../dto/user-response.dto';
+import { UserService } from '../user.service';
 
 /**
  * User Controller
@@ -76,7 +69,8 @@ export class UserController {
   @Put('profile')
   @ApiOperation({
     summary: 'Update user profile',
-    description: 'Update the authenticated user\'s profile information including name, phone, profile picture, locale, and timezone.',
+    description:
+      "Update the authenticated user's profile information including name, phone, profile picture, locale, and timezone.",
   })
   @ApiBody({ type: UpdateUserDto })
   @ApiResponse({
@@ -87,10 +81,7 @@ export class UserController {
   @ApiResponse({ status: 400, description: 'Invalid input data' })
   @ApiResponse({ status: 401, description: 'Unauthorized - Invalid or missing authentication' })
   @ApiResponse({ status: 404, description: 'User not found' })
-  async updateProfile(
-    @UserId() userId: string,
-    @Body() updateUserDto: UpdateUserDto,
-  ): Promise<UserResponseDto> {
+  async updateProfile(@UserId() userId: string, @Body() updateUserDto: UpdateUserDto): Promise<UserResponseDto> {
     this.logger.log(`PUT /users/profile - Updating profile for user: ${userId}`);
     return await this.userService.update(userId, updateUserDto);
   }
@@ -102,7 +93,8 @@ export class UserController {
   @Delete('account')
   @ApiOperation({
     summary: 'Delete user account',
-    description: 'Soft delete the authenticated user\'s account. Sets account status to INACTIVE and invalidates all sessions.',
+    description:
+      "Soft delete the authenticated user's account. Sets account status to INACTIVE and invalidates all sessions.",
   })
   @ApiResponse({
     status: 200,

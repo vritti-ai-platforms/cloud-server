@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PrimaryBaseRepository, PrimaryDatabaseService } from '@vritti/api-sdk';
+import { BadRequestException, PrimaryBaseRepository, PrimaryDatabaseService } from '@vritti/api-sdk';
 import { and, eq, sql } from '@vritti/api-sdk/drizzle-orm';
 import { type ChangeRequestRateLimit, changeRequestRateLimits } from '@/db/schema';
 
@@ -44,7 +44,10 @@ export class ChangeRequestRateLimitRepository extends PrimaryBaseRepository<type
       .returning()) as ChangeRequestRateLimit[];
     const result = results[0];
     if (!result) {
-      throw new Error(`Failed to increment count: rate limit ${id} not found`);
+      throw new BadRequestException({
+        label: 'Rate Limit Error',
+        detail: 'Unable to update rate limit record. Please try again.',
+      });
     }
     return result;
   }
