@@ -86,12 +86,6 @@ export class MfaVerificationResponseDto {
   expiresIn: number;
 
   @ApiProperty({
-    description: 'Type of the token (always "Bearer" for JWT tokens)',
-    example: 'Bearer',
-  })
-  tokenType: string;
-
-  @ApiProperty({
     description: 'Information about the authenticated user',
     type: MfaVerificationUserDto,
   })

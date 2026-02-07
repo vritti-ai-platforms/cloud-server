@@ -425,7 +425,7 @@ export class SessionService {
 
       const expiresIn = Math.floor((session.accessTokenExpiresAt.getTime() - Date.now()) / 1000);
 
-      return SessionTokenResponseDto.forCloud(session.accessToken, session.refreshToken, expiresIn > 0 ? expiresIn : 0);
+      return SessionTokenResponseDto.forCloud(session.accessToken, expiresIn > 0 ? expiresIn : 0);
     }
   }
 

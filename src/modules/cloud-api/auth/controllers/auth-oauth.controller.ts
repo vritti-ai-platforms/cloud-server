@@ -95,8 +95,8 @@ export class AuthOAuthController {
       // Set refresh token cookie (domain from REFRESH_COOKIE_DOMAIN env var)
       res.setCookie(getRefreshCookieName(), refreshToken, getRefreshCookieOptionsFromConfig());
 
-      // Redirect to frontend with access token
-      const frontendUrl = this.getFrontendRedirectUrl(response, accessToken, expiresIn);
+      // Redirect to frontend (token recovered via GET /auth/token using refresh cookie)
+      const frontendUrl = this.getFrontendRedirectUrl(response);
       res.redirect(frontendUrl, 302);
     } catch (error) {
       this.logger.error('OAuth callback error', error);
@@ -194,13 +194,9 @@ export class AuthOAuthController {
   /**
    * Get frontend redirect URL after successful OAuth
    */
-  private getFrontendRedirectUrl(response: OAuthResponseDto, accessToken: string, expiresIn: number): string {
+  private getFrontendRedirectUrl(response: OAuthResponseDto): string {
     const baseUrl = this.configService.get<string>('FRONTEND_BASE_URL', 'http://cloud.localhost:3012');
     const params = new URLSearchParams({
-      token: accessToken,
-      expiresIn: String(expiresIn),
-      isNewUser: String(response.isNewUser),
-      requiresPassword: String(response.requiresPasswordSetup),
       step: response.user.onboardingStep,
     });
 

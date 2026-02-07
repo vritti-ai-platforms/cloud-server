@@ -44,19 +44,6 @@ export class AuthResponseDto {
   accessToken?: string;
 
   @ApiPropertyOptional({
-    description: 'Refresh token for obtaining new access tokens',
-    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-  })
-  refreshToken?: string;
-
-  @ApiPropertyOptional({
-    description: 'Token type',
-    example: 'Bearer',
-    default: 'Bearer',
-  })
-  tokenType?: string;
-
-  @ApiPropertyOptional({
     description: 'Access token expiry in seconds',
     example: 3600,
   })

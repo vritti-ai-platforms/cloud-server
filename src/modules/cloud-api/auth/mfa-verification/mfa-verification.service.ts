@@ -406,7 +406,6 @@ export class MfaVerificationService {
       ...new MfaVerificationResponseDto({
         accessToken,
         expiresIn,
-        tokenType: 'Bearer',
         user: {
           id: user.id,
           email: user.email,

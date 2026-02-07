@@ -21,12 +21,6 @@ export class SessionTokenResponseDto {
   accessToken?: string;
 
   @ApiPropertyOptional({
-    description: 'JWT refresh token used to obtain new access tokens. Only present when sessionType is "cloud"',
-    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyXzEyMyIsInR5cGUiOiJyZWZyZXNoIiwiaWF0IjoxNTE2MjM5MDIyfQ.8k3nM2pLqR7vX9wYz1tU2sK4jF6hN5cD3eB0aQ9mW7I',
-  })
-  refreshToken?: string;
-
-  @ApiPropertyOptional({
     description: 'Access token expiration time in seconds',
     example: 3600,
   })
@@ -43,11 +37,10 @@ export class SessionTokenResponseDto {
     });
   }
 
-  static forCloud(accessToken: string, refreshToken: string, expiresIn: number): SessionTokenResponseDto {
+  static forCloud(accessToken: string, expiresIn: number): SessionTokenResponseDto {
     return new SessionTokenResponseDto({
       sessionType: 'cloud',
       accessToken,
-      refreshToken,
       expiresIn,
     });
   }
