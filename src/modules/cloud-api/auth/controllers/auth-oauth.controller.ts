@@ -1,10 +1,10 @@
 import { Controller, Get, Logger, Param, Query, Redirect, Request, Res } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ApiTags } from '@nestjs/swagger';
-import { ApiHandleOAuthCallback, ApiLinkOAuthProvider, ApiInitiateOAuth } from '../docs/auth-oauth.docs';
 import { BadRequestException, Onboarding, Public } from '@vritti/api-sdk';
 import type { FastifyReply } from 'fastify';
 import { OnboardingStepValues, SessionTypeValues } from '@/db/schema';
+import { ApiHandleOAuthCallback, ApiInitiateOAuth, ApiLinkOAuthProvider } from '../docs/auth-oauth.docs';
 import type { OAuthResponseDto } from '../oauth/dto/oauth-response.dto';
 import { OAuthService } from '../oauth/services/oauth.service';
 import { getRefreshCookieName, getRefreshCookieOptionsFromConfig, SessionService } from '../services/session.service';

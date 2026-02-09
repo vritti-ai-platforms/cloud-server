@@ -15,26 +15,26 @@ import {
   Res,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import {
-  ApiSignup,
-  ApiGetToken,
-  ApiLogin,
-  ApiRefreshToken,
-  ApiLogout,
-  ApiLogoutAll,
-  ApiGetCurrentUser,
-  ApiForgotPassword,
-  ApiVerifyResetOtp,
-  ApiResetPassword,
-  ApiChangePassword,
-  ApiGetSessions,
-  ApiRevokeSession,
-} from '../docs/auth.docs';
 import { NotFoundException, Public, UnauthorizedException, UserId } from '@vritti/api-sdk';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { SessionTypeValues } from '@/db/schema';
 import type { OnboardingStatusResponseDto } from '../../onboarding/dto/onboarding-status-response.dto';
 import { UserService } from '../../user/user.service';
+import {
+  ApiChangePassword,
+  ApiForgotPassword,
+  ApiGetCurrentUser,
+  ApiGetSessions,
+  ApiGetToken,
+  ApiLogin,
+  ApiLogout,
+  ApiLogoutAll,
+  ApiRefreshToken,
+  ApiResetPassword,
+  ApiRevokeSession,
+  ApiSignup,
+  ApiVerifyResetOtp,
+} from '../docs/auth.docs';
 import type { AuthResponseDto } from '../dto/auth-response.dto';
 import { AuthStatusResponseDto } from '../dto/auth-status-response.dto';
 import { ChangePasswordDto } from '../dto/change-password.dto';
@@ -403,9 +403,7 @@ export class AuthController {
     const targetSession = sessions.find((s) => s.id === sessionId);
 
     if (!targetSession) {
-      throw new NotFoundException(
-        'The session you are trying to revoke does not exist or has already been revoked.',
-      );
+      throw new NotFoundException('The session you are trying to revoke does not exist or has already been revoked.');
     }
 
     // Verify session belongs to user
