@@ -4,9 +4,9 @@ import { eq } from '@vritti/api-sdk/drizzle-orm';
 import * as crypto from 'crypto';
 import { mobileVerifications } from '@/db/schema';
 import { SmsService } from '@/services';
-import { MobileVerificationRepository } from '../../onboarding/repositories/mobile-verification.repository';
-import { OtpService } from '../../onboarding/services/otp.service';
-import { UserService } from '../user.service';
+import { MobileVerificationRepository } from '../../onboarding/mobile-verification/repositories/mobile-verification.repository';
+import { OtpService } from '../../onboarding/root/services/otp.service';
+import { UserService } from './user.service';
 import { PhoneChangeRequestRepository } from '../repositories/phone-change-request.repository';
 import { RateLimitService } from './rate-limit.service';
 
@@ -24,10 +24,7 @@ export class PhoneChangeService {
     private readonly rateLimitService: RateLimitService,
   ) {}
 
-  /**
-   * Step 1: Request identity verification
-   * Send OTP to current phone to confirm user identity
-   */
+  // Sends OTP to current phone to confirm user identity (step 1)
   async requestIdentityVerification(userId: string): Promise<{ verificationId: string; expiresAt: Date }> {
     // Get user details
     const user = await this.userService.findById(userId);
@@ -79,10 +76,7 @@ export class PhoneChangeService {
     };
   }
 
-  /**
-   * Step 2: Verify identity
-   * Verify OTP sent to current phone and create change request
-   */
+  // Verifies OTP sent to current phone and creates change request (step 2)
   async verifyIdentity(
     userId: string,
     verificationId: string,
@@ -162,10 +156,7 @@ export class PhoneChangeService {
     };
   }
 
-  /**
-   * Step 3: Submit new phone
-   * Validate new phone and send verification OTP
-   */
+  // Validates new phone and sends verification OTP to it (step 3)
   async submitNewPhone(
     userId: string,
     changeRequestId: string,
@@ -258,10 +249,7 @@ export class PhoneChangeService {
     };
   }
 
-  /**
-   * Step 4: Verify new phone
-   * Verify OTP sent to new phone and complete the change
-   */
+  // Verifies OTP sent to new phone and completes the change (step 4)
   async verifyNewPhone(
     userId: string,
     changeRequestId: string,
@@ -371,9 +359,7 @@ export class PhoneChangeService {
     };
   }
 
-  /**
-   * Revert phone change using revert token
-   */
+  // Reverts a completed phone change using the revert token
   async revertChange(revertToken: string): Promise<{ success: boolean; revertedPhone: string }> {
     // Find change request by revert token
     const changeRequest = await this.phoneChangeRequestRepo.findCompletedByRevertToken(revertToken);
@@ -430,9 +416,7 @@ export class PhoneChangeService {
     };
   }
 
-  /**
-   * Resend OTP for phone verification
-   */
+  // Resends the verification OTP by deleting the old one and creating a new one
   async resendOtp(userId: string, verificationId: string): Promise<{ success: boolean; expiresAt: Date }> {
     // Find verification
     const verification = await this.mobileVerificationRepo.findById(verificationId);

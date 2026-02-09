@@ -1925,6 +1925,196 @@
         ]
       }
     },
+    "/cloud-api/auth/mfa/verify-totp": {
+      "post": {
+        "operationId": "MfaVerificationController_verifyTotp",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyMfaTotpDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "TOTP code verified successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MfaVerificationResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid TOTP code or malformed request"
+          },
+          "401": {
+            "description": "MFA session expired or invalid"
+          }
+        },
+        "summary": "Verify TOTP code for MFA",
+        "tags": [
+          "MFA"
+        ]
+      }
+    },
+    "/cloud-api/auth/mfa/sms/send": {
+      "post": {
+        "operationId": "MfaVerificationController_sendSmsOtp",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendSmsOtpDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "SMS OTP sent successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SmsOtpSentResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request or phone number not configured"
+          },
+          "401": {
+            "description": "MFA session expired or invalid"
+          }
+        },
+        "summary": "Send SMS OTP for MFA verification",
+        "tags": [
+          "MFA"
+        ]
+      }
+    },
+    "/cloud-api/auth/mfa/sms/verify": {
+      "post": {
+        "operationId": "MfaVerificationController_verifySmsOtp",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifySmsOtpDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "SMS OTP verified successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MfaVerificationResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid OTP code or malformed request"
+          },
+          "401": {
+            "description": "MFA session expired or invalid"
+          }
+        },
+        "summary": "Verify SMS OTP code for MFA",
+        "tags": [
+          "MFA"
+        ]
+      }
+    },
+    "/cloud-api/auth/mfa/passkey/start": {
+      "post": {
+        "operationId": "MfaVerificationController_startPasskeyMfa",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartPasskeyMfaDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Passkey authentication options generated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PasskeyMfaOptionsDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request or no passkeys registered"
+          },
+          "401": {
+            "description": "MFA session expired or invalid"
+          }
+        },
+        "summary": "Start passkey authentication for MFA",
+        "tags": [
+          "MFA"
+        ]
+      }
+    },
+    "/cloud-api/auth/mfa/passkey/verify": {
+      "post": {
+        "operationId": "MfaVerificationController_verifyPasskeyMfa",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyPasskeyMfaDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Passkey verified successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MfaVerificationResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid passkey credential or malformed request"
+          },
+          "401": {
+            "description": "MFA session expired or invalid"
+          }
+        },
+        "summary": "Verify passkey authentication for MFA",
+        "tags": [
+          "MFA"
+        ]
+      }
+    },
     "/cloud-api/onboarding/verify-email": {
       "post": {
         "operationId": "OnboardingController_verifyEmail",
@@ -2753,196 +2943,6 @@
         "summary": "Verify Passkey/WebAuthn credential registration",
         "tags": [
           "Onboarding - Two-Factor Authentication"
-        ]
-      }
-    },
-    "/cloud-api/auth/mfa/verify-totp": {
-      "post": {
-        "operationId": "MfaVerificationController_verifyTotp",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/VerifyMfaTotpDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "TOTP code verified successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MfaVerificationResponseDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid TOTP code or malformed request"
-          },
-          "401": {
-            "description": "MFA session expired or invalid"
-          }
-        },
-        "summary": "Verify TOTP code for MFA",
-        "tags": [
-          "MFA"
-        ]
-      }
-    },
-    "/cloud-api/auth/mfa/sms/send": {
-      "post": {
-        "operationId": "MfaVerificationController_sendSmsOtp",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SendSmsOtpDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "SMS OTP sent successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SmsOtpSentResponseDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid request or phone number not configured"
-          },
-          "401": {
-            "description": "MFA session expired or invalid"
-          }
-        },
-        "summary": "Send SMS OTP for MFA verification",
-        "tags": [
-          "MFA"
-        ]
-      }
-    },
-    "/cloud-api/auth/mfa/sms/verify": {
-      "post": {
-        "operationId": "MfaVerificationController_verifySmsOtp",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/VerifySmsOtpDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "SMS OTP verified successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MfaVerificationResponseDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid OTP code or malformed request"
-          },
-          "401": {
-            "description": "MFA session expired or invalid"
-          }
-        },
-        "summary": "Verify SMS OTP code for MFA",
-        "tags": [
-          "MFA"
-        ]
-      }
-    },
-    "/cloud-api/auth/mfa/passkey/start": {
-      "post": {
-        "operationId": "MfaVerificationController_startPasskeyMfa",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/StartPasskeyMfaDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Passkey authentication options generated successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PasskeyMfaOptionsDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid request or no passkeys registered"
-          },
-          "401": {
-            "description": "MFA session expired or invalid"
-          }
-        },
-        "summary": "Start passkey authentication for MFA",
-        "tags": [
-          "MFA"
-        ]
-      }
-    },
-    "/cloud-api/auth/mfa/passkey/verify": {
-      "post": {
-        "operationId": "MfaVerificationController_verifyPasskeyMfa",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/VerifyPasskeyMfaDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Passkey verified successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MfaVerificationResponseDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid passkey credential or malformed request"
-          },
-          "401": {
-            "description": "MFA session expired or invalid"
-          }
-        },
-        "summary": "Verify passkey authentication for MFA",
-        "tags": [
-          "MFA"
         ]
       }
     }
@@ -3976,122 +3976,6 @@
           "credential"
         ]
       },
-      "VerifyEmailDto": {
-        "type": "object",
-        "properties": {
-          "otp": {
-            "type": "string",
-            "description": "Six-digit one-time password sent to the user email address for verification",
-            "example": "123456",
-            "minLength": 6,
-            "maxLength": 6
-          }
-        },
-        "required": [
-          "otp"
-        ]
-      },
-      "SetPasswordDto": {
-        "type": "object",
-        "properties": {
-          "password": {
-            "type": "string",
-            "description": "User password that must be at least 8 characters and contain at least one lowercase letter, uppercase letter, number, and special character",
-            "example": "SecureP@ss123",
-            "minLength": 8
-          }
-        },
-        "required": [
-          "password"
-        ]
-      },
-      "InitiateMobileVerificationDto": {
-        "type": "object",
-        "properties": {
-          "phone": {
-            "type": "string",
-            "description": "Phone number in E.164 format (with + prefix). Optional for QR-based methods, required for OTP-based method.",
-            "example": "+919876543210",
-            "minLength": 10,
-            "maxLength": 20
-          },
-          "phoneCountry": {
-            "type": "string",
-            "description": "ISO 3166-1 alpha-2 country code for the phone number",
-            "example": "IN",
-            "minLength": 2,
-            "maxLength": 5
-          },
-          "method": {
-            "type": "string",
-            "description": "Method to use for mobile verification. Defaults to WHATSAPP_QR.",
-            "example": "WHATSAPP_QR",
-            "enum": [
-              "WHATSAPP_QR",
-              "SMS_QR",
-              "MANUAL_OTP"
-            ],
-            "default": "WHATSAPP_QR"
-          }
-        }
-      },
-      "VerifyMobileOtpDto": {
-        "type": "object",
-        "properties": {
-          "otp": {
-            "type": "string",
-            "description": "Six-digit one-time password received via SMS for mobile verification",
-            "example": "123456",
-            "minLength": 6,
-            "maxLength": 6
-          }
-        },
-        "required": [
-          "otp"
-        ]
-      },
-      "VerifyTotpDto": {
-        "type": "object",
-        "properties": {
-          "token": {
-            "type": "string",
-            "description": "Six-digit TOTP verification code from the authenticator app",
-            "example": "123456",
-            "minLength": 6,
-            "maxLength": 6
-          }
-        },
-        "required": [
-          "token"
-        ]
-      },
-      "VerifyPasskeyDto": {
-        "type": "object",
-        "properties": {
-          "credential": {
-            "type": "object",
-            "description": "WebAuthn credential registration response from the browser containing attestation data",
-            "example": {
-              "id": "base64url-credential-id",
-              "rawId": "base64url-raw-credential-id",
-              "response": {
-                "clientDataJSON": "base64url-client-data",
-                "attestationObject": "base64url-attestation-object",
-                "transports": [
-                  "internal",
-                  "hybrid"
-                ]
-              },
-              "authenticatorAttachment": "platform",
-              "clientExtensionResults": {},
-              "type": "public-key"
-            }
-          }
-        },
-        "required": [
-          "credential"
-        ]
-      },
       "VerifyMfaTotpDto": {
         "type": "object",
         "properties": {
@@ -4371,6 +4255,122 @@
         },
         "required": [
           "sessionId",
+          "credential"
+        ]
+      },
+      "VerifyEmailDto": {
+        "type": "object",
+        "properties": {
+          "otp": {
+            "type": "string",
+            "description": "Six-digit one-time password sent to the user email address for verification",
+            "example": "123456",
+            "minLength": 6,
+            "maxLength": 6
+          }
+        },
+        "required": [
+          "otp"
+        ]
+      },
+      "SetPasswordDto": {
+        "type": "object",
+        "properties": {
+          "password": {
+            "type": "string",
+            "description": "User password that must be at least 8 characters and contain at least one lowercase letter, uppercase letter, number, and special character",
+            "example": "SecureP@ss123",
+            "minLength": 8
+          }
+        },
+        "required": [
+          "password"
+        ]
+      },
+      "InitiateMobileVerificationDto": {
+        "type": "object",
+        "properties": {
+          "phone": {
+            "type": "string",
+            "description": "Phone number in E.164 format (with + prefix). Optional for QR-based methods, required for OTP-based method.",
+            "example": "+919876543210",
+            "minLength": 10,
+            "maxLength": 20
+          },
+          "phoneCountry": {
+            "type": "string",
+            "description": "ISO 3166-1 alpha-2 country code for the phone number",
+            "example": "IN",
+            "minLength": 2,
+            "maxLength": 5
+          },
+          "method": {
+            "type": "string",
+            "description": "Method to use for mobile verification. Defaults to WHATSAPP_QR.",
+            "example": "WHATSAPP_QR",
+            "enum": [
+              "WHATSAPP_QR",
+              "SMS_QR",
+              "MANUAL_OTP"
+            ],
+            "default": "WHATSAPP_QR"
+          }
+        }
+      },
+      "VerifyMobileOtpDto": {
+        "type": "object",
+        "properties": {
+          "otp": {
+            "type": "string",
+            "description": "Six-digit one-time password received via SMS for mobile verification",
+            "example": "123456",
+            "minLength": 6,
+            "maxLength": 6
+          }
+        },
+        "required": [
+          "otp"
+        ]
+      },
+      "VerifyTotpDto": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "Six-digit TOTP verification code from the authenticator app",
+            "example": "123456",
+            "minLength": 6,
+            "maxLength": 6
+          }
+        },
+        "required": [
+          "token"
+        ]
+      },
+      "VerifyPasskeyDto": {
+        "type": "object",
+        "properties": {
+          "credential": {
+            "type": "object",
+            "description": "WebAuthn credential registration response from the browser containing attestation data",
+            "example": {
+              "id": "base64url-credential-id",
+              "rawId": "base64url-raw-credential-id",
+              "response": {
+                "clientDataJSON": "base64url-client-data",
+                "attestationObject": "base64url-attestation-object",
+                "transports": [
+                  "internal",
+                  "hybrid"
+                ]
+              },
+              "authenticatorAttachment": "platform",
+              "clientExtensionResults": {},
+              "type": "public-key"
+            }
+          }
+        },
+        "required": [
           "credential"
         ]
       }

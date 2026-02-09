@@ -1,10 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import type { TenantDatabaseConfig } from '@/db/schema';
 
-/**
- * Response DTO for tenant database configuration
- * Excludes sensitive fields (dbUsername, dbPassword) for security
- */
 export class TenantDatabaseConfigResponseDto {
   @ApiProperty({
     description: 'Unique identifier for the database configuration',
@@ -82,10 +78,7 @@ export class TenantDatabaseConfigResponseDto {
     Object.assign(this, partial);
   }
 
-  /**
-   * Create from TenantDatabaseConfig model, excluding sensitive fields
-   * Explicitly excludes: dbUsername, dbPassword
-   */
+  // Excludes dbUsername and dbPassword from the response
   static from(config: TenantDatabaseConfig): TenantDatabaseConfigResponseDto {
     return new TenantDatabaseConfigResponseDto({
       id: config.id,

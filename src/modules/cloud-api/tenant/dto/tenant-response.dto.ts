@@ -2,7 +2,6 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import type { DatabaseType, Tenant, TenantDatabaseConfig, TenantStatus } from '@/db/schema';
 import { TenantDatabaseConfigResponseDto } from './tenant-database-config-response.dto';
 
-/** Tenant with optional database configuration relation */
 type TenantWithConfig = Tenant & {
   databaseConfig?: TenantDatabaseConfig | null;
 };
@@ -76,11 +75,6 @@ export class TenantResponseDto {
     Object.assign(this, partial);
   }
 
-  /**
-   * Create from Tenant model with optional database configuration
-   * @param tenant - Tenant model with optional databaseConfig relation
-   * @returns TenantResponseDto with sanitized database configuration
-   */
   static from(tenant: TenantWithConfig): TenantResponseDto {
     return new TenantResponseDto({
       id: tenant.id,

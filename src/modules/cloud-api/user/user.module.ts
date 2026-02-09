@@ -10,8 +10,8 @@ import { PhoneChangeRequestRepository } from './repositories/phone-change-reques
 import { EmailChangeService } from './services/email-change.service';
 import { PhoneChangeService } from './services/phone-change.service';
 import { RateLimitService } from './services/rate-limit.service';
-import { UserRepository } from './user.repository';
-import { UserService } from './user.service';
+import { UserRepository } from './repositories/user.repository';
+import { UserService } from './services/user.service';
 
 @Module({
   imports: [forwardRef(() => AuthModule), forwardRef(() => OnboardingModule)],

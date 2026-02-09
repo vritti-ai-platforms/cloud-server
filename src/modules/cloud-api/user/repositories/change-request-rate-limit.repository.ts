@@ -9,9 +9,7 @@ export class ChangeRequestRateLimitRepository extends PrimaryBaseRepository<type
     super(database, changeRequestRateLimits);
   }
 
-  /**
-   * Find rate limit record by user ID, change type, and date
-   */
+  // Finds a rate limit record for the given user, change type, and date
   async findByUserAndDate(
     userId: string,
     changeType: 'email' | 'phone',
@@ -29,9 +27,7 @@ export class ChangeRequestRateLimitRepository extends PrimaryBaseRepository<type
     return results[0];
   }
 
-  /**
-   * Increment request count for a rate limit record
-   */
+  // Increments the request count for a rate limit record
   async incrementCount(id: string): Promise<ChangeRequestRateLimit> {
     this.logger.debug(`Incrementing request count for rate limit: ${id}`);
     const results = (await this.db

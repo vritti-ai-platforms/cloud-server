@@ -5,32 +5,33 @@ import { jwtConfigFactory } from '../../../config/jwt.config';
 import { ServicesModule } from '../../../services';
 import { OnboardingModule } from '../onboarding/onboarding.module';
 import { UserModule } from '../user/user.module';
-import { AuthController } from './controllers/auth.controller';
-import { AuthOAuthController } from './controllers/auth-oauth.controller';
-import { PasskeyAuthController } from './controllers/passkey-auth.controller';
-import { MfaVerificationModule } from './mfa-verification/mfa-verification.module';
-import { AppleOAuthProvider } from './oauth/apple-oauth.provider';
-import { FacebookOAuthProvider } from './oauth/facebook-oauth.provider';
-import { GoogleOAuthProvider } from './oauth/google-oauth.provider';
-import { MicrosoftOAuthProvider } from './oauth/microsoft-oauth.provider';
+// MFA verification submodule
+import { MfaVerificationController } from './mfa-verification/controllers/mfa-verification.controller';
+import { MfaChallengeStore } from './mfa-verification/services/mfa-challenge.store';
+import { MfaVerificationService } from './mfa-verification/services/mfa-verification.service';
+// OAuth submodule
+import { AuthOAuthController } from './oauth/controllers/auth-oauth.controller';
+import { AppleOAuthProvider } from './oauth/providers/apple-oauth.provider';
+import { FacebookOAuthProvider } from './oauth/providers/facebook-oauth.provider';
+import { GoogleOAuthProvider } from './oauth/providers/google-oauth.provider';
+import { MicrosoftOAuthProvider } from './oauth/providers/microsoft-oauth.provider';
+import { TwitterOAuthProvider } from './oauth/providers/twitter-oauth.provider';
 import { OAuthProviderRepository } from './oauth/repositories/oauth-provider.repository';
 import { OAuthStateRepository } from './oauth/repositories/oauth-state.repository';
-// OAuth imports
 import { OAuthService } from './oauth/services/oauth.service';
 import { OAuthStateService } from './oauth/services/oauth-state.service';
-import { TwitterOAuthProvider } from './oauth/twitter-oauth.provider';
-import { PasswordResetRepository } from './repositories/password-reset.repository';
-import { SessionRepository } from './repositories/session.repository';
-import { AuthService } from './services/auth.service';
-import { PasswordResetService } from './services/password-reset.service';
-import { JwtAuthService } from './services/jwt.service';
-import { PasskeyAuthService } from './services/passkey-auth.service';
-import { SessionService } from './services/session.service';
+// Passkey submodule
+import { PasskeyAuthController } from './passkey/controllers/passkey-auth.controller';
+import { PasskeyAuthService } from './passkey/services/passkey-auth.service';
+// Root submodule
+import { AuthController } from './root/controllers/auth.controller';
+import { PasswordResetRepository } from './root/repositories/password-reset.repository';
+import { SessionRepository } from './root/repositories/session.repository';
+import { AuthService } from './root/services/auth.service';
+import { JwtAuthService } from './root/services/jwt.service';
+import { PasswordResetService } from './root/services/password-reset.service';
+import { SessionService } from './root/services/session.service';
 
-/**
- * Auth Module
- * Handles user authentication, session management, and JWT tokens
- */
 @Module({
   imports: [
     JwtModule.registerAsync({
@@ -40,19 +41,19 @@ import { SessionService } from './services/session.service';
     ServicesModule,
     forwardRef(() => UserModule),
     forwardRef(() => OnboardingModule),
-    forwardRef(() => MfaVerificationModule),
   ],
-  controllers: [AuthController, AuthOAuthController, PasskeyAuthController],
+  controllers: [AuthController, AuthOAuthController, PasskeyAuthController, MfaVerificationController],
   providers: [
+    // Root
     AuthService,
     JwtAuthService,
     SessionService,
     SessionRepository,
-    PasskeyAuthService,
-    // Password reset
     PasswordResetService,
     PasswordResetRepository,
-    // OAuth providers
+    // Passkey
+    PasskeyAuthService,
+    // OAuth
     OAuthService,
     OAuthStateService,
     OAuthProviderRepository,
@@ -62,7 +63,10 @@ import { SessionService } from './services/session.service';
     AppleOAuthProvider,
     FacebookOAuthProvider,
     TwitterOAuthProvider,
+    // MFA verification
+    MfaVerificationService,
+    MfaChallengeStore,
   ],
-  exports: [AuthService, JwtAuthService, SessionService],
+  exports: [AuthService, JwtAuthService, SessionService, MfaVerificationService, MfaChallengeStore],
 })
 export class AuthModule {}

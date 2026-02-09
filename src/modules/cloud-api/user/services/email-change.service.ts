@@ -4,10 +4,10 @@ import { eq } from '@vritti/api-sdk/drizzle-orm';
 import * as crypto from 'crypto';
 import { emailVerifications } from '@/db/schema';
 import { EmailService } from '@/services';
-import { EmailVerificationService } from '../../onboarding/services/email-verification.service';
-import { OtpService } from '../../onboarding/services/otp.service';
-import { UserService } from '../user.service';
-import { EmailVerificationRepository } from '../../onboarding/repositories/email-verification.repository';
+import { EmailVerificationService } from '../../onboarding/root/services/email-verification.service';
+import { OtpService } from '../../onboarding/root/services/otp.service';
+import { UserService } from './user.service';
+import { EmailVerificationRepository } from '../../onboarding/root/repositories/email-verification.repository';
 import { EmailChangeRequestRepository } from '../repositories/email-change-request.repository';
 import { RateLimitService } from './rate-limit.service';
 
@@ -26,10 +26,7 @@ export class EmailChangeService {
     private readonly rateLimitService: RateLimitService,
   ) {}
 
-  /**
-   * Step 1: Request identity verification
-   * Send OTP to current email to confirm user identity
-   */
+  // Sends OTP to current email to confirm user identity (step 1)
   async requestIdentityVerification(userId: string): Promise<{ verificationId: string; expiresAt: Date }> {
     // Get user details
     const user = await this.userService.findById(userId);
@@ -61,10 +58,7 @@ export class EmailChangeService {
     };
   }
 
-  /**
-   * Step 2: Verify identity
-   * Verify OTP sent to current email and create change request
-   */
+  // Verifies OTP sent to current email and creates change request (step 2)
   async verifyIdentity(
     userId: string,
     verificationId: string,
@@ -129,10 +123,7 @@ export class EmailChangeService {
     };
   }
 
-  /**
-   * Step 3: Submit new email
-   * Validate new email and send verification OTP
-   */
+  // Validates new email and sends verification OTP to it (step 3)
   async submitNewEmail(
     userId: string,
     changeRequestId: string,
@@ -206,10 +197,7 @@ export class EmailChangeService {
     };
   }
 
-  /**
-   * Step 4: Verify new email
-   * Verify OTP sent to new email and complete the change
-   */
+  // Verifies OTP sent to new email and completes the change (step 4)
   async verifyNewEmail(
     userId: string,
     changeRequestId: string,
@@ -316,9 +304,7 @@ export class EmailChangeService {
     };
   }
 
-  /**
-   * Revert email change using revert token
-   */
+  // Reverts a completed email change using the revert token
   async revertChange(revertToken: string): Promise<{ success: boolean; revertedEmail: string }> {
     // Find change request by revert token
     const changeRequest = await this.emailChangeRequestRepo.findCompletedByRevertToken(revertToken);
@@ -371,9 +357,7 @@ export class EmailChangeService {
     };
   }
 
-  /**
-   * Resend OTP for email verification
-   */
+  // Resends the verification OTP by deleting the old one and creating a new one
   async resendOtp(userId: string, verificationId: string): Promise<{ success: boolean; expiresAt: Date }> {
     // Find verification
     const verification = await this.emailVerificationRepo.findById(verificationId);

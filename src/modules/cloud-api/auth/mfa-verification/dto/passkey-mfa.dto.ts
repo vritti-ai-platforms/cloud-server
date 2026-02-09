@@ -1,9 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsObject, IsString } from 'class-validator';
 
-/**
- * WebAuthn authenticator response containing cryptographic proof
- */
 class AuthenticatorResponseDto {
   @ApiProperty({
     description: 'Base64URL-encoded client data JSON containing challenge and origin',
@@ -31,9 +28,6 @@ class AuthenticatorResponseDto {
   userHandle?: string;
 }
 
-/**
- * WebAuthn authentication response type for API documentation
- */
 class AuthenticationResponseJSONDto {
   @ApiProperty({
     description: 'Base64URL-encoded credential identifier',
@@ -75,9 +69,6 @@ class AuthenticationResponseJSONDto {
   type: 'public-key';
 }
 
-/**
- * WebAuthn authentication response type
- */
 interface AuthenticationResponseJSON {
   id: string;
   rawId: string;

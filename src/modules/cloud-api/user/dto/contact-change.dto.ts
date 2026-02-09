@@ -1,9 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEmail, IsNotEmpty, IsString, IsUUID, Length, Matches } from 'class-validator';
 
-/**
- * DTO for verifying identity (Step 2)
- */
 export class VerifyIdentityDto {
   @ApiProperty({
     description: 'Verification ID from step 1',
@@ -25,9 +22,6 @@ export class VerifyIdentityDto {
   otpCode: string;
 }
 
-/**
- * DTO for submitting new email (Step 3)
- */
 export class SubmitNewEmailDto {
   @ApiProperty({
     description: 'Change request ID from step 2',
@@ -46,9 +40,6 @@ export class SubmitNewEmailDto {
   newEmail: string;
 }
 
-/**
- * DTO for verifying new email (Step 4)
- */
 export class VerifyNewEmailDto {
   @ApiProperty({
     description: 'Change request ID from step 2',
@@ -78,9 +69,6 @@ export class VerifyNewEmailDto {
   otpCode: string;
 }
 
-/**
- * DTO for reverting email change
- */
 export class RevertEmailChangeDto {
   @ApiProperty({
     description: 'Revert token from email notification',
@@ -91,9 +79,6 @@ export class RevertEmailChangeDto {
   revertToken: string;
 }
 
-/**
- * DTO for resending OTP
- */
 export class ResendOtpDto {
   @ApiProperty({
     description: 'Verification ID to resend OTP for',
@@ -104,9 +89,6 @@ export class ResendOtpDto {
   verificationId: string;
 }
 
-/**
- * DTO for submitting new phone (Step 3)
- */
 export class SubmitNewPhoneDto {
   @ApiProperty({
     description: 'Change request ID from step 2',
@@ -135,9 +117,6 @@ export class SubmitNewPhoneDto {
   newPhoneCountry: string;
 }
 
-/**
- * DTO for verifying new phone (Step 4)
- */
 export class VerifyNewPhoneDto {
   @ApiProperty({
     description: 'Change request ID from step 2',
@@ -167,9 +146,6 @@ export class VerifyNewPhoneDto {
   otpCode: string;
 }
 
-/**
- * DTO for reverting phone change
- */
 export class RevertPhoneChangeDto {
   @ApiProperty({
     description: 'Revert token from notification',

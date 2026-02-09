@@ -1,10 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsIn, IsInt, IsOptional, IsString, Max, Min, MinLength } from 'class-validator';
 
-/**
- * DTO for creating tenant database configuration
- * Contains database connection details for DEDICATED tenants
- */
 export class CreateTenantDatabaseConfigDto {
   @ApiProperty({
     description: 'Database server hostname or IP address',

@@ -5,12 +5,6 @@ import { JwtService } from '@nestjs/jwt';
 import { BadRequestException, UnauthorizedException } from '@vritti/api-sdk';
 import { type OAuthProviderType, OAuthProviderTypeValues, OnboardingStepValues, type User } from '@/db/schema';
 
-/**
- * Validates and converts a provider string to OAuthProviderType
- * @param providerStr - The raw provider string from the request
- * @returns The validated OAuthProviderType
- * @throws BadRequestException if provider is invalid
- */
 function validateProviderString(providerStr: string): OAuthProviderType {
   const upperProvider = providerStr.toUpperCase();
 
@@ -26,23 +20,19 @@ function validateProviderString(providerStr: string): OAuthProviderType {
 }
 
 import { getTokenExpiry, TokenType } from '../../../../../config/jwt.config';
-import { UserRepository } from '../../../user/user.repository';
-import { AppleOAuthProvider } from '../apple-oauth.provider';
+import { UserRepository } from '../../../user/repositories/user.repository';
 import { OAuthResponseDto } from '../dto/oauth-response.dto';
-import { FacebookOAuthProvider } from '../facebook-oauth.provider';
-import { GoogleOAuthProvider } from '../google-oauth.provider';
 import type { IOAuthProvider } from '../interfaces/oauth-provider.interface';
 import type { OAuthTokens } from '../interfaces/oauth-tokens.interface';
 import type { OAuthUserProfile } from '../interfaces/oauth-user-profile.interface';
-import { MicrosoftOAuthProvider } from '../microsoft-oauth.provider';
+import { AppleOAuthProvider } from '../providers/apple-oauth.provider';
+import { FacebookOAuthProvider } from '../providers/facebook-oauth.provider';
+import { GoogleOAuthProvider } from '../providers/google-oauth.provider';
+import { MicrosoftOAuthProvider } from '../providers/microsoft-oauth.provider';
+import { TwitterOAuthProvider } from '../providers/twitter-oauth.provider';
 import { OAuthProviderRepository } from '../repositories/oauth-provider.repository';
-import { TwitterOAuthProvider } from '../twitter-oauth.provider';
 import { OAuthStateService } from './oauth-state.service';
 
-/**
- * Main OAuth Service
- * Orchestrates OAuth authentication flow for all providers
- */
 @Injectable()
 export class OAuthService {
   private readonly logger = new Logger(OAuthService.name);
@@ -75,12 +65,7 @@ export class OAuthService {
     ] as [OAuthProviderType, IOAuthProvider][]);
   }
 
-  /**
-   * Initiate OAuth flow
-   * @param providerStr - OAuth provider string (will be validated)
-   * @param userId - Optional user ID (for linking OAuth to existing user)
-   * @returns Authorization URL and state token
-   */
+  // Generates an authorization URL with PKCE and state, then stores the state in DB
   async initiateOAuth(providerStr: string, userId?: string): Promise<{ url: string; state: string }> {
     const provider = validateProviderString(providerStr);
     const oauthProvider = this.getProvider(provider);
@@ -100,13 +85,7 @@ export class OAuthService {
     return { url, state };
   }
 
-  /**
-   * Handle OAuth callback
-   * @param providerStr - OAuth provider string (will be validated)
-   * @param code - Authorization code from provider
-   * @param state - State token from OAuth flow
-   * @returns OAuth response with onboarding token
-   */
+  // Exchanges the authorization code for tokens, finds or creates the user, and links the provider
   async handleCallback(providerStr: string, code: string, state: string): Promise<OAuthResponseDto> {
     console.log('hi Sunvish2');
 
@@ -146,9 +125,6 @@ export class OAuthService {
     return OAuthResponseDto.create(onboardingToken, user, isNewUser);
   }
 
-  /**
-   * Find or create user from OAuth profile
-   */
   private async findOrCreateUser(
     profile: OAuthUserProfile,
     linkToUserId?: string,
@@ -193,9 +169,6 @@ export class OAuthService {
     return { user: newUser, isNewUser: true };
   }
 
-  /**
-   * Link OAuth provider to user account
-   */
   private async linkOAuthProvider(userId: string, profile: OAuthUserProfile, tokens: OAuthTokens): Promise<void> {
     // Calculate token expiry
     const tokenExpiresAt = tokens.expiresIn ? new Date(Date.now() + tokens.expiresIn * 1000) : undefined;
@@ -205,9 +178,6 @@ export class OAuthService {
     this.logger.log(`Linked OAuth provider: ${profile.provider} to user: ${userId}`);
   }
 
-  /**
-   * Generate onboarding JWT token
-   */
   private generateOnboardingToken(userId: string): string {
     return this.jwtService.sign(
       {
@@ -220,9 +190,6 @@ export class OAuthService {
     );
   }
 
-  /**
-   * Get OAuth provider implementation
-   */
   private getProvider(provider: OAuthProviderType): IOAuthProvider {
     const oauthProvider = this.providers.get(provider);
     if (!oauthProvider) {
@@ -231,16 +198,10 @@ export class OAuthService {
     return oauthProvider;
   }
 
-  /**
-   * Generate PKCE code verifier (random string)
-   */
   private generateCodeVerifier(): string {
     return crypto.randomBytes(32).toString('base64url');
   }
 
-  /**
-   * Generate PKCE code challenge from verifier
-   */
   private generateCodeChallenge(verifier: string): string {
     return crypto.createHash('sha256').update(verifier).digest('base64url');
   }

@@ -9,16 +9,12 @@ export class PhoneChangeRequestRepository extends PrimaryBaseRepository<typeof p
     super(database, phoneChangeRequests);
   }
 
-  /**
-   * Find phone change request by ID
-   */
+  // Finds a phone change request by its ID
   async findById(id: string): Promise<PhoneChangeRequest | undefined> {
     return this.findOne({ id });
   }
 
-  /**
-   * Find active (non-completed) phone change requests for a user
-   */
+  // Retrieves all incomplete phone change requests for a user
   async findActiveByUserId(userId: string): Promise<PhoneChangeRequest[]> {
     return this.findMany({
       where: { userId, isCompleted: false },
@@ -26,16 +22,12 @@ export class PhoneChangeRequestRepository extends PrimaryBaseRepository<typeof p
     });
   }
 
-  /**
-   * Find phone change request by revert token
-   */
+  // Finds a phone change request by its revert token
   async findByRevertToken(revertToken: string): Promise<PhoneChangeRequest | undefined> {
     return this.findOne({ revertToken });
   }
 
-  /**
-   * Mark phone change request as completed
-   */
+  // Marks a phone change request as completed with revert token
   async markAsCompleted(id: string, revertToken: string, revertExpiresAt: Date): Promise<PhoneChangeRequest> {
     return this.update(id, {
       isCompleted: true,
@@ -45,19 +37,14 @@ export class PhoneChangeRequestRepository extends PrimaryBaseRepository<typeof p
     });
   }
 
-  /**
-   * Mark phone change request as reverted
-   */
+  // Marks a phone change request as reverted
   async markAsReverted(id: string): Promise<PhoneChangeRequest> {
     return this.update(id, {
       revertedAt: new Date(),
     });
   }
 
-  /**
-   * Delete incomplete change requests for a user
-   * Used to clean up before creating a new request
-   */
+  // Deletes all incomplete phone change requests for a user
   async deleteIncompleteForUser(userId: string): Promise<number> {
     const condition = and(eq(phoneChangeRequests.userId, userId), eq(phoneChangeRequests.isCompleted, false));
     if (!condition) {
@@ -67,9 +54,7 @@ export class PhoneChangeRequestRepository extends PrimaryBaseRepository<typeof p
     return result.count;
   }
 
-  /**
-   * Find completed but not reverted phone change request by revert token
-   */
+  // Finds a completed, non-reverted phone change request by revert token
   async findCompletedByRevertToken(revertToken: string): Promise<PhoneChangeRequest | undefined> {
     const condition = and(
       eq(phoneChangeRequests.revertToken, revertToken),

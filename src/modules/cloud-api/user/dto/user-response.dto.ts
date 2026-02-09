@@ -71,11 +71,7 @@ export class UserResponseDto {
     Object.assign(this, partial);
   }
 
-  /**
-   * Create from User model
-   * @param user - User model from database
-   * @returns UserResponseDto without sensitive data (passwordHash excluded)
-   */
+  // Creates a response DTO from a User model
   static from(user: User): UserResponseDto {
     return new UserResponseDto({
       id: user.id,

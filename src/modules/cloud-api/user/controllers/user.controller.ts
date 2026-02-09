@@ -1,17 +1,12 @@
 import { Body, Controller, Delete, Get, Logger, Param, Put } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { UserId } from '@vritti/api-sdk';
-import { SessionService } from '../../auth/services/session.service';
+import { SessionService } from '../../auth/root/services/session.service';
 import { ApiFindAllUsers, ApiFindUserById, ApiUpdateProfile, ApiDeleteAccount } from '../docs/user.docs';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { UserResponseDto } from '../dto/user-response.dto';
-import { UserService } from '../user.service';
+import { UserService } from '../services/user.service';
 
-/**
- * User Controller
- * Note: This controller provides basic read operations for internal use.
- * User creation/update is handled by Onboarding and Auth modules.
- */
 @ApiTags('Users')
 @ApiBearerAuth()
 @Controller('users')
@@ -23,10 +18,7 @@ export class UserController {
     private readonly sessionService: SessionService,
   ) {}
 
-  /**
-   * Get all users (admin/internal use)
-   * GET /users
-   */
+  // Retrieves all users in the system
   @Get()
   @ApiFindAllUsers()
   async findAll(): Promise<UserResponseDto[]> {
@@ -34,10 +26,7 @@ export class UserController {
     return await this.userService.findAll();
   }
 
-  /**
-   * Get user by ID
-   * GET /users/:id
-   */
+  // Retrieves a single user by their unique identifier
   @Get(':id')
   @ApiFindUserById()
   async findById(@Param('id') id: string): Promise<UserResponseDto> {
@@ -45,10 +34,7 @@ export class UserController {
     return await this.userService.findById(id);
   }
 
-  /**
-   * Update user profile
-   * PUT /users/profile
-   */
+  // Updates the authenticated user's profile information
   @Put('profile')
   @ApiUpdateProfile()
   async updateProfile(@UserId() userId: string, @Body() updateUserDto: UpdateUserDto): Promise<UserResponseDto> {
@@ -56,10 +42,7 @@ export class UserController {
     return await this.userService.update(userId, updateUserDto);
   }
 
-  /**
-   * Delete user account
-   * DELETE /users/account
-   */
+  // Deactivates the authenticated user's account and invalidates all sessions
   @Delete('account')
   @ApiDeleteAccount()
   async deleteAccount(@UserId() userId: string): Promise<{ message: string }> {

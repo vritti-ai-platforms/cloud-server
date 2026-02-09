@@ -9,13 +9,7 @@ export class RateLimitService {
 
   constructor(private readonly rateLimitRepo: ChangeRequestRateLimitRepository) {}
 
-  /**
-   * Check and increment change request limit
-   * @param userId - User ID
-   * @param changeType - 'email' or 'phone'
-   * @returns Object with allowed flag and current request count
-   * @throws BadRequestException if daily limit exceeded
-   */
+  // Checks daily limit and increments counter; throws if limit exceeded
   async checkAndIncrementChangeRequestLimit(
     userId: string,
     changeType: 'email' | 'phone',
@@ -55,9 +49,7 @@ export class RateLimitService {
     return { allowed, requestsToday: newCount };
   }
 
-  /**
-   * Get current request count for today
-   */
+  // Returns the current daily change request count for the given user and type
   async getCurrentRequestCount(userId: string, changeType: 'email' | 'phone'): Promise<number> {
     const today = new Date().toISOString().split('T')[0];
     const rateLimit = await this.rateLimitRepo.findByUserAndDate(userId, changeType, today);

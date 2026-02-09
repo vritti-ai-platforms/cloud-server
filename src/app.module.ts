@@ -13,7 +13,6 @@ import { AppService } from './app.service';
 import { validate } from './config/env.validation';
 import { CsrfController } from './csrf.controller';
 import { AuthModule } from './modules/cloud-api/auth/auth.module';
-import { MfaVerificationModule } from './modules/cloud-api/auth/mfa-verification/mfa-verification.module';
 import { OnboardingModule } from './modules/cloud-api/onboarding/onboarding.module';
 import { TenantModule } from './modules/cloud-api/tenant/tenant.module';
 import { UserModule } from './modules/cloud-api/user/user.module';
@@ -95,12 +94,11 @@ import { UserModule } from './modules/cloud-api/user/user.module';
     UserModule,
     OnboardingModule,
     AuthModule,
-    MfaVerificationModule,
     // Cloud API routes with 'cloud-api' prefix
     RouterModule.register([
       {
         path: 'cloud-api',
-        children: [TenantModule, UserModule, OnboardingModule, AuthModule, MfaVerificationModule],
+        children: [TenantModule, UserModule, OnboardingModule, AuthModule],
       },
     ]),
   ],

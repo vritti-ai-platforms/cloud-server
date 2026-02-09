@@ -1,10 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-import type { MfaMethod } from '../mfa-challenge.store';
+import type { MfaMethod } from '../services/mfa-challenge.store';
 
-/**
- * User information returned after successful MFA verification
- */
 class MfaVerificationUserDto {
   @ApiProperty({
     description: 'Unique identifier for the user',
@@ -33,9 +30,6 @@ class MfaVerificationUserDto {
   lastName?: string | null;
 }
 
-/**
- * MFA Challenge response - returned when login requires MFA
- */
 export class MfaChallengeDto {
   @ApiProperty({
     description: 'Unique session identifier for the MFA challenge. Use this in subsequent MFA verification requests.',
@@ -69,9 +63,6 @@ export class MfaChallengeDto {
   }
 }
 
-/**
- * MFA verification success response
- */
 export class MfaVerificationResponseDto {
   @ApiProperty({
     description: 'JWT access token for authenticating subsequent API requests',
@@ -96,9 +87,6 @@ export class MfaVerificationResponseDto {
   }
 }
 
-/**
- * Passkey MFA start response
- */
 export class PasskeyMfaOptionsDto<T = unknown> {
   @ApiProperty({
     description: 'WebAuthn authentication options to be passed to the browser credentials API (navigator.credentials.get)',
@@ -122,9 +110,6 @@ export class PasskeyMfaOptionsDto<T = unknown> {
   }
 }
 
-/**
- * SMS OTP send response
- */
 export class SmsOtpSentResponseDto {
   @ApiProperty({
     description: 'Indicates whether the SMS OTP was sent successfully',

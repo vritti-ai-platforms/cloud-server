@@ -1,8 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-/**
- * User information returned in OAuth response
- */
 class OAuthUserDto {
   @ApiProperty({
     description: 'Unique identifier for the user',
@@ -44,9 +41,6 @@ class OAuthUserDto {
   emailVerified: boolean;
 }
 
-/**
- * Response DTO for OAuth authentication
- */
 export class OAuthResponseDto {
   @ApiProperty({
     description: 'JWT token for continuing the onboarding flow after OAuth authentication',
@@ -79,9 +73,6 @@ export class OAuthResponseDto {
   })
   requiresPasswordSetup: boolean;
 
-  /**
-   * Factory method to create OAuthResponseDto
-   */
   static create(
     onboardingToken: string,
     user: {

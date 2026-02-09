@@ -9,16 +9,12 @@ export class EmailChangeRequestRepository extends PrimaryBaseRepository<typeof e
     super(database, emailChangeRequests);
   }
 
-  /**
-   * Find email change request by ID
-   */
+  // Finds an email change request by its ID
   async findById(id: string): Promise<EmailChangeRequest | undefined> {
     return this.findOne({ id });
   }
 
-  /**
-   * Find active (non-completed) email change requests for a user
-   */
+  // Retrieves all incomplete email change requests for a user
   async findActiveByUserId(userId: string): Promise<EmailChangeRequest[]> {
     return this.findMany({
       where: { userId, isCompleted: false },
@@ -26,16 +22,12 @@ export class EmailChangeRequestRepository extends PrimaryBaseRepository<typeof e
     });
   }
 
-  /**
-   * Find email change request by revert token
-   */
+  // Finds an email change request by its revert token
   async findByRevertToken(revertToken: string): Promise<EmailChangeRequest | undefined> {
     return this.findOne({ revertToken });
   }
 
-  /**
-   * Mark email change request as completed
-   */
+  // Marks an email change request as completed with revert token
   async markAsCompleted(id: string, revertToken: string, revertExpiresAt: Date): Promise<EmailChangeRequest> {
     return this.update(id, {
       isCompleted: true,
@@ -45,19 +37,14 @@ export class EmailChangeRequestRepository extends PrimaryBaseRepository<typeof e
     });
   }
 
-  /**
-   * Mark email change request as reverted
-   */
+  // Marks an email change request as reverted
   async markAsReverted(id: string): Promise<EmailChangeRequest> {
     return this.update(id, {
       revertedAt: new Date(),
     });
   }
 
-  /**
-   * Delete incomplete change requests for a user
-   * Used to clean up before creating a new request
-   */
+  // Deletes all incomplete email change requests for a user
   async deleteIncompleteForUser(userId: string): Promise<number> {
     const condition = and(eq(emailChangeRequests.userId, userId), eq(emailChangeRequests.isCompleted, false));
     if (!condition) {
@@ -67,9 +54,7 @@ export class EmailChangeRequestRepository extends PrimaryBaseRepository<typeof e
     return result.count;
   }
 
-  /**
-   * Find completed but not reverted email change request by user ID and revert token
-   */
+  // Finds a completed, non-reverted email change request by revert token
   async findCompletedByRevertToken(revertToken: string): Promise<EmailChangeRequest | undefined> {
     const condition = and(
       eq(emailChangeRequests.revertToken, revertToken),

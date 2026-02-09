@@ -28,14 +28,6 @@ import {
 import { EmailChangeService } from '../services/email-change.service';
 import { PhoneChangeService } from '../services/phone-change.service';
 
-/**
- * Controller for handling secure email/phone contact change with verification
- * Implements 4-step flow:
- * 1. Confirm identity (OTP to current email/phone)
- * 2. Enter new value
- * 3. Verify new value (OTP to new email/phone)
- * 4. Success with revert token (72h validity)
- */
 @ApiTags('Contact Change')
 @ApiBearerAuth()
 @Controller('users/contact')
@@ -49,10 +41,7 @@ export class ContactChangeController {
   // Email Change Endpoints
   // ============================================================================
 
-  /**
-   * Step 1: Request identity verification for email change
-   * Sends OTP to current email to confirm user identity
-   */
+  // Sends an OTP to the user's current email to confirm identity
   @Post('email/request-identity-verification')
   @HttpCode(HttpStatus.OK)
   @ApiRequestEmailIdentityVerification()
@@ -60,10 +49,7 @@ export class ContactChangeController {
     return this.emailChangeService.requestIdentityVerification(userId);
   }
 
-  /**
-   * Step 2: Verify identity and create change request
-   * Verifies OTP sent to current email and initiates the change request
-   */
+  // Verifies the identity OTP and creates an email change request
   @Post('email/verify-identity')
   @HttpCode(HttpStatus.OK)
   @ApiVerifyEmailIdentity()
@@ -71,10 +57,7 @@ export class ContactChangeController {
     return this.emailChangeService.verifyIdentity(userId, dto.verificationId, dto.otpCode);
   }
 
-  /**
-   * Step 3: Submit new email and send verification OTP
-   * Validates new email and sends OTP to the new email address
-   */
+  // Validates the new email and sends a verification OTP to it
   @Post('email/submit-new-email')
   @HttpCode(HttpStatus.OK)
   @ApiSubmitNewEmail()
@@ -82,10 +65,7 @@ export class ContactChangeController {
     return this.emailChangeService.submitNewEmail(userId, dto.changeRequestId, dto.newEmail);
   }
 
-  /**
-   * Step 4: Verify new email and complete the change
-   * Verifies OTP sent to new email, updates user's email, and generates revert token
-   */
+  // Verifies the new email OTP and completes the email change
   @Post('email/verify-new-email')
   @HttpCode(HttpStatus.OK)
   @ApiVerifyNewEmail()
@@ -93,10 +73,7 @@ export class ContactChangeController {
     return this.emailChangeService.verifyNewEmail(userId, dto.changeRequestId, dto.verificationId, dto.otpCode);
   }
 
-  /**
-   * Revert email change using revert token
-   * Restores the old email address within 72 hours of the change
-   */
+  // Reverts a completed email change using a revert token
   @Post('email/revert')
   @HttpCode(HttpStatus.OK)
   @ApiRevertEmailChange()
@@ -104,10 +81,7 @@ export class ContactChangeController {
     return this.emailChangeService.revertChange(dto.revertToken);
   }
 
-  /**
-   * Resend OTP for email verification
-   * Resends the OTP to the email address associated with the verification
-   */
+  // Resends the email verification OTP for an active verification
   @Post('email/resend-otp')
   @HttpCode(HttpStatus.OK)
   @ApiResendEmailOtp()
@@ -119,10 +93,7 @@ export class ContactChangeController {
   // Phone Change Endpoints
   // ============================================================================
 
-  /**
-   * Step 1: Request identity verification for phone change
-   * Sends OTP to current phone to confirm user identity
-   */
+  // Sends an OTP to the user's current phone to confirm identity
   @Post('phone/request-identity-verification')
   @HttpCode(HttpStatus.OK)
   @ApiRequestPhoneIdentityVerification()
@@ -130,10 +101,7 @@ export class ContactChangeController {
     return this.phoneChangeService.requestIdentityVerification(userId);
   }
 
-  /**
-   * Step 2: Verify identity and create change request
-   * Verifies OTP sent to current phone and initiates the change request
-   */
+  // Verifies the identity OTP and creates a phone change request
   @Post('phone/verify-identity')
   @HttpCode(HttpStatus.OK)
   @ApiVerifyPhoneIdentity()
@@ -141,10 +109,7 @@ export class ContactChangeController {
     return this.phoneChangeService.verifyIdentity(userId, dto.verificationId, dto.otpCode);
   }
 
-  /**
-   * Step 3: Submit new phone and send verification OTP
-   * Validates new phone and sends OTP to the new phone number
-   */
+  // Validates the new phone number and sends a verification OTP to it
   @Post('phone/submit-new-phone')
   @HttpCode(HttpStatus.OK)
   @ApiSubmitNewPhone()
@@ -152,10 +117,7 @@ export class ContactChangeController {
     return this.phoneChangeService.submitNewPhone(userId, dto.changeRequestId, dto.newPhone, dto.newPhoneCountry);
   }
 
-  /**
-   * Step 4: Verify new phone and complete the change
-   * Verifies OTP sent to new phone, updates user's phone, and generates revert token
-   */
+  // Verifies the new phone OTP and completes the phone change
   @Post('phone/verify-new-phone')
   @HttpCode(HttpStatus.OK)
   @ApiVerifyNewPhone()
@@ -163,10 +125,7 @@ export class ContactChangeController {
     return this.phoneChangeService.verifyNewPhone(userId, dto.changeRequestId, dto.verificationId, dto.otpCode);
   }
 
-  /**
-   * Revert phone change using revert token
-   * Restores the old phone number within 72 hours of the change
-   */
+  // Reverts a completed phone change using a revert token
   @Post('phone/revert')
   @HttpCode(HttpStatus.OK)
   @ApiRevertPhoneChange()
@@ -174,10 +133,7 @@ export class ContactChangeController {
     return this.phoneChangeService.revertChange(dto.revertToken);
   }
 
-  /**
-   * Resend OTP for phone verification
-   * Resends the OTP to the phone number associated with the verification
-   */
+  // Resends the phone verification OTP for an active verification
   @Post('phone/resend-otp')
   @HttpCode(HttpStatus.OK)
   @ApiResendPhoneOtp()

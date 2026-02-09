@@ -1,6 +1,3 @@
-/**
- * OAuth token response from provider
- */
 export interface OAuthTokens {
   accessToken: string;
   refreshToken?: string;
@@ -9,9 +6,6 @@ export interface OAuthTokens {
   idToken?: string; // For OpenID Connect providers
 }
 
-/**
- * OAuth token exchange request (typed interface)
- */
 export interface OAuthTokenRequest {
   code: string;
   clientId: string;
@@ -21,10 +15,6 @@ export interface OAuthTokenRequest {
   codeVerifier?: string; // For PKCE
 }
 
-/**
- * OAuth token exchange payload (snake_case for API requests)
- * Used when sending POST requests to OAuth providers
- */
 export interface OAuthTokenExchangePayload {
   code: string;
   client_id: string;
@@ -34,10 +24,6 @@ export interface OAuthTokenExchangePayload {
   code_verifier?: string;
 }
 
-/**
- * Facebook OAuth token query params
- * Facebook uses GET request with query params (no grant_type)
- */
 export interface FacebookTokenParams {
   code: string;
   client_id: string;
@@ -46,10 +32,6 @@ export interface FacebookTokenParams {
   code_verifier?: string;
 }
 
-/**
- * Apple ID token payload structure
- * Decoded from JWT returned by Apple OAuth
- */
 export interface AppleIdTokenPayload {
   iss: string; // Issuer (https://appleid.apple.com)
   aud: string; // Client ID
