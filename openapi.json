@@ -335,7 +335,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/UserResponseDto"
+                    "$ref": "#/components/schemas/UserDto"
                   }
                 }
               }
@@ -377,7 +377,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UserResponseDto"
+                  "$ref": "#/components/schemas/UserDto"
                 }
               }
             }
@@ -421,7 +421,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UserResponseDto"
+                  "$ref": "#/components/schemas/UserDto"
                 }
               }
             }
@@ -1123,7 +1123,14 @@
         },
         "responses": {
           "200": {
-            "description": "User created successfully. Returns onboarding status and access token."
+            "description": "User created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid input data or validation error."
@@ -1145,21 +1152,11 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Session recovered successfully. Returns new access token.",
+            "description": "Session recovered successfully.",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "accessToken": {
-                      "type": "string",
-                      "description": "JWT access token"
-                    },
-                    "expiresIn": {
-                      "type": "number",
-                      "description": "Token expiry in seconds"
-                    }
-                  }
+                  "$ref": "#/components/schemas/TokenResponse"
                 }
               }
             }
@@ -1200,16 +1197,20 @@
         },
         "responses": {
           "201": {
-            "description": "Login successful. Returns access token and user information."
+            "description": "Login successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid input data or validation error."
           },
           "401": {
             "description": "Invalid credentials."
-          },
-          "404": {
-            "description": "User not found."
           }
         },
         "summary": "User login",
@@ -1220,26 +1221,16 @@
     },
     "/cloud-api/auth/refresh": {
       "post": {
-        "description": "Generates a new access token and rotates the refresh token for enhanced security. Reads refresh token from httpOnly cookie and updates it with the new rotated token.",
+        "description": "Generates a new access token and rotates the refresh token for enhanced security.",
         "operationId": "AuthController_refreshToken",
         "parameters": [],
         "responses": {
           "201": {
-            "description": "Token refreshed successfully. Returns new access token.",
+            "description": "Token refreshed successfully.",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "accessToken": {
-                      "type": "string",
-                      "description": "New JWT access token"
-                    },
-                    "expiresIn": {
-                      "type": "number",
-                      "description": "Token expiry in seconds"
-                    }
-                  }
+                  "$ref": "#/components/schemas/TokenResponse"
                 }
               }
             }
@@ -1256,7 +1247,7 @@
     },
     "/cloud-api/auth/logout": {
       "post": {
-        "description": "Invalidates the current session and clears the refresh token cookie. Only logs out from the current device.",
+        "description": "Invalidates the current session and clears the refresh token cookie.",
         "operationId": "AuthController_logout",
         "parameters": [],
         "responses": {
@@ -1265,19 +1256,13 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string",
-                      "example": "Successfully logged out"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
           },
           "401": {
-            "description": "Unauthorized. Invalid or missing access token."
+            "description": "Unauthorized."
           }
         },
         "security": [
@@ -1293,7 +1278,7 @@
     },
     "/cloud-api/auth/logout-all": {
       "post": {
-        "description": "Invalidates all active sessions for the current user across all devices and clears the refresh token cookie.",
+        "description": "Invalidates all active sessions for the current user across all devices.",
         "operationId": "AuthController_logoutAll",
         "parameters": [],
         "responses": {
@@ -1302,19 +1287,13 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string",
-                      "example": "Successfully logged out from 3 device(s)"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
           },
           "401": {
-            "description": "Unauthorized. Invalid or missing access token."
+            "description": "Unauthorized."
           }
         },
         "security": [
@@ -1330,7 +1309,7 @@
     },
     "/cloud-api/auth/me": {
       "get": {
-        "description": "Checks authentication status via httpOnly cookie. Returns user data and access token if authenticated, or { isAuthenticated: false } if not. Never returns a 401 error.",
+        "description": "Checks authentication status via httpOnly cookie. Returns user data and access token if authenticated, or { isAuthenticated: false } if not. Never returns 401.",
         "operationId": "AuthController_getCurrentUser",
         "parameters": [],
         "responses": {
@@ -1339,7 +1318,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AuthStatusResponseDto"
+                  "$ref": "#/components/schemas/AuthStatusResponse"
                 }
               }
             }
@@ -1353,7 +1332,7 @@
     },
     "/cloud-api/auth/forgot-password": {
       "post": {
-        "description": "Sends a password reset OTP to the provided email address. Always returns success to prevent email enumeration.",
+        "description": "Sends a password reset OTP to the provided email. Always returns success to prevent email enumeration.",
         "operationId": "AuthController_forgotPassword",
         "parameters": [],
         "requestBody": {
@@ -1372,17 +1351,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "example": true
-                    },
-                    "message": {
-                      "type": "string",
-                      "example": "If an account with that email exists, a password reset code has been sent."
-                    }
-                  }
+                  "$ref": "#/components/schemas/SuccessResponse"
                 }
               }
             }
@@ -1399,7 +1368,7 @@
     },
     "/cloud-api/auth/verify-reset-otp": {
       "post": {
-        "description": "Validates the OTP sent to the user email and returns a reset token for setting a new password.",
+        "description": "Validates the OTP sent to the user email and returns a reset token.",
         "operationId": "AuthController_verifyResetOtp",
         "parameters": [],
         "requestBody": {
@@ -1414,17 +1383,11 @@
         },
         "responses": {
           "200": {
-            "description": "OTP verified successfully. Returns reset token.",
+            "description": "OTP verified successfully.",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "resetToken": {
-                      "type": "string",
-                      "description": "Token to use for resetting the password"
-                    }
-                  }
+                  "$ref": "#/components/schemas/ResetTokenResponse"
                 }
               }
             }
@@ -1444,7 +1407,7 @@
     },
     "/cloud-api/auth/reset-password": {
       "post": {
-        "description": "Sets a new password using the reset token received after OTP verification. Invalidates all active sessions.",
+        "description": "Sets a new password using the reset token. Invalidates all active sessions.",
         "operationId": "AuthController_resetPassword",
         "parameters": [],
         "requestBody": {
@@ -1463,17 +1426,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "example": true
-                    },
-                    "message": {
-                      "type": "string",
-                      "example": "Password has been reset successfully. Please login with your new password."
-                    }
-                  }
+                  "$ref": "#/components/schemas/SuccessResponse"
                 }
               }
             }
@@ -1505,26 +1458,20 @@
         },
         "responses": {
           "200": {
-            "description": "Password changed successfully",
+            "description": "Password changed successfully.",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string",
-                      "example": "Password changed successfully"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
           },
           "400": {
-            "description": "Invalid current password or validation error"
+            "description": "Invalid current password or validation error."
           },
           "401": {
-            "description": "Unauthorized - Invalid or missing authentication"
+            "description": "Unauthorized."
           }
         },
         "security": [
@@ -1545,20 +1492,20 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Active sessions retrieved successfully",
+            "description": "Active sessions retrieved.",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/SessionResponseDto"
+                    "$ref": "#/components/schemas/SessionResponse"
                   }
                 }
               }
             }
           },
           "401": {
-            "description": "Unauthorized - Invalid or missing authentication"
+            "description": "Unauthorized."
           }
         },
         "security": [
@@ -1583,36 +1530,29 @@
             "in": "path",
             "description": "Session ID to revoke",
             "schema": {
-              "example": "550e8400-e29b-41d4-a716-446655440000",
               "type": "string"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "Session revoked successfully",
+            "description": "Session revoked.",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string",
-                      "example": "Session revoked successfully"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
           },
           "400": {
-            "description": "Cannot revoke current session"
+            "description": "Cannot revoke current session."
           },
           "401": {
-            "description": "Unauthorized - Invalid or missing authentication"
+            "description": "Unauthorized."
           },
           "404": {
-            "description": "Session not found"
+            "description": "Session not found."
           }
         },
         "security": [
@@ -3367,7 +3307,7 @@
           }
         }
       },
-      "UserResponseDto": {
+      "UserDto": {
         "type": "object",
         "properties": {
           "id": {
@@ -3766,6 +3706,23 @@
           "password"
         ]
       },
+      "TokenResponse": {
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          },
+          "expiresIn": {
+            "type": "number",
+            "example": 3600
+          }
+        },
+        "required": [
+          "accessToken",
+          "expiresIn"
+        ]
+      },
       "LoginDto": {
         "type": "object",
         "properties": {
@@ -3787,7 +3744,119 @@
           "password"
         ]
       },
-      "AuthStatusResponseDto": {
+      "MfaChallengeInfo": {
+        "type": "object",
+        "properties": {
+          "sessionId": {
+            "type": "string",
+            "description": "MFA session ID",
+            "example": "mfa_abc123xyz"
+          },
+          "availableMethods": {
+            "type": "array",
+            "description": "Available MFA methods",
+            "example": [
+              "totp",
+              "sms"
+            ],
+            "items": {
+              "type": "string",
+              "enum": [
+                "totp",
+                "sms",
+                "passkey"
+              ]
+            }
+          },
+          "defaultMethod": {
+            "type": "string",
+            "description": "Default MFA method",
+            "example": "totp",
+            "enum": [
+              "totp",
+              "sms",
+              "passkey"
+            ]
+          },
+          "maskedPhone": {
+            "type": "string",
+            "description": "Masked phone number for SMS verification",
+            "example": "+1 *** *** 4567"
+          }
+        },
+        "required": [
+          "sessionId",
+          "availableMethods",
+          "defaultMethod"
+        ]
+      },
+      "LoginResponse": {
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string",
+            "description": "JWT access token",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          },
+          "expiresIn": {
+            "type": "number",
+            "description": "Access token expiry in seconds",
+            "example": 3600
+          },
+          "user": {
+            "type": "object",
+            "description": "User information"
+          },
+          "requiresOnboarding": {
+            "type": "boolean",
+            "description": "Whether user requires onboarding",
+            "example": false
+          },
+          "onboardingToken": {
+            "type": "string",
+            "description": "Token for continuing onboarding flow",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          },
+          "onboardingStep": {
+            "type": "string",
+            "description": "Current onboarding step",
+            "example": "EMAIL_VERIFICATION",
+            "enum": [
+              "EMAIL_VERIFICATION",
+              "PASSWORD_SETUP",
+              "PHONE_VERIFICATION",
+              "TWO_FACTOR_SETUP",
+              "COMPLETE"
+            ]
+          },
+          "requiresMfa": {
+            "type": "boolean",
+            "description": "Whether MFA verification is required",
+            "example": true
+          },
+          "mfaChallenge": {
+            "description": "MFA challenge information",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MfaChallengeInfo"
+              }
+            ]
+          }
+        }
+      },
+      "MessageResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Operation completed successfully"
+          }
+        },
+        "required": [
+          "message"
+        ]
+      },
+      "AuthStatusResponse": {
         "type": "object",
         "properties": {
           "isAuthenticated": {
@@ -3799,7 +3868,7 @@
             "description": "User information (only present when authenticated)",
             "allOf": [
               {
-                "$ref": "#/components/schemas/UserResponseDto"
+                "$ref": "#/components/schemas/UserDto"
               }
             ]
           },
@@ -3832,6 +3901,23 @@
           "email"
         ]
       },
+      "SuccessResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "example": "Operation completed successfully"
+          }
+        },
+        "required": [
+          "success",
+          "message"
+        ]
+      },
       "VerifyResetOtpDto": {
         "type": "object",
         "properties": {
@@ -3850,6 +3936,18 @@
         "required": [
           "email",
           "otp"
+        ]
+      },
+      "ResetTokenResponse": {
+        "type": "object",
+        "properties": {
+          "resetToken": {
+            "type": "string",
+            "example": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+          }
+        },
+        "required": [
+          "resetToken"
         ]
       },
       "ResetPasswordDto": {
@@ -3890,7 +3988,7 @@
           "newPassword"
         ]
       },
-      "SessionResponseDto": {
+      "SessionResponse": {
         "type": "object",
         "properties": {
           "sessionId": {

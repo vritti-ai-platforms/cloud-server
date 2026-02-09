@@ -3,8 +3,8 @@ import { BadRequestException } from '@vritti/api-sdk';
 import { OnboardingStepValues } from '@/db/schema';
 import { EncryptionService } from '../../../../../services';
 import { UserService } from '../../../user/services/user.service';
-import { OnboardingStatusResponseDto } from '../dto/onboarding-status-response.dto';
-import { StartOnboardingResponseDto } from '../dto/start-onboarding-response.dto';
+import { OnboardingStatusResponseDto } from '../dto/entity/onboarding-status-response.dto';
+import { StartOnboardingResponseDto } from '../dto/response/start-onboarding-response.dto';
 import { EmailVerificationService } from './email-verification.service';
 
 @Injectable()
@@ -21,7 +21,7 @@ export class OnboardingService {
   async getStatus(userId: string): Promise<OnboardingStatusResponseDto> {
     const userResponse = await this.userService.findById(userId);
 
-    return OnboardingStatusResponseDto.fromUserResponseDto(userResponse);
+    return OnboardingStatusResponseDto.fromUserDto(userResponse);
   }
 
   // Validates onboarding state, hashes the password, and advances to mobile verification

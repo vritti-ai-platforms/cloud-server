@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { getConfig, getRefreshCookieOptions, UnauthorizedException } from '@vritti/api-sdk';
 import { and, eq } from '@vritti/api-sdk/drizzle-orm';
 import { type Session, type SessionType, SessionTypeValues, sessions } from '@/db/schema';
-import { SessionTokenResponseDto } from '../dto/session-token-response.dto';
+import { SessionTokenResponseDto } from '../dto/response/session-token-response.dto';
 import { SessionRepository } from '../repositories/session.repository';
 import { JwtAuthService } from './jwt.service';
 
@@ -207,8 +207,8 @@ export class SessionService {
   async recoverSession(refreshToken: string | undefined): Promise<{
     accessToken: string;
     expiresIn: number;
+    userId: string;
   }> {
-    // Handle missing refresh token (no cookie present)
     if (!refreshToken) {
       throw new UnauthorizedException({
         label: 'No Session Found',
@@ -218,19 +218,16 @@ export class SessionService {
 
     const session = await this.getSessionByRefreshTokenOrThrow(refreshToken);
 
-    // Generate new access token with existing refresh token binding
     const newAccessToken =
       session.type === SessionTypeValues.ONBOARDING
         ? this.jwtService.generateOnboardingToken(session.userId, refreshToken)
         : this.jwtService.generateAccessToken(session.userId, refreshToken);
 
-    // Calculate new expiry time
     const newAccessTokenExpiresAt =
       session.type === SessionTypeValues.ONBOARDING
         ? this.jwtService.getOnboardingTokenExpiryTime()
         : this.jwtService.getAccessTokenExpiryTime();
 
-    // Update session with new access token only (no refresh rotation)
     await this.sessionRepository.updateAccessToken(session.id, newAccessToken, newAccessTokenExpiresAt);
 
     const expiresIn = Math.floor((newAccessTokenExpiresAt.getTime() - Date.now()) / 1000);
@@ -240,6 +237,7 @@ export class SessionService {
     return {
       accessToken: newAccessToken,
       expiresIn,
+      userId: session.userId,
     };
   }
 

@@ -1,7 +1,7 @@
 import { applyDecorators } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { VerifyPasskeyDto } from '../dto/verify-passkey.dto';
-import { VerifyTotpDto } from '../dto/verify-totp.dto';
+import { VerifyPasskeyDto } from '../dto/request/verify-passkey.dto';
+import { VerifyTotpDto } from '../dto/request/verify-totp.dto';
 
 export function ApiInitiateTotpSetup() {
   return applyDecorators(

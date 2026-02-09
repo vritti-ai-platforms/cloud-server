@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import type { AccountStatus, OnboardingStep, User } from '@/db/schema';
 import { OnboardingStepValues } from '@/db/schema';
-import type { UserResponseDto } from '../../../user/dto/user-response.dto';
+import type { UserDto } from '../../../../user/dto/entity/user.dto';
 
 export class OnboardingStatusResponseDto {
   @ApiProperty({
@@ -103,7 +103,7 @@ export class OnboardingStatusResponseDto {
     });
   }
 
-  static fromUserResponseDto(userResponse: UserResponseDto, isNewUser: boolean = false): OnboardingStatusResponseDto {
+  static fromUserDto(userResponse: UserDto, isNewUser: boolean = false): OnboardingStatusResponseDto {
     const signupMethod: 'email' | 'oauth' = userResponse.hasPassword ? 'email' : 'oauth';
 
     return new OnboardingStatusResponseDto({

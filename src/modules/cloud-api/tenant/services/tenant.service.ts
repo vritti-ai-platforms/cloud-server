@@ -1,8 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { BadRequestException, ConflictException, NotFoundException } from '@vritti/api-sdk';
-import type { CreateTenantDto } from '../dto/create-tenant.dto';
-import { TenantResponseDto } from '../dto/tenant-response.dto';
-import type { UpdateTenantDto } from '../dto/update-tenant.dto';
+import type { CreateTenantDto } from '../dto/request/create-tenant.dto';
+import { TenantResponseDto } from '../dto/entity/tenant-response.dto';
+import type { UpdateTenantDto } from '../dto/request/update-tenant.dto';
 import { TenantRepository } from '../repositories/tenant.repository';
 import { TenantDatabaseConfigService } from './tenant-database-config.service';
 

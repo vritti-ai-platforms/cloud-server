@@ -21,7 +21,7 @@ function validateProviderString(providerStr: string): OAuthProviderType {
 
 import { getTokenExpiry, TokenType } from '../../../../../config/jwt.config';
 import { UserRepository } from '../../../user/repositories/user.repository';
-import { OAuthResponseDto } from '../dto/oauth-response.dto';
+import { OAuthResponseDto } from '../dto/response/oauth-response.dto';
 import type { IOAuthProvider } from '../interfaces/oauth-provider.interface';
 import type { OAuthTokens } from '../interfaces/oauth-tokens.interface';
 import type { OAuthUserProfile } from '../interfaces/oauth-user-profile.interface';
@@ -130,7 +130,7 @@ export class OAuthService {
     linkToUserId?: string,
   ): Promise<{ user: User; isNewUser: boolean }> {
     // If linkToUserId provided, link to existing user
-    // Use repository directly to get full User type (service returns UserResponseDto)
+    // Use repository directly to get full User type (service returns UserDto)
     if (linkToUserId) {
       const user = await this.userRepository.findById(linkToUserId);
       if (!user) {

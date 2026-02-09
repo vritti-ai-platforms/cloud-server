@@ -24,7 +24,7 @@ import {
   VerifyIdentityDto,
   VerifyNewEmailDto,
   VerifyNewPhoneDto,
-} from '../dto/contact-change.dto';
+} from '../dto/request/contact-change.dto';
 import { EmailChangeService } from '../services/email-change.service';
 import { PhoneChangeService } from '../services/phone-change.service';
 

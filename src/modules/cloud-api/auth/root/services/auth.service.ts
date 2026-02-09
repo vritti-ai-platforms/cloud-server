@@ -1,17 +1,19 @@
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
-import { BadRequestException, UnauthorizedException } from '@vritti/api-sdk';
+import { BadRequestException, NotFoundException, UnauthorizedException } from '@vritti/api-sdk';
 import { AccountStatusValues, OnboardingStepValues, SessionTypeValues, type User } from '@/db/schema';
 import { TokenType } from '../../../../../config/jwt.config';
 import { EncryptionService } from '../../../../../services';
-import { OnboardingStatusResponseDto } from '../../../onboarding/root/dto/onboarding-status-response.dto';
-import { UserResponseDto } from '../../../user/dto/user-response.dto';
+import { OnboardingStatusResponseDto } from '../../../onboarding/root/dto/entity/onboarding-status-response.dto';
+import { UserDto } from '../../../user/dto/entity/user.dto';
 import { UserService } from '../../../user/services/user.service';
-import { AuthResponseDto } from '../dto/auth-response.dto';
-import { AuthStatusResponseDto } from '../dto/auth-status-response.dto';
-import type { LoginDto } from '../dto/login.dto';
-import type { SignupDto } from '../dto/signup.dto';
+import { LoginResponse } from '../dto/response/login-response.dto';
+import { AuthStatusResponse } from '../dto/response/auth-status-response.dto';
+import type { LoginDto } from '../dto/request/login.dto';
+import type { SignupDto } from '../dto/request/signup.dto';
 import { MfaVerificationService } from '../../mfa-verification/services/mfa-verification.service';
+import { SessionResponse } from '../dto/entity/session-response.dto';
 import { JwtAuthService } from './jwt.service';
+import { PasswordResetService } from './password-reset.service';
 import { SessionService } from './session.service';
 
 @Injectable()
@@ -25,10 +27,11 @@ export class AuthService {
     private readonly jwtService: JwtAuthService,
     @Inject(forwardRef(() => MfaVerificationService))
     private readonly mfaVerificationService: MfaVerificationService,
+    private readonly passwordResetService: PasswordResetService,
   ) {}
 
   // Validates credentials and creates session, or returns MFA challenge if 2FA enabled
-  async login(dto: LoginDto, ipAddress?: string, userAgent?: string): Promise<AuthResponseDto & { refreshToken?: string }> {
+  async login(dto: LoginDto, ipAddress?: string, userAgent?: string): Promise<LoginResponse & { refreshToken?: string }> {
     // Find user by email
     const user = await this.userService.findByEmail(dto.email);
 
@@ -66,11 +69,11 @@ export class AuthService {
       this.logger.log(`User login - requires onboarding: ${user.email} (${user.id})`);
 
       // Return response with onboarding requirements
-      return new AuthResponseDto({
+      return new LoginResponse({
         requiresOnboarding: true,
         onboardingToken,
         onboardingStep: user.onboardingStep,
-        user: UserResponseDto.from(user),
+        user: UserDto.from(user),
       });
     }
 
@@ -92,7 +95,7 @@ export class AuthService {
       // User has 2FA enabled - return MFA challenge instead of tokens
       this.logger.log(`User login requires MFA: ${user.email} (${user.id})`);
 
-      return new AuthResponseDto({
+      return new LoginResponse({
         requiresMfa: true,
         mfaChallenge: {
           sessionId: mfaChallenge.sessionId,
@@ -121,17 +124,17 @@ export class AuthService {
 
     // Return auth response with refreshToken for controller to set as cookie
     return {
-      ...new AuthResponseDto({
+      ...new LoginResponse({
         accessToken,
         expiresIn: this.jwtService.getAccessTokenExpiryInSeconds(),
-        user: UserResponseDto.from(user),
+        user: UserDto.from(user),
       }),
       refreshToken,
     };
   }
 
   // Refreshes the access token using a valid refresh token
-  async refreshToken(refreshToken: string): Promise<AuthResponseDto> {
+  async refreshToken(refreshToken: string): Promise<LoginResponse> {
     // Refresh access token
     const tokens = await this.sessionService.refreshAccessToken(refreshToken);
 
@@ -153,10 +156,10 @@ export class AuthService {
 
     this.logger.log(`Token refreshed for user: ${payload.userId}`);
 
-    return new AuthResponseDto({
+    return new LoginResponse({
       accessToken: tokens.accessToken,
       expiresIn: this.jwtService.getAccessTokenExpiryInSeconds(),
-      user: UserResponseDto.from(freshUser),
+      user: UserDto.from(freshUser),
     });
   }
 
@@ -174,7 +177,7 @@ export class AuthService {
   }
 
   // Validates that a user exists and has an active account
-  async validateUser(userId: string): Promise<UserResponseDto> {
+  async validateUser(userId: string): Promise<UserDto> {
     const user = await this.userService.findById(userId);
 
     // Check if account is active
@@ -250,7 +253,7 @@ export class AuthService {
 
     this.logger.log(`Created new user and started onboarding: ${userResponse.email} (${userResponse.id})`);
 
-    return OnboardingStatusResponseDto.fromUserResponseDto(userResponse, true);
+    return OnboardingStatusResponseDto.fromUserDto(userResponse, true);
   }
 
   private generateOnboardingToken(userId: string): string {
@@ -312,22 +315,84 @@ export class AuthService {
     this.logger.log(`Password changed for user: ${user.id}`);
   }
 
+  // Recovers access token from httpOnly cookie without rotating refresh token
+  async recoverToken(refreshToken: string | undefined): Promise<{ accessToken: string; expiresIn: number }> {
+    return this.sessionService.recoverSession(refreshToken);
+  }
+
+  // Rotates both tokens and returns new access + refresh tokens
+  async refreshSession(refreshToken: string | undefined): Promise<{ accessToken: string; refreshToken: string; expiresIn: number }> {
+    return this.sessionService.refreshSession(refreshToken);
+  }
+
+  // Creates onboarding session and returns tokens
+  async createSignupSession(userId: string, ipAddress: string, userAgent: string): Promise<{ accessToken: string; refreshToken: string; expiresIn: number }> {
+    return this.sessionService.createUnifiedSession(userId, SessionTypeValues.ONBOARDING, ipAddress, userAgent);
+  }
+
+  // Returns active sessions for the user, marking the current one
+  async getUserSessions(userId: string, currentAccessToken: string): Promise<SessionResponse[]> {
+    const sessions = await this.sessionService.getUserActiveSessions(userId);
+    return sessions.map((session) => SessionResponse.from(session, currentAccessToken));
+  }
+
+  // Revokes a specific session, preventing revocation of the current one
+  async revokeSession(userId: string, sessionId: string, currentAccessToken: string): Promise<{ message: string }> {
+    const currentSession = await this.sessionService.validateAccessToken(currentAccessToken);
+    if (currentSession.id === sessionId) {
+      throw new BadRequestException({
+        label: 'Cannot Revoke',
+        detail: 'You cannot revoke your current session. Use logout instead.',
+      });
+    }
+
+    const sessions = await this.sessionService.getUserActiveSessions(userId);
+    const targetSession = sessions.find((s) => s.id === sessionId);
+
+    if (!targetSession) {
+      throw new NotFoundException('The session you are trying to revoke does not exist or has already been revoked.');
+    }
+
+    if (targetSession.userId !== userId) {
+      throw new UnauthorizedException('You do not have permission to revoke this session.');
+    }
+
+    await this.sessionService.invalidateSession(targetSession.accessToken);
+    this.logger.log(`Session ${sessionId} revoked for user: ${userId}`);
+
+    return { message: 'Session revoked successfully' };
+  }
+
+  // Sends password reset OTP to the given email
+  async requestPasswordReset(email: string): Promise<{ success: boolean; message: string }> {
+    return this.passwordResetService.requestPasswordReset(email);
+  }
+
+  // Validates password reset OTP and returns a reset token
+  async verifyResetOtp(email: string, otp: string): Promise<{ resetToken: string }> {
+    return this.passwordResetService.verifyResetOtp(email, otp);
+  }
+
+  // Sets new password using the verified reset token
+  async resetPassword(resetToken: string, newPassword: string): Promise<{ success: boolean; message: string }> {
+    return this.passwordResetService.resetPassword(resetToken, newPassword);
+  }
+
   // Returns { isAuthenticated: false } instead of throwing (never 401)
-  async getAuthStatus(refreshToken: string | undefined): Promise<AuthStatusResponseDto> {
+  async getAuthStatus(refreshToken: string | undefined): Promise<AuthStatusResponse> {
     if (!refreshToken) {
-      return new AuthStatusResponseDto({ isAuthenticated: false });
+      return new AuthStatusResponse({ isAuthenticated: false });
     }
 
     try {
-      const { accessToken, expiresIn } = await this.sessionService.recoverSession(refreshToken);
-      const session = await this.sessionService.getSessionByRefreshTokenOrThrow(refreshToken);
-      const user = await this.userService.findById(session.userId);
+      const { accessToken, expiresIn, userId } = await this.sessionService.recoverSession(refreshToken);
+      const user = await this.userService.findById(userId);
 
-      this.logger.log(`Session recovered for user: ${session.userId}`);
+      this.logger.log(`Session recovered for user: ${userId}`);
 
-      return new AuthStatusResponseDto({ isAuthenticated: true, user, accessToken, expiresIn });
+      return new AuthStatusResponse({ isAuthenticated: true, user, accessToken, expiresIn });
     } catch {
-      return new AuthStatusResponseDto({ isAuthenticated: false });
+      return new AuthStatusResponse({ isAuthenticated: false });
     }
   }
 }

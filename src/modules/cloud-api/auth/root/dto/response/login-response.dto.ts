@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import type { OnboardingStep } from '@/db/schema';
-import type { UserResponseDto } from '../../../user/dto/user-response.dto';
+import type { UserDto } from '../../../../user/dto/entity/user.dto';
 
 export type MfaMethodType = 'totp' | 'sms' | 'passkey';
 
@@ -30,7 +30,7 @@ export class MfaChallengeInfo {
   maskedPhone?: string;
 }
 
-export class AuthResponseDto {
+export class LoginResponse {
   @ApiPropertyOptional({
     description: 'JWT access token',
     example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
@@ -46,7 +46,7 @@ export class AuthResponseDto {
   @ApiPropertyOptional({
     description: 'User information',
   })
-  user?: UserResponseDto;
+  user?: UserDto;
 
   @ApiPropertyOptional({
     description: 'Whether user requires onboarding',
@@ -79,7 +79,7 @@ export class AuthResponseDto {
   })
   mfaChallenge?: MfaChallengeInfo;
 
-  constructor(partial: Partial<AuthResponseDto>) {
+  constructor(partial: Partial<LoginResponse>) {
     Object.assign(this, partial);
   }
 }

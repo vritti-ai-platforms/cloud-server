@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import type { AccountStatus, OnboardingStep, User } from '@/db/schema';
 
-export class UserResponseDto {
+export class UserDto {
   @ApiProperty({ description: 'User unique identifier', example: 'usr_abc123xyz' })
   id: string;
 
@@ -67,13 +67,13 @@ export class UserResponseDto {
   @ApiPropertyOptional({ description: 'Phone verification timestamp', example: '2024-01-15T10:30:00Z' })
   phoneVerifiedAt?: Date | null;
 
-  constructor(partial: Partial<UserResponseDto>) {
+  constructor(partial: Partial<UserDto>) {
     Object.assign(this, partial);
   }
 
   // Creates a response DTO from a User model
-  static from(user: User): UserResponseDto {
-    return new UserResponseDto({
+  static from(user: User): UserDto {
+    return new UserDto({
       id: user.id,
       email: user.email,
       firstName: user.firstName,

@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-import type { MfaMethod } from '../services/mfa-challenge.store';
+import type { MfaMethod } from '../../services/mfa-challenge.store';
 
 class MfaVerificationUserDto {
   @ApiProperty({

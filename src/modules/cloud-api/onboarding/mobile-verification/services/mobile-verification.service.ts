@@ -5,8 +5,8 @@ import { BadRequestException, NotFoundException, extractCountryFromPhone, normal
 import { type VerificationMethod, VerificationMethodValues } from '@/db/schema/enums';
 import { type MobileVerification } from '@/db/schema';
 import { UserService } from '../../../user/services/user.service';
-import { InitiateMobileVerificationDto } from '../dto/initiate-mobile-verification.dto';
-import { MobileVerificationStatusResponseDto } from '../dto/mobile-verification-status-response.dto';
+import { InitiateMobileVerificationDto } from '../dto/request/initiate-mobile-verification.dto';
+import { MobileVerificationStatusResponseDto } from '../dto/response/mobile-verification-status-response.dto';
 import { VerificationProviderFactory } from '../providers';
 import { VERIFICATION_EVENTS, MobileVerificationEvent } from '../events/verification.events';
 import { MobileVerificationRepository } from '../repositories/mobile-verification.repository';

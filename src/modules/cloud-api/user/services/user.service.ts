@@ -1,9 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConflictException, NotFoundException } from '@vritti/api-sdk';
 import type { User } from '@/db/schema';
-import type { CreateUserDto } from '../dto/create-user.dto';
-import type { UpdateUserDto } from '../dto/update-user.dto';
-import { UserResponseDto } from '../dto/user-response.dto';
+import type { CreateUserDto } from '../dto/request/create-user.dto';
+import type { UpdateUserDto } from '../dto/request/update-user.dto';
+import { UserDto } from '../dto/entity/user.dto';
 import { UserRepository } from '../repositories/user.repository';
 
 @Injectable()
@@ -17,7 +17,7 @@ export class UserService {
     createUserDto: CreateUserDto,
     passwordHash?: string,
     skipEmailCheck = false,
-  ): Promise<UserResponseDto> {
+  ): Promise<UserDto> {
     // Validate email uniqueness (skip if caller has already verified)
     if (!skipEmailCheck) {
       const existingUser = await this.userRepository.findByEmail(createUserDto.email);
@@ -38,17 +38,17 @@ export class UserService {
 
     this.logger.log(`Created user: ${user.email} (${user.id})`);
 
-    return UserResponseDto.from(user);
+    return UserDto.from(user);
   }
 
   // Retrieves all users as response DTOs
-  async findAll(): Promise<UserResponseDto[]> {
+  async findAll(): Promise<UserDto[]> {
     const users = await this.userRepository.findAll();
-    return users.map((user) => UserResponseDto.from(user));
+    return users.map((user) => UserDto.from(user));
   }
 
   // Finds a user by ID; throws NotFoundException if not found
-  async findById(id: string): Promise<UserResponseDto> {
+  async findById(id: string): Promise<UserDto> {
     const user = await this.userRepository.findById(id);
 
     if (!user) {
@@ -58,7 +58,7 @@ export class UserService {
       });
     }
 
-    return UserResponseDto.from(user);
+    return UserDto.from(user);
   }
 
   // Finds a user by email address
@@ -72,7 +72,7 @@ export class UserService {
   }
 
   // Updates user profile fields; throws NotFoundException if not found
-  async update(id: string, updateUserDto: UpdateUserDto): Promise<UserResponseDto> {
+  async update(id: string, updateUserDto: UpdateUserDto): Promise<UserDto> {
     // Check if user exists
     const existing = await this.userRepository.findById(id);
     if (!existing) {
@@ -87,7 +87,7 @@ export class UserService {
 
     this.logger.log(`Updated user: ${user.email} (${user.id})`);
 
-    return UserResponseDto.from(user);
+    return UserDto.from(user);
   }
 
   // Records the current timestamp as the user's last login
@@ -97,42 +97,42 @@ export class UserService {
   }
 
   // Marks the user's email as verified
-  async markEmailVerified(id: string): Promise<UserResponseDto> {
+  async markEmailVerified(id: string): Promise<UserDto> {
     const user = await this.userRepository.markEmailVerified(id);
     this.logger.log(`Marked email verified for user: ${user.email} (${user.id})`);
-    return UserResponseDto.from(user);
+    return UserDto.from(user);
   }
 
   // Marks the user's phone as verified with the given number
-  async markPhoneVerified(id: string, phone: string, phoneCountry: string): Promise<UserResponseDto> {
+  async markPhoneVerified(id: string, phone: string, phoneCountry: string): Promise<UserDto> {
     const user = await this.userRepository.markPhoneVerified(id, phone, phoneCountry);
     this.logger.log(`Marked phone verified for user: ${user.email} (${user.id})`);
-    return UserResponseDto.from(user);
+    return UserDto.from(user);
   }
 
   // Sets password hash and advances onboarding (for OAuth users setting password)
-  async setPasswordHash(id: string, passwordHash: string): Promise<UserResponseDto> {
+  async setPasswordHash(id: string, passwordHash: string): Promise<UserDto> {
     const user = await this.userRepository.setPasswordHash(id, passwordHash);
     this.logger.log(`Set password for user: ${user.email} (${user.id})`);
-    return UserResponseDto.from(user);
+    return UserDto.from(user);
   }
 
   // Marks phone as verified and completes onboarding, skipping MFA
-  async completeOnboarding(id: string, phone: string, phoneCountry?: string): Promise<UserResponseDto> {
+  async completeOnboarding(id: string, phone: string, phoneCountry?: string): Promise<UserDto> {
     const user = await this.userRepository.completeOnboarding(id, phone, phoneCountry);
     this.logger.log(`Completed onboarding for user: ${user.email} (${user.id})`);
-    return UserResponseDto.from(user);
+    return UserDto.from(user);
   }
 
   // Marks phone as verified and advances to MFA setup step
-  async markPhoneVerifiedAndAdvanceToMfa(id: string, phone: string, phoneCountry?: string): Promise<UserResponseDto> {
+  async markPhoneVerifiedAndAdvanceToMfa(id: string, phone: string, phoneCountry?: string): Promise<UserDto> {
     const user = await this.userRepository.markPhoneVerifiedAndAdvanceToMfa(id, phone, phoneCountry);
     this.logger.log(`Marked phone verified and advanced to MFA for user: ${user.email} (${user.id})`);
-    return UserResponseDto.from(user);
+    return UserDto.from(user);
   }
 
   // Soft deletes a user account; throws NotFoundException if not found
-  async deactivate(id: string): Promise<UserResponseDto> {
+  async deactivate(id: string): Promise<UserDto> {
     // Check if user exists
     const existing = await this.userRepository.findById(id);
     if (!existing) {
@@ -146,6 +146,6 @@ export class UserService {
 
     this.logger.log(`Deactivated user: ${user.email} (${user.id})`);
 
-    return UserResponseDto.from(user);
+    return UserDto.from(user);
   }
 }

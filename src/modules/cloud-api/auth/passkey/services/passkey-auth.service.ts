@@ -3,7 +3,7 @@ import { BadRequestException, UnauthorizedException } from '@vritti/api-sdk';
 import { TwoFactorAuthRepository } from '../../../onboarding/two-factor/repositories/two-factor-auth.repository';
 import { WebAuthnService } from '../../../onboarding/two-factor/services/webauthn.service';
 import { UserService } from '../../../user/services/user.service';
-import { PasskeyAuthOptionsDto } from '../dto/passkey-auth-options.dto';
+import { PasskeyAuthOptionsDto } from '../dto/response/passkey-auth-options.dto';
 import { SessionService } from '../../root/services/session.service';
 
 // Type for WebAuthn authentication response

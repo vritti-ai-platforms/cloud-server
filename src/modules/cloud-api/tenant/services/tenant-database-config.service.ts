@@ -2,9 +2,9 @@ import { Injectable, Logger } from '@nestjs/common';
 import { BadRequestException, NotFoundException } from '@vritti/api-sdk';
 import { eq } from '@vritti/api-sdk/drizzle-orm';
 import { tenantDatabaseConfigs } from '@/db/schema';
-import type { CreateTenantDatabaseConfigDto } from '../dto/create-tenant-database-config.dto';
-import { TenantDatabaseConfigResponseDto } from '../dto/tenant-database-config-response.dto';
-import type { UpdateTenantDatabaseConfigDto } from '../dto/update-tenant-database-config.dto';
+import type { CreateTenantDatabaseConfigDto } from '../dto/request/create-tenant-database-config.dto';
+import { TenantDatabaseConfigResponseDto } from '../dto/entity/tenant-database-config-response.dto';
+import type { UpdateTenantDatabaseConfigDto } from '../dto/request/update-tenant-database-config.dto';
 import { TenantDatabaseConfigRepository } from '../repositories/tenant-database-config.repository';
 
 @Injectable()

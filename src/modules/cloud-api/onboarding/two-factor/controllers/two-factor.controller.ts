@@ -9,12 +9,12 @@ import {
   ApiInitiatePasskeySetup,
   ApiVerifyPasskeySetup,
 } from '../docs/two-factor.docs';
-import type { BackupCodesResponseDto } from '../dto/backup-codes-response.dto';
-import type { PasskeyRegistrationOptionsDto } from '../dto/passkey-registration-options.dto';
-import type { TotpSetupResponseDto } from '../dto/totp-setup-response.dto';
-import type { TwoFactorStatusResponseDto } from '../dto/two-factor-status-response.dto';
-import { VerifyPasskeyDto } from '../dto/verify-passkey.dto';
-import { VerifyTotpDto } from '../dto/verify-totp.dto';
+import type { BackupCodesResponseDto } from '../dto/response/backup-codes-response.dto';
+import type { PasskeyRegistrationOptionsDto } from '../dto/response/passkey-registration-options.dto';
+import type { TotpSetupResponseDto } from '../dto/response/totp-setup-response.dto';
+import type { TwoFactorStatusResponseDto } from '../dto/response/two-factor-status-response.dto';
+import { VerifyPasskeyDto } from '../dto/request/verify-passkey.dto';
+import { VerifyTotpDto } from '../dto/request/verify-totp.dto';
 import { TwoFactorAuthService } from '../services/two-factor-auth.service';
 
 @ApiTags('Onboarding - Two-Factor Authentication')

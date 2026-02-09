@@ -5,7 +5,7 @@ import { BadRequestException, Onboarding, Public } from '@vritti/api-sdk';
 import type { FastifyReply } from 'fastify';
 import { OnboardingStepValues, SessionTypeValues } from '@/db/schema';
 import { ApiHandleOAuthCallback, ApiInitiateOAuth, ApiLinkOAuthProvider } from '../docs/auth-oauth.docs';
-import type { OAuthResponseDto } from '../dto/oauth-response.dto';
+import type { OAuthResponseDto } from '../dto/response/oauth-response.dto';
 import { OAuthService } from '../services/oauth.service';
 import { getRefreshCookieName, getRefreshCookieOptionsFromConfig, SessionService } from '../../root/services/session.service';
 

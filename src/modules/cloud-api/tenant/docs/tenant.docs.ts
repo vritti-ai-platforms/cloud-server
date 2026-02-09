@@ -1,8 +1,8 @@
 import { applyDecorators } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
-import { CreateTenantDto } from '../dto/create-tenant.dto';
-import { TenantResponseDto } from '../dto/tenant-response.dto';
-import { UpdateTenantDto } from '../dto/update-tenant.dto';
+import { CreateTenantDto } from '../dto/request/create-tenant.dto';
+import { TenantResponseDto } from '../dto/entity/tenant-response.dto';
+import { UpdateTenantDto } from '../dto/request/update-tenant.dto';
 
 export function ApiCreateTenant() {
   return applyDecorators(

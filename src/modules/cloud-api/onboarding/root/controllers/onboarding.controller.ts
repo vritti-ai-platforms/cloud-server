@@ -12,13 +12,13 @@ import {
   ApiResendMobileVerification,
   ApiVerifyMobileOtp,
 } from '../docs/onboarding.docs';
-import { InitiateMobileVerificationDto } from '../../mobile-verification/dto/initiate-mobile-verification.dto';
-import type { MobileVerificationStatusResponseDto } from '../../mobile-verification/dto/mobile-verification-status-response.dto';
-import type { OnboardingStatusResponseDto } from '../dto/onboarding-status-response.dto';
-import { SetPasswordDto } from '../dto/set-password.dto';
-import { VerifyMobileOtpDto } from '../../mobile-verification/dto/verify-mobile-otp.dto';
-import type { StartOnboardingResponseDto } from '../dto/start-onboarding-response.dto';
-import { VerifyEmailDto } from '../dto/verify-email.dto';
+import { InitiateMobileVerificationDto } from '../../mobile-verification/dto/request/initiate-mobile-verification.dto';
+import type { MobileVerificationStatusResponseDto } from '../../mobile-verification/dto/response/mobile-verification-status-response.dto';
+import type { OnboardingStatusResponseDto } from '../dto/entity/onboarding-status-response.dto';
+import { SetPasswordDto } from '../dto/request/set-password.dto';
+import { VerifyMobileOtpDto } from '../../mobile-verification/dto/request/verify-mobile-otp.dto';
+import type { StartOnboardingResponseDto } from '../dto/response/start-onboarding-response.dto';
+import { VerifyEmailDto } from '../dto/request/verify-email.dto';
 import { EmailVerificationService } from '../services/email-verification.service';
 import { MobileVerificationService } from '../../mobile-verification/services/mobile-verification.service';
 import { OnboardingService } from '../services/onboarding.service';

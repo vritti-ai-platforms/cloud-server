@@ -1,9 +1,9 @@
 import { applyDecorators } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { InitiateMobileVerificationDto } from '../../mobile-verification/dto/initiate-mobile-verification.dto';
-import { SetPasswordDto } from '../dto/set-password.dto';
-import { VerifyEmailDto } from '../dto/verify-email.dto';
-import { VerifyMobileOtpDto } from '../../mobile-verification/dto/verify-mobile-otp.dto';
+import { InitiateMobileVerificationDto } from '../../mobile-verification/dto/request/initiate-mobile-verification.dto';
+import { SetPasswordDto } from '../dto/request/set-password.dto';
+import { VerifyEmailDto } from '../dto/request/verify-email.dto';
+import { VerifyMobileOtpDto } from '../../mobile-verification/dto/request/verify-mobile-otp.dto';
 
 export function ApiVerifyEmail() {
   return applyDecorators(

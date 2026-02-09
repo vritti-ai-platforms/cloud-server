@@ -1,7 +1,7 @@
 import { applyDecorators } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
-import { UpdateUserDto } from '../dto/update-user.dto';
-import { UserResponseDto } from '../dto/user-response.dto';
+import { UpdateUserDto } from '../dto/request/update-user.dto';
+import { UserDto } from '../dto/entity/user.dto';
 
 export function ApiFindAllUsers() {
   return applyDecorators(
@@ -9,7 +9,7 @@ export function ApiFindAllUsers() {
     ApiResponse({
       status: 200,
       description: 'List of all users retrieved successfully',
-      type: [UserResponseDto],
+      type: [UserDto],
     }),
     ApiResponse({ status: 401, description: 'Unauthorized - Invalid or missing authentication' }),
   );
@@ -26,7 +26,7 @@ export function ApiFindUserById() {
     ApiResponse({
       status: 200,
       description: 'User retrieved successfully',
-      type: UserResponseDto,
+      type: UserDto,
     }),
     ApiResponse({ status: 401, description: 'Unauthorized - Invalid or missing authentication' }),
     ApiResponse({ status: 404, description: 'User not found' }),
@@ -44,7 +44,7 @@ export function ApiUpdateProfile() {
     ApiResponse({
       status: 200,
       description: 'Profile updated successfully',
-      type: UserResponseDto,
+      type: UserDto,
     }),
     ApiResponse({ status: 400, description: 'Invalid input data' }),
     ApiResponse({ status: 401, description: 'Unauthorized - Invalid or missing authentication' }),

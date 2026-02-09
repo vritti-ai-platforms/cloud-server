@@ -18,8 +18,8 @@ import type { FastifyRequest } from 'fastify';
 import { Public, SkipCsrf } from '@vritti/api-sdk';
 import { WhatsAppService } from '@/services';
 import { SMSInboundProvider } from '../providers';
-import { WhatsAppWebhookDto } from '../dto/whatsapp-webhook.dto';
-import { TwilioSmsWebhookDto } from '../dto/sms-webhook.dto';
+import { WhatsAppWebhookDto } from '../dto/request/whatsapp-webhook.dto';
+import { TwilioSmsWebhookDto } from '../dto/request/sms-webhook.dto';
 import { MobileVerificationService } from '../services/mobile-verification.service';
 
 type WebhookProvider = 'whatsapp' | 'sms';

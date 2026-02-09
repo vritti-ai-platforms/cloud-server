@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import type { Session } from '@/db/schema';
 
-export class SessionResponseDto {
+export class SessionResponse {
   @ApiProperty({
     description: 'Unique session identifier',
     example: '550e8400-e29b-41d4-a716-446655440000',
@@ -38,7 +38,7 @@ export class SessionResponseDto {
   })
   isCurrent: boolean;
 
-  static from(session: Session, currentAccessToken: string): SessionResponseDto {
+  static from(session: Session, currentAccessToken: string): SessionResponse {
     return {
       sessionId: session.id,
       device: this.parseUserAgent(session.userAgent),

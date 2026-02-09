@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { UserResponseDto } from '../../../user/dto/user-response.dto';
+import { UserDto } from '../../../../user/dto/entity/user.dto';
 
-export class AuthStatusResponseDto {
+export class AuthStatusResponse {
   @ApiProperty({
     description: 'Whether the user is authenticated',
     example: true,
@@ -10,9 +10,9 @@ export class AuthStatusResponseDto {
 
   @ApiPropertyOptional({
     description: 'User information (only present when authenticated)',
-    type: () => UserResponseDto,
+    type: () => UserDto,
   })
-  user?: UserResponseDto;
+  user?: UserDto;
 
   @ApiPropertyOptional({
     description: 'JWT access token (only present when authenticated)',
@@ -26,7 +26,7 @@ export class AuthStatusResponseDto {
   })
   expiresIn?: number;
 
-  constructor(partial: Partial<AuthStatusResponseDto>) {
+  constructor(partial: Partial<AuthStatusResponse>) {
     Object.assign(this, partial);
   }
 }
