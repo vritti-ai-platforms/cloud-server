@@ -1,21 +1,18 @@
 import { Controller, Get } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiTags } from '@nestjs/swagger';
 import { Public } from '@vritti/api-sdk';
-import { AppService } from './app.service';
+import { ApiHealthCheck } from '../docs/app.docs';
+import { AppService } from '../services/app.service';
 
 @ApiTags('Health')
 @Controller()
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
+  // Returns a welcome message indicating the API is running
   @Get()
   @Public()
-  @ApiOperation({ summary: 'Health check endpoint' })
-  @ApiResponse({
-    status: 200,
-    description: 'Returns a welcome message indicating the API is running',
-    type: String,
-  })
+  @ApiHealthCheck()
   getHello(): string {
     return this.appService.getHello();
   }
