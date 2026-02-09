@@ -1,6 +1,20 @@
 import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { UserId } from '@vritti/api-sdk';
+import {
+  ApiRequestEmailIdentityVerification,
+  ApiVerifyEmailIdentity,
+  ApiSubmitNewEmail,
+  ApiVerifyNewEmail,
+  ApiRevertEmailChange,
+  ApiResendEmailOtp,
+  ApiRequestPhoneIdentityVerification,
+  ApiVerifyPhoneIdentity,
+  ApiSubmitNewPhone,
+  ApiVerifyNewPhone,
+  ApiRevertPhoneChange,
+  ApiResendPhoneOtp,
+} from '../docs/contact-change.docs';
 import {
   ResendOtpDto,
   RevertEmailChangeDto,
@@ -41,22 +55,7 @@ export class ContactChangeController {
    */
   @Post('email/request-identity-verification')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({
-    summary: 'Request identity verification for email change',
-    description: 'Sends a 6-digit OTP to the current email address to verify user identity before allowing email change',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'OTP sent successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        verificationId: { type: 'string', format: 'uuid' },
-        expiresAt: { type: 'string', format: 'date-time' },
-      },
-    },
-  })
-  @ApiResponse({ status: 400, description: 'Email not verified or other validation error' })
+  @ApiRequestEmailIdentityVerification()
   async requestEmailIdentityVerification(@UserId() userId: string) {
     return this.emailChangeService.requestIdentityVerification(userId);
   }
@@ -67,24 +66,7 @@ export class ContactChangeController {
    */
   @Post('email/verify-identity')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({
-    summary: 'Verify identity for email change',
-    description:
-      'Verifies the OTP sent to current email and creates an email change request. Checks daily rate limit (max 3 per day)',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Identity verified, change request created',
-    schema: {
-      type: 'object',
-      properties: {
-        changeRequestId: { type: 'string', format: 'uuid' },
-        changeRequestsToday: { type: 'number' },
-      },
-    },
-  })
-  @ApiResponse({ status: 400, description: 'Invalid OTP or rate limit exceeded' })
-  @ApiResponse({ status: 401, description: 'Incorrect verification code' })
+  @ApiVerifyEmailIdentity()
   async verifyEmailIdentity(@UserId() userId: string, @Body() dto: VerifyIdentityDto) {
     return this.emailChangeService.verifyIdentity(userId, dto.verificationId, dto.otpCode);
   }
@@ -95,23 +77,7 @@ export class ContactChangeController {
    */
   @Post('email/submit-new-email')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({
-    summary: 'Submit new email address',
-    description:
-      'Validates the new email address, checks if already in use, and sends a verification OTP to the new email',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'New email submitted, OTP sent',
-    schema: {
-      type: 'object',
-      properties: {
-        verificationId: { type: 'string', format: 'uuid' },
-        expiresAt: { type: 'string', format: 'date-time' },
-      },
-    },
-  })
-  @ApiResponse({ status: 400, description: 'Email already in use or invalid change request' })
+  @ApiSubmitNewEmail()
   async submitNewEmail(@UserId() userId: string, @Body() dto: SubmitNewEmailDto) {
     return this.emailChangeService.submitNewEmail(userId, dto.changeRequestId, dto.newEmail);
   }
@@ -122,26 +88,7 @@ export class ContactChangeController {
    */
   @Post('email/verify-new-email')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({
-    summary: 'Verify new email and complete change',
-    description:
-      'Verifies the OTP sent to new email, updates the user email, and sends a notification to old email with a 72-hour revert link',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Email changed successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        success: { type: 'boolean' },
-        revertToken: { type: 'string', format: 'uuid' },
-        revertExpiresAt: { type: 'string', format: 'date-time' },
-        newEmail: { type: 'string', format: 'email' },
-      },
-    },
-  })
-  @ApiResponse({ status: 400, description: 'Invalid OTP or change request' })
-  @ApiResponse({ status: 401, description: 'Incorrect verification code' })
+  @ApiVerifyNewEmail()
   async verifyNewEmail(@UserId() userId: string, @Body() dto: VerifyNewEmailDto) {
     return this.emailChangeService.verifyNewEmail(userId, dto.changeRequestId, dto.verificationId, dto.otpCode);
   }
@@ -152,22 +99,7 @@ export class ContactChangeController {
    */
   @Post('email/revert')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({
-    summary: 'Revert email change',
-    description: 'Reverts the email change using the revert token sent to the old email (valid for 72 hours)',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Email change reverted successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        success: { type: 'boolean' },
-        revertedEmail: { type: 'string', format: 'email' },
-      },
-    },
-  })
-  @ApiResponse({ status: 400, description: 'Invalid or expired revert token' })
+  @ApiRevertEmailChange()
   async revertEmailChange(@Body() dto: RevertEmailChangeDto) {
     return this.emailChangeService.revertChange(dto.revertToken);
   }
@@ -178,22 +110,7 @@ export class ContactChangeController {
    */
   @Post('email/resend-otp')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({
-    summary: 'Resend email verification OTP',
-    description: 'Resends the verification OTP to the email address',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'OTP resent successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        success: { type: 'boolean' },
-        expiresAt: { type: 'string', format: 'date-time' },
-      },
-    },
-  })
-  @ApiResponse({ status: 400, description: 'Invalid verification ID or already verified' })
+  @ApiResendEmailOtp()
   async resendEmailOtp(@UserId() userId: string, @Body() dto: ResendOtpDto) {
     return this.emailChangeService.resendOtp(userId, dto.verificationId);
   }
@@ -208,22 +125,7 @@ export class ContactChangeController {
    */
   @Post('phone/request-identity-verification')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({
-    summary: 'Request identity verification for phone change',
-    description: 'Sends a 6-digit OTP to the current phone number to verify user identity before allowing phone change',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'OTP sent successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        verificationId: { type: 'string', format: 'uuid' },
-        expiresAt: { type: 'string', format: 'date-time' },
-      },
-    },
-  })
-  @ApiResponse({ status: 400, description: 'Phone not verified or other validation error' })
+  @ApiRequestPhoneIdentityVerification()
   async requestPhoneIdentityVerification(@UserId() userId: string) {
     return this.phoneChangeService.requestIdentityVerification(userId);
   }
@@ -234,24 +136,7 @@ export class ContactChangeController {
    */
   @Post('phone/verify-identity')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({
-    summary: 'Verify identity for phone change',
-    description:
-      'Verifies the OTP sent to current phone and creates a phone change request. Checks daily rate limit (max 3 per day)',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Identity verified, change request created',
-    schema: {
-      type: 'object',
-      properties: {
-        changeRequestId: { type: 'string', format: 'uuid' },
-        changeRequestsToday: { type: 'number' },
-      },
-    },
-  })
-  @ApiResponse({ status: 400, description: 'Invalid OTP or rate limit exceeded' })
-  @ApiResponse({ status: 401, description: 'Incorrect verification code' })
+  @ApiVerifyPhoneIdentity()
   async verifyPhoneIdentity(@UserId() userId: string, @Body() dto: VerifyIdentityDto) {
     return this.phoneChangeService.verifyIdentity(userId, dto.verificationId, dto.otpCode);
   }
@@ -262,23 +147,7 @@ export class ContactChangeController {
    */
   @Post('phone/submit-new-phone')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({
-    summary: 'Submit new phone number',
-    description:
-      'Validates the new phone number, checks if already in use, and sends a verification OTP to the new phone',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'New phone submitted, OTP sent',
-    schema: {
-      type: 'object',
-      properties: {
-        verificationId: { type: 'string', format: 'uuid' },
-        expiresAt: { type: 'string', format: 'date-time' },
-      },
-    },
-  })
-  @ApiResponse({ status: 400, description: 'Phone already in use or invalid change request' })
+  @ApiSubmitNewPhone()
   async submitNewPhone(@UserId() userId: string, @Body() dto: SubmitNewPhoneDto) {
     return this.phoneChangeService.submitNewPhone(userId, dto.changeRequestId, dto.newPhone, dto.newPhoneCountry);
   }
@@ -289,26 +158,7 @@ export class ContactChangeController {
    */
   @Post('phone/verify-new-phone')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({
-    summary: 'Verify new phone and complete change',
-    description:
-      'Verifies the OTP sent to new phone, updates the user phone, and sends a notification to old phone with a 72-hour revert token',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Phone changed successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        success: { type: 'boolean' },
-        revertToken: { type: 'string', format: 'uuid' },
-        revertExpiresAt: { type: 'string', format: 'date-time' },
-        newPhone: { type: 'string' },
-      },
-    },
-  })
-  @ApiResponse({ status: 400, description: 'Invalid OTP or change request' })
-  @ApiResponse({ status: 401, description: 'Incorrect verification code' })
+  @ApiVerifyNewPhone()
   async verifyNewPhone(@UserId() userId: string, @Body() dto: VerifyNewPhoneDto) {
     return this.phoneChangeService.verifyNewPhone(userId, dto.changeRequestId, dto.verificationId, dto.otpCode);
   }
@@ -319,22 +169,7 @@ export class ContactChangeController {
    */
   @Post('phone/revert')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({
-    summary: 'Revert phone change',
-    description: 'Reverts the phone change using the revert token sent to the old phone (valid for 72 hours)',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Phone change reverted successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        success: { type: 'boolean' },
-        revertedPhone: { type: 'string' },
-      },
-    },
-  })
-  @ApiResponse({ status: 400, description: 'Invalid or expired revert token' })
+  @ApiRevertPhoneChange()
   async revertPhoneChange(@Body() dto: RevertPhoneChangeDto) {
     return this.phoneChangeService.revertChange(dto.revertToken);
   }
@@ -345,22 +180,7 @@ export class ContactChangeController {
    */
   @Post('phone/resend-otp')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({
-    summary: 'Resend phone verification OTP',
-    description: 'Resends the verification OTP to the phone number',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'OTP resent successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        success: { type: 'boolean' },
-        expiresAt: { type: 'string', format: 'date-time' },
-      },
-    },
-  })
-  @ApiResponse({ status: 400, description: 'Invalid verification ID or already verified' })
+  @ApiResendPhoneOtp()
   async resendPhoneOtp(@UserId() userId: string, @Body() dto: ResendOtpDto) {
     return this.phoneChangeService.resendOtp(userId, dto.verificationId);
   }

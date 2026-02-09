@@ -1,12 +1,14 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Logger, Post } from '@nestjs/common';
-import {
-  ApiBearerAuth,
-  ApiBody,
-  ApiOperation,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Onboarding, UserId } from '@vritti/api-sdk';
+import {
+  ApiInitiateTotpSetup,
+  ApiVerifyTotpSetup,
+  ApiSkip2FASetup,
+  ApiGet2FAStatus,
+  ApiInitiatePasskeySetup,
+  ApiVerifyPasskeySetup,
+} from '../docs/two-factor.docs';
 import type { BackupCodesResponseDto } from '../dto/backup-codes-response.dto';
 import type { PasskeyRegistrationOptionsDto } from '../dto/passkey-registration-options.dto';
 import type { TotpSetupResponseDto } from '../dto/totp-setup-response.dto';
@@ -34,13 +36,7 @@ export class TwoFactorController {
   @Post('totp/setup')
   @Onboarding()
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Initiate TOTP (Time-based One-Time Password) setup' })
-  @ApiResponse({
-    status: 200,
-    description: 'Returns QR code and manual key for TOTP setup',
-  })
-  @ApiResponse({ status: 401, description: 'Unauthorized - Invalid or missing onboarding token' })
-  @ApiResponse({ status: 409, description: 'TOTP already configured for this user' })
+  @ApiInitiateTotpSetup()
   async initiateTotpSetup(@UserId() userId: string): Promise<TotpSetupResponseDto> {
     this.logger.log(`POST /onboarding/2fa/totp/setup - User: ${userId}`);
     return await this.twoFactorAuthService.initiateTotpSetup(userId);
@@ -53,14 +49,7 @@ export class TwoFactorController {
   @Post('totp/verify')
   @Onboarding()
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Verify TOTP setup with a code from authenticator app' })
-  @ApiBody({ type: VerifyTotpDto, description: 'TOTP verification payload' })
-  @ApiResponse({
-    status: 200,
-    description: 'TOTP verified successfully, returns backup codes',
-  })
-  @ApiResponse({ status: 400, description: 'Invalid TOTP code' })
-  @ApiResponse({ status: 401, description: 'Unauthorized - Invalid or missing onboarding token' })
+  @ApiVerifyTotpSetup()
   async verifyTotpSetup(
     @UserId() userId: string,
     @Body() verifyTotpDto: VerifyTotpDto,
@@ -77,19 +66,7 @@ export class TwoFactorController {
   @Post('skip')
   @Onboarding()
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Skip two-factor authentication setup' })
-  @ApiResponse({
-    status: 200,
-    description: '2FA setup skipped successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        success: { type: 'boolean', example: true },
-        message: { type: 'string', example: 'Two-factor authentication setup skipped. You can enable it later in settings.' },
-      },
-    },
-  })
-  @ApiResponse({ status: 401, description: 'Unauthorized - Invalid or missing onboarding token' })
+  @ApiSkip2FASetup()
   async skip2FASetup(@UserId() userId: string): Promise<{ success: boolean; message: string }> {
     this.logger.log(`POST /onboarding/2fa/skip - User: ${userId}`);
     await this.twoFactorAuthService.skip2FASetup(userId);
@@ -105,12 +82,7 @@ export class TwoFactorController {
    */
   @Get('status')
   @Onboarding()
-  @ApiOperation({ summary: 'Get current two-factor authentication status' })
-  @ApiResponse({
-    status: 200,
-    description: 'Returns the current 2FA configuration status',
-  })
-  @ApiResponse({ status: 401, description: 'Unauthorized - Invalid or missing onboarding token' })
+  @ApiGet2FAStatus()
   async get2FAStatus(@UserId() userId: string): Promise<TwoFactorStatusResponseDto> {
     this.logger.log(`GET /onboarding/2fa/status - User: ${userId}`);
     return await this.twoFactorAuthService.get2FAStatus(userId);
@@ -123,13 +95,7 @@ export class TwoFactorController {
   @Post('passkey/setup')
   @Onboarding()
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Initiate Passkey/WebAuthn setup' })
-  @ApiResponse({
-    status: 200,
-    description: 'Returns WebAuthn registration options for passkey setup',
-  })
-  @ApiResponse({ status: 401, description: 'Unauthorized - Invalid or missing onboarding token' })
-  @ApiResponse({ status: 409, description: 'Passkey already configured for this user' })
+  @ApiInitiatePasskeySetup()
   async initiatePasskeySetup(@UserId() userId: string): Promise<PasskeyRegistrationOptionsDto> {
     this.logger.log(`POST /onboarding/2fa/passkey/setup - User: ${userId}`);
     return await this.twoFactorAuthService.initiatePasskeySetup(userId);
@@ -142,14 +108,7 @@ export class TwoFactorController {
   @Post('passkey/verify')
   @Onboarding()
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Verify Passkey/WebAuthn credential registration' })
-  @ApiBody({ type: VerifyPasskeyDto, description: 'Passkey credential verification payload' })
-  @ApiResponse({
-    status: 200,
-    description: 'Passkey registered successfully, returns backup codes',
-  })
-  @ApiResponse({ status: 400, description: 'Invalid passkey credential' })
-  @ApiResponse({ status: 401, description: 'Unauthorized - Invalid or missing onboarding token' })
+  @ApiVerifyPasskeySetup()
   async verifyPasskeySetup(
     @UserId() userId: string,
     @Body() verifyPasskeyDto: VerifyPasskeyDto,

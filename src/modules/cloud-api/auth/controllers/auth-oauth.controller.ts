@@ -1,6 +1,7 @@
 import { Controller, Get, Logger, Param, Query, Redirect, Request, Res } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiTags } from '@nestjs/swagger';
+import { ApiHandleOAuthCallback, ApiLinkOAuthProvider, ApiInitiateOAuth } from '../docs/auth-oauth.docs';
 import { BadRequestException, Onboarding, Public } from '@vritti/api-sdk';
 import type { FastifyReply } from 'fastify';
 import { OnboardingStepValues, SessionTypeValues } from '@/db/schema';
@@ -33,37 +34,7 @@ export class AuthOAuthController {
    */
   @Get(':provider/callback')
   @Public()
-  @ApiOperation({
-    summary: 'Handle OAuth callback',
-    description:
-      'Receives the authorization code from the OAuth provider after user authorization. Exchanges the code for tokens and creates a session.',
-  })
-  @ApiParam({
-    name: 'provider',
-    description: 'OAuth provider name',
-    example: 'google',
-    enum: ['google', 'github', 'microsoft'],
-  })
-  @ApiQuery({
-    name: 'code',
-    description: 'Authorization code from OAuth provider',
-    required: true,
-    type: String,
-  })
-  @ApiQuery({
-    name: 'state',
-    description: 'State parameter for CSRF protection',
-    required: true,
-    type: String,
-  })
-  @ApiResponse({
-    status: 302,
-    description: 'Redirects to frontend with access token on success, or to error page on failure.',
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'Missing code or state parameter.',
-  })
+  @ApiHandleOAuthCallback()
   async handleOAuthCallback(
     @Param('provider') provider: string,
     @Query('code') code: string,
@@ -117,30 +88,7 @@ export class AuthOAuthController {
   @Get(':provider/link')
   @Onboarding()
   @Redirect()
-  @ApiBearerAuth()
-  @ApiOperation({
-    summary: 'Link OAuth provider to existing account',
-    description:
-      "Initiates the OAuth flow to link an additional OAuth provider to the authenticated user's account. Requires an onboarding token.",
-  })
-  @ApiParam({
-    name: 'provider',
-    description: 'OAuth provider name to link',
-    example: 'google',
-    enum: ['google', 'github', 'microsoft'],
-  })
-  @ApiResponse({
-    status: 302,
-    description: 'Redirects to OAuth provider authorization page.',
-  })
-  @ApiResponse({
-    status: 401,
-    description: 'Unauthorized. Invalid or missing onboarding token.',
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'Invalid OAuth provider.',
-  })
+  @ApiLinkOAuthProvider()
   async linkOAuthProvider(@Param('provider') provider: string, @Request() req): Promise<{ url: string }> {
     const userId = req.user.id;
 
@@ -163,25 +111,7 @@ export class AuthOAuthController {
   @Get(':provider')
   @Public()
   @Redirect()
-  @ApiOperation({
-    summary: 'Initiate OAuth flow',
-    description:
-      "Initiates the OAuth authentication flow by redirecting the user to the specified OAuth provider's authorization page.",
-  })
-  @ApiParam({
-    name: 'provider',
-    description: 'OAuth provider name',
-    example: 'google',
-    enum: ['google', 'github', 'microsoft'],
-  })
-  @ApiResponse({
-    status: 302,
-    description: 'Redirects to OAuth provider authorization page.',
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'Invalid or unsupported OAuth provider.',
-  })
+  @ApiInitiateOAuth()
   async initiateOAuth(@Param('provider') provider: string): Promise<{ url: string }> {
     this.logger.log(`Initiating OAuth flow for provider: ${provider}`);
 

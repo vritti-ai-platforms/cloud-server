@@ -270,15 +270,7 @@ export class AuthService {
 
     this.logger.log(`Created new user and started onboarding: ${userResponse.email} (${userResponse.id})`);
 
-    // Get fresh user data to return
-    const user = await this.userService.findByEmail(dto.email);
-    if (!user) {
-      throw new BadRequestException({
-        label: 'Account Creation Failed',
-        detail: 'Failed to create user account. Please try again.',
-      });
-    }
-    return OnboardingStatusResponseDto.fromUser(user, true);
+    return OnboardingStatusResponseDto.fromUserResponseDto(userResponse, true);
   }
 
   /**

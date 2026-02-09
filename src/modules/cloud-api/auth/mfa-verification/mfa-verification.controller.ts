@@ -1,5 +1,6 @@
 import { Body, Controller, HttpCode, HttpStatus, Logger, Post, Res } from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiTags } from '@nestjs/swagger';
+import { ApiVerifyTotp, ApiSendSmsOtp, ApiVerifySmsOtp, ApiStartPasskeyMfa, ApiVerifyPasskeyMfa } from './mfa-verification.docs';
 import { Public } from '@vritti/api-sdk';
 import type { FastifyReply } from 'fastify';
 import { getRefreshCookieName, getRefreshCookieOptionsFromConfig } from '../services/session.service';
@@ -39,11 +40,7 @@ export class MfaVerificationController {
   @Post('verify-totp')
   @Public()
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Verify TOTP code for MFA' })
-  @ApiBody({ type: VerifyMfaTotpDto })
-  @ApiResponse({ status: 200, description: 'TOTP code verified successfully', type: MfaVerificationResponseDto })
-  @ApiResponse({ status: 400, description: 'Invalid TOTP code or malformed request' })
-  @ApiResponse({ status: 401, description: 'MFA session expired or invalid' })
+  @ApiVerifyTotp()
   async verifyTotp(
     @Body() dto: VerifyMfaTotpDto,
     @Res({ passthrough: true }) reply: FastifyReply,
@@ -66,11 +63,7 @@ export class MfaVerificationController {
   @Post('sms/send')
   @Public()
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Send SMS OTP for MFA verification' })
-  @ApiBody({ type: SendSmsOtpDto })
-  @ApiResponse({ status: 200, description: 'SMS OTP sent successfully', type: SmsOtpSentResponseDto })
-  @ApiResponse({ status: 400, description: 'Invalid request or phone number not configured' })
-  @ApiResponse({ status: 401, description: 'MFA session expired or invalid' })
+  @ApiSendSmsOtp()
   async sendSmsOtp(@Body() dto: SendSmsOtpDto): Promise<SmsOtpSentResponseDto> {
     this.logger.log(`POST /auth/mfa/sms/send - sessionId: ${dto.sessionId}`);
     return await this.mfaVerificationService.sendSmsOtp(dto.sessionId);
@@ -85,11 +78,7 @@ export class MfaVerificationController {
   @Post('sms/verify')
   @Public()
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Verify SMS OTP code for MFA' })
-  @ApiBody({ type: VerifySmsOtpDto })
-  @ApiResponse({ status: 200, description: 'SMS OTP verified successfully', type: MfaVerificationResponseDto })
-  @ApiResponse({ status: 400, description: 'Invalid OTP code or malformed request' })
-  @ApiResponse({ status: 401, description: 'MFA session expired or invalid' })
+  @ApiVerifySmsOtp()
   async verifySmsOtp(
     @Body() dto: VerifySmsOtpDto,
     @Res({ passthrough: true }) reply: FastifyReply,
@@ -112,11 +101,7 @@ export class MfaVerificationController {
   @Post('passkey/start')
   @Public()
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Start passkey authentication for MFA' })
-  @ApiBody({ type: StartPasskeyMfaDto })
-  @ApiResponse({ status: 200, description: 'Passkey authentication options generated successfully', type: PasskeyMfaOptionsDto })
-  @ApiResponse({ status: 400, description: 'Invalid request or no passkeys registered' })
-  @ApiResponse({ status: 401, description: 'MFA session expired or invalid' })
+  @ApiStartPasskeyMfa()
   async startPasskeyMfa(@Body() dto: StartPasskeyMfaDto): Promise<PasskeyMfaOptionsDto> {
     this.logger.log(`POST /auth/mfa/passkey/start - sessionId: ${dto.sessionId}`);
     return await this.mfaVerificationService.startPasskeyMfa(dto.sessionId);
@@ -131,11 +116,7 @@ export class MfaVerificationController {
   @Post('passkey/verify')
   @Public()
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Verify passkey authentication for MFA' })
-  @ApiBody({ type: VerifyPasskeyMfaDto })
-  @ApiResponse({ status: 200, description: 'Passkey verified successfully', type: MfaVerificationResponseDto })
-  @ApiResponse({ status: 400, description: 'Invalid passkey credential or malformed request' })
-  @ApiResponse({ status: 401, description: 'MFA session expired or invalid' })
+  @ApiVerifyPasskeyMfa()
   async verifyPasskeyMfa(
     @Body() dto: VerifyPasskeyMfaDto,
     @Res({ passthrough: true }) reply: FastifyReply,

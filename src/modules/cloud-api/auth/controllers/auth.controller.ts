@@ -14,7 +14,22 @@ import {
   Req,
   Res,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiTags } from '@nestjs/swagger';
+import {
+  ApiSignup,
+  ApiGetToken,
+  ApiLogin,
+  ApiRefreshToken,
+  ApiLogout,
+  ApiLogoutAll,
+  ApiGetCurrentUser,
+  ApiForgotPassword,
+  ApiVerifyResetOtp,
+  ApiResetPassword,
+  ApiChangePassword,
+  ApiGetSessions,
+  ApiRevokeSession,
+} from '../docs/auth.docs';
 import { NotFoundException, Public, UnauthorizedException, UserId } from '@vritti/api-sdk';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { SessionTypeValues } from '@/db/schema';
@@ -56,24 +71,7 @@ export class AuthController {
   @Post('signup')
   @Public()
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({
-    summary: 'User signup',
-    description:
-      'Creates a new user account and initiates the onboarding flow. Returns an access token and sets a refresh token in an httpOnly cookie.',
-  })
-  @ApiBody({ type: SignupDto })
-  @ApiResponse({
-    status: 200,
-    description: 'User created successfully. Returns onboarding status and access token.',
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'Invalid input data or validation error.',
-  })
-  @ApiResponse({
-    status: 409,
-    description: 'User with this email already exists.',
-  })
+  @ApiSignup()
   async signup(
     @Body() signupDto: SignupDto,
     @Res({ passthrough: true }) reply: FastifyReply,
@@ -114,26 +112,7 @@ export class AuthController {
    */
   @Get('token')
   @Public()
-  @ApiOperation({
-    summary: 'Recover session token',
-    description:
-      'Recovers the session by reading the refresh token from the httpOnly cookie and returns a new access token. Does not rotate the refresh token.',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Session recovered successfully. Returns new access token.',
-    schema: {
-      type: 'object',
-      properties: {
-        accessToken: { type: 'string', description: 'JWT access token' },
-        expiresIn: { type: 'number', description: 'Token expiry in seconds' },
-      },
-    },
-  })
-  @ApiResponse({
-    status: 401,
-    description: 'Invalid or expired refresh token.',
-  })
+  @ApiGetToken()
   async getToken(@Req() request: FastifyRequest): Promise<{ accessToken: string; expiresIn: number }> {
     const refreshToken = request.cookies?.[getRefreshCookieName()];
 
@@ -151,28 +130,7 @@ export class AuthController {
    */
   @Post('login')
   @Public()
-  @ApiOperation({
-    summary: 'User login',
-    description:
-      'Authenticates the user with email and password. Returns an access token and sets a refresh token in an httpOnly cookie.',
-  })
-  @ApiBody({ type: LoginDto })
-  @ApiResponse({
-    status: 201,
-    description: 'Login successful. Returns access token and user information.',
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'Invalid input data or validation error.',
-  })
-  @ApiResponse({
-    status: 401,
-    description: 'Invalid credentials.',
-  })
-  @ApiResponse({
-    status: 404,
-    description: 'User not found.',
-  })
+  @ApiLogin()
   async login(
     @Body() loginDto: LoginDto,
     @Res({ passthrough: true }) reply: FastifyReply,
@@ -200,26 +158,7 @@ export class AuthController {
    */
   @Post('refresh')
   @Public()
-  @ApiOperation({
-    summary: 'Refresh access token',
-    description:
-      'Generates a new access token and rotates the refresh token for enhanced security. Reads refresh token from httpOnly cookie and updates it with the new rotated token.',
-  })
-  @ApiResponse({
-    status: 201,
-    description: 'Token refreshed successfully. Returns new access token.',
-    schema: {
-      type: 'object',
-      properties: {
-        accessToken: { type: 'string', description: 'New JWT access token' },
-        expiresIn: { type: 'number', description: 'Token expiry in seconds' },
-      },
-    },
-  })
-  @ApiResponse({
-    status: 401,
-    description: 'Invalid or expired refresh token.',
-  })
+  @ApiRefreshToken()
   async refreshToken(
     @Req() request: FastifyRequest,
     @Res({ passthrough: true }) reply: FastifyReply,
@@ -257,26 +196,7 @@ export class AuthController {
    * The guard provides authentication, the service provides session state management.
    */
   @Post('logout')
-  @ApiBearerAuth()
-  @ApiOperation({
-    summary: 'Logout from current device',
-    description:
-      'Invalidates the current session and clears the refresh token cookie. Only logs out from the current device.',
-  })
-  @ApiResponse({
-    status: 201,
-    description: 'Successfully logged out.',
-    schema: {
-      type: 'object',
-      properties: {
-        message: { type: 'string', example: 'Successfully logged out' },
-      },
-    },
-  })
-  @ApiResponse({
-    status: 401,
-    description: 'Unauthorized. Invalid or missing access token.',
-  })
+  @ApiLogout()
   async logout(
     @Req() request: FastifyRequest,
     @Res({ passthrough: true }) reply: FastifyReply,
@@ -301,26 +221,7 @@ export class AuthController {
    * Invalidates all sessions and clears refresh token cookie
    */
   @Post('logout-all')
-  @ApiBearerAuth()
-  @ApiOperation({
-    summary: 'Logout from all devices',
-    description:
-      'Invalidates all active sessions for the current user across all devices and clears the refresh token cookie.',
-  })
-  @ApiResponse({
-    status: 201,
-    description: 'Successfully logged out from all devices.',
-    schema: {
-      type: 'object',
-      properties: {
-        message: { type: 'string', example: 'Successfully logged out from 3 device(s)' },
-      },
-    },
-  })
-  @ApiResponse({
-    status: 401,
-    description: 'Unauthorized. Invalid or missing access token.',
-  })
+  @ApiLogoutAll()
   async logoutAll(
     @UserId() userId: string,
     @Res({ passthrough: true }) reply: FastifyReply,
@@ -350,16 +251,7 @@ export class AuthController {
    */
   @Get('me')
   @Public()
-  @ApiOperation({
-    summary: 'Get current user authentication status',
-    description:
-      'Checks authentication status via httpOnly cookie. Returns user data and access token if authenticated, or { isAuthenticated: false } if not. Never returns a 401 error.',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Authentication status returned.',
-    type: AuthStatusResponseDto,
-  })
+  @ApiGetCurrentUser()
   async getCurrentUser(@Req() request: FastifyRequest): Promise<AuthStatusResponseDto> {
     const refreshToken = request.cookies?.[getRefreshCookieName()];
 
@@ -406,30 +298,7 @@ export class AuthController {
   @Post('forgot-password')
   @Public()
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({
-    summary: 'Request password reset',
-    description:
-      'Sends a password reset OTP to the provided email address. Always returns success to prevent email enumeration.',
-  })
-  @ApiBody({ type: ForgotPasswordDto })
-  @ApiResponse({
-    status: 200,
-    description: 'Password reset email sent (if account exists).',
-    schema: {
-      type: 'object',
-      properties: {
-        success: { type: 'boolean', example: true },
-        message: {
-          type: 'string',
-          example: 'If an account with that email exists, a password reset code has been sent.',
-        },
-      },
-    },
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'Invalid input data.',
-  })
+  @ApiForgotPassword()
   async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto): Promise<{ success: boolean; message: string }> {
     this.logger.log(`POST /auth/forgot-password - Email: ${forgotPasswordDto.email}`);
     return this.passwordResetService.requestPasswordReset(forgotPasswordDto.email);
@@ -443,29 +312,7 @@ export class AuthController {
   @Post('verify-reset-otp')
   @Public()
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({
-    summary: 'Verify password reset OTP',
-    description: 'Validates the OTP sent to the user email and returns a reset token for setting a new password.',
-  })
-  @ApiBody({ type: VerifyResetOtpDto })
-  @ApiResponse({
-    status: 200,
-    description: 'OTP verified successfully. Returns reset token.',
-    schema: {
-      type: 'object',
-      properties: {
-        resetToken: { type: 'string', description: 'Token to use for resetting the password' },
-      },
-    },
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'No reset request found or OTP expired.',
-  })
-  @ApiResponse({
-    status: 401,
-    description: 'Invalid OTP.',
-  })
+  @ApiVerifyResetOtp()
   async verifyResetOtp(@Body() verifyResetOtpDto: VerifyResetOtpDto): Promise<{ resetToken: string }> {
     this.logger.log(`POST /auth/verify-reset-otp - Email: ${verifyResetOtpDto.email}`);
     return this.passwordResetService.verifyResetOtp(verifyResetOtpDto.email, verifyResetOtpDto.otp);
@@ -479,30 +326,7 @@ export class AuthController {
   @Post('reset-password')
   @Public()
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({
-    summary: 'Reset password',
-    description:
-      'Sets a new password using the reset token received after OTP verification. Invalidates all active sessions.',
-  })
-  @ApiBody({ type: ResetPasswordDto })
-  @ApiResponse({
-    status: 200,
-    description: 'Password reset successfully.',
-    schema: {
-      type: 'object',
-      properties: {
-        success: { type: 'boolean', example: true },
-        message: {
-          type: 'string',
-          example: 'Password has been reset successfully. Please login with your new password.',
-        },
-      },
-    },
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'Invalid or expired reset token.',
-  })
+  @ApiResetPassword()
   async resetPassword(@Body() resetPasswordDto: ResetPasswordDto): Promise<{ success: boolean; message: string }> {
     this.logger.log('POST /auth/reset-password');
     return this.passwordResetService.resetPassword(resetPasswordDto.resetToken, resetPasswordDto.newPassword);
@@ -515,25 +339,8 @@ export class AuthController {
    * Validates current password before updating to new password
    */
   @Post('password/change')
-  @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({
-    summary: 'Change password',
-    description: "Change the authenticated user's password. Requires current password verification.",
-  })
-  @ApiBody({ type: ChangePasswordDto })
-  @ApiResponse({
-    status: 200,
-    description: 'Password changed successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        message: { type: 'string', example: 'Password changed successfully' },
-      },
-    },
-  })
-  @ApiResponse({ status: 400, description: 'Invalid current password or validation error' })
-  @ApiResponse({ status: 401, description: 'Unauthorized - Invalid or missing authentication' })
+  @ApiChangePassword()
   async changePassword(@UserId() userId: string, @Body() dto: ChangePasswordDto): Promise<{ message: string }> {
     this.logger.log(`POST /auth/password/change - Changing password for user: ${userId}`);
 
@@ -549,17 +356,7 @@ export class AuthController {
    * Returns all active sessions for the authenticated user
    */
   @Get('sessions')
-  @ApiBearerAuth()
-  @ApiOperation({
-    summary: 'List active sessions',
-    description: 'Get all active sessions for the authenticated user across all devices.',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Active sessions retrieved successfully',
-    type: [SessionResponseDto],
-  })
-  @ApiResponse({ status: 401, description: 'Unauthorized - Invalid or missing authentication' })
+  @ApiGetSessions()
   async getSessions(@UserId() userId: string, @Req() request: FastifyRequest): Promise<SessionResponseDto[]> {
     this.logger.log(`GET /auth/sessions - Fetching sessions for user: ${userId}`);
 
@@ -581,29 +378,7 @@ export class AuthController {
    * Invalidates a specific session by ID (cannot revoke current session)
    */
   @Delete('sessions/:id')
-  @ApiBearerAuth()
-  @ApiOperation({
-    summary: 'Revoke a specific session',
-    description: 'Invalidate a specific session by ID. Cannot revoke the current session.',
-  })
-  @ApiParam({
-    name: 'id',
-    description: 'Session ID to revoke',
-    example: '550e8400-e29b-41d4-a716-446655440000',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Session revoked successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        message: { type: 'string', example: 'Session revoked successfully' },
-      },
-    },
-  })
-  @ApiResponse({ status: 400, description: 'Cannot revoke current session' })
-  @ApiResponse({ status: 401, description: 'Unauthorized - Invalid or missing authentication' })
-  @ApiResponse({ status: 404, description: 'Session not found' })
+  @ApiRevokeSession()
   async revokeSession(
     @UserId() userId: string,
     @Param('id') sessionId: string,
