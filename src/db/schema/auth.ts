@@ -15,7 +15,7 @@ export const sessions = cloudSchema.table(
       .references(() => users.id, { onDelete: 'cascade' }),
     type: sessionTypeEnum('type').notNull().default('CLOUD'),
     accessToken: varchar('access_token', { length: 2048 }).notNull().unique(),
-    refreshToken: varchar('refresh_token', { length: 2048 }).unique(),
+    refreshToken: varchar('refresh_token', { length: 2048 }).notNull().unique(),
     tokenType: varchar('token_type', { length: 50 }).notNull().default('Bearer'),
     ipAddress: varchar('ip_address', { length: 45 }),
     userAgent: text('user_agent'),
@@ -25,7 +25,7 @@ export const sessions = cloudSchema.table(
     }).notNull(),
     refreshTokenExpiresAt: timestamp('refresh_token_expires_at', {
       withTimezone: true,
-    }),
+    }).notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true })
       .notNull()

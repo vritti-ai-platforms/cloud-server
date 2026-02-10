@@ -1145,10 +1145,10 @@
         ]
       }
     },
-    "/cloud-api/auth/token": {
+    "/cloud-api/auth/access-token": {
       "get": {
         "description": "Recovers the session by reading the refresh token from the httpOnly cookie and returns a new access token. Does not rotate the refresh token.",
-        "operationId": "AuthController_getToken",
+        "operationId": "AuthController_getAccessToken",
         "parameters": [],
         "responses": {
           "200": {
@@ -1307,10 +1307,10 @@
         ]
       }
     },
-    "/cloud-api/auth/me": {
+    "/cloud-api/auth/status": {
       "get": {
         "description": "Checks authentication status via httpOnly cookie. Returns user data and access token if authenticated, or { isAuthenticated: false } if not. Never returns 401.",
-        "operationId": "AuthController_getCurrentUser",
+        "operationId": "AuthController_getAuthStatus",
         "parameters": [],
         "responses": {
           "200": {

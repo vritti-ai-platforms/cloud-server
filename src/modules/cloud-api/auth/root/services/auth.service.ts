@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { BadRequestException, NotFoundException, UnauthorizedException } from '@vritti/api-sdk';
 import { AccountStatusValues, OnboardingStepValues, SessionTypeValues, type User } from '@/db/schema';
 import { TokenType } from '../../../../../config/jwt.config';
@@ -6,12 +6,12 @@ import { EncryptionService } from '../../../../../services';
 import { OnboardingStatusResponseDto } from '../../../onboarding/root/dto/entity/onboarding-status-response.dto';
 import { UserDto } from '../../../user/dto/entity/user.dto';
 import { UserService } from '../../../user/services/user.service';
-import { LoginResponse } from '../dto/response/login-response.dto';
-import { AuthStatusResponse } from '../dto/response/auth-status-response.dto';
-import type { LoginDto } from '../dto/request/login.dto';
-import type { SignupDto } from '../dto/request/signup.dto';
 import { MfaVerificationService } from '../../mfa-verification/services/mfa-verification.service';
 import { SessionResponse } from '../dto/entity/session-response.dto';
+import { LoginDto } from '../dto/request/login.dto';
+import { SignupDto } from '../dto/request/signup.dto';
+import { AuthStatusResponse } from '../dto/response/auth-status-response.dto';
+import { LoginResponse } from '../dto/response/login-response.dto';
 import { JwtAuthService } from './jwt.service';
 import { PasswordResetService } from './password-reset.service';
 import { SessionService } from './session.service';
@@ -31,7 +31,11 @@ export class AuthService {
   ) {}
 
   // Validates credentials and creates session, or returns MFA challenge if 2FA enabled
-  async login(dto: LoginDto, ipAddress?: string, userAgent?: string): Promise<LoginResponse & { refreshToken?: string }> {
+  async login(
+    dto: LoginDto,
+    ipAddress?: string,
+    userAgent?: string,
+  ): Promise<LoginResponse & { refreshToken?: string }> {
     // Find user by email
     const user = await this.userService.findByEmail(dto.email);
 
@@ -131,36 +135,6 @@ export class AuthService {
       }),
       refreshToken,
     };
-  }
-
-  // Refreshes the access token using a valid refresh token
-  async refreshToken(refreshToken: string): Promise<LoginResponse> {
-    // Refresh access token
-    const tokens = await this.sessionService.refreshAccessToken(refreshToken);
-
-    // Verify token to get userId
-    const payload = this.jwtService.verifyRefreshToken(refreshToken);
-
-    // Get user
-    const userResponse = await this.userService.findById(payload.userId);
-
-    // Get fresh user data
-    const freshUser = await this.userService.findByEmail(userResponse.email);
-
-    if (!freshUser) {
-      throw new UnauthorizedException({
-        label: 'Account Not Found',
-        detail: 'Your account could not be found. Please log in again.',
-      });
-    }
-
-    this.logger.log(`Token refreshed for user: ${payload.userId}`);
-
-    return new LoginResponse({
-      accessToken: tokens.accessToken,
-      expiresIn: this.jwtService.getAccessTokenExpiryInSeconds(),
-      user: UserDto.from(freshUser),
-    });
   }
 
   // Invalidates the session associated with the given access token
@@ -287,10 +261,7 @@ export class AuthService {
       });
     }
 
-    const isCurrentPasswordValid = await this.encryptionService.comparePassword(
-      currentPassword,
-      user.passwordHash,
-    );
+    const isCurrentPasswordValid = await this.encryptionService.comparePassword(currentPassword, user.passwordHash);
 
     if (!isCurrentPasswordValid) {
       throw new UnauthorizedException('The current password you entered is incorrect. Please try again.');
@@ -316,17 +287,23 @@ export class AuthService {
   }
 
   // Recovers access token from httpOnly cookie without rotating refresh token
-  async recoverToken(refreshToken: string | undefined): Promise<{ accessToken: string; expiresIn: number }> {
+  async getAccessToken(refreshToken: string | undefined): Promise<{ accessToken: string; expiresIn: number }> {
     return this.sessionService.recoverSession(refreshToken);
   }
 
   // Rotates both tokens and returns new access + refresh tokens
-  async refreshSession(refreshToken: string | undefined): Promise<{ accessToken: string; refreshToken: string; expiresIn: number }> {
+  async refreshSession(
+    refreshToken: string | undefined,
+  ): Promise<{ accessToken: string; refreshToken: string; expiresIn: number }> {
     return this.sessionService.refreshSession(refreshToken);
   }
 
   // Creates onboarding session and returns tokens
-  async createSignupSession(userId: string, ipAddress: string, userAgent: string): Promise<{ accessToken: string; refreshToken: string; expiresIn: number }> {
+  async createSignupSession(
+    userId: string,
+    ipAddress: string,
+    userAgent: string,
+  ): Promise<{ accessToken: string; refreshToken: string; expiresIn: number }> {
     return this.sessionService.createUnifiedSession(userId, SessionTypeValues.ONBOARDING, ipAddress, userAgent);
   }
 

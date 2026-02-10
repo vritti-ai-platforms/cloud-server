@@ -5,9 +5,9 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 import {
   ApiChangePassword,
   ApiForgotPassword,
-  ApiGetCurrentUser,
+  ApiGetAuthStatus,
   ApiGetSessions,
-  ApiGetToken,
+  ApiGetAccessToken,
   ApiLogin,
   ApiLogout,
   ApiLogoutAll,
@@ -64,12 +64,12 @@ export class AuthController {
   }
 
   // Recovers session from httpOnly cookie without rotating the refresh token
-  @Get('token')
+  @Get('access-token')
   @Public()
-  @ApiGetToken()
-  async getToken(@RefreshTokenCookie() refreshToken: string | undefined): Promise<TokenResponse> {
-    this.logger.log('GET /auth/token - Recovering session from cookie');
-    return this.authService.recoverToken(refreshToken);
+  @ApiGetAccessToken()
+  async getAccessToken(@RefreshTokenCookie() refreshToken: string | undefined): Promise<TokenResponse> {
+    this.logger.log('GET /auth/access-token - Recovering session from cookie');
+    return this.authService.getAccessToken(refreshToken);
   }
 
   // Authenticates user credentials, returns access token or MFA challenge
@@ -136,11 +136,11 @@ export class AuthController {
   }
 
   // Returns auth status without throwing 401
-  @Get('me')
+  @Get('status')
   @Public()
-  @ApiGetCurrentUser()
-  async getCurrentUser(@RefreshTokenCookie() refreshToken: string | undefined): Promise<AuthStatusResponse> {
-    this.logger.log('GET /auth/me - Checking authentication status');
+  @ApiGetAuthStatus()
+  async getAuthStatus(@RefreshTokenCookie() refreshToken: string | undefined): Promise<AuthStatusResponse> {
+    this.logger.log('GET /auth/status - Checking authentication status');
     return this.authService.getAuthStatus(refreshToken);
   }
 

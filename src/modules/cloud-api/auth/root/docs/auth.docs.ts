@@ -26,7 +26,7 @@ export function ApiSignup() {
   );
 }
 
-export function ApiGetToken() {
+export function ApiGetAccessToken() {
   return applyDecorators(
     ApiOperation({
       summary: 'Recover session token',
@@ -88,7 +88,7 @@ export function ApiLogoutAll() {
   );
 }
 
-export function ApiGetCurrentUser() {
+export function ApiGetAuthStatus() {
   return applyDecorators(
     ApiOperation({
       summary: 'Get current user authentication status',
