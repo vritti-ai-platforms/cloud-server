@@ -1219,10 +1219,10 @@
         ]
       }
     },
-    "/cloud-api/auth/refresh": {
+    "/cloud-api/auth/refresh-tokens": {
       "post": {
         "description": "Generates a new access token and rotates the refresh token for enhanced security.",
-        "operationId": "AuthController_refreshToken",
+        "operationId": "AuthController_refreshTokens",
         "parameters": [],
         "responses": {
           "201": {

@@ -182,10 +182,10 @@ export class OAuthService {
     return this.jwtService.sign(
       {
         userId,
-        type: TokenType.ONBOARDING,
+        tokenType: TokenType.ACCESS,
       },
       {
-        expiresIn: this.tokenExpiry.ONBOARDING,
+        expiresIn: this.tokenExpiry.ACCESS,
       },
     );
   }

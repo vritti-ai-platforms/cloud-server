@@ -1,7 +1,20 @@
-import { Body, Controller, Delete, Get, Headers, HttpCode, HttpStatus, Ip, Logger, Param, Post, Req, Res } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Headers,
+  HttpCode,
+  HttpStatus,
+  Ip,
+  Logger,
+  Param,
+  Post,
+  Res,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { AccessToken, Public, RefreshTokenCookie, UserId } from '@vritti/api-sdk';
-import type { FastifyReply, FastifyRequest } from 'fastify';
+import type { FastifyReply } from 'fastify';
 import {
   ApiChangePassword,
   ApiForgotPassword,
@@ -11,17 +24,17 @@ import {
   ApiLogin,
   ApiLogout,
   ApiLogoutAll,
-  ApiRefreshToken,
+  ApiRefreshTokens,
   ApiResetPassword,
   ApiRevokeSession,
   ApiSignup,
   ApiVerifyResetOtp,
 } from '../docs/auth.docs';
+import type { SessionResponse } from '../dto/entity/session-response.dto';
 import { ChangePasswordDto } from '../dto/request/change-password.dto';
 import { ForgotPasswordDto, ResetPasswordDto, VerifyResetOtpDto } from '../dto/request/forgot-password.dto';
 import { LoginDto } from '../dto/request/login.dto';
 import { SignupDto } from '../dto/request/signup.dto';
-import type { SessionResponse } from '../dto/entity/session-response.dto';
 import type { AuthStatusResponse } from '../dto/response/auth-status-response.dto';
 import type { LoginResponse } from '../dto/response/login-response.dto';
 import type { MessageResponse } from '../dto/response/message-response.dto';
@@ -94,17 +107,16 @@ export class AuthController {
   }
 
   // Rotates refresh token and issues a new access token
-  @Post('refresh')
+  @Post('refresh-tokens')
   @Public()
-  @ApiRefreshToken()
-  async refreshToken(
-    @Req() request: FastifyRequest,
+  @ApiRefreshTokens()
+  async refreshTokens(
+    @RefreshTokenCookie() refreshToken: string | undefined,
     @Res({ passthrough: true }) reply: FastifyReply,
   ): Promise<TokenResponse> {
-    const refreshToken = request.cookies?.[getRefreshCookieName()];
-    this.logger.log('POST /auth/refresh - Refreshing session with rotation');
+    this.logger.log('POST /auth/refresh-tokens');
 
-    const result = await this.authService.refreshSession(refreshToken);
+    const result = await this.authService.refreshTokens(refreshToken);
 
     reply.setCookie(getRefreshCookieName(), result.refreshToken, getRefreshCookieOptionsFromConfig());
 
@@ -126,10 +138,7 @@ export class AuthController {
   // Invalidates all sessions across all devices for the current user
   @Post('logout-all')
   @ApiLogoutAll()
-  async logoutAll(
-    @UserId() userId: string,
-    @Res({ passthrough: true }) reply: FastifyReply,
-  ): Promise<MessageResponse> {
+  async logoutAll(@UserId() userId: string, @Res({ passthrough: true }) reply: FastifyReply): Promise<MessageResponse> {
     const count = await this.authService.logoutAll(userId);
     reply.clearCookie(getRefreshCookieName(), { path: '/' });
     return { message: `Successfully logged out from ${count} device(s)` };
@@ -195,7 +204,11 @@ export class AuthController {
   // Revokes a specific session by ID
   @Delete('sessions/:id')
   @ApiRevokeSession()
-  async revokeSession(@UserId() userId: string, @Param('id') sessionId: string, @AccessToken() accessToken: string): Promise<MessageResponse> {
+  async revokeSession(
+    @UserId() userId: string,
+    @Param('id') sessionId: string,
+    @AccessToken() accessToken: string,
+  ): Promise<MessageResponse> {
     this.logger.log(`DELETE /auth/sessions/${sessionId} - User: ${userId}`);
     return this.authService.revokeSession(userId, sessionId, accessToken);
   }

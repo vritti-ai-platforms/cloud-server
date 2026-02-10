@@ -2,12 +2,13 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { type JwtSignOptions, JwtService as NestJwtService } from '@nestjs/jwt';
 import { hashToken } from '@vritti/api-sdk';
-import { getTokenExpiry, TokenType } from '../../../../../config/jwt.config';
+import type { SessionType } from '@/db/schema';
+import { getTokenExpiry, type TokenExpiry, TokenType } from '../../../../../config/jwt.config';
 
 @Injectable()
 export class JwtAuthService {
   private readonly logger = new Logger(JwtAuthService.name);
-  private readonly tokenExpiry: ReturnType<typeof getTokenExpiry>;
+  private readonly tokenExpiry: TokenExpiry;
 
   constructor(
     private readonly jwtService: NestJwtService,
@@ -16,44 +17,19 @@ export class JwtAuthService {
     this.tokenExpiry = getTokenExpiry(configService);
   }
 
-  // Generates a short-lived access token bound to the given refresh token
-  generateAccessToken(userId: string, refreshToken: string): string {
+  // Generates an access token bound to the given refresh token
+  generateAccessToken(userId: string, sessionId: string, sessionType: SessionType, refreshToken: string): string {
     return this.jwtService.sign(
-      {
-        userId,
-        type: TokenType.ACCESS,
-        refreshTokenHash: hashToken(refreshToken),
-      },
-      {
-        expiresIn: this.tokenExpiry.ACCESS,
-      },
+      { sessionType, tokenType: TokenType.ACCESS, userId, sessionId, refreshTokenHash: hashToken(refreshToken) },
+      { expiresIn: this.tokenExpiry.ACCESS },
     );
   }
 
-  // Generates a long-lived refresh token for session persistence
-  generateRefreshToken(userId: string): string {
+  // Generates a refresh token for session persistence
+  generateRefreshToken(userId: string, sessionId: string, sessionType: SessionType): string {
     return this.jwtService.sign(
-      {
-        userId,
-        type: TokenType.REFRESH,
-      },
-      {
-        expiresIn: this.tokenExpiry.REFRESH,
-      },
-    );
-  }
-
-  // Generates an onboarding token bound to the given refresh token
-  generateOnboardingToken(userId: string, refreshToken: string): string {
-    return this.jwtService.sign(
-      {
-        userId,
-        type: TokenType.ONBOARDING,
-        refreshTokenHash: hashToken(refreshToken),
-      },
-      {
-        expiresIn: this.tokenExpiry.ONBOARDING,
-      },
+      { sessionType, tokenType: TokenType.REFRESH, userId, sessionId },
+      { expiresIn: this.tokenExpiry.REFRESH },
     );
   }
 
@@ -62,61 +38,50 @@ export class JwtAuthService {
     return this.jwtService.sign(payload, options);
   }
 
-  // Verifies and decodes an access token, ensuring correct token type
-  verifyAccessToken(token: string): { userId: string; type: TokenType } {
+  // Verifies a token and ensures it matches the expected token type
+  verify(
+    token: string,
+    expectedType: TokenType,
+  ): { userId: string; sessionId: string; sessionType: SessionType; tokenType: TokenType } {
     try {
       const payload = this.jwtService.verify(token);
 
-      if (payload.type !== TokenType.ACCESS) {
-        throw new Error('Invalid token type');
+      if (payload.tokenType !== expectedType) {
+        throw new Error(`Expected ${expectedType} token, got ${payload.tokenType}`);
       }
 
       return payload;
     } catch (error) {
-      this.logger.error('Failed to verify access token', error);
+      this.logger.error(`Failed to verify ${expectedType} token`, error);
       throw error;
     }
   }
 
-  // Verifies and decodes a refresh token, ensuring correct token type
-  verifyRefreshToken(token: string): { userId: string; type: TokenType } {
-    try {
-      const payload = this.jwtService.verify(token);
-
-      if (payload.type !== TokenType.REFRESH) {
-        throw new Error('Invalid token type');
-      }
-
-      return payload;
-    } catch (error) {
-      this.logger.error('Failed to verify refresh token', error);
-      throw error;
-    }
+  // Returns the expiry as a Date for the given token type
+  getExpiryTime(type: TokenType): Date {
+    return new Date(Date.now() + this.parseExpiryToMs(this.tokenExpiry[type]));
   }
 
-  // Returns the access token expiry as a Date (15 minutes from now)
-  getAccessTokenExpiryTime(): Date {
-    const expiryTime = new Date();
-    expiryTime.setMinutes(expiryTime.getMinutes() + 15); // 15 minutes
-    return expiryTime;
+  // Returns the token lifetime in seconds for the given type
+  getExpiryInSeconds(type: TokenType): number {
+    return Math.floor(this.parseExpiryToMs(this.tokenExpiry[type]) / 1000);
   }
 
-  // Returns the refresh token expiry as a Date (7 days from now)
-  getRefreshTokenExpiryTime(): Date {
-    const expiryTime = new Date();
-    expiryTime.setDate(expiryTime.getDate() + 7); // 7 days
-    return expiryTime;
-  }
+  // Parses expiry strings like '15m', '24h', '30d' to milliseconds
+  private parseExpiryToMs(expiry: string): number {
+    const match = expiry.match(/^(\d+)([smhdwy])$/);
+    if (!match) throw new Error(`Invalid expiry format: ${expiry}`);
 
-  // Returns the onboarding token expiry as a Date (7 days from now)
-  getOnboardingTokenExpiryTime(): Date {
-    const expiryTime = new Date();
-    expiryTime.setDate(expiryTime.getDate() + 7); // 7 days
-    return expiryTime;
-  }
+    const value = Number.parseInt(match[1], 10);
+    const multipliers: Record<string, number> = {
+      s: 1000,
+      m: 60_000,
+      h: 3_600_000,
+      d: 86_400_000,
+      w: 604_800_000,
+      y: 31_536_000_000,
+    };
 
-  // Returns the access token lifetime in seconds
-  getAccessTokenExpiryInSeconds(): number {
-    return 15 * 60; // 15 minutes in seconds
+    return value * multipliers[match[2]];
   }
 }

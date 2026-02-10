@@ -61,15 +61,11 @@ class EnvironmentVariables {
 
   @IsString()
   @IsOptional()
-  JWT_ACCESS_EXPIRY: string = '15m';
+  ACCESS_TOKEN_EXPIRY: string = '15m';
 
   @IsString()
   @IsOptional()
-  JWT_REFRESH_EXPIRY: string = '30d';
-
-  @IsString()
-  @IsOptional()
-  JWT_SIGNUP_EXPIRY: string = '2h';
+  REFRESH_TOKEN_EXPIRY: string = '30d';
 
   // Bcrypt Configuration
   @IsNumber()

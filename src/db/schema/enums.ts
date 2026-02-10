@@ -38,7 +38,7 @@ export const oauthProviderTypeEnum = cloudSchema.enum('OAuthProviderType', [
 ]);
 
 // Session enums
-export const sessionTypeEnum = cloudSchema.enum('SessionType', ['ONBOARDING', 'CLOUD']);
+export const sessionTypeEnum = cloudSchema.enum('SessionType', ['ONBOARDING', 'CLOUD', 'COMPANY']);
 
 // TypeScript type exports for use in DTOs and services
 export type DatabaseType = (typeof databaseTypeEnum.enumValues)[number];
@@ -98,4 +98,5 @@ export const OAuthProviderTypeValues = {
 export const SessionTypeValues = {
   ONBOARDING: 'ONBOARDING' as const,
   CLOUD: 'CLOUD' as const,
+  COMPANY: 'COMPANY' as const,
 };

@@ -2,11 +2,9 @@ import { Injectable, Logger } from '@nestjs/common';
 import { getConfig, getRefreshCookieOptions, UnauthorizedException } from '@vritti/api-sdk';
 import { and, eq } from '@vritti/api-sdk/drizzle-orm';
 import { type Session, type SessionType, SessionTypeValues, sessions } from '@/db/schema';
+import { TokenType } from '../../../../../config/jwt.config';
 import { SessionRepository } from '../repositories/session.repository';
 import { JwtAuthService } from './jwt.service';
-
-// Note: findOne uses object-based filters (Drizzle v2 relational API)
-// Use { fieldName: value } instead of eq(table.field, value)
 
 export function getRefreshCookieName(): string {
   return getConfig().cookie.refreshCookieName;
@@ -37,45 +35,37 @@ export class SessionService {
     refreshToken: string;
     expiresIn: number;
   }> {
-    // Generate refresh token FIRST (needed for token binding)
-    const refreshToken = this.jwtService.generateRefreshToken(userId);
-
-    // Generate access token with refresh token binding
-    const accessToken =
-      sessionType === SessionTypeValues.ONBOARDING
-        ? this.jwtService.generateOnboardingToken(userId, refreshToken)
-        : this.jwtService.generateAccessToken(userId, refreshToken);
-
-    // Calculate expiry times
-    const accessTokenExpiresAt =
-      sessionType === SessionTypeValues.ONBOARDING
-        ? this.jwtService.getOnboardingTokenExpiryTime()
-        : this.jwtService.getAccessTokenExpiryTime();
-    const refreshTokenExpiresAt = this.jwtService.getRefreshTokenExpiryTime();
-
-    // Create session with both tokens
+    // Create session first to get the ID for JWT payloads
     const session = await this.sessionRepository.create({
       userId,
       type: sessionType,
-      accessToken,
-      refreshToken,
-      accessTokenExpiresAt,
-      refreshTokenExpiresAt,
+      accessToken: 'pending',
+      refreshToken: 'pending',
+      accessTokenExpiresAt: new Date(),
+      refreshTokenExpiresAt: new Date(),
       ipAddress,
       userAgent,
     });
 
-    // Calculate expiresIn in seconds
-    const expiresIn = Math.floor((accessTokenExpiresAt.getTime() - Date.now()) / 1000);
+    // Generate tokens with session ID
+    const refreshToken = this.jwtService.generateRefreshToken(userId, session.id, sessionType);
+    const accessToken = this.jwtService.generateAccessToken(userId, session.id, sessionType, refreshToken);
+    const accessTokenExpiresAt = this.jwtService.getExpiryTime(TokenType.ACCESS);
+    const refreshTokenExpiresAt = this.jwtService.getExpiryTime(TokenType.REFRESH);
 
-    this.logger.log(`Created unified ${sessionType} session for user: ${userId}`);
-
-    return {
-      session,
+    // Update session with real tokens
+    await this.sessionRepository.update(session.id, {
       accessToken,
       refreshToken,
-      expiresIn,
-    };
+      accessTokenExpiresAt,
+      refreshTokenExpiresAt,
+    });
+
+    const expiresIn = this.jwtService.getExpiryInSeconds(TokenType.ACCESS);
+
+    this.logger.log(`Created ${sessionType} session for user: ${userId}`);
+
+    return { session: { ...session, accessToken, refreshToken, accessTokenExpiresAt, refreshTokenExpiresAt }, accessToken, refreshToken, expiresIn };
   }
 
   // Finds an active, non-expired session by refresh token or throws
@@ -85,20 +75,21 @@ export class SessionService {
   }
 
   // Rotates both access and refresh tokens for a session
-  async refreshSession(refreshToken: string | undefined): Promise<{
+  async refreshTokens(refreshToken: string | undefined): Promise<{
     accessToken: string;
     refreshToken: string;
     expiresIn: number;
   }> {
     const session = await this.validateRefreshToken(refreshToken);
-    const newRefreshToken = this.jwtService.generateRefreshToken(session.userId);
-    const { accessToken, expiresIn } = this.generateAccessTokenForSession(session, newRefreshToken);
+    const newRefreshToken = this.jwtService.generateRefreshToken(session.userId, session.id, session.type);
+    session.refreshToken = newRefreshToken;
+    const { accessToken, expiresIn } = this.generateAccessTokenForSession(session);
 
     await this.sessionRepository.update(session.id, {
       accessToken,
-      accessTokenExpiresAt: this.getAccessTokenExpiry(session.type),
+      accessTokenExpiresAt: this.jwtService.getExpiryTime(TokenType.ACCESS),
       refreshToken: newRefreshToken,
-      refreshTokenExpiresAt: this.jwtService.getRefreshTokenExpiryTime(),
+      refreshTokenExpiresAt: this.jwtService.getExpiryTime(TokenType.REFRESH),
     });
 
     this.logger.log(`Refreshed session for user: ${session.userId}`);
@@ -107,17 +98,17 @@ export class SessionService {
   }
 
   // Generates new access token without rotating the refresh token
-  async recoverSession(refreshToken: string | undefined): Promise<{
+  async generateAccessToken(refreshToken: string | undefined): Promise<{
     accessToken: string;
     expiresIn: number;
     userId: string;
   }> {
     const session = await this.validateRefreshToken(refreshToken);
-    const { accessToken, expiresIn } = this.generateAccessTokenForSession(session, session.refreshToken);
+    const { accessToken, expiresIn } = this.generateAccessTokenForSession(session);
 
-    await this.sessionRepository.updateAccessToken(session.id, accessToken, this.getAccessTokenExpiry(session.type));
+    await this.sessionRepository.updateAccessToken(session.id, accessToken, this.jwtService.getExpiryTime(TokenType.ACCESS));
 
-    this.logger.log(`Recovered session for user: ${session.userId}`);
+    this.logger.log(`Generated access token for user: ${session.userId}`);
 
     return { accessToken, expiresIn, userId: session.userId };
   }
@@ -133,26 +124,35 @@ export class SessionService {
     return this.getSessionByRefreshTokenOrThrow(refreshToken);
   }
 
-  // Generates an access token bound to the given refresh token based on session type
-  private generateAccessTokenForSession(
-    session: Session,
-    refreshToken: string,
-  ): { accessToken: string; expiresIn: number } {
-    const accessToken =
-      session.type === SessionTypeValues.ONBOARDING
-        ? this.jwtService.generateOnboardingToken(session.userId, refreshToken)
-        : this.jwtService.generateAccessToken(session.userId, refreshToken);
-
-    const expiresIn = Math.floor((this.getAccessTokenExpiry(session.type).getTime() - Date.now()) / 1000);
-
+  // Generates an access token bound to the session's refresh token
+  private generateAccessTokenForSession(session: Session): { accessToken: string; expiresIn: number } {
+    const accessToken = this.jwtService.generateAccessToken(session.userId, session.id, session.type, session.refreshToken);
+    const expiresIn = this.jwtService.getExpiryInSeconds(TokenType.ACCESS);
     return { accessToken, expiresIn };
   }
 
-  // Returns the access token expiry time based on session type
-  private getAccessTokenExpiry(sessionType: SessionType): Date {
-    return sessionType === SessionTypeValues.ONBOARDING
-      ? this.jwtService.getOnboardingTokenExpiryTime()
-      : this.jwtService.getAccessTokenExpiryTime();
+  // Upgrades all ONBOARDING sessions to CLOUD and regenerates tokens
+  async upgradeToCloudSession(userId: string): Promise<void> {
+    const onboardingSessions = await this.sessionRepository.findMany({
+      where: { userId, type: SessionTypeValues.ONBOARDING, isActive: true },
+    });
+
+    for (const session of onboardingSessions) {
+      const refreshToken = this.jwtService.generateRefreshToken(userId, session.id, SessionTypeValues.CLOUD);
+      const accessToken = this.jwtService.generateAccessToken(userId, session.id, SessionTypeValues.CLOUD, refreshToken);
+
+      await this.sessionRepository.update(session.id, {
+        type: SessionTypeValues.CLOUD,
+        accessToken,
+        refreshToken,
+        accessTokenExpiresAt: this.jwtService.getExpiryTime(TokenType.ACCESS),
+        refreshTokenExpiresAt: this.jwtService.getExpiryTime(TokenType.REFRESH),
+      });
+    }
+
+    if (onboardingSessions.length > 0) {
+      this.logger.log(`Upgraded ${onboardingSessions.length} onboarding sessions to CLOUD for user: ${userId}`);
+    }
   }
 
   // Deletes all onboarding sessions for a user after onboarding completes
@@ -168,10 +168,7 @@ export class SessionService {
 
   // Guard validates JWT cryptographically; service manages session state in DB
   async invalidateSession(accessToken: string): Promise<void> {
-    const session = await this.sessionRepository.findOne({
-      accessToken,
-    });
-
+    const session = await this.sessionRepository.findOne({ accessToken });
     if (session) {
       await this.sessionRepository.update(session.id, { isActive: false });
       this.logger.log(`Invalidated session: ${session.id}`);
@@ -187,7 +184,7 @@ export class SessionService {
 
   // Returns all active sessions for a user ordered by most recent
   async getUserActiveSessions(userId: string): Promise<Session[]> {
-    return await this.sessionRepository.findActiveByUserId(userId);
+    return this.sessionRepository.findActiveByUserId(userId);
   }
 
   // Finds and validates a session by access token, throwing if expired or inactive

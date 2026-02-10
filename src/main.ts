@@ -74,9 +74,6 @@ function configureApiSdkSettings() {
       refreshCookieSameSite: 'strict',
       refreshCookieDomain: ENV.refreshCookieDomain,
     },
-    jwt: {
-      validateTokenBinding: true,
-    },
     guard: {
       tenantHeaderName: 'x-tenant-id',
     },

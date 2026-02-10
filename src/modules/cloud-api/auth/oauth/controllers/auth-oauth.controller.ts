@@ -73,7 +73,7 @@ export class AuthOAuthController {
   @Redirect()
   @ApiLinkOAuthProvider()
   async linkOAuthProvider(@Param('provider') provider: string, @Request() req): Promise<{ url: string }> {
-    const userId = req.user.id;
+    const userId = req.sessionInfo.userId;
 
     this.logger.log(`Linking OAuth provider: ${provider} for user: ${userId}`);
 

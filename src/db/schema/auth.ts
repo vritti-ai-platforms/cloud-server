@@ -16,7 +16,6 @@ export const sessions = cloudSchema.table(
     type: sessionTypeEnum('type').notNull().default('CLOUD'),
     accessToken: varchar('access_token', { length: 2048 }).notNull().unique(),
     refreshToken: varchar('refresh_token', { length: 2048 }).notNull().unique(),
-    tokenType: varchar('token_type', { length: 50 }).notNull().default('Bearer'),
     ipAddress: varchar('ip_address', { length: 45 }),
     userAgent: text('user_agent'),
     isActive: boolean('is_active').notNull().default(true),

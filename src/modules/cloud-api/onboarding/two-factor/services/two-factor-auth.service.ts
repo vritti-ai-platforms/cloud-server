@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { BadRequestException } from '@vritti/api-sdk';
 import { AccountStatusValues, OnboardingStepValues } from '@/db/schema';
+import { SessionService } from '../../../auth/root/services/session.service';
 import { UserService } from '../../../user/services/user.service';
 import { BackupCodesResponseDto } from '../dto/response/backup-codes-response.dto';
 import { PasskeyRegistrationOptionsDto } from '../dto/response/passkey-registration-options.dto';
@@ -38,6 +39,7 @@ export class TwoFactorAuthService {
     private readonly totpService: TotpService,
     private readonly webAuthnService: WebAuthnService,
     private readonly userService: UserService,
+    private readonly sessionService: SessionService,
   ) {}
 
   // Generates a TOTP secret, stores it in a pending map, and returns the QR code
@@ -112,6 +114,8 @@ export class TwoFactorAuthService {
       accountStatus: AccountStatusValues.ACTIVE,
     });
 
+    await this.sessionService.upgradeToCloudSession(userId);
+
     this.logger.log(`TOTP setup completed for user: ${userId}`);
 
     return new BackupCodesResponseDto({
@@ -131,6 +135,8 @@ export class TwoFactorAuthService {
       onboardingStep: OnboardingStepValues.COMPLETE,
       accountStatus: AccountStatusValues.ACTIVE,
     });
+
+    await this.sessionService.upgradeToCloudSession(userId);
 
     this.logger.log(`User ${userId} skipped 2FA setup`);
   }
@@ -267,6 +273,8 @@ export class TwoFactorAuthService {
       onboardingStep: OnboardingStepValues.COMPLETE,
       accountStatus: AccountStatusValues.ACTIVE,
     });
+
+    await this.sessionService.upgradeToCloudSession(userId);
 
     this.logger.log(`Passkey setup completed for user: ${userId}`);
 

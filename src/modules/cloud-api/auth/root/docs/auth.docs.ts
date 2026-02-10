@@ -52,7 +52,7 @@ export function ApiLogin() {
   );
 }
 
-export function ApiRefreshToken() {
+export function ApiRefreshTokens() {
   return applyDecorators(
     ApiOperation({
       summary: 'Refresh access token',

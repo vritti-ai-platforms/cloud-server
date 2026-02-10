@@ -130,7 +130,7 @@ export class AuthService {
     return {
       ...new LoginResponse({
         accessToken,
-        expiresIn: this.jwtService.getAccessTokenExpiryInSeconds(),
+        expiresIn: this.jwtService.getExpiryInSeconds(TokenType.ACCESS),
         user: UserDto.from(user),
       }),
       refreshToken,
@@ -234,7 +234,7 @@ export class AuthService {
     return this.jwtService.sign(
       {
         userId,
-        type: TokenType.ONBOARDING,
+        tokenType: TokenType.ACCESS,
       },
       {
         expiresIn: '7d',
@@ -288,14 +288,14 @@ export class AuthService {
 
   // Recovers access token from httpOnly cookie without rotating refresh token
   async getAccessToken(refreshToken: string | undefined): Promise<{ accessToken: string; expiresIn: number }> {
-    return this.sessionService.recoverSession(refreshToken);
+    return this.sessionService.generateAccessToken(refreshToken);
   }
 
   // Rotates both tokens and returns new access + refresh tokens
-  async refreshSession(
+  async refreshTokens(
     refreshToken: string | undefined,
   ): Promise<{ accessToken: string; refreshToken: string; expiresIn: number }> {
-    return this.sessionService.refreshSession(refreshToken);
+    return this.sessionService.refreshTokens(refreshToken);
   }
 
   // Creates onboarding session and returns tokens
@@ -362,7 +362,7 @@ export class AuthService {
     }
 
     try {
-      const { accessToken, expiresIn, userId } = await this.sessionService.recoverSession(refreshToken);
+      const { accessToken, expiresIn, userId } = await this.sessionService.generateAccessToken(refreshToken);
       const user = await this.userService.findById(userId);
 
       this.logger.log(`Session recovered for user: ${userId}`);
