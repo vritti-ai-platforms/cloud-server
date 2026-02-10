@@ -185,7 +185,7 @@ export class OAuthService {
         tokenType: TokenType.ACCESS,
       },
       {
-        expiresIn: this.tokenExpiry.ACCESS,
+        expiresIn: this.tokenExpiry.access,
       },
     );
   }

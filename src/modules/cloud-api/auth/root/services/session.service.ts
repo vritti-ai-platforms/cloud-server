@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { Injectable, Logger } from '@nestjs/common';
 import { getConfig, getRefreshCookieOptions, UnauthorizedException } from '@vritti/api-sdk';
 import { and, eq } from '@vritti/api-sdk/drizzle-orm';
@@ -35,37 +36,29 @@ export class SessionService {
     refreshToken: string;
     expiresIn: number;
   }> {
-    // Create session first to get the ID for JWT payloads
-    const session = await this.sessionRepository.create({
-      userId,
-      type: sessionType,
-      accessToken: 'pending',
-      refreshToken: 'pending',
-      accessTokenExpiresAt: new Date(),
-      refreshTokenExpiresAt: new Date(),
-      ipAddress,
-      userAgent,
-    });
-
-    // Generate tokens with session ID
-    const refreshToken = this.jwtService.generateRefreshToken(userId, session.id, sessionType);
-    const accessToken = this.jwtService.generateAccessToken(userId, session.id, sessionType, refreshToken);
+    const sessionId = randomUUID();
+    const refreshToken = this.jwtService.generateRefreshToken(userId, sessionId, sessionType);
+    const accessToken = this.jwtService.generateAccessToken(userId, sessionId, sessionType, refreshToken);
     const accessTokenExpiresAt = this.jwtService.getExpiryTime(TokenType.ACCESS);
     const refreshTokenExpiresAt = this.jwtService.getExpiryTime(TokenType.REFRESH);
 
-    // Update session with real tokens
-    await this.sessionRepository.update(session.id, {
+    const session = await this.sessionRepository.create({
+      id: sessionId,
+      userId,
+      type: sessionType,
       accessToken,
       refreshToken,
       accessTokenExpiresAt,
       refreshTokenExpiresAt,
+      ipAddress,
+      userAgent,
     });
 
     const expiresIn = this.jwtService.getExpiryInSeconds(TokenType.ACCESS);
 
     this.logger.log(`Created ${sessionType} session for user: ${userId}`);
 
-    return { session: { ...session, accessToken, refreshToken, accessTokenExpiresAt, refreshTokenExpiresAt }, accessToken, refreshToken, expiresIn };
+    return { session, accessToken, refreshToken, expiresIn };
   }
 
   // Finds an active, non-expired session by refresh token or throws

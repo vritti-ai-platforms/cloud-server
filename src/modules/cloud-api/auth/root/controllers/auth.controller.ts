@@ -18,9 +18,9 @@ import type { FastifyReply } from 'fastify';
 import {
   ApiChangePassword,
   ApiForgotPassword,
+  ApiGetAccessToken,
   ApiGetAuthStatus,
   ApiGetSessions,
-  ApiGetAccessToken,
   ApiLogin,
   ApiLogout,
   ApiLogoutAll,

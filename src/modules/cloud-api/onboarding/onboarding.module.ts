@@ -4,17 +4,10 @@ import { JwtModule } from '@nestjs/jwt';
 import { SseAuthGuard } from '@vritti/api-sdk';
 import { jwtConfigFactory } from '../../../config/jwt.config';
 import { ServicesModule } from '../../../services';
+import { SessionRepository } from '../auth/root/repositories/session.repository';
+import { JwtAuthService } from '../auth/root/services/jwt.service';
+import { SessionService } from '../auth/root/services/session.service';
 import { UserModule } from '../user/user.module';
-import { OnboardingController } from './root/controllers/onboarding.controller';
-import { EmailVerificationRepository } from './root/repositories/email-verification.repository';
-import { EmailVerificationService } from './root/services/email-verification.service';
-import { OnboardingService } from './root/services/onboarding.service';
-import { OtpService } from './root/services/otp.service';
-import { TwoFactorController } from './two-factor/controllers/two-factor.controller';
-import { TwoFactorAuthRepository } from './two-factor/repositories/two-factor-auth.repository';
-import { TotpService } from './two-factor/services/totp.service';
-import { TwoFactorAuthService } from './two-factor/services/two-factor-auth.service';
-import { WebAuthnService } from './two-factor/services/webauthn.service';
 import { VerificationSseController } from './mobile-verification/controllers/verification-sse.controller';
 import { VerificationWebhookController } from './mobile-verification/controllers/verification-webhook.controller';
 import {
@@ -27,6 +20,16 @@ import { MobileVerificationRepository } from './mobile-verification/repositories
 import { MobileVerificationService } from './mobile-verification/services/mobile-verification.service';
 import { SseConnectionService } from './mobile-verification/services/sse-connection.service';
 import { VerificationEventListener } from './mobile-verification/services/verification-event.listener';
+import { OnboardingController } from './root/controllers/onboarding.controller';
+import { EmailVerificationRepository } from './root/repositories/email-verification.repository';
+import { EmailVerificationService } from './root/services/email-verification.service';
+import { OnboardingService } from './root/services/onboarding.service';
+import { OtpService } from './root/services/otp.service';
+import { TwoFactorController } from './two-factor/controllers/two-factor.controller';
+import { TwoFactorAuthRepository } from './two-factor/repositories/two-factor-auth.repository';
+import { TotpService } from './two-factor/services/totp.service';
+import { TwoFactorAuthService } from './two-factor/services/two-factor-auth.service';
+import { WebAuthnService } from './two-factor/services/webauthn.service';
 
 @Module({
   imports: [
@@ -43,7 +46,7 @@ import { VerificationEventListener } from './mobile-verification/services/verifi
     EmailVerificationService,
     MobileVerificationService,
     OtpService,
-
+    SessionService,
     WhatsAppProvider,
     SMSInboundProvider,
     SMSOtpProvider,
@@ -51,9 +54,11 @@ import { VerificationEventListener } from './mobile-verification/services/verifi
     TotpService,
     TwoFactorAuthService,
     WebAuthnService,
+    JwtAuthService,
 
     EmailVerificationRepository,
     MobileVerificationRepository,
+    SessionRepository,
 
     SseConnectionService,
     VerificationEventListener,

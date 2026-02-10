@@ -12,13 +12,13 @@ export const jwtConfigFactory = (configService: ConfigService): JwtModuleOptions
 type TokenExpiryString = `${number}${'s' | 'm' | 'h' | 'd' | 'w' | 'y'}`;
 
 export interface TokenExpiry {
-  ACCESS: TokenExpiryString;
-  REFRESH: TokenExpiryString;
+  access: TokenExpiryString;
+  refresh: TokenExpiryString;
 }
 
 export const getTokenExpiry = (configService: ConfigService): TokenExpiry => ({
-  ACCESS: (configService.get<string>('ACCESS_TOKEN_EXPIRY') ?? '15m') as TokenExpiryString,
-  REFRESH: (configService.get<string>('REFRESH_TOKEN_EXPIRY') ?? '30d') as TokenExpiryString,
+  access: (configService.get<string>('ACCESS_TOKEN_EXPIRY') ?? '15m') as TokenExpiryString,
+  refresh: (configService.get<string>('REFRESH_TOKEN_EXPIRY') ?? '30d') as TokenExpiryString,
 });
 
 export enum TokenType {

@@ -21,7 +21,7 @@ export class JwtAuthService {
   generateAccessToken(userId: string, sessionId: string, sessionType: SessionType, refreshToken: string): string {
     return this.jwtService.sign(
       { sessionType, tokenType: TokenType.ACCESS, userId, sessionId, refreshTokenHash: hashToken(refreshToken) },
-      { expiresIn: this.tokenExpiry.ACCESS },
+      { expiresIn: this.tokenExpiry.access },
     );
   }
 
@@ -29,7 +29,7 @@ export class JwtAuthService {
   generateRefreshToken(userId: string, sessionId: string, sessionType: SessionType): string {
     return this.jwtService.sign(
       { sessionType, tokenType: TokenType.REFRESH, userId, sessionId },
-      { expiresIn: this.tokenExpiry.REFRESH },
+      { expiresIn: this.tokenExpiry.refresh },
     );
   }
 
