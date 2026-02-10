@@ -25,7 +25,7 @@ export class SessionService {
   ) {}
 
   // Creates a session with both access and refresh tokens for any session type
-  async createUnifiedSession(
+  async createSession(
     userId: string,
     sessionType: SessionType,
     ipAddress?: string,
@@ -99,7 +99,11 @@ export class SessionService {
     const session = await this.validateRefreshToken(refreshToken);
     const { accessToken, expiresIn } = this.generateAccessTokenForSession(session);
 
-    await this.sessionRepository.updateAccessToken(session.id, accessToken, this.jwtService.getExpiryTime(TokenType.ACCESS));
+    await this.sessionRepository.updateAccessToken(
+      session.id,
+      accessToken,
+      this.jwtService.getExpiryTime(TokenType.ACCESS),
+    );
 
     this.logger.log(`Generated access token for user: ${session.userId}`);
 
@@ -119,7 +123,12 @@ export class SessionService {
 
   // Generates an access token bound to the session's refresh token
   private generateAccessTokenForSession(session: Session): { accessToken: string; expiresIn: number } {
-    const accessToken = this.jwtService.generateAccessToken(session.userId, session.id, session.type, session.refreshToken);
+    const accessToken = this.jwtService.generateAccessToken(
+      session.userId,
+      session.id,
+      session.type,
+      session.refreshToken,
+    );
     const expiresIn = this.jwtService.getExpiryInSeconds(TokenType.ACCESS);
     return { accessToken, expiresIn };
   }
@@ -132,7 +141,12 @@ export class SessionService {
 
     for (const session of onboardingSessions) {
       const refreshToken = this.jwtService.generateRefreshToken(userId, session.id, SessionTypeValues.CLOUD);
-      const accessToken = this.jwtService.generateAccessToken(userId, session.id, SessionTypeValues.CLOUD, refreshToken);
+      const accessToken = this.jwtService.generateAccessToken(
+        userId,
+        session.id,
+        SessionTypeValues.CLOUD,
+        refreshToken,
+      );
 
       await this.sessionRepository.update(session.id, {
         type: SessionTypeValues.CLOUD,

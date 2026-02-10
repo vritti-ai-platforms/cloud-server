@@ -47,7 +47,7 @@ export class AuthOAuthController {
       const sessionType = isFullyOnboarded ? SessionTypeValues.CLOUD : SessionTypeValues.ONBOARDING;
 
       // Create session with refresh token
-      const { accessToken, refreshToken, expiresIn } = await this.sessionService.createUnifiedSession(
+      const { accessToken, refreshToken, expiresIn } = await this.sessionService.createSession(
         response.user.id,
         sessionType,
       );

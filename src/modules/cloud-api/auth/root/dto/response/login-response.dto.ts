@@ -55,12 +55,6 @@ export class LoginResponse {
   requiresOnboarding?: boolean;
 
   @ApiPropertyOptional({
-    description: 'Token for continuing onboarding flow',
-    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-  })
-  onboardingToken?: string;
-
-  @ApiPropertyOptional({
     description: 'Current onboarding step',
     example: 'EMAIL_VERIFICATION',
     enum: ['EMAIL_VERIFICATION', 'PASSWORD_SETUP', 'PHONE_VERIFICATION', 'TWO_FACTOR_SETUP', 'COMPLETE'],

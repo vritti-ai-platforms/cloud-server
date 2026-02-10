@@ -155,7 +155,7 @@ export class PasskeyAuthService {
     }
 
     // Create session
-    const session = await this.sessionService.createUnifiedSession(user.id, 'CLOUD', ipAddress, userAgent);
+    const session = await this.sessionService.createSession(user.id, 'CLOUD', ipAddress, userAgent);
 
     this.logger.log(`Passkey authentication successful for user: ${user.id}`);
 

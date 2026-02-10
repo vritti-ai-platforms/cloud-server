@@ -87,14 +87,10 @@ export class OAuthService {
 
   // Exchanges the authorization code for tokens, finds or creates the user, and links the provider
   async handleCallback(providerStr: string, code: string, state: string): Promise<OAuthResponseDto> {
-    console.log('hi Sunvish2');
-
     const provider = validateProviderString(providerStr);
 
     // Validate and consume state token
     const stateData = await this.oauthStateService.validateAndConsumeState(state);
-
-    console.log('hi Sunvish3');
 
     // Verify provider matches
     if (stateData.provider !== provider) {

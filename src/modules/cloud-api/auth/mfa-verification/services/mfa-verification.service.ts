@@ -359,7 +359,7 @@ export class MfaVerificationService {
     const user = await this.userService.findById(challenge.userId);
 
     // Create session - capture refreshToken for cookie
-    const { accessToken, refreshToken, expiresIn } = await this.sessionService.createUnifiedSession(
+    const { accessToken, refreshToken, expiresIn } = await this.sessionService.createSession(
       challenge.userId,
       SessionTypeValues.CLOUD,
       challenge.ipAddress,

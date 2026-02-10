@@ -1,9 +1,8 @@
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
-import { BadRequestException, NotFoundException, UnauthorizedException } from '@vritti/api-sdk';
-import { AccountStatusValues, OnboardingStepValues, SessionTypeValues, type User } from '@/db/schema';
+import { BadRequestException, ConflictException, NotFoundException, UnauthorizedException } from '@vritti/api-sdk';
+import { AccountStatusValues, OnboardingStepValues, SessionTypeValues } from '@/db/schema';
 import { TokenType } from '../../../../../config/jwt.config';
 import { EncryptionService } from '../../../../../services';
-import { OnboardingStatusResponseDto } from '../../../onboarding/root/dto/entity/onboarding-status-response.dto';
 import { UserDto } from '../../../user/dto/entity/user.dto';
 import { UserService } from '../../../user/services/user.service';
 import { MfaVerificationService } from '../../mfa-verification/services/mfa-verification.service';
@@ -12,6 +11,7 @@ import { LoginDto } from '../dto/request/login.dto';
 import { SignupDto } from '../dto/request/signup.dto';
 import { AuthStatusResponse } from '../dto/response/auth-status-response.dto';
 import { LoginResponse } from '../dto/response/login-response.dto';
+import { SignupResponseDto } from '../dto/response/signup-response.dto';
 import { JwtAuthService } from './jwt.service';
 import { PasswordResetService } from './password-reset.service';
 import { SessionService } from './session.service';
@@ -30,25 +30,56 @@ export class AuthService {
     private readonly passwordResetService: PasswordResetService,
   ) {}
 
+  // Creates a new user, starts an onboarding session, and returns tokens
+  async signup(
+    dto: SignupDto,
+    ipAddress?: string,
+    userAgent?: string,
+  ): Promise<SignupResponseDto & { refreshToken: string }> {
+    const existingUser = await this.userService.findByEmail(dto.email);
+
+    if (existingUser) {
+      throw new ConflictException({
+        label: 'Account Exists',
+        detail: 'An account with this email already exists. Please log in instead.',
+      });
+    }
+
+    const passwordHash = await this.encryptionService.hashPassword(dto.password);
+
+    const user = await this.userService.create(
+      { email: dto.email, firstName: dto.firstName, lastName: dto.lastName },
+      passwordHash,
+      true,
+    );
+
+    const { accessToken, refreshToken, expiresIn } = await this.sessionService.createSession(
+      user.id,
+      SessionTypeValues.ONBOARDING,
+      ipAddress,
+      userAgent,
+    );
+
+    this.logger.log(`Created new user: ${user.email} (${user.id})`);
+
+    return { ...SignupResponseDto.from(user, accessToken, expiresIn), refreshToken };
+  }
+
   // Validates credentials and creates session, or returns MFA challenge if 2FA enabled
   async login(
     dto: LoginDto,
     ipAddress?: string,
     userAgent?: string,
   ): Promise<LoginResponse & { refreshToken?: string }> {
-    // Find user by email
     const user = await this.userService.findByEmail(dto.email);
 
     if (!user) {
-      // Use message-only pattern for general auth errors (not field-specific)
-      // This ensures the error displays as a root form error, not on a specific field
       throw new UnauthorizedException({
         label: 'Invalid Credentials',
         detail: 'The email or password you entered is incorrect. Please check your credentials and try again.',
       });
     }
 
-    // Verify password (single check for all login flows)
     if (!user.passwordHash) {
       throw new UnauthorizedException({
         label: 'Invalid Credentials',
@@ -65,20 +96,27 @@ export class AuthService {
       });
     }
 
-    // Check if onboarding is complete
+    // Incomplete onboarding — create ONBOARDING session so user can access onboarding endpoints
     if (user.onboardingStep !== OnboardingStepValues.COMPLETE) {
-      // Generate onboarding token
-      const onboardingToken = this.generateOnboardingToken(user.id);
+      const { accessToken, refreshToken } = await this.sessionService.createSession(
+        user.id,
+        SessionTypeValues.ONBOARDING,
+        ipAddress,
+        userAgent,
+      );
 
       this.logger.log(`User login - requires onboarding: ${user.email} (${user.id})`);
 
-      // Return response with onboarding requirements
-      return new LoginResponse({
-        requiresOnboarding: true,
-        onboardingToken,
-        onboardingStep: user.onboardingStep,
-        user: UserDto.from(user),
-      });
+      return {
+        ...new LoginResponse({
+          accessToken,
+          expiresIn: this.jwtService.getExpiryInSeconds(TokenType.ACCESS),
+          requiresOnboarding: true,
+          onboardingStep: user.onboardingStep,
+          user: UserDto.from(user),
+        }),
+        refreshToken,
+      };
     }
 
     // Only ACTIVE users can login
@@ -96,7 +134,6 @@ export class AuthService {
     });
 
     if (mfaChallenge) {
-      // User has 2FA enabled - return MFA challenge instead of tokens
       this.logger.log(`User login requires MFA: ${user.email} (${user.id})`);
 
       return new LoginResponse({
@@ -110,8 +147,8 @@ export class AuthService {
       });
     }
 
-    // No 2FA - create session and generate tokens
-    const { accessToken, refreshToken } = await this.sessionService.createUnifiedSession(
+    // No 2FA — create CLOUD session
+    const { accessToken, refreshToken } = await this.sessionService.createSession(
       user.id,
       SessionTypeValues.CLOUD,
       ipAddress,
@@ -121,12 +158,10 @@ export class AuthService {
     // Delete all onboarding sessions (user has completed onboarding)
     await this.sessionService.deleteOnboardingSessions(user.id);
 
-    // Update last login timestamp
     await this.userService.updateLastLogin(user.id);
 
     this.logger.log(`User logged in: ${user.email} (${user.id})`);
 
-    // Return auth response with refreshToken for controller to set as cookie
     return {
       ...new LoginResponse({
         accessToken,
@@ -135,6 +170,36 @@ export class AuthService {
       }),
       refreshToken,
     };
+  }
+
+  // Returns { isAuthenticated: false } instead of throwing (never 401)
+  async getAuthStatus(refreshToken: string | undefined): Promise<AuthStatusResponse> {
+    if (!refreshToken) {
+      return new AuthStatusResponse({ isAuthenticated: false });
+    }
+
+    try {
+      const { accessToken, expiresIn, userId } = await this.sessionService.generateAccessToken(refreshToken);
+      const user = await this.userService.findById(userId);
+
+      this.logger.log(`Session recovered for user: ${userId}`);
+
+      return new AuthStatusResponse({ isAuthenticated: true, user, accessToken, expiresIn });
+    } catch {
+      return new AuthStatusResponse({ isAuthenticated: false });
+    }
+  }
+
+  // Recovers access token from httpOnly cookie without rotating refresh token
+  async getAccessToken(refreshToken: string | undefined): Promise<{ accessToken: string; expiresIn: number }> {
+    return this.sessionService.generateAccessToken(refreshToken);
+  }
+
+  // Rotates both tokens and returns new access + refresh tokens
+  async refreshTokens(
+    refreshToken: string | undefined,
+  ): Promise<{ accessToken: string; refreshToken: string; expiresIn: number }> {
+    return this.sessionService.refreshTokens(refreshToken);
   }
 
   // Invalidates the session associated with the given access token
@@ -154,7 +219,6 @@ export class AuthService {
   async validateUser(userId: string): Promise<UserDto> {
     const user = await this.userService.findById(userId);
 
-    // Check if account is active
     if (user.accountStatus !== AccountStatusValues.ACTIVE) {
       throw new UnauthorizedException({
         label: 'Account Inactive',
@@ -163,148 +227,6 @@ export class AuthService {
     }
 
     return user;
-  }
-
-  // Registers a new user or resumes onboarding for an existing incomplete account
-  async signup(dto: SignupDto): Promise<OnboardingStatusResponseDto> {
-    const existingUser = await this.userService.findByEmail(dto.email);
-
-    if (existingUser) {
-      if (existingUser.onboardingStep !== OnboardingStepValues.COMPLETE) {
-        // Resume onboarding
-        return await this.resumeOnboarding(existingUser, dto.password);
-      }
-      // Onboarding complete → error
-      throw new BadRequestException({
-        label: 'Account Exists',
-        detail: 'An account with this email already exists. Please log in instead.',
-        errors: [{ field: 'email', message: 'Already registered' }],
-      });
-    }
-
-    // New user
-    return await this.createNewUser(dto);
-  }
-
-  private async resumeOnboarding(user: User, password: string): Promise<OnboardingStatusResponseDto> {
-    // Skip password check if BOTH email AND mobile not verified
-    const shouldSkipPasswordCheck = !user.emailVerified && !user.phoneVerified;
-
-    if (!shouldSkipPasswordCheck && user.passwordHash) {
-      const isPasswordValid = await this.encryptionService.comparePassword(password, user.passwordHash);
-      if (!isPasswordValid) {
-        throw new BadRequestException({
-          label: 'Invalid Password',
-          detail: 'The password you entered is incorrect. Please enter the correct password to continue.',
-          errors: [{ field: 'password', message: 'Invalid password' }],
-        });
-      }
-    }
-
-    this.logger.log(`Resuming onboarding for user: ${user.email} (${user.id})`);
-
-    return OnboardingStatusResponseDto.fromUser(user, false);
-  }
-
-  private async createNewUser(dto: SignupDto): Promise<OnboardingStatusResponseDto> {
-    // Hash password
-    const passwordHash = await this.encryptionService.hashPassword(dto.password);
-
-    // Create user (skip email check since signup() already verified email doesn't exist)
-    const userResponse = await this.userService.create(
-      {
-        email: dto.email,
-        firstName: dto.firstName,
-        lastName: dto.lastName,
-      },
-      passwordHash,
-      true, // skipEmailCheck - signup() already validated email uniqueness
-    );
-
-    // OTP sending removed - now handled by POST /onboarding/start endpoint
-
-    // Generate onboarding token
-
-    this.logger.log(`Created new user and started onboarding: ${userResponse.email} (${userResponse.id})`);
-
-    return OnboardingStatusResponseDto.fromUserDto(userResponse, true);
-  }
-
-  private generateOnboardingToken(userId: string): string {
-    return this.jwtService.sign(
-      {
-        userId,
-        tokenType: TokenType.ACCESS,
-      },
-      {
-        expiresIn: '7d',
-      },
-    );
-  }
-
-  // Verifies current password and updates to a new one
-  async changePassword(userId: string, currentPassword: string, newPassword: string): Promise<void> {
-    // Get user
-    const userResponse = await this.userService.findById(userId);
-    const user = await this.userService.findByEmail(userResponse.email);
-
-    if (!user) {
-      throw new UnauthorizedException("We couldn't find your account. Please log in again.");
-    }
-
-    // Verify current password
-    if (!user.passwordHash) {
-      throw new BadRequestException({
-        label: 'No Password Set',
-        detail: 'Your account does not have a password set. Please use password recovery or OAuth sign-in.',
-        errors: [{ field: 'password', message: 'No password set' }],
-      });
-    }
-
-    const isCurrentPasswordValid = await this.encryptionService.comparePassword(currentPassword, user.passwordHash);
-
-    if (!isCurrentPasswordValid) {
-      throw new UnauthorizedException('The current password you entered is incorrect. Please try again.');
-    }
-
-    // Ensure new password is different
-    const isSamePassword = await this.encryptionService.comparePassword(newPassword, user.passwordHash);
-    if (isSamePassword) {
-      throw new BadRequestException({
-        label: 'Password Already In Use',
-        detail: 'Your new password must be different from your current password.',
-        errors: [{ field: 'newPassword', message: 'Password already in use' }],
-      });
-    }
-
-    // Hash new password
-    const newPasswordHash = await this.encryptionService.hashPassword(newPassword);
-
-    // Update password
-    await this.userService.update(user.id, { passwordHash: newPasswordHash });
-
-    this.logger.log(`Password changed for user: ${user.id}`);
-  }
-
-  // Recovers access token from httpOnly cookie without rotating refresh token
-  async getAccessToken(refreshToken: string | undefined): Promise<{ accessToken: string; expiresIn: number }> {
-    return this.sessionService.generateAccessToken(refreshToken);
-  }
-
-  // Rotates both tokens and returns new access + refresh tokens
-  async refreshTokens(
-    refreshToken: string | undefined,
-  ): Promise<{ accessToken: string; refreshToken: string; expiresIn: number }> {
-    return this.sessionService.refreshTokens(refreshToken);
-  }
-
-  // Creates onboarding session and returns tokens
-  async createSignupSession(
-    userId: string,
-    ipAddress: string,
-    userAgent: string,
-  ): Promise<{ accessToken: string; refreshToken: string; expiresIn: number }> {
-    return this.sessionService.createUnifiedSession(userId, SessionTypeValues.ONBOARDING, ipAddress, userAgent);
   }
 
   // Returns active sessions for the user, marking the current one
@@ -340,6 +262,45 @@ export class AuthService {
     return { message: 'Session revoked successfully' };
   }
 
+  // Verifies current password and updates to a new one
+  async changePassword(userId: string, currentPassword: string, newPassword: string): Promise<void> {
+    const userResponse = await this.userService.findById(userId);
+    const user = await this.userService.findByEmail(userResponse.email);
+
+    if (!user) {
+      throw new UnauthorizedException("We couldn't find your account. Please log in again.");
+    }
+
+    if (!user.passwordHash) {
+      throw new BadRequestException({
+        label: 'No Password Set',
+        detail: 'Your account does not have a password set. Please use password recovery or OAuth sign-in.',
+        errors: [{ field: 'password', message: 'No password set' }],
+      });
+    }
+
+    const isCurrentPasswordValid = await this.encryptionService.comparePassword(currentPassword, user.passwordHash);
+
+    if (!isCurrentPasswordValid) {
+      throw new UnauthorizedException('The current password you entered is incorrect. Please try again.');
+    }
+
+    const isSamePassword = await this.encryptionService.comparePassword(newPassword, user.passwordHash);
+    if (isSamePassword) {
+      throw new BadRequestException({
+        label: 'Password Already In Use',
+        detail: 'Your new password must be different from your current password.',
+        errors: [{ field: 'newPassword', message: 'Password already in use' }],
+      });
+    }
+
+    const newPasswordHash = await this.encryptionService.hashPassword(newPassword);
+
+    await this.userService.update(user.id, { passwordHash: newPasswordHash });
+
+    this.logger.log(`Password changed for user: ${user.id}`);
+  }
+
   // Sends password reset OTP to the given email
   async requestPasswordReset(email: string): Promise<{ success: boolean; message: string }> {
     return this.passwordResetService.requestPasswordReset(email);
@@ -353,23 +314,5 @@ export class AuthService {
   // Sets new password using the verified reset token
   async resetPassword(resetToken: string, newPassword: string): Promise<{ success: boolean; message: string }> {
     return this.passwordResetService.resetPassword(resetToken, newPassword);
-  }
-
-  // Returns { isAuthenticated: false } instead of throwing (never 401)
-  async getAuthStatus(refreshToken: string | undefined): Promise<AuthStatusResponse> {
-    if (!refreshToken) {
-      return new AuthStatusResponse({ isAuthenticated: false });
-    }
-
-    try {
-      const { accessToken, expiresIn, userId } = await this.sessionService.generateAccessToken(refreshToken);
-      const user = await this.userService.findById(userId);
-
-      this.logger.log(`Session recovered for user: ${userId}`);
-
-      return new AuthStatusResponse({ isAuthenticated: true, user, accessToken, expiresIn });
-    } catch {
-      return new AuthStatusResponse({ isAuthenticated: false });
-    }
   }
 }

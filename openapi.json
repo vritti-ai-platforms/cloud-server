@@ -1145,32 +1145,6 @@
         ]
       }
     },
-    "/cloud-api/auth/access-token": {
-      "get": {
-        "description": "Recovers the session by reading the refresh token from the httpOnly cookie and returns a new access token. Does not rotate the refresh token.",
-        "operationId": "AuthController_getAccessToken",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "Session recovered successfully.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TokenResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Invalid or expired refresh token."
-          }
-        },
-        "summary": "Recover session token",
-        "tags": [
-          "Auth"
-        ]
-      }
-    },
     "/cloud-api/auth/login": {
       "post": {
         "description": "Authenticates the user with email and password. Returns an access token and sets a refresh token in an httpOnly cookie.",
@@ -1214,6 +1188,55 @@
           }
         },
         "summary": "User login",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/cloud-api/auth/status": {
+      "get": {
+        "description": "Checks authentication status via httpOnly cookie. Returns user data and access token if authenticated, or { isAuthenticated: false } if not. Never returns 401.",
+        "operationId": "AuthController_getAuthStatus",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Authentication status returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthStatusResponse"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get current user authentication status",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/cloud-api/auth/access-token": {
+      "get": {
+        "description": "Recovers the session by reading the refresh token from the httpOnly cookie and returns a new access token. Does not rotate the refresh token.",
+        "operationId": "AuthController_getAccessToken",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Session recovered successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or expired refresh token."
+          }
+        },
+        "summary": "Recover session token",
         "tags": [
           "Auth"
         ]
@@ -1307,24 +1330,126 @@
         ]
       }
     },
-    "/cloud-api/auth/status": {
+    "/cloud-api/auth/sessions": {
       "get": {
-        "description": "Checks authentication status via httpOnly cookie. Returns user data and access token if authenticated, or { isAuthenticated: false } if not. Never returns 401.",
-        "operationId": "AuthController_getAuthStatus",
+        "description": "Get all active sessions for the authenticated user across all devices.",
+        "operationId": "AuthController_getSessions",
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Authentication status returned.",
+            "description": "Active sessions retrieved.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AuthStatusResponse"
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SessionResponse"
+                  }
                 }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List active sessions",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/cloud-api/auth/sessions/{id}": {
+      "delete": {
+        "description": "Invalidate a specific session by ID. Cannot revoke the current session.",
+        "operationId": "AuthController_revokeSession",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Session ID to revoke",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Session revoked.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Cannot revoke current session."
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "404": {
+            "description": "Session not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Revoke a specific session",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/cloud-api/auth/password/change": {
+      "post": {
+        "description": "Change the authenticated user's password. Requires current password verification.",
+        "operationId": "AuthController_changePassword",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordDto"
               }
             }
           }
         },
-        "summary": "Get current user authentication status",
+        "responses": {
+          "200": {
+            "description": "Password changed successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid current password or validation error."
+          },
+          "401": {
+            "description": "Unauthorized."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change password",
         "tags": [
           "Auth"
         ]
@@ -1436,131 +1561,6 @@
           }
         },
         "summary": "Reset password",
-        "tags": [
-          "Auth"
-        ]
-      }
-    },
-    "/cloud-api/auth/password/change": {
-      "post": {
-        "description": "Change the authenticated user's password. Requires current password verification.",
-        "operationId": "AuthController_changePassword",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ChangePasswordDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Password changed successfully.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MessageResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid current password or validation error."
-          },
-          "401": {
-            "description": "Unauthorized."
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Change password",
-        "tags": [
-          "Auth"
-        ]
-      }
-    },
-    "/cloud-api/auth/sessions": {
-      "get": {
-        "description": "Get all active sessions for the authenticated user across all devices.",
-        "operationId": "AuthController_getSessions",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "Active sessions retrieved.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/SessionResponse"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized."
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "List active sessions",
-        "tags": [
-          "Auth"
-        ]
-      }
-    },
-    "/cloud-api/auth/sessions/{id}": {
-      "delete": {
-        "description": "Invalidate a specific session by ID. Cannot revoke the current session.",
-        "operationId": "AuthController_revokeSession",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "description": "Session ID to revoke",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Session revoked.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MessageResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Cannot revoke current session."
-          },
-          "401": {
-            "description": "Unauthorized."
-          },
-          "404": {
-            "description": "Session not found."
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Revoke a specific session",
         "tags": [
           "Auth"
         ]
@@ -3703,7 +3703,9 @@
         },
         "required": [
           "email",
-          "password"
+          "password",
+          "firstName",
+          "lastName"
         ]
       },
       "TokenResponse": {
@@ -3812,11 +3814,6 @@
             "description": "Whether user requires onboarding",
             "example": false
           },
-          "onboardingToken": {
-            "type": "string",
-            "description": "Token for continuing onboarding flow",
-            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-          },
           "onboardingStep": {
             "type": "string",
             "description": "Current onboarding step",
@@ -3843,18 +3840,6 @@
             ]
           }
         }
-      },
-      "MessageResponse": {
-        "type": "object",
-        "properties": {
-          "message": {
-            "type": "string",
-            "example": "Operation completed successfully"
-          }
-        },
-        "required": [
-          "message"
-        ]
       },
       "AuthStatusResponse": {
         "type": "object",
@@ -3885,6 +3870,81 @@
         },
         "required": [
           "isAuthenticated"
+        ]
+      },
+      "MessageResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Operation completed successfully"
+          }
+        },
+        "required": [
+          "message"
+        ]
+      },
+      "SessionResponse": {
+        "type": "object",
+        "properties": {
+          "sessionId": {
+            "type": "string",
+            "description": "Unique session identifier",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "device": {
+            "type": "string",
+            "description": "Device information parsed from user agent",
+            "example": "Chrome on macOS"
+          },
+          "location": {
+            "type": "string",
+            "description": "Geographic location based on IP address",
+            "example": "San Francisco, CA"
+          },
+          "ipAddress": {
+            "type": "string",
+            "description": "IP address of the session",
+            "example": "192.168.1.1"
+          },
+          "lastActive": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Last activity timestamp",
+            "example": "2026-02-04T12:30:00Z"
+          },
+          "isCurrent": {
+            "type": "boolean",
+            "description": "Whether this is the current session",
+            "example": false
+          }
+        },
+        "required": [
+          "sessionId",
+          "device",
+          "location",
+          "ipAddress",
+          "lastActive",
+          "isCurrent"
+        ]
+      },
+      "ChangePasswordDto": {
+        "type": "object",
+        "properties": {
+          "currentPassword": {
+            "type": "string",
+            "description": "Current password for verification",
+            "example": "MyOldPassword123!"
+          },
+          "newPassword": {
+            "type": "string",
+            "description": "New password (min 8 chars, must contain uppercase, lowercase, number, and special character)",
+            "example": "MyNewPassword456!"
+          }
+        },
+        "required": [
+          "currentPassword",
+          "newPassword"
         ]
       },
       "ForgotPasswordDto": {
@@ -3967,69 +4027,6 @@
         "required": [
           "resetToken",
           "newPassword"
-        ]
-      },
-      "ChangePasswordDto": {
-        "type": "object",
-        "properties": {
-          "currentPassword": {
-            "type": "string",
-            "description": "Current password for verification",
-            "example": "MyOldPassword123!"
-          },
-          "newPassword": {
-            "type": "string",
-            "description": "New password (min 8 chars, must contain uppercase, lowercase, number, and special character)",
-            "example": "MyNewPassword456!"
-          }
-        },
-        "required": [
-          "currentPassword",
-          "newPassword"
-        ]
-      },
-      "SessionResponse": {
-        "type": "object",
-        "properties": {
-          "sessionId": {
-            "type": "string",
-            "description": "Unique session identifier",
-            "example": "550e8400-e29b-41d4-a716-446655440000"
-          },
-          "device": {
-            "type": "string",
-            "description": "Device information parsed from user agent",
-            "example": "Chrome on macOS"
-          },
-          "location": {
-            "type": "string",
-            "description": "Geographic location based on IP address",
-            "example": "San Francisco, CA"
-          },
-          "ipAddress": {
-            "type": "string",
-            "description": "IP address of the session",
-            "example": "192.168.1.1"
-          },
-          "lastActive": {
-            "format": "date-time",
-            "type": "string",
-            "description": "Last activity timestamp",
-            "example": "2026-02-04T12:30:00Z"
-          },
-          "isCurrent": {
-            "type": "boolean",
-            "description": "Whether this is the current session",
-            "example": false
-          }
-        },
-        "required": [
-          "sessionId",
-          "device",
-          "location",
-          "ipAddress",
-          "lastActive",
-          "isCurrent"
         ]
       },
       "StartPasskeyAuthDto": {

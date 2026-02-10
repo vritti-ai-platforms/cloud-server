@@ -37,6 +37,7 @@ import { LoginDto } from '../dto/request/login.dto';
 import { SignupDto } from '../dto/request/signup.dto';
 import type { AuthStatusResponse } from '../dto/response/auth-status-response.dto';
 import type { LoginResponse } from '../dto/response/login-response.dto';
+import type { SignupResponseDto } from '../dto/response/signup-response.dto';
 import type { MessageResponse } from '../dto/response/message-response.dto';
 import type { ResetTokenResponse } from '../dto/response/reset-token-response.dto';
 import type { SuccessResponse } from '../dto/response/success-response.dto';
@@ -61,28 +62,14 @@ export class AuthController {
     @Res({ passthrough: true }) reply: FastifyReply,
     @Ip() ipAddress: string,
     @Headers('user-agent') userAgent: string,
-  ): Promise<TokenResponse & { userId: string }> {
+  ): Promise<SignupResponseDto> {
     this.logger.log(`POST /auth/signup - Email: ${signupDto.email}`);
 
-    const response = await this.authService.signup(signupDto);
-    const { accessToken, refreshToken, expiresIn } = await this.authService.createSignupSession(
-      response.userId,
-      ipAddress,
-      userAgent,
-    );
+    const { refreshToken, ...response } = await this.authService.signup(signupDto, ipAddress, userAgent);
 
     reply.setCookie(getRefreshCookieName(), refreshToken, getRefreshCookieOptionsFromConfig());
 
-    return { ...response, accessToken, expiresIn };
-  }
-
-  // Recovers session from httpOnly cookie without rotating the refresh token
-  @Get('access-token')
-  @Public()
-  @ApiGetAccessToken()
-  async getAccessToken(@RefreshTokenCookie() refreshToken: string | undefined): Promise<TokenResponse> {
-    this.logger.log('GET /auth/access-token - Recovering session from cookie');
-    return this.authService.getAccessToken(refreshToken);
+    return response;
   }
 
   // Authenticates user credentials, returns access token or MFA challenge
@@ -104,6 +91,24 @@ export class AuthController {
     }
 
     return response;
+  }
+
+  // Returns auth status without throwing 401
+  @Get('status')
+  @Public()
+  @ApiGetAuthStatus()
+  async getAuthStatus(@RefreshTokenCookie() refreshToken: string | undefined): Promise<AuthStatusResponse> {
+    this.logger.log('GET /auth/status - Checking authentication status');
+    return this.authService.getAuthStatus(refreshToken);
+  }
+
+  // Recovers session from httpOnly cookie without rotating the refresh token
+  @Get('access-token')
+  @Public()
+  @ApiGetAccessToken()
+  async getAccessToken(@RefreshTokenCookie() refreshToken: string | undefined): Promise<TokenResponse> {
+    this.logger.log('GET /auth/access-token - Recovering session from cookie');
+    return this.authService.getAccessToken(refreshToken);
   }
 
   // Rotates refresh token and issues a new access token
@@ -144,13 +149,34 @@ export class AuthController {
     return { message: `Successfully logged out from ${count} device(s)` };
   }
 
-  // Returns auth status without throwing 401
-  @Get('status')
-  @Public()
-  @ApiGetAuthStatus()
-  async getAuthStatus(@RefreshTokenCookie() refreshToken: string | undefined): Promise<AuthStatusResponse> {
-    this.logger.log('GET /auth/status - Checking authentication status');
-    return this.authService.getAuthStatus(refreshToken);
+  // Returns all active sessions for the authenticated user
+  @Get('sessions')
+  @ApiGetSessions()
+  async getSessions(@UserId() userId: string, @AccessToken() accessToken: string): Promise<SessionResponse[]> {
+    this.logger.log(`GET /auth/sessions - User: ${userId}`);
+    return this.authService.getUserSessions(userId, accessToken);
+  }
+
+  // Revokes a specific session by ID
+  @Delete('sessions/:id')
+  @ApiRevokeSession()
+  async revokeSession(
+    @UserId() userId: string,
+    @Param('id') sessionId: string,
+    @AccessToken() accessToken: string,
+  ): Promise<MessageResponse> {
+    this.logger.log(`DELETE /auth/sessions/${sessionId} - User: ${userId}`);
+    return this.authService.revokeSession(userId, sessionId, accessToken);
+  }
+
+  // Verifies current password and updates to a new one
+  @Post('password/change')
+  @HttpCode(HttpStatus.OK)
+  @ApiChangePassword()
+  async changePassword(@UserId() userId: string, @Body() dto: ChangePasswordDto): Promise<MessageResponse> {
+    this.logger.log(`POST /auth/password/change - User: ${userId}`);
+    await this.authService.changePassword(userId, dto.currentPassword, dto.newPassword);
+    return { message: 'Password changed successfully' };
   }
 
   // Sends password reset OTP to the given email
@@ -181,35 +207,5 @@ export class AuthController {
   async resetPassword(@Body() dto: ResetPasswordDto): Promise<SuccessResponse> {
     this.logger.log('POST /auth/reset-password');
     return this.authService.resetPassword(dto.resetToken, dto.newPassword);
-  }
-
-  // Verifies current password and updates to a new one
-  @Post('password/change')
-  @HttpCode(HttpStatus.OK)
-  @ApiChangePassword()
-  async changePassword(@UserId() userId: string, @Body() dto: ChangePasswordDto): Promise<MessageResponse> {
-    this.logger.log(`POST /auth/password/change - User: ${userId}`);
-    await this.authService.changePassword(userId, dto.currentPassword, dto.newPassword);
-    return { message: 'Password changed successfully' };
-  }
-
-  // Returns all active sessions for the authenticated user
-  @Get('sessions')
-  @ApiGetSessions()
-  async getSessions(@UserId() userId: string, @AccessToken() accessToken: string): Promise<SessionResponse[]> {
-    this.logger.log(`GET /auth/sessions - User: ${userId}`);
-    return this.authService.getUserSessions(userId, accessToken);
-  }
-
-  // Revokes a specific session by ID
-  @Delete('sessions/:id')
-  @ApiRevokeSession()
-  async revokeSession(
-    @UserId() userId: string,
-    @Param('id') sessionId: string,
-    @AccessToken() accessToken: string,
-  ): Promise<MessageResponse> {
-    this.logger.log(`DELETE /auth/sessions/${sessionId} - User: ${userId}`);
-    return this.authService.revokeSession(userId, sessionId, accessToken);
   }
 }
