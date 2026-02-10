@@ -26,6 +26,12 @@ export class AuthStatusResponse {
   })
   expiresIn?: number;
 
+  @ApiPropertyOptional({
+    description: 'Whether the user needs to complete onboarding',
+    example: false,
+  })
+  requiresOnboarding?: boolean;
+
   constructor(partial: Partial<AuthStatusResponse>) {
     Object.assign(this, partial);
   }

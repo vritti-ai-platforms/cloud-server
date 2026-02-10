@@ -139,13 +139,16 @@ export class OAuthService {
     const existingUser = await this.userRepository.findByEmail(profile.email);
 
     if (existingUser) {
-      // Allow OAuth signin for both incomplete and completed users
-      // For completed users: OAuth provider will be linked, CLOUD session created, redirected to dashboard
-      // For incomplete users: OAuth provider will be linked, ONBOARDING session created, redirected to onboarding
-      this.logger.log(
-        `Found existing user for email: ${profile.email}, onboardingStep: ${existingUser.onboardingStep}`,
-      );
-      return { user: existingUser, isNewUser: false };
+      // Completed onboarding — link provider and continue
+      if (existingUser.onboardingStep === OnboardingStepValues.COMPLETE) {
+        this.logger.log(`Found existing user for email: ${profile.email}, linking OAuth provider`);
+        return { user: existingUser, isNewUser: false };
+      }
+
+      // Incomplete onboarding — delete and start fresh
+      await this.oauthProviderRepository.deleteByUserId(existingUser.id);
+      await this.userRepository.hardDelete(existingUser.id);
+      this.logger.log(`Deleted incomplete user for re-signup: ${profile.email} (${existingUser.id})`);
     }
 
     // Create new user

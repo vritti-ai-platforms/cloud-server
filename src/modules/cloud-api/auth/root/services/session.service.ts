@@ -95,6 +95,7 @@ export class SessionService {
     accessToken: string;
     expiresIn: number;
     userId: string;
+    sessionType: string;
   }> {
     const session = await this.validateRefreshToken(refreshToken);
     const { accessToken, expiresIn } = this.generateAccessTokenForSession(session);
@@ -107,7 +108,7 @@ export class SessionService {
 
     this.logger.log(`Generated access token for user: ${session.userId}`);
 
-    return { accessToken, expiresIn, userId: session.userId };
+    return { accessToken, expiresIn, userId: session.userId, sessionType: session.type };
   }
 
   // Validates refresh token presence and returns the active session

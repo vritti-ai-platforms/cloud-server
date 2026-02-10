@@ -131,6 +131,12 @@ export class UserService {
     return UserDto.from(user);
   }
 
+  // Permanently deletes a user and all related data
+  async delete(id: string): Promise<void> {
+    await this.userRepository.hardDelete(id);
+    this.logger.log(`Deleted user: ${id}`);
+  }
+
   // Soft deletes a user account; throws NotFoundException if not found
   async deactivate(id: string): Promise<UserDto> {
     // Check if user exists

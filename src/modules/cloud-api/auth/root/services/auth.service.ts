@@ -30,7 +30,7 @@ export class AuthService {
     private readonly passwordResetService: PasswordResetService,
   ) {}
 
-  // Creates a new user, starts an onboarding session, and returns tokens
+  // Creates a new user or sets password for OAuth users without one
   async signup(
     dto: SignupDto,
     ipAddress?: string,
@@ -39,12 +39,22 @@ export class AuthService {
     const existingUser = await this.userService.findByEmail(dto.email);
 
     if (existingUser) {
-      throw new ConflictException({
-        label: 'Account Exists',
-        detail: 'An account with this email already exists. Please log in instead.',
-      });
+      // Completed onboarding — must use login
+      if (existingUser.onboardingStep === OnboardingStepValues.COMPLETE) {
+        throw new ConflictException({
+          label: 'Account Exists',
+          detail: 'An account with this email already exists. Please log in instead.',
+        });
+      }
+
+      // Incomplete onboarding — delete and start fresh
+      await this.sessionService.invalidateAllUserSessions(existingUser.id);
+      await this.userService.delete(existingUser.id);
+
+      this.logger.log(`Deleted incomplete user for re-signup: ${existingUser.email} (${existingUser.id})`);
     }
 
+    // New user
     const passwordHash = await this.encryptionService.hashPassword(dto.password);
 
     const user = await this.userService.create(
@@ -179,8 +189,15 @@ export class AuthService {
     }
 
     try {
-      const { accessToken, expiresIn, userId } = await this.sessionService.generateAccessToken(refreshToken);
+      const { accessToken, expiresIn, userId, sessionType } =
+        await this.sessionService.generateAccessToken(refreshToken);
+
       const user = await this.userService.findById(userId);
+
+      // Onboarding sessions return tokens but are not fully authenticated
+      if (sessionType === SessionTypeValues.ONBOARDING) {
+        return new AuthStatusResponse({ isAuthenticated: false, requiresOnboarding: true, user, accessToken, expiresIn });
+      }
 
       this.logger.log(`Session recovered for user: ${userId}`);
 

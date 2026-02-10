@@ -113,8 +113,14 @@ export class UserRepository extends PrimaryBaseRepository<typeof users> {
   }
 
   // Soft deletes a user by setting accountStatus to INACTIVE
-  async delete(id: string): Promise<User> {
-    this.logger.log(`Deactivating user: ${id}`);
+  async softDelete(id: string): Promise<User> {
+    this.logger.log(`Soft deleting user: ${id}`);
     return this.update(id, { accountStatus: AccountStatusValues.INACTIVE });
+  }
+
+  // Permanently removes a user record from the database
+  async hardDelete(id: string): Promise<void> {
+    this.logger.log(`Hard deleting user: ${id}`);
+    await this.delete(id);
   }
 }

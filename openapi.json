@@ -3866,6 +3866,11 @@
             "type": "number",
             "description": "Token expiry in seconds (only present when authenticated)",
             "example": 3600
+          },
+          "requiresOnboarding": {
+            "type": "boolean",
+            "description": "Whether the user needs to complete onboarding",
+            "example": false
           }
         },
         "required": [
