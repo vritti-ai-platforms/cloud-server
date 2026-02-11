@@ -148,7 +148,7 @@ export class UserService {
       });
     }
 
-    const user = await this.userRepository.delete(id);
+    const user = await this.userRepository.softDelete(id);
 
     this.logger.log(`Deactivated user: ${user.email} (${user.id})`);
 
