@@ -6,11 +6,6 @@ import type { OAuthProviderType } from '@/db/schema';
 import type { OAuthStateData } from '../interfaces/oauth-state.interface';
 import { OAuthStateRepository } from '../repositories/oauth-state.repository';
 
-/**
- * OAuth State Service
- * Manages OAuth state tokens using Prisma database (not Redis)
- * Provides CSRF protection for OAuth flows
- */
 @Injectable()
 export class OAuthStateService {
   private readonly logger = new Logger(OAuthStateService.name);
@@ -24,13 +19,7 @@ export class OAuthStateService {
     this.hmacSecret = this.configService.getOrThrow<string>('CSRF_HMAC_KEY');
   }
 
-  /**
-   * Generate and store OAuth state token
-   * @param provider - OAuth provider
-   * @param userId - Optional user ID (for link OAuth flow)
-   * @param codeVerifier - PKCE code verifier
-   * @returns Signed state token
-   */
+  // Generates a signed state token with PKCE verifier and stores it in the database
   async generateState(provider: OAuthProviderType, userId: string | undefined, codeVerifier: string): Promise<string> {
     // Generate cryptographically secure random state token
     const stateToken = crypto.randomBytes(32).toString('hex');
@@ -56,12 +45,7 @@ export class OAuthStateService {
     return signedStateToken;
   }
 
-  /**
-   * Validate and consume OAuth state token (one-time use)
-   * @param stateToken - State token from OAuth callback
-   * @returns OAuth state data
-   * @throws UnauthorizedException if state is invalid or expired
-   */
+  // Validates the HMAC signature, checks expiry, and consumes the one-time state token
   async validateAndConsumeState(stateToken: string): Promise<OAuthStateData> {
     // Verify HMAC signature
     if (!this.verifyStateToken(stateToken)) {
@@ -104,11 +88,7 @@ export class OAuthStateService {
     };
   }
 
-  /**
-   * Cleanup expired OAuth states
-   * This should be called periodically (e.g., via cron job)
-   * @returns Number of deleted states
-   */
+  // Removes all expired OAuth state records from the database
   async cleanupExpiredStates(): Promise<number> {
     const result = await this.stateRepository.deleteExpired();
 
@@ -119,9 +99,6 @@ export class OAuthStateService {
     return result.count;
   }
 
-  /**
-   * Sign state token with HMAC
-   */
   private signStateToken(stateToken: string): string {
     const hmac = crypto.createHmac('sha256', this.hmacSecret);
     hmac.update(stateToken);
@@ -129,9 +106,6 @@ export class OAuthStateService {
     return `${stateToken}.${signature}`;
   }
 
-  /**
-   * Verify state token HMAC signature
-   */
   private verifyStateToken(signedStateToken: string): boolean {
     const parts = signedStateToken.split('.');
     if (parts.length !== 2) {
