@@ -1,61 +1,43 @@
-import * as crypto from 'node:crypto';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { JwtService } from '@nestjs/jwt';
 import { BadRequestException, UnauthorizedException } from '@vritti/api-sdk';
-import { type OAuthProviderType, OAuthProviderTypeValues, OnboardingStepValues, type User } from '@/db/schema';
-
-function validateProviderString(providerStr: string): OAuthProviderType {
-  const upperProvider = providerStr.toUpperCase();
-
-  if (!Object.values(OAuthProviderTypeValues).includes(upperProvider as OAuthProviderType)) {
-    throw new BadRequestException({
-      label: 'Invalid Provider',
-      detail: 'The selected login method is not supported. Please choose a different option.',
-      errors: [{ field: 'provider', message: 'Unsupported provider' }],
-    });
-  }
-
-  return upperProvider as OAuthProviderType;
-}
-
-import { getTokenExpiry, TokenType } from '../../../../../config/jwt.config';
+import {
+  type OAuthProviderType,
+  OAuthProviderTypeValues,
+  OnboardingStepValues,
+  SessionTypeValues,
+  type User,
+} from '@/db/schema';
 import { UserRepository } from '../../../user/repositories/user.repository';
-import { OAuthResponseDto } from '../dto/response/oauth-response.dto';
+import { SessionService } from '../../root/services/session.service';
 import type { IOAuthProvider } from '../interfaces/oauth-provider.interface';
-import type { OAuthTokens } from '../interfaces/oauth-tokens.interface';
-import type { OAuthUserProfile } from '../interfaces/oauth-user-profile.interface';
 import { AppleOAuthProvider } from '../providers/apple-oauth.provider';
 import { FacebookOAuthProvider } from '../providers/facebook-oauth.provider';
 import { GoogleOAuthProvider } from '../providers/google-oauth.provider';
 import { MicrosoftOAuthProvider } from '../providers/microsoft-oauth.provider';
 import { TwitterOAuthProvider } from '../providers/twitter-oauth.provider';
 import { OAuthProviderRepository } from '../repositories/oauth-provider.repository';
+import { OAuthCryptoService } from './oauth-crypto.service';
 import { OAuthStateService } from './oauth-state.service';
 
 @Injectable()
 export class OAuthService {
   private readonly logger = new Logger(OAuthService.name);
-  private readonly tokenExpiry: ReturnType<typeof getTokenExpiry>;
   private readonly providers: Map<OAuthProviderType, IOAuthProvider>;
 
   constructor(
     private readonly userRepository: UserRepository,
     private readonly oauthStateService: OAuthStateService,
     private readonly oauthProviderRepository: OAuthProviderRepository,
-    private readonly jwtService: JwtService,
+    private readonly oauthCryptoService: OAuthCryptoService,
+    private readonly sessionService: SessionService,
     readonly configService: ConfigService,
-    // Inject all OAuth providers
     private readonly googleProvider: GoogleOAuthProvider,
     private readonly microsoftProvider: MicrosoftOAuthProvider,
     private readonly appleProvider: AppleOAuthProvider,
     private readonly facebookProvider: FacebookOAuthProvider,
     private readonly twitterProvider: TwitterOAuthProvider,
   ) {
-    this.tokenExpiry = getTokenExpiry(configService);
-
-    // Map provider types to implementations
-    // Use type assertion to bypass structural typing issues with private logger properties
     this.providers = new Map([
       [OAuthProviderTypeValues.GOOGLE, this.googleProvider],
       [OAuthProviderTypeValues.MICROSOFT, this.microsoftProvider],
@@ -66,127 +48,137 @@ export class OAuthService {
   }
 
   // Generates an authorization URL with PKCE and state, then stores the state in DB
-  async initiateOAuth(providerStr: string, userId?: string): Promise<{ url: string; state: string }> {
-    const provider = validateProviderString(providerStr);
+  async initiateOAuth(providerStr: string): Promise<{ url: string }> {
+    const provider = this.validateProviderString(providerStr);
     const oauthProvider = this.getProvider(provider);
 
     // Generate PKCE code verifier and challenge
-    const codeVerifier = this.generateCodeVerifier();
-    const codeChallenge = this.generateCodeChallenge(codeVerifier);
+    const codeVerifier = this.oauthCryptoService.generateCodeVerifier();
+    const codeChallenge = this.oauthCryptoService.generateCodeChallenge(codeVerifier);
 
     // Generate and store state token
-    const state = await this.oauthStateService.generateState(provider, userId, codeVerifier);
+    const state = await this.oauthStateService.generateState(provider, undefined, codeVerifier);
 
     // Get authorization URL from provider
     const url = oauthProvider.getAuthorizationUrl(state, codeChallenge);
 
-    this.logger.log(`Initiated OAuth flow for provider: ${provider}, userId: ${userId || 'none'}`);
+    this.logger.log(`Initiated OAuth flow for provider: ${provider}`);
 
-    return { url, state };
+    return { url };
   }
 
-  // Exchanges the authorization code for tokens, finds or creates the user, and links the provider
-  async handleCallback(providerStr: string, code: string, state: string): Promise<OAuthResponseDto> {
-    const provider = validateProviderString(providerStr);
+  // Exchanges code for tokens, creates session, and returns redirect URL with refresh token
+  async handleCallback(
+    providerStr: string,
+    code: string,
+    state: string,
+  ): Promise<{ redirectUrl: string; refreshToken: string }> {
+    try {
+      const provider = this.validateProviderString(providerStr);
 
-    // Validate and consume state token
-    const stateData = await this.oauthStateService.validateAndConsumeState(state);
+      // Validate and consume state token
+      const stateData = await this.oauthStateService.validateAndConsumeState(state);
 
-    // Verify provider matches
-    if (stateData.provider !== provider) {
-      throw new UnauthorizedException(
-        'The authentication provider does not match your request. Please try logging in again.',
-      );
-    }
-
-    const oauthProvider = this.getProvider(provider);
-
-    // Exchange code for tokens
-    const tokens = await oauthProvider.exchangeCodeForToken(code, stateData.codeVerifier);
-
-    // Get user profile from provider
-    const profile = await oauthProvider.getUserProfile(tokens.accessToken);
-
-    // Find or create user
-    const { user, isNewUser } = await this.findOrCreateUser(profile, stateData.userId);
-
-    // Link OAuth provider to user
-    await this.linkOAuthProvider(user.id, profile, tokens);
-
-    // Generate onboarding token
-    const onboardingToken = this.generateOnboardingToken(user.id);
-
-    this.logger.log(`OAuth callback completed for provider: ${provider}, user: ${user.email}, isNewUser: ${isNewUser}`);
-
-    return OAuthResponseDto.create(onboardingToken, user, isNewUser);
-  }
-
-  private async findOrCreateUser(
-    profile: OAuthUserProfile,
-    linkToUserId?: string,
-  ): Promise<{ user: User; isNewUser: boolean }> {
-    // If linkToUserId provided, link to existing user
-    // Use repository directly to get full User type (service returns UserDto)
-    if (linkToUserId) {
-      const user = await this.userRepository.findById(linkToUserId);
-      if (!user) {
-        throw new BadRequestException("We couldn't find your account. Please check your information or register.");
-      }
-      return { user, isNewUser: false };
-    }
-
-    // Check if user with email exists (returns full User type)
-    const existingUser = await this.userRepository.findByEmail(profile.email);
-
-    if (existingUser) {
-      // Completed onboarding — link provider and continue
-      if (existingUser.onboardingStep === OnboardingStepValues.COMPLETE) {
-        this.logger.log(`Found existing user for email: ${profile.email}, linking OAuth provider`);
-        return { user: existingUser, isNewUser: false };
+      // Verify provider matches
+      if (stateData.provider !== provider) {
+        throw new UnauthorizedException(
+          'The authentication provider does not match your request. Please try logging in again.',
+        );
       }
 
-      // Incomplete onboarding — delete and start fresh
-      await this.oauthProviderRepository.deleteByUserId(existingUser.id);
-      await this.userRepository.hardDelete(existingUser.id);
-      this.logger.log(`Deleted incomplete user for re-signup: ${profile.email} (${existingUser.id})`);
+      const oauthProvider = this.getProvider(provider);
+
+      // Exchange code for tokens
+      const tokens = await oauthProvider.exchangeCodeForToken(code, stateData.codeVerifier);
+
+      // Get user profile from provider
+      const profile = await oauthProvider.getUserProfile(tokens.accessToken);
+
+      // Check if user with email exists
+      const existingUser = await this.userRepository.findByEmail(profile.email);
+      let user: User;
+      let isNewUser: boolean;
+
+      if (existingUser) {
+        // Completed onboarding — link provider and continue
+        if (existingUser.onboardingStep === OnboardingStepValues.COMPLETE) {
+          this.logger.log(`Found existing user for email: ${profile.email}, linking OAuth provider`);
+          user = existingUser;
+          isNewUser = false;
+        } else {
+          // Incomplete onboarding — delete and start fresh
+          await this.oauthProviderRepository.deleteByUserId(existingUser.id);
+          await this.userRepository.hardDelete(existingUser.id);
+          this.logger.log(`Deleted incomplete user for re-signup: ${profile.email} (${existingUser.id})`);
+
+          // Create new user
+          this.logger.log(`Creating new user from OAuth profile: ${profile.email}`);
+          user = await this.userRepository.createFromOAuth({
+            email: profile.email,
+            firstName: profile.firstName || null,
+            lastName: profile.lastName || null,
+            emailVerified: true,
+            onboardingStep: OnboardingStepValues.SET_PASSWORD,
+            profilePictureUrl: profile.profilePictureUrl || null,
+          });
+          isNewUser = true;
+        }
+      } else {
+        // Create new user
+        this.logger.log(`Creating new user from OAuth profile: ${profile.email}`);
+        user = await this.userRepository.createFromOAuth({
+          email: profile.email,
+          firstName: profile.firstName || null,
+          lastName: profile.lastName || null,
+          emailVerified: true,
+          onboardingStep: OnboardingStepValues.SET_PASSWORD,
+          profilePictureUrl: profile.profilePictureUrl || null,
+        });
+        isNewUser = true;
+      }
+
+      // Link OAuth provider to user
+      const tokenExpiresAt = tokens.expiresIn ? new Date(Date.now() + tokens.expiresIn * 1000) : undefined;
+      await this.oauthProviderRepository.upsert(user.id, profile, tokens.accessToken, tokens.refreshToken, tokenExpiresAt);
+      this.logger.log(`Linked OAuth provider: ${profile.provider} to user: ${user.id}`);
+
+      // Determine session type based on onboarding status
+      const isFullyOnboarded = user.onboardingStep === OnboardingStepValues.COMPLETE;
+      const sessionType = isFullyOnboarded ? SessionTypeValues.CLOUD : SessionTypeValues.ONBOARDING;
+
+      // Create session
+      const session = await this.sessionService.createSession(user.id, sessionType);
+
+      // Build frontend redirect URL based on onboarding status
+      const baseUrl = this.configService.getOrThrow<string>('FRONTEND_BASE_URL');
+      const redirectUrl = isFullyOnboarded
+        ? baseUrl // Complete users → dashboard
+        : `${baseUrl}/auth-success?email=${encodeURIComponent(user.email)}`; // Incomplete users → auth-success
+
+      this.logger.log(`OAuth callback completed for user: ${user.email}, isNewUser: ${isNewUser}, redirecting to: ${isFullyOnboarded ? 'dashboard' : 'auth-success'}`);
+
+      return { redirectUrl, refreshToken: session.refreshToken };
+    } catch (error) {
+      this.logger.error('OAuth callback error', error);
+      const baseUrl = this.configService.getOrThrow<string>('FRONTEND_BASE_URL');
+      const params = new URLSearchParams({ error: error.message });
+      const redirectUrl = `${baseUrl}/auth-error?${params.toString()}`;
+      return { redirectUrl, refreshToken: '' };
+    }
+  }
+
+  private validateProviderString(providerStr: string): OAuthProviderType {
+    const upperProvider = providerStr.toUpperCase();
+
+    if (!Object.values(OAuthProviderTypeValues).includes(upperProvider as OAuthProviderType)) {
+      throw new BadRequestException({
+        label: 'Invalid Provider',
+        detail: 'The selected login method is not supported. Please choose a different option.',
+        errors: [{ field: 'provider', message: 'Unsupported provider' }],
+      });
     }
 
-    // Create new user
-    this.logger.log(`Creating new user from OAuth profile: ${profile.email}`);
-
-    // For OAuth users, we use a dedicated repository method
-    // since CreateUserDto requires a password field that OAuth users don't have
-    const newUser = await this.userRepository.createFromOAuth({
-      email: profile.email,
-      firstName: profile.firstName || null,
-      lastName: profile.lastName || null,
-      emailVerified: true, // Email verified by OAuth provider
-      onboardingStep: OnboardingStepValues.SET_PASSWORD,
-      profilePictureUrl: profile.profilePictureUrl || null,
-    });
-
-    return { user: newUser, isNewUser: true };
-  }
-
-  private async linkOAuthProvider(userId: string, profile: OAuthUserProfile, tokens: OAuthTokens): Promise<void> {
-    // Calculate token expiry
-    const tokenExpiresAt = tokens.expiresIn ? new Date(Date.now() + tokens.expiresIn * 1000) : undefined;
-
-    await this.oauthProviderRepository.upsert(userId, profile, tokens.accessToken, tokens.refreshToken, tokenExpiresAt);
-
-    this.logger.log(`Linked OAuth provider: ${profile.provider} to user: ${userId}`);
-  }
-
-  private generateOnboardingToken(userId: string): string {
-    return this.jwtService.sign(
-      {
-        userId,
-        tokenType: TokenType.ACCESS,
-      },
-      {
-        expiresIn: this.tokenExpiry.access,
-      },
-    );
+    return upperProvider as OAuthProviderType;
   }
 
   private getProvider(provider: OAuthProviderType): IOAuthProvider {
@@ -195,13 +187,5 @@ export class OAuthService {
       throw new BadRequestException('The selected login method is not available. Please choose a different option.');
     }
     return oauthProvider;
-  }
-
-  private generateCodeVerifier(): string {
-    return crypto.randomBytes(32).toString('base64url');
-  }
-
-  private generateCodeChallenge(verifier: string): string {
-    return crypto.createHash('sha256').update(verifier).digest('base64url');
   }
 }
