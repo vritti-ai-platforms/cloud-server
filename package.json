@@ -68,7 +68,7 @@
     "rxjs": "^7.8.1"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.2.3",
+    "@biomejs/biome": "2.3.11",
     "@compodoc/compodoc": "^1.1.31",
     "@nestjs/cli": "^11.0.0",
     "@nestjs/schematics": "^11.0.0",

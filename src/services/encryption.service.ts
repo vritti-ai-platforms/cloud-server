@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
+import { TIME_CONSTANTS } from '../constants/time-constants';
 
 /**
  * Encryption Service for password and OTP hashing
@@ -9,7 +10,7 @@ import * as crypto from 'crypto';
 @Injectable()
 export class EncryptionService {
   private readonly logger = new Logger(EncryptionService.name);
-  private readonly saltRounds = 10;
+  private readonly saltRounds = TIME_CONSTANTS.BCRYPT_SALT_ROUNDS;
 
   /**
    * Hash a password using bcrypt

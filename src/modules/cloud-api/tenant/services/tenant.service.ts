@@ -1,0 +1,245 @@
+import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, ConflictException, NotFoundException } from '@vritti/api-sdk';
+import type { CreateTenantDto } from '../dto/request/create-tenant.dto';
+import { TenantResponseDto } from '../dto/entity/tenant-response.dto';
+import type { UpdateTenantDto } from '../dto/request/update-tenant.dto';
+import { TenantRepository } from '../repositories/tenant.repository';
+import { TenantDatabaseConfigService } from './tenant-database-config.service';
+
+@Injectable()
+export class TenantService {
+  private readonly logger = new Logger(TenantService.name);
+
+  constructor(
+    private readonly tenantRepository: TenantRepository,
+    private readonly configService: TenantDatabaseConfigService,
+  ) {}
+
+  // Creates a tenant with optional dedicated database configuration
+  async create(createTenantDto: CreateTenantDto): Promise<TenantResponseDto> {
+    // Validate database configuration based on dbType
+    this.validateDatabaseConfig(createTenantDto);
+
+    // Create tenant (business data only)
+    // Subdomain uniqueness is enforced by database constraint - no pre-check needed
+    // This approach is race-condition safe and more performant (1 query instead of 2)
+    let tenant;
+    try {
+      tenant = await this.tenantRepository.create(createTenantDto);
+    } catch (error) {
+      this.handleUniqueConstraintError(error, 'subdomain', createTenantDto.subdomain);
+      throw error;
+    }
+
+    // Create database configuration if DEDICATED type
+    if (createTenantDto.dbType === 'DEDICATED') {
+      const dbConfig = this.assertDedicatedDbConfig(createTenantDto);
+      await this.configService.create(tenant.id, {
+        ...dbConfig,
+        dbSchema: createTenantDto.dbSchema,
+        dbSslMode: createTenantDto.dbSslMode,
+        connectionPoolSize: createTenantDto.connectionPoolSize,
+      });
+    }
+
+    this.logger.log(`Created tenant: ${tenant.subdomain} (${tenant.id})`);
+
+    // Return tenant with config (if exists)
+    return this.findById(tenant.id);
+  }
+
+  // Retrieves all tenants as response DTOs
+  async findAll(): Promise<TenantResponseDto[]> {
+    const tenants = await this.tenantRepository.findAll();
+    return tenants.map((tenant) => TenantResponseDto.from(tenant));
+  }
+
+  // Finds a tenant by ID with config; throws NotFoundException if not found
+  async findById(id: string): Promise<TenantResponseDto> {
+    const tenant = await this.tenantRepository.findByIdWithConfig(id);
+
+    if (!tenant) {
+      throw new NotFoundException({
+        label: 'Tenant Not Found',
+        detail: "We couldn't find the organization you're looking for. Please check the ID and try again.",
+      });
+    }
+
+    return TenantResponseDto.from(tenant);
+  }
+
+  // Finds a tenant by subdomain; throws NotFoundException if not found
+  async findBySubdomain(subdomain: string): Promise<TenantResponseDto> {
+    const tenant = await this.tenantRepository.findBySubdomain(subdomain, true); // Include config
+
+    if (!tenant) {
+      throw new NotFoundException({
+        label: 'Tenant Not Found',
+        detail: "We couldn't find an organization with this subdomain. Please check the subdomain and try again.",
+      });
+    }
+
+    return TenantResponseDto.from(tenant);
+  }
+
+  // Updates tenant fields and database config; throws NotFoundException if not found
+  async update(id: string, updateTenantDto: UpdateTenantDto): Promise<TenantResponseDto> {
+    // Check if tenant exists and get current data including config
+    // This single query provides both existence check AND config existence check,
+    // avoiding a separate configService.exists() call later
+    const existing = await this.tenantRepository.findByIdWithConfig(id);
+    if (!existing) {
+      throw new NotFoundException({
+        label: 'Tenant Not Found',
+        detail: "We couldn't find the organization you're trying to update. Please check the ID and try again.",
+      });
+    }
+
+    // Extract database config fields from update DTO
+    const { dbHost, dbPort, dbUsername, dbPassword, dbName, dbSchema, dbSslMode, connectionPoolSize, ...tenantData } =
+      updateTenantDto;
+
+    // Update tenant (business data only)
+    // Subdomain uniqueness is enforced by database constraint - no pre-check needed
+    // This approach is race-condition safe and more performant
+    let tenant;
+    try {
+      tenant = await this.tenantRepository.update(id, tenantData);
+    } catch (error) {
+      if (updateTenantDto.subdomain) {
+        this.handleUniqueConstraintError(error, 'subdomain', updateTenantDto.subdomain);
+      }
+      throw error;
+    }
+
+    // Update database configuration if any DB fields are provided
+    const hasDbConfigFields =
+      dbHost || dbPort || dbUsername || dbPassword || dbName || dbSchema || dbSslMode || connectionPoolSize;
+
+    if (hasDbConfigFields) {
+      // Reuse databaseConfig from initial findByIdWithConfig query to check if config exists
+      // This eliminates a separate configService.exists() database call
+      const configExists = !!(existing as { databaseConfig?: unknown }).databaseConfig;
+
+      if (configExists) {
+        // Update existing config
+        await this.configService.update(id, {
+          dbHost,
+          dbPort,
+          dbUsername,
+          dbPassword,
+          dbName,
+          dbSchema,
+          dbSslMode,
+          connectionPoolSize,
+        });
+      } else if (tenant.dbType === 'DEDICATED') {
+        // Create new config if tenant is DEDICATED and config doesn't exist
+        const dbConfig = this.assertDedicatedDbConfig({ dbHost, dbPort, dbUsername, dbPassword, dbName });
+        await this.configService.create(id, {
+          ...dbConfig,
+          dbSchema,
+          dbSslMode,
+          connectionPoolSize,
+        });
+      }
+    }
+
+    this.logger.log(`Updated tenant: ${tenant.subdomain} (${tenant.id})`);
+
+    // Fetch updated tenant with config for response
+    // Call findByIdWithConfig directly instead of going through findById method
+    // to get fresh data after updates (needed because tenant and config may have changed)
+    const updatedTenant = await this.tenantRepository.findByIdWithConfig(id);
+
+    // This should never happen since we just updated the tenant, but handle defensively
+    if (!updatedTenant) {
+      throw new NotFoundException({
+        label: 'Tenant Retrieval Failed',
+        detail: 'An unexpected error occurred while retrieving the updated organization.',
+      });
+    }
+
+    return TenantResponseDto.from(updatedTenant);
+  }
+
+  // Soft deletes via single DELETE with RETURNING; throws if not found
+  async archive(id: string): Promise<TenantResponseDto> {
+    const tenant = await this.tenantRepository.delete(id);
+
+    // If no tenant was deleted (record didn't exist), throw NotFoundException
+    if (!tenant) {
+      throw new NotFoundException({
+        label: 'Tenant Not Found',
+        detail: "We couldn't find the organization you're trying to archive. Please check the ID and try again.",
+      });
+    }
+
+    this.logger.log(`Archived tenant: ${tenant.subdomain} (${tenant.id})`);
+
+    return TenantResponseDto.from(tenant);
+  }
+
+  // Asserts that all required dedicated database fields are present
+  private assertDedicatedDbConfig(dto: Partial<Pick<CreateTenantDto, 'dbHost' | 'dbPort' | 'dbUsername' | 'dbPassword' | 'dbName'>>): {
+    dbHost: string;
+    dbPort: number;
+    dbUsername: string;
+    dbPassword: string;
+    dbName: string;
+  } {
+    if (!dto.dbHost || !dto.dbPort || !dto.dbUsername || !dto.dbPassword || !dto.dbName) {
+      throw new BadRequestException({
+        label: 'Missing Configuration',
+        detail: 'Please provide all database connection details.',
+        errors: [{ field: 'dbHost', message: 'Configuration required' }],
+      });
+    }
+    return {
+      dbHost: dto.dbHost,
+      dbPort: dto.dbPort,
+      dbUsername: dto.dbUsername,
+      dbPassword: dto.dbPassword,
+      dbName: dto.dbName,
+    };
+  }
+
+  // Validates database configuration based on shared or dedicated dbType
+  private validateDatabaseConfig(dto: CreateTenantDto): void {
+    if (dto.dbType === 'SHARED') {
+      // For SHARED, dbSchema is required
+      if (!dto.dbSchema) {
+        throw new BadRequestException({
+          label: 'Missing Configuration',
+          detail: 'A database schema is required for shared database configuration. Please provide a schema name.',
+          errors: [{ field: 'dbSchema', message: 'Schema required' }],
+        });
+      }
+    } else if (dto.dbType === 'DEDICATED') {
+      // For DEDICATED, full database connection details are required
+      if (!dto.dbHost || !dto.dbName || !dto.dbUsername || !dto.dbPassword) {
+        throw new BadRequestException({
+          label: 'Missing Configuration',
+          detail: 'Complete database connection details are required for dedicated database configuration. Please provide host, name, username, and password.',
+          errors: [{ field: 'dbHost', message: 'Connection details required' }],
+        });
+      }
+    }
+  }
+
+  // Converts PostgreSQL unique constraint violations (23505) to ConflictException
+  private handleUniqueConstraintError(error: unknown, field: string, value: string): void {
+    // PostgreSQL unique constraint violation error code is 23505
+    if (
+      error instanceof Error &&
+      'code' in error &&
+      (error as Error & { code: string }).code === '23505'
+    ) {
+      throw new ConflictException({
+        label: 'Already Taken',
+        detail: `This ${field} is already taken. Please choose a different ${field} for your organization.`,
+        errors: [{ field, message: `Duplicate ${field}` }],
+      });
+    }
+  }
+}

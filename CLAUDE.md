@@ -335,10 +335,86 @@ src/
 
 ## Common Patterns
 
+### Swagger Documentation Pattern (docs/ folders)
+
+**CRITICAL: Swagger decorators live in separate `docs/` files, NOT inline on controllers.**
+
+Controllers should be clean — business logic only. All `@ApiOperation`, `@ApiBody`, `@ApiResponse`, `@ApiParam`, `@ApiQuery`, `@ApiHeader`, `@ApiProduces` decorators are composed into single custom decorators using `applyDecorators` and stored in `docs/` folders.
+
+**Structure:**
+```
+modules/cloud-api/
+├── auth/
+│   ├── controllers/
+│   │   └── auth.controller.ts          ← clean logic, uses @ApiSignup()
+│   ├── docs/
+│   │   └── auth.docs.ts                ← Swagger decorators composed here
+│   └── mfa-verification/
+│       ├── mfa-verification.controller.ts
+│       └── mfa-verification.docs.ts    ← co-located (submodule)
+├── onboarding/
+│   ├── controllers/
+│   └── docs/
+├── user/
+│   ├── controllers/
+│   └── docs/
+└── tenant/
+    ├── tenant.controller.ts
+    └── docs/
+```
+
+**docs file pattern** (`auth.docs.ts`):
+```typescript
+import { applyDecorators } from '@nestjs/common';
+import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { SignupDto } from '../dto/signup.dto';
+
+export function ApiSignup() {
+  return applyDecorators(
+    ApiOperation({ summary: 'User signup', description: '...' }),
+    ApiBody({ type: SignupDto }),
+    ApiResponse({ status: 200, description: '...' }),
+    ApiResponse({ status: 400, description: '...' }),
+    ApiResponse({ status: 409, description: '...' }),
+  );
+}
+```
+
+**Controller usage:**
+```typescript
+import { ApiSignup } from '../docs/auth.docs';
+
+@ApiTags('Auth')          // stays on controller (class-level)
+@Controller('auth')
+export class AuthController {
+  @Post('signup')
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @ApiSignup()            // single decorator replaces 5-8 lines
+  async signup(@Body() dto: SignupDto) { ... }
+}
+```
+
+**What stays on the controller:**
+- `@ApiTags()` — class-level grouping
+- `@ApiBearerAuth()` — class-level when all endpoints are protected
+- `@Controller()`, `@Get/@Post/@Delete`, `@Public()`, `@HttpCode()` — routing/behavior
+
+**What goes in docs:**
+- `@ApiOperation()`, `@ApiBody()`, `@ApiResponse()`, `@ApiParam()`, `@ApiQuery()`, `@ApiHeader()`, `@ApiProduces()`
+- Method-level `@ApiBearerAuth()` (when only some endpoints need it)
+- Inline `schema: { type: 'object', properties: {...} }` blocks
+
+**Naming convention:**
+- Function: `Api` + PascalCase endpoint name (e.g., `ApiSignup()`, `ApiGetToken()`, `ApiForgotPassword()`)
+
 ### Controller Example
 ```typescript
+import { ApiFindAllUsers, ApiDeleteAccount } from '../docs/user.docs';
+
 @Controller('users')
 @ApiTags('Users')
+@ApiBearerAuth()
 export class UsersController {
   constructor(
     private usersService: UsersService,
@@ -346,10 +422,15 @@ export class UsersController {
   ) {}
 
   @Get()
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  @ApiFindAllUsers()
   async findAll() {
     return this.usersService.findAll();
+  }
+
+  @Delete('account')
+  @ApiDeleteAccount()
+  async deleteAccount(@UserId() userId: string) {
+    return this.usersService.deactivate(userId);
   }
 }
 ```

@@ -1,12 +1,14 @@
 import fastifyCookie from '@fastify/cookie';
 import fastifyCsrfProtection from '@fastify/csrf-protection';
-import { BadRequestException, ValidationPipe } from '@nestjs/common';
+import { ValidationPipe } from '@nestjs/common';
+import type { ValidationError } from 'class-validator';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { type MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import {
+  BadRequestException,
   CorrelationIdMiddleware,
   configureApiSdk,
   HttpExceptionFilter,
@@ -76,9 +78,6 @@ function configureApiSdkSettings() {
       refreshCookieMaxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
       refreshCookieSameSite: 'strict',
       refreshCookieDomain: ENV.refreshCookieDomain,
-    },
-    jwt: {
-      validateTokenBinding: true,
     },
     guard: {
       tenantHeaderName: 'x-tenant-id',
@@ -215,10 +214,15 @@ async function bootstrap() {
       transformOptions: {
         enableImplicitConversion: true,
       },
-      // Preserve ValidationError objects with property and constraints fields
-      // This ensures HttpExceptionFilter can extract field names from DTO validation errors
-      exceptionFactory: (errors) => {
-        return new BadRequestException(errors);
+      // Transform class-validator errors into RFC 9457 field errors
+      exceptionFactory: (errors: ValidationError[]) => {
+        return new BadRequestException({
+          detail: 'Please check your input and try again.',
+          errors: errors.map((err) => ({
+            field: err.property,
+            message: Object.values(err.constraints ?? {})[0] ?? 'Invalid value',
+          })),
+        });
       },
     }),
   );

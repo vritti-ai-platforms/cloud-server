@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
-import { TenantController } from './tenant.controller';
-import { TenantRepository } from './tenant.repository';
-import { TenantService } from './tenant.service';
-import { TenantDatabaseConfigRepository } from './tenant-database-config.repository';
-import { TenantDatabaseConfigService } from './tenant-database-config.service';
+import { TenantController } from './controllers/tenant.controller';
+import { TenantRepository } from './repositories/tenant.repository';
+import { TenantDatabaseConfigRepository } from './repositories/tenant-database-config.repository';
+import { TenantService } from './services/tenant.service';
+import { TenantDatabaseConfigService } from './services/tenant-database-config.service';
 
 @Module({
   controllers: [TenantController],

@@ -1,27 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { PrimaryBaseRepository, PrimaryDatabaseService } from '@vritti/api-sdk';
+import { eq } from '@vritti/api-sdk/drizzle-orm';
 import { type OAuthProvider, oauthProviders } from '@/db/schema';
 import type { OAuthUserProfile } from '../interfaces/oauth-user-profile.interface';
 
-/**
- * OAuth Provider Repository
- * CRUD operations for OAuthProvider model
- *
- * For simple queries, use inherited methods from PrimaryBaseRepository:
- * - findOne(where)
- * - findMany({ where })
- * - delete(id)
- * - deleteMany(where)
- */
 @Injectable()
 export class OAuthProviderRepository extends PrimaryBaseRepository<typeof oauthProviders> {
   constructor(database: PrimaryDatabaseService) {
     super(database, oauthProviders);
   }
 
-  /**
-   * Find OAuth provider by provider type and provider ID
-   */
+  // Finds an OAuth provider record by its type and external provider ID
   async findByProviderAndProviderId(
     provider: OAuthProvider['provider'],
     providerId: string,
@@ -29,27 +18,19 @@ export class OAuthProviderRepository extends PrimaryBaseRepository<typeof oauthP
     return this.findOne({ provider, providerId });
   }
 
-  /**
-   * Find all OAuth providers for a user
-   */
+  // Returns all linked OAuth providers for a user
   async findByUserId(userId: string): Promise<OAuthProvider[]> {
     return this.findMany({
       where: { userId },
     });
   }
 
-  /**
-   * Create or update OAuth provider
-   * If provider already exists (by provider + providerId), update tokens and metadata
-   * Otherwise, create a new OAuth provider record
-   *
-   * @param userId - The user ID to link the OAuth provider to
-   * @param profile - OAuth user profile data from the provider
-   * @param accessToken - OAuth access token
-   * @param refreshToken - Optional OAuth refresh token
-   * @param tokenExpiresAt - Optional token expiration date
-   * @returns The created or updated OAuthProvider record
-   */
+  // Removes all OAuth provider links for a user
+  async deleteByUserId(userId: string): Promise<void> {
+    await this.deleteMany(eq(oauthProviders.userId, userId));
+  }
+
+  // Creates or updates an OAuth provider link with fresh tokens and profile data
   async upsert(
     userId: string,
     profile: OAuthUserProfile,

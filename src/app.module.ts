@@ -8,13 +8,12 @@ import './db/schema.registry';
 
 import { RouterModule } from '@nestjs/core';
 import { AuthConfigModule, DatabaseModule, type DatabaseModuleOptions, LoggerModule } from '@vritti/api-sdk';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { validate } from './config/env.validation';
-import { CsrfController } from './csrf.controller';
+import { AppController } from './modules/root/controllers/app.controller';
+import { CsrfController } from './modules/root/controllers/csrf.controller';
+import { AppService } from './modules/root/services/app.service';
 import { RmqModule } from './rmq';
 import { AuthModule } from './modules/cloud-api/auth/auth.module';
-import { MfaVerificationModule } from './modules/cloud-api/auth/mfa-verification/mfa-verification.module';
 import { OnboardingModule } from './modules/cloud-api/onboarding/onboarding.module';
 import { TenantModule } from './modules/cloud-api/tenant/tenant.module';
 import { UserModule } from './modules/cloud-api/user/user.module';
@@ -98,12 +97,11 @@ import { UserModule } from './modules/cloud-api/user/user.module';
     UserModule,
     OnboardingModule,
     AuthModule,
-    MfaVerificationModule,
     // Cloud API routes with 'cloud-api' prefix
     RouterModule.register([
       {
         path: 'cloud-api',
-        children: [TenantModule, UserModule, OnboardingModule, AuthModule, MfaVerificationModule],
+        children: [TenantModule, UserModule, OnboardingModule, AuthModule],
       },
     ]),
   ],
