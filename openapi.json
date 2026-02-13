@@ -1621,7 +1621,7 @@
           },
           {
             "name": "code",
-            "required": true,
+            "required": false,
             "in": "query",
             "description": "Authorization code from OAuth provider",
             "schema": {
@@ -1633,6 +1633,78 @@
             "required": true,
             "in": "query",
             "description": "State parameter for CSRF protection",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "error",
+            "required": false,
+            "in": "query",
+            "description": "Error code from OAuth provider",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "error_description",
+            "required": false,
+            "in": "query",
+            "description": "Error description from OAuth provider",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "error_code",
+            "required": false,
+            "in": "query",
+            "description": "Error code from OAuth provider (Facebook)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "error_reason",
+            "required": false,
+            "in": "query",
+            "description": "Error reason from OAuth provider (Facebook)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "scope",
+            "required": false,
+            "in": "query",
+            "description": "OAuth scope parameter",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "authuser",
+            "required": false,
+            "in": "query",
+            "description": "Authenticated user index (Google)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "hd",
+            "required": false,
+            "in": "query",
+            "description": "Hosted domain (Google Workspace)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "prompt",
+            "required": false,
+            "in": "query",
+            "description": "Prompt parameter from OAuth provider",
             "schema": {
               "type": "string"
             }

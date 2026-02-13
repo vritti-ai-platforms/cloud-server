@@ -70,10 +70,35 @@ export class OAuthService {
   // Exchanges code for tokens, creates session, and returns redirect URL with refresh token
   async handleCallback(
     providerStr: string,
-    code: string,
+    code: string | undefined,
     state: string,
+    error?: string,
+    errorDescription?: string,
   ): Promise<{ redirectUrl: string; refreshToken: string }> {
     try {
+      // Check for OAuth error response (user cancelled or provider error)
+      if (error) {
+        this.logger.warn(`OAuth error: ${error} - ${errorDescription || 'No description'}`);
+        const baseUrl = this.configService.getOrThrow<string>('FRONTEND_BASE_URL');
+
+        // Normalize error message for user cancellation
+        const normalizedDescription = error === 'access_denied'
+          ? 'You cancelled the authentication process. Please try again if you want to continue.'
+          : (errorDescription || 'Authentication failed. Please try again.');
+
+        const params = new URLSearchParams({
+          error,
+          error_description: normalizedDescription
+        });
+        const redirectUrl = `${baseUrl}/auth-error?${params.toString()}`;
+        return { redirectUrl, refreshToken: '' };
+      }
+
+      // Code is required if no error
+      if (!code) {
+        throw new BadRequestException('Authorization code is required.');
+      }
+
       const provider = this.validateProviderString(providerStr);
 
       // Validate and consume state token

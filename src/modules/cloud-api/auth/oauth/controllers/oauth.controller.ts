@@ -34,7 +34,18 @@ export class OAuthController {
     @Res() res: FastifyReply,
   ): Promise<void> {
     this.logger.log(`OAuth callback for: ${provider}`);
-    const { redirectUrl, refreshToken } = await this.oauthService.handleCallback(provider, dto.code, dto.state);
+
+    // Map Facebook-specific error params to standard OAuth params
+    const error = dto.error || dto.error_code;
+    const errorDescription = dto.error_description || dto.error_reason;
+
+    const { redirectUrl, refreshToken } = await this.oauthService.handleCallback(
+      provider,
+      dto.code,
+      dto.state,
+      error,
+      errorDescription,
+    );
 
     // Set refresh token cookie only on success (non-empty token)
     if (refreshToken) {
