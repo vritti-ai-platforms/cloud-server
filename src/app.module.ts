@@ -14,6 +14,8 @@ import { CsrfController } from './modules/root/controllers/csrf.controller';
 import { AppService } from './modules/root/services/app.service';
 import { RmqModule } from './rmq';
 import { AuthModule } from './modules/cloud-api/auth/auth.module';
+import { ChatModule } from './modules/cloud-api/chat/chat.module';
+import { WebhookModule } from './modules/cloud-api/chat/webhooks/webhook.module';
 import { OnboardingModule } from './modules/cloud-api/onboarding/onboarding.module';
 import { TenantModule } from './modules/cloud-api/tenant/tenant.module';
 import { UserModule } from './modules/cloud-api/user/user.module';
@@ -25,7 +27,7 @@ import { UserModule } from './modules/cloud-api/user/user.module';
       envFilePath: '.env',
       validate,
     }),
-    // Event emitter for SSE real-time updates
+    // Event emitter for real-time WebSocket updates
     EventEmitterModule.forRoot(),
     // Logger module configuration with environment presets
     // Presets available: 'development', 'staging', 'production', 'test'
@@ -97,11 +99,14 @@ import { UserModule } from './modules/cloud-api/user/user.module';
     UserModule,
     OnboardingModule,
     AuthModule,
+    ChatModule,
+    // Webhook module registered outside RouterModule so it stays at /webhooks/* (not /cloud-api/webhooks/*)
+    WebhookModule,
     // Cloud API routes with 'cloud-api' prefix
     RouterModule.register([
       {
         path: 'cloud-api',
-        children: [TenantModule, UserModule, OnboardingModule, AuthModule],
+        children: [TenantModule, UserModule, OnboardingModule, AuthModule, ChatModule],
       },
     ]),
   ],

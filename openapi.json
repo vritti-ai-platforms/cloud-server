@@ -23,43 +23,6 @@
         ]
       }
     },
-    "/test/ping-integrations": {
-      "get": {
-        "operationId": "AppController_pingIntegrations",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "Returns a pong response from the integrations microservice",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "status": {
-                      "type": "string",
-                      "example": "pong"
-                    },
-                    "timestamp": {
-                      "type": "string",
-                      "format": "date-time",
-                      "example": "2026-02-07T12:00:00.000Z"
-                    }
-                  },
-                  "required": [
-                    "status",
-                    "timestamp"
-                  ]
-                }
-              }
-            }
-          }
-        },
-        "summary": "Ping integrations microservice via RabbitMQ",
-        "tags": [
-          "Health"
-        ]
-      }
-    },
     "/csrf/token": {
       "get": {
         "description": "Generates and returns a CSRF token that must be included in all state-changing requests (POST, PUT, PATCH, DELETE). The token should be sent in the X-CSRF-Token header.",
@@ -2922,6 +2885,1231 @@
           "Onboarding - Two-Factor Authentication"
         ]
       }
+    },
+    "/cloud-api/inboxes/instagram/authorize": {
+      "get": {
+        "description": "Generates the Instagram OAuth authorization URL for the current tenant and user. The frontend should redirect the user to this URL to begin the Instagram connection flow.",
+        "operationId": "InstagramOAuthController_authorize",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Authorization URL generated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "url": {
+                      "type": "string",
+                      "example": "https://api.instagram.com/oauth/authorize?client_id=...&state=..."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get Instagram OAuth authorization URL",
+        "tags": [
+          "Inboxes"
+        ]
+      }
+    },
+    "/cloud-api/inboxes/instagram/callback": {
+      "get": {
+        "description": "Handles the redirect from Instagram after the user authorizes the app. Exchanges the authorization code for tokens, fetches the user profile, creates or reconnects the inbox, and redirects to the frontend.",
+        "operationId": "InstagramOAuthController_callback",
+        "parameters": [
+          {
+            "name": "code",
+            "required": false,
+            "in": "query",
+            "description": "Authorization code from Instagram",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "state",
+            "required": false,
+            "in": "query",
+            "description": "JWT state token for CSRF protection",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "error",
+            "required": false,
+            "in": "query",
+            "description": "Error code if the user denied authorization",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "error_reason",
+            "required": false,
+            "in": "query",
+            "description": "Reason for the error",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Redirects to the frontend success or error page."
+          }
+        },
+        "summary": "Handle Instagram OAuth callback",
+        "tags": [
+          "Inboxes"
+        ]
+      }
+    },
+    "/cloud-api/inboxes/telegram": {
+      "post": {
+        "description": "Creates a new inbox connected to a Telegram bot. The bot token is validated against the Telegram API. If no name is provided, the bot name is auto-detected from the Telegram API.",
+        "operationId": "InboxController_createTelegram",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTelegramInboxDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Telegram inbox created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "inbox": {
+                      "$ref": "#/components/schemas/InboxResponseDto"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Telegram inbox created successfully."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input data, validation failed, or the bot token is invalid."
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a Telegram inbox",
+        "tags": [
+          "Inboxes"
+        ]
+      }
+    },
+    "/cloud-api/inboxes/instagram": {
+      "post": {
+        "description": "Creates a new inbox connected to an Instagram account via the Graph API. Requires a valid access token and page ID.",
+        "operationId": "InboxController_createInstagram",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateInstagramInboxDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Instagram inbox created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "inbox": {
+                      "$ref": "#/components/schemas/InboxResponseDto"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Instagram inbox created successfully."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input data or validation failed."
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create an Instagram inbox",
+        "tags": [
+          "Inboxes"
+        ]
+      }
+    },
+    "/cloud-api/inboxes/whatsapp": {
+      "post": {
+        "description": "Creates a new inbox connected to a WhatsApp Business account. Requires access token, phone number ID, business account ID, and a webhook verify token.",
+        "operationId": "InboxController_createWhatsApp",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateWhatsAppInboxDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "WhatsApp inbox created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "inbox": {
+                      "$ref": "#/components/schemas/InboxResponseDto"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "WhatsApp inbox created successfully."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input data or validation failed."
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a WhatsApp inbox",
+        "tags": [
+          "Inboxes"
+        ]
+      }
+    },
+    "/cloud-api/inboxes": {
+      "get": {
+        "description": "Retrieves a paginated list of inboxes for the authenticated user's tenant.",
+        "operationId": "InboxController_findAll",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number (defaults to 1)",
+            "schema": {
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Number of items per page (defaults to 20)",
+            "schema": {
+              "example": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of inboxes retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "inboxes": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/InboxResponseDto"
+                      }
+                    },
+                    "total": {
+                      "type": "number",
+                      "example": 42
+                    },
+                    "page": {
+                      "type": "number",
+                      "example": 1
+                    },
+                    "limit": {
+                      "type": "number",
+                      "example": 20
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List all inboxes",
+        "tags": [
+          "Inboxes"
+        ]
+      }
+    },
+    "/cloud-api/inboxes/{id}": {
+      "get": {
+        "description": "Retrieves a single inbox by its unique identifier. Only returns inboxes belonging to the current tenant.",
+        "operationId": "InboxController_findById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Unique identifier of the inbox",
+            "schema": {
+              "example": "550e8400-e29b-41d4-a716-446655440000",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Inbox retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InboxResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication."
+          },
+          "404": {
+            "description": "Inbox not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get an inbox by ID",
+        "tags": [
+          "Inboxes"
+        ]
+      },
+      "delete": {
+        "description": "Permanently deletes an inbox and all associated data. This action cannot be undone. Only deletes inboxes belonging to the current tenant.",
+        "operationId": "InboxController_delete",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Unique identifier of the inbox to delete",
+            "schema": {
+              "example": "550e8400-e29b-41d4-a716-446655440000",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Inbox deleted successfully."
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication."
+          },
+          "404": {
+            "description": "Inbox not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete an inbox",
+        "tags": [
+          "Inboxes"
+        ]
+      }
+    },
+    "/cloud-api/conversations": {
+      "get": {
+        "description": "Retrieves a paginated list of conversations for the current tenant. Supports filtering by status, channel type, inbox, and search term. Results are sorted by most recently updated.",
+        "operationId": "ConversationController_findAll",
+        "parameters": [
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Filter conversations by status",
+            "schema": {
+              "enum": [
+                "OPEN",
+                "RESOLVED",
+                "PENDING",
+                "SNOOZED"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Search by last message content",
+            "schema": {
+              "example": "order issue",
+              "type": "string"
+            }
+          },
+          {
+            "name": "channelType",
+            "required": false,
+            "in": "query",
+            "description": "Filter conversations by messaging channel type",
+            "schema": {
+              "enum": [
+                "TELEGRAM",
+                "INSTAGRAM",
+                "WHATSAPP"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "inboxId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by inbox identifier",
+            "schema": {
+              "example": "550e8400-e29b-41d4-a716-446655440000",
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number (default: 1)",
+            "schema": {
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Items per page (default: 20)",
+            "schema": {
+              "default": 20,
+              "example": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of conversations retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "conversations": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ConversationResponseDto"
+                      }
+                    },
+                    "total": {
+                      "type": "number",
+                      "example": 42
+                    },
+                    "page": {
+                      "type": "number",
+                      "example": 1
+                    },
+                    "limit": {
+                      "type": "number",
+                      "example": 20
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List conversations",
+        "tags": [
+          "Conversations"
+        ]
+      }
+    },
+    "/cloud-api/conversations/counts": {
+      "get": {
+        "description": "Returns the count of conversations grouped by status for the current tenant.",
+        "operationId": "ConversationController_getCounts",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Conversation counts retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "all": {
+                      "type": "number",
+                      "example": 42
+                    },
+                    "open": {
+                      "type": "number",
+                      "example": 15
+                    },
+                    "resolved": {
+                      "type": "number",
+                      "example": 20
+                    },
+                    "pending": {
+                      "type": "number",
+                      "example": 5
+                    },
+                    "snoozed": {
+                      "type": "number",
+                      "example": 2
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get conversation status counts",
+        "tags": [
+          "Conversations"
+        ]
+      }
+    },
+    "/cloud-api/conversations/{id}": {
+      "get": {
+        "description": "Retrieves a single conversation with embedded contact details for the current tenant.",
+        "operationId": "ConversationController_findById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Unique identifier of the conversation",
+            "schema": {
+              "example": "550e8400-e29b-41d4-a716-446655440000",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Conversation retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication"
+          },
+          "404": {
+            "description": "Conversation not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a conversation by ID",
+        "tags": [
+          "Conversations"
+        ]
+      },
+      "patch": {
+        "description": "Updates conversation fields such as status, assigned agent, labels, or unread count.",
+        "operationId": "ConversationController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Unique identifier of the conversation to update",
+            "schema": {
+              "example": "550e8400-e29b-41d4-a716-446655440000",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateConversationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Conversation updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input data or validation failed"
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication"
+          },
+          "404": {
+            "description": "Conversation not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update a conversation",
+        "tags": [
+          "Conversations"
+        ]
+      }
+    },
+    "/cloud-api/conversations/{conversationId}/messages": {
+      "get": {
+        "description": "Retrieves a paginated list of messages for a specific conversation, sorted by creation time in ascending order.",
+        "operationId": "MessageController_findAll",
+        "parameters": [
+          {
+            "name": "conversationId",
+            "required": true,
+            "in": "path",
+            "description": "Unique identifier of the conversation",
+            "schema": {
+              "example": "550e8400-e29b-41d4-a716-446655440000",
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number (defaults to 1)",
+            "schema": {
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Number of messages per page (defaults to 20)",
+            "schema": {
+              "example": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of messages retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "messages": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/MessageResponseDto"
+                      }
+                    },
+                    "total": {
+                      "type": "number",
+                      "example": 150
+                    },
+                    "page": {
+                      "type": "number",
+                      "example": 1
+                    },
+                    "limit": {
+                      "type": "number",
+                      "example": 20
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication."
+          },
+          "404": {
+            "description": "Conversation not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List messages in a conversation",
+        "tags": [
+          "Messages"
+        ]
+      },
+      "post": {
+        "description": "Sends a new message from the authenticated agent to the specified conversation. Reopens resolved or snoozed conversations automatically.",
+        "operationId": "MessageController_send",
+        "parameters": [
+          {
+            "name": "conversationId",
+            "required": true,
+            "in": "path",
+            "description": "Unique identifier of the conversation",
+            "schema": {
+              "example": "550e8400-e29b-41d4-a716-446655440000",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendMessageDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Message sent successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input data or validation failed."
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication."
+          },
+          "404": {
+            "description": "Conversation not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Send an agent reply",
+        "tags": [
+          "Messages"
+        ]
+      }
+    },
+    "/cloud-api/contacts/{id}": {
+      "get": {
+        "description": "Retrieves the details of a single contact for the current tenant.",
+        "operationId": "ContactController_findById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Unique identifier of the contact",
+            "schema": {
+              "example": "550e8400-e29b-41d4-a716-446655440000",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Contact retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContactResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication"
+          },
+          "404": {
+            "description": "Contact not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a contact by ID",
+        "tags": [
+          "Contacts"
+        ]
+      }
+    },
+    "/cloud-api/contacts/{id}/conversations": {
+      "get": {
+        "description": "Retrieves all conversations associated with a contact. Optionally excludes a specific conversation by ID.",
+        "operationId": "ContactController_findConversations",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Unique identifier of the contact",
+            "schema": {
+              "example": "550e8400-e29b-41d4-a716-446655440000",
+              "type": "string"
+            }
+          },
+          {
+            "name": "exclude",
+            "required": false,
+            "in": "query",
+            "description": "Conversation ID to exclude from results",
+            "schema": {
+              "example": "550e8400-e29b-41d4-a716-446655440000",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Contact conversations retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ConversationResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication"
+          },
+          "404": {
+            "description": "Contact not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get conversations for a contact",
+        "tags": [
+          "Contacts"
+        ]
+      }
+    },
+    "/cloud-api/canned-responses": {
+      "get": {
+        "description": "Retrieves all canned responses for the current tenant, ordered by short code.",
+        "operationId": "CannedResponseController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of canned responses retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CannedResponseResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List all canned responses",
+        "tags": [
+          "Canned Responses"
+        ]
+      },
+      "post": {
+        "description": "Creates a new canned response with a unique short code for the current tenant.",
+        "operationId": "CannedResponseController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCannedResponseDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Canned response created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CannedResponseResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input data or validation failed"
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication"
+          },
+          "409": {
+            "description": "Conflict - A canned response with this short code already exists"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a canned response",
+        "tags": [
+          "Canned Responses"
+        ]
+      }
+    },
+    "/cloud-api/canned-responses/{id}": {
+      "patch": {
+        "description": "Updates an existing canned response by ID for the current tenant.",
+        "operationId": "CannedResponseController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Unique identifier of the canned response",
+            "schema": {
+              "example": "550e8400-e29b-41d4-a716-446655440000",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCannedResponseDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Canned response updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CannedResponseResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input data or validation failed"
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication"
+          },
+          "404": {
+            "description": "Canned response not found"
+          },
+          "409": {
+            "description": "Conflict - A canned response with this short code already exists"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update a canned response",
+        "tags": [
+          "Canned Responses"
+        ]
+      },
+      "delete": {
+        "description": "Permanently deletes a canned response by ID for the current tenant.",
+        "operationId": "CannedResponseController_delete",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Unique identifier of the canned response to delete",
+            "schema": {
+              "example": "550e8400-e29b-41d4-a716-446655440000",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Canned response deleted successfully"
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication"
+          },
+          "404": {
+            "description": "Canned response not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a canned response",
+        "tags": [
+          "Canned Responses"
+        ]
+      }
+    },
+    "/webhooks/telegram/{inboxId}": {
+      "post": {
+        "description": "Receives incoming message updates from Telegram Bot API.",
+        "operationId": "WebhookController_telegramWebhook",
+        "parameters": [
+          {
+            "name": "inboxId",
+            "required": true,
+            "in": "path",
+            "description": "Unique identifier of the Telegram inbox",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Webhook received successfully."
+          }
+        },
+        "summary": "Telegram incoming webhook",
+        "tags": [
+          "Webhook"
+        ]
+      }
+    },
+    "/webhooks/whatsapp/{inboxId}": {
+      "post": {
+        "description": "Receives incoming message updates from WhatsApp Cloud API.",
+        "operationId": "WebhookController_whatsappWebhook",
+        "parameters": [
+          {
+            "name": "inboxId",
+            "required": true,
+            "in": "path",
+            "description": "Unique identifier of the WhatsApp inbox",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Webhook received successfully."
+          }
+        },
+        "summary": "WhatsApp incoming webhook",
+        "tags": [
+          "Webhook"
+        ]
+      },
+      "get": {
+        "description": "Handles the Meta webhook subscription verification challenge.",
+        "operationId": "WebhookController_whatsappVerify",
+        "parameters": [
+          {
+            "name": "inboxId",
+            "required": true,
+            "in": "path",
+            "description": "Unique identifier of the WhatsApp inbox",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Verification challenge returned."
+          }
+        },
+        "summary": "WhatsApp webhook verification",
+        "tags": [
+          "Webhook"
+        ]
+      }
+    },
+    "/webhooks/instagram/{inboxId}": {
+      "post": {
+        "description": "Receives incoming message updates from Instagram Messaging API.",
+        "operationId": "WebhookController_instagramWebhook",
+        "parameters": [
+          {
+            "name": "inboxId",
+            "required": true,
+            "in": "path",
+            "description": "Unique identifier of the Instagram inbox",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Webhook received successfully."
+          }
+        },
+        "summary": "Instagram incoming webhook",
+        "tags": [
+          "Webhook"
+        ]
+      },
+      "get": {
+        "description": "Handles the Meta webhook subscription verification challenge.",
+        "operationId": "WebhookController_instagramVerify",
+        "parameters": [
+          {
+            "name": "inboxId",
+            "required": true,
+            "in": "path",
+            "description": "Unique identifier of the Instagram inbox",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Verification challenge returned."
+          }
+        },
+        "summary": "Instagram webhook verification",
+        "tags": [
+          "Webhook"
+        ]
+      }
     }
   },
   "info": {
@@ -2982,7 +4170,7 @@
   ],
   "servers": [
     {
-      "url": "http://local.vrittiai.com:3001",
+      "url": "http://local.vrittiai.com:3000",
       "description": "Local Development"
     }
   ],
@@ -4510,6 +5698,558 @@
         "required": [
           "credential"
         ]
+      },
+      "CreateTelegramInboxDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Display name for the Telegram inbox. If not provided, the bot name from the Telegram API will be used.",
+            "example": "My Telegram Bot"
+          },
+          "botToken": {
+            "type": "string",
+            "description": "Telegram Bot API token obtained from @BotFather",
+            "example": "123456789:ABCdefGhIJKlmnoPQRstUVwxyZ"
+          }
+        },
+        "required": [
+          "botToken"
+        ]
+      },
+      "CreateInstagramInboxDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Display name for the Instagram inbox",
+            "example": "My Instagram Page"
+          },
+          "accessToken": {
+            "type": "string",
+            "description": "Instagram Graph API access token"
+          },
+          "pageId": {
+            "type": "string",
+            "description": "Facebook Page ID linked to the Instagram account"
+          }
+        },
+        "required": [
+          "name",
+          "accessToken",
+          "pageId"
+        ]
+      },
+      "CreateWhatsAppInboxDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Display name for the WhatsApp inbox",
+            "example": "My WhatsApp Business"
+          },
+          "accessToken": {
+            "type": "string",
+            "description": "WhatsApp Business API access token"
+          },
+          "phoneNumberId": {
+            "type": "string",
+            "description": "WhatsApp phone number ID from Meta Business Suite"
+          },
+          "businessAccountId": {
+            "type": "string",
+            "description": "WhatsApp Business Account ID"
+          },
+          "verifyToken": {
+            "type": "string",
+            "description": "Webhook verification token for incoming message validation"
+          }
+        },
+        "required": [
+          "name",
+          "accessToken",
+          "phoneNumberId",
+          "businessAccountId",
+          "verifyToken"
+        ]
+      },
+      "InboxResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the inbox",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name of the inbox",
+            "example": "My Telegram Bot"
+          },
+          "channelType": {
+            "type": "string",
+            "description": "Messaging channel type",
+            "enum": [
+              "TELEGRAM",
+              "INSTAGRAM",
+              "WHATSAPP"
+            ],
+            "example": "TELEGRAM"
+          },
+          "status": {
+            "type": "string",
+            "description": "Current connection status of the inbox",
+            "enum": [
+              "ACTIVE",
+              "PENDING",
+              "DISCONNECTED",
+              "ERROR"
+            ],
+            "example": "ACTIVE"
+          },
+          "channelConfig": {
+            "type": "object",
+            "description": "Channel-specific configuration (tokens, IDs, etc.)",
+            "example": {
+              "botToken": "123456789:ABCdefGhIJKlmnoPQRstUVwxyZ"
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "Timestamp when the inbox was created",
+            "example": "2024-01-15T10:30:00.000Z",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "description": "Timestamp when the inbox was last updated",
+            "example": "2024-01-20T14:45:00.000Z",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "channelType",
+          "status",
+          "channelConfig",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "ContactEmbedDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier of the contact",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name of the contact",
+            "example": "John Doe"
+          },
+          "avatarUrl": {
+            "type": "string",
+            "description": "URL to the contact avatar image",
+            "example": "https://example.com/avatar.jpg"
+          },
+          "phone": {
+            "type": "string",
+            "description": "Phone number of the contact",
+            "example": "+1234567890"
+          },
+          "username": {
+            "type": "string",
+            "description": "Username of the contact on the messaging platform",
+            "example": "johndoe"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "MessagePreviewDto": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string",
+            "description": "Content of the last message",
+            "example": "Hello, I need help with my order."
+          },
+          "timestamp": {
+            "type": "string",
+            "description": "Timestamp when the message was sent",
+            "example": "2024-01-15T10:30:00.000Z"
+          },
+          "isFromContact": {
+            "type": "boolean",
+            "description": "Whether the message was sent by the contact (true) or an agent (false)",
+            "example": true
+          }
+        },
+        "required": [
+          "content",
+          "timestamp",
+          "isFromContact"
+        ]
+      },
+      "ConversationResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier of the conversation",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "contact": {
+            "description": "Embedded contact information",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContactEmbedDto"
+              }
+            ]
+          },
+          "channelType": {
+            "type": "string",
+            "description": "Messaging channel type",
+            "enum": [
+              "telegram",
+              "whatsapp",
+              "instagram"
+            ],
+            "example": "telegram"
+          },
+          "inboxId": {
+            "type": "string",
+            "description": "Identifier of the inbox this conversation belongs to",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "status": {
+            "type": "string",
+            "description": "Current status of the conversation",
+            "enum": [
+              "open",
+              "resolved",
+              "pending",
+              "snoozed"
+            ],
+            "example": "open"
+          },
+          "unreadCount": {
+            "type": "number",
+            "description": "Number of unread messages in the conversation",
+            "example": 3
+          },
+          "lastMessage": {
+            "description": "Preview of the last message in the conversation",
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MessagePreviewDto"
+              }
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "Timestamp when the conversation was created",
+            "example": "2024-01-15T10:30:00.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "description": "Timestamp when the conversation was last updated",
+            "example": "2024-01-20T14:45:00.000Z"
+          },
+          "assignedAgentId": {
+            "type": "string",
+            "description": "Identifier of the agent assigned to this conversation",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "labels": {
+            "description": "Labels attached to this conversation",
+            "example": [
+              "urgent",
+              "vip"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "contact",
+          "channelType",
+          "inboxId",
+          "status",
+          "unreadCount",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "UpdateConversationDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "New status for the conversation",
+            "enum": [
+              "OPEN",
+              "RESOLVED",
+              "PENDING",
+              "SNOOZED"
+            ],
+            "example": "RESOLVED"
+          },
+          "assignedAgentId": {
+            "type": "object",
+            "description": "Identifier of the agent to assign (null to unassign)",
+            "example": "550e8400-e29b-41d4-a716-446655440000",
+            "nullable": true
+          },
+          "labels": {
+            "description": "Labels to attach to the conversation",
+            "example": [
+              "urgent",
+              "vip"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "unreadCount": {
+            "type": "number",
+            "description": "Unread message count",
+            "example": 0
+          }
+        }
+      },
+      "SendMessageDto": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string",
+            "description": "The message content to send",
+            "example": "Hello, how can I help you?"
+          },
+          "contentType": {
+            "type": "string",
+            "description": "Content type of the message",
+            "enum": [
+              "TEXT",
+              "IMAGE",
+              "FILE",
+              "AUDIO",
+              "VIDEO"
+            ],
+            "default": "TEXT"
+          },
+          "echoId": {
+            "type": "string",
+            "description": "Client-generated UUID for deduplication between optimistic updates and WebSocket events",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          }
+        },
+        "required": [
+          "content"
+        ]
+      },
+      "MessageResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier of the message",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "conversationId": {
+            "type": "string",
+            "description": "Identifier of the conversation this message belongs to",
+            "example": "660e8400-e29b-41d4-a716-446655440000"
+          },
+          "content": {
+            "type": "string",
+            "description": "The message content",
+            "example": "Hello, how can I help you today?"
+          },
+          "type": {
+            "type": "string",
+            "description": "Content type of the message",
+            "enum": [
+              "text",
+              "image",
+              "file",
+              "audio",
+              "video"
+            ],
+            "example": "text"
+          },
+          "isFromContact": {
+            "type": "boolean",
+            "description": "Whether this message was sent by the contact (customer)",
+            "example": true
+          },
+          "senderName": {
+            "type": "string",
+            "description": "Display name of the message sender",
+            "example": "John Doe"
+          },
+          "status": {
+            "type": "string",
+            "description": "Delivery status of the message",
+            "enum": [
+              "sending",
+              "sent",
+              "delivered",
+              "read",
+              "failed"
+            ],
+            "example": "sent"
+          },
+          "echoId": {
+            "type": "object",
+            "description": "Client-generated UUID for deduplication between optimistic updates and WebSocket events",
+            "example": "550e8400-e29b-41d4-a716-446655440000",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "Timestamp when the message was created",
+            "example": "2024-01-15T10:30:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "conversationId",
+          "content",
+          "type",
+          "isFromContact",
+          "senderName",
+          "status",
+          "createdAt"
+        ]
+      },
+      "ContactResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier of the contact",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name of the contact",
+            "example": "John Doe"
+          },
+          "avatarUrl": {
+            "type": "string",
+            "description": "URL to the contact avatar image",
+            "example": "https://example.com/avatar.jpg"
+          },
+          "phone": {
+            "type": "string",
+            "description": "Phone number of the contact",
+            "example": "+1234567890"
+          },
+          "username": {
+            "type": "string",
+            "description": "Username of the contact on the messaging platform",
+            "example": "johndoe"
+          },
+          "email": {
+            "type": "string",
+            "description": "Email address of the contact",
+            "example": "john@example.com"
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "Timestamp when the contact was created",
+            "example": "2024-01-15T10:30:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "createdAt"
+        ]
+      },
+      "CannedResponseResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier of the canned response",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "shortCode": {
+            "type": "string",
+            "description": "Short code used to quickly insert this canned response",
+            "example": "greeting"
+          },
+          "content": {
+            "type": "string",
+            "description": "The full message content of the canned response",
+            "example": "Hello! How can I help you today?"
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "Timestamp when the canned response was created",
+            "example": "2024-01-15T10:30:00.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "description": "Timestamp when the canned response was last updated",
+            "example": "2024-01-20T14:45:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "shortCode",
+          "content",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CreateCannedResponseDto": {
+        "type": "object",
+        "properties": {
+          "shortCode": {
+            "type": "string",
+            "description": "Short code used to quickly insert this canned response",
+            "example": "greeting",
+            "maxLength": 100
+          },
+          "content": {
+            "type": "string",
+            "description": "The full message content of the canned response",
+            "example": "Hello! How can I help you today?"
+          }
+        },
+        "required": [
+          "shortCode",
+          "content"
+        ]
+      },
+      "UpdateCannedResponseDto": {
+        "type": "object",
+        "properties": {
+          "shortCode": {
+            "type": "string",
+            "description": "Short code used to quickly insert this canned response",
+            "example": "greeting",
+            "maxLength": 100
+          },
+          "content": {
+            "type": "string",
+            "description": "The full message content of the canned response",
+            "example": "Hello! How can I help you today?"
+          }
+        }
       }
     }
   }

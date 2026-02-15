@@ -6,6 +6,7 @@ import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { type MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
+import { IoAdapter } from '@nestjs/platform-socket.io';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import {
   BadRequestException,
@@ -19,6 +20,7 @@ import fastifyRawBody from 'fastify-raw-body';
 import { readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { AppModule } from './app.module';
+import { CORS_ORIGINS } from './config/cors.config';
 
 // ============================================================================
 // Environment Configuration
@@ -43,17 +45,6 @@ const baseUrl = `${protocol}://${ENV.host}:${ENV.port}`;
 // ============================================================================
 // CORS Configuration
 // ============================================================================
-
-const CORS_ORIGINS = [
-  'http://localhost:5173', // Host app
-  'http://localhost:3001', // Auth MF
-  'http://localhost:3012', // Host app main port
-  'http://localhost:5174', // Other possible ports
-  `http://${ENV.host}:3012`,
-  `http://cloud.${ENV.host}:3012`,
-  `https://${ENV.host}:3012`,
-  `https://cloud.${ENV.host}:3012`,
-];
 
 const CORS_CONFIG = {
   origin: CORS_ORIGINS,
@@ -149,6 +140,9 @@ async function bootstrap() {
 
   // Create NestJS application
   const app = await NestFactory.create<NestFastifyApplication>(AppModule, fastifyAdapter, loggerOptions);
+
+  // Configure Socket.IO WebSocket adapter for Fastify
+  app.useWebSocketAdapter(new IoAdapter(app));
 
   // Get services from DI container
   const configService = app.get(ConfigService);

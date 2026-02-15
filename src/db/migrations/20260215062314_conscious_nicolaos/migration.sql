@@ -1,0 +1,1 @@
+ALTER TABLE "cloud"."messages" ADD COLUMN "echo_id" varchar(36);

@@ -156,6 +156,23 @@ class EnvironmentVariables {
   @IsString()
   @IsOptional()
   RABBITMQ_URL: string;
+
+  // Instagram OAuth Configuration
+  @IsString()
+  @IsOptional()
+  INSTAGRAM_APP_ID: string;
+
+  @IsString()
+  @IsOptional()
+  INSTAGRAM_APP_SECRET: string;
+
+  @IsString()
+  @IsOptional()
+  INSTAGRAM_OAUTH_CALLBACK_URL: string;
+
+  @IsString()
+  @IsOptional()
+  INSTAGRAM_WEBHOOK_VERIFY_TOKEN: string;
 }
 
 /**

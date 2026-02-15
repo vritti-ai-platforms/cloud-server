@@ -8,6 +8,10 @@ export const relations = defineRelations(schema, (r) => ({
       from: r.tenants.id,
       to: r.tenantDatabaseConfigs.tenantId,
     }),
+    inboxes: r.many.inboxes(),
+    contacts: r.many.contacts(),
+    conversations: r.many.conversations(),
+    cannedResponses: r.many.cannedResponses(),
   },
   tenantDatabaseConfigs: {
     tenant: r.one.tenants({
@@ -23,6 +27,10 @@ export const relations = defineRelations(schema, (r) => ({
     twoFactorAuth: r.many.twoFactorAuth(),
     oauthProviders: r.many.oauthProviders(),
     sessions: r.many.sessions(),
+    assignedConversations: r.many.conversations({
+      from: r.users.id,
+      to: r.conversations.assignedAgentId,
+    }),
   },
 
   // Session relations
@@ -62,6 +70,80 @@ export const relations = defineRelations(schema, (r) => ({
     user: r.one.users({
       from: r.twoFactorAuth.userId,
       to: r.users.id,
+    }),
+  },
+
+  // Inbox relations
+  inboxes: {
+    tenant: r.one.tenants({
+      from: r.inboxes.tenantId,
+      to: r.tenants.id,
+    }),
+    contactInboxes: r.many.contactInboxes(),
+    conversations: r.many.conversations(),
+  },
+
+  // Contact relations
+  contacts: {
+    tenant: r.one.tenants({
+      from: r.contacts.tenantId,
+      to: r.tenants.id,
+    }),
+    contactInboxes: r.many.contactInboxes(),
+    conversations: r.many.conversations(),
+  },
+
+  // Contact inbox relations
+  contactInboxes: {
+    contact: r.one.contacts({
+      from: r.contactInboxes.contactId,
+      to: r.contacts.id,
+    }),
+    inbox: r.one.inboxes({
+      from: r.contactInboxes.inboxId,
+      to: r.inboxes.id,
+    }),
+    conversations: r.many.conversations(),
+  },
+
+  // Conversation relations
+  conversations: {
+    tenant: r.one.tenants({
+      from: r.conversations.tenantId,
+      to: r.tenants.id,
+    }),
+    inbox: r.one.inboxes({
+      from: r.conversations.inboxId,
+      to: r.inboxes.id,
+    }),
+    contact: r.one.contacts({
+      from: r.conversations.contactId,
+      to: r.contacts.id,
+    }),
+    contactInbox: r.one.contactInboxes({
+      from: r.conversations.contactInboxId,
+      to: r.contactInboxes.id,
+    }),
+    assignedAgent: r.one.users({
+      from: r.conversations.assignedAgentId,
+      to: r.users.id,
+    }),
+    messages: r.many.messages(),
+  },
+
+  // Message relations
+  messages: {
+    conversation: r.one.conversations({
+      from: r.messages.conversationId,
+      to: r.conversations.id,
+    }),
+  },
+
+  // Canned response relations
+  cannedResponses: {
+    tenant: r.one.tenants({
+      from: r.cannedResponses.tenantId,
+      to: r.tenants.id,
     }),
   },
 }));
