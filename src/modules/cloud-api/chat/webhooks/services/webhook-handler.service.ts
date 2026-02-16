@@ -9,6 +9,14 @@ import { MessageRepository } from '../../messages/repositories/message.repositor
 import { MessageResponseDto } from '../../messages/dto/entity/message-response.dto';
 import type { ParsedIncomingMessage } from './channel-adapter.interface';
 
+// ============================================================================
+// Instagram Channel Config
+// ============================================================================
+
+interface InstagramChannelConfig {
+  accessToken?: string;
+}
+
 @Injectable()
 export class WebhookHandlerService {
   private readonly logger = new Logger(WebhookHandlerService.name);
@@ -42,6 +50,18 @@ export class WebhookHandlerService {
     }
 
     const tenantId = inbox.tenantId;
+
+    // 1b. Resolve Instagram sender name if it's just a numeric ID
+    if (inbox.channelType === 'INSTAGRAM' && /^\d+$/.test(parsed.senderName)) {
+      const resolvedName = await this.resolveInstagramSenderName(
+        parsed.sourceId,
+        inbox.channelConfig as InstagramChannelConfig,
+      );
+      if (resolvedName) {
+        parsed.senderName = resolvedName.name;
+        parsed.username = resolvedName.username;
+      }
+    }
 
     // 2. Find or create ContactInbox (and Contact)
     const { contactInbox, contact } = await this.findOrCreateContactInbox(
@@ -123,6 +143,16 @@ export class WebhookHandlerService {
     )) as ({ contact?: Contact } & Record<string, unknown>) | undefined;
 
     if (existing?.contact) {
+      // Update contact name if it's still a numeric ID (unresolved Instagram sender)
+      if (existing.contact.name && /^\d+$/.test(existing.contact.name) && parsed.senderName && !/^\d+$/.test(parsed.senderName)) {
+        await this.contactRepository.update(existing.contact.id, {
+          name: parsed.senderName,
+          username: parsed.username || existing.contact.username,
+        });
+        existing.contact.name = parsed.senderName;
+        if (parsed.username) existing.contact.username = parsed.username;
+        this.logger.log(`Updated contact ${existing.contact.id} name to: ${parsed.senderName}`);
+      }
       return { contactInbox: existing as { id: string }, contact: existing.contact };
     }
 
@@ -157,6 +187,47 @@ export class WebhookHandlerService {
     this.logger.log(`Created new contactInbox: ${contactInbox.id}`);
 
     return { contactInbox, contact };
+  }
+
+  /**
+   * Resolves the Instagram sender's display name and username by calling
+   * the Instagram Graph API. Instagram webhooks only include the sender's
+   * numeric ID — the profile must be fetched separately.
+   */
+  private async resolveInstagramSenderName(
+    senderId: string,
+    channelConfig: InstagramChannelConfig,
+  ): Promise<{ name: string; username: string } | null> {
+    const accessToken = channelConfig?.accessToken;
+    if (!accessToken) return null;
+
+    try {
+      const params = new URLSearchParams({
+        fields: 'name,username',
+        access_token: accessToken,
+      });
+
+      const response = await fetch(
+        `https://graph.instagram.com/v22.0/${senderId}?${params.toString()}`,
+      );
+
+      if (!response.ok) {
+        this.logger.warn(
+          `Failed to fetch Instagram profile for sender ${senderId} (HTTP ${response.status})`,
+        );
+        return null;
+      }
+
+      const data = (await response.json()) as { name?: string; username?: string };
+      return {
+        name: data.name || data.username || senderId,
+        username: data.username || '',
+      };
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error('Unknown error');
+      this.logger.warn(`Instagram profile fetch failed for sender ${senderId}: ${err.message}`);
+      return null;
+    }
   }
 
   /**

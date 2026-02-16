@@ -4110,6 +4110,36 @@
           "Webhook"
         ]
       }
+    },
+    "/webhooks/instagram": {
+      "post": {
+        "description": "Receives incoming message updates from Instagram Messaging API. Looks up the inbox from the recipient Instagram ID in the payload.",
+        "operationId": "WebhookController_instagramGenericWebhook",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Webhook received successfully."
+          }
+        },
+        "summary": "Instagram generic incoming webhook",
+        "tags": [
+          "Webhook"
+        ]
+      },
+      "get": {
+        "description": "Handles the Meta webhook subscription verification challenge. Uses the INSTAGRAM_WEBHOOK_VERIFY_TOKEN environment variable.",
+        "operationId": "WebhookController_instagramGenericVerify",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Verification challenge returned."
+          }
+        },
+        "summary": "Instagram generic webhook verification",
+        "tags": [
+          "Webhook"
+        ]
+      }
     }
   },
   "info": {
@@ -4170,7 +4200,7 @@
   ],
   "servers": [
     {
-      "url": "http://local.vrittiai.com:3000",
+      "url": "https://local.vrittiai.com:3000",
       "description": "Local Development"
     }
   ],

@@ -70,3 +70,27 @@ export function ApiInstagramVerify() {
     ApiResponse({ status: 200, description: 'Verification challenge returned.' }),
   );
 }
+
+export function ApiInstagramGenericWebhook() {
+  return applyDecorators(
+    ApiOperation({
+      summary: 'Instagram generic incoming webhook',
+      description:
+        'Receives incoming message updates from Instagram Messaging API. ' +
+        'Looks up the inbox from the recipient Instagram ID in the payload.',
+    }),
+    ApiResponse({ status: 200, description: 'Webhook received successfully.' }),
+  );
+}
+
+export function ApiInstagramGenericVerify() {
+  return applyDecorators(
+    ApiOperation({
+      summary: 'Instagram generic webhook verification',
+      description:
+        'Handles the Meta webhook subscription verification challenge. ' +
+        'Uses the INSTAGRAM_WEBHOOK_VERIFY_TOKEN environment variable.',
+    }),
+    ApiResponse({ status: 200, description: 'Verification challenge returned.' }),
+  );
+}

@@ -150,6 +150,8 @@ export class InstagramOAuthService {
       scope: 'instagram_business_basic,instagram_business_manage_messages',
       response_type: 'code',
       state: stateToken,
+      enable_fb_login: '0',
+      force_authentication: '1',
     });
 
     return `https://api.instagram.com/oauth/authorize?${params.toString()}`;

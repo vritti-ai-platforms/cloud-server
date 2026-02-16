@@ -18,9 +18,19 @@ export class InstagramAdapter implements ChannelAdapter {
 
     if (!messaging?.message) return null;
 
+    // Ignore echo messages — these are messages sent BY the business account
+    // (e.g. agent replies dispatched via Graph API). Instagram webhooks fire
+    // for both inbound and outbound messages; echoes have is_echo=true or
+    // the sender matches the business account (entry.id).
+    if (messaging.message.is_echo) return null;
+
+    const businessAccountId = entry?.id?.toString();
+    const senderId = messaging.sender?.id?.toString();
+    if (businessAccountId && senderId === businessAccountId) return null;
+
     return {
-      sourceId: messaging.sender.id,
-      senderName: messaging.sender.id, // Instagram does not send name in webhook; resolved later via API
+      sourceId: senderId,
+      senderName: senderId, // Instagram does not send name in webhook; resolved later via API
       content: messaging.message.text || '',
       contentType: messaging.message.attachments
         ? this.detectAttachmentType(messaging.message.attachments[0])
@@ -42,6 +52,17 @@ export class InstagramAdapter implements ChannelAdapter {
       default:
         return 'TEXT';
     }
+  }
+
+  /**
+   * Extracts the recipient Instagram ID from the webhook payload.
+   * This is the Instagram account that received the message — used to
+   * look up the correct inbox when using the generic webhook endpoint.
+   *
+   * The `entry[].id` field contains the Instagram user ID of the recipient.
+   */
+  extractRecipientId(payload: any): string | null {
+    return payload?.entry?.[0]?.id?.toString() || null;
   }
 
   /**

@@ -66,4 +66,23 @@ export class InboxRepository extends PrimaryBaseRepository<typeof inboxes> {
       return config?.instagramUserId === instagramUserId;
     });
   }
+
+  /**
+   * Finds an inbox by Instagram user ID across ALL tenants.
+   * Used by the generic webhook endpoint (no inboxId in URL) to route
+   * incoming Instagram messages to the correct inbox based on the
+   * recipient ID in the webhook payload.
+   */
+  async findByInstagramUserId(instagramUserId: string): Promise<Inbox | undefined> {
+    const instagramInboxes = await this.model.findMany({
+      where: {
+        channelType: 'INSTAGRAM' as ChannelType,
+      },
+    });
+
+    return instagramInboxes.find((inbox) => {
+      const config = inbox.channelConfig as Record<string, unknown> | null;
+      return config?.instagramUserId === instagramUserId || config?.instagramId === instagramUserId;
+    });
+  }
 }
