@@ -2085,44 +2085,13 @@
         ]
       }
     },
-    "/cloud-api/onboarding/verify-email": {
+    "/cloud-api/onboarding/start": {
       "post": {
-        "operationId": "OnboardingController_verifyEmail",
+        "operationId": "OnboardingController_startOnboarding",
         "parameters": [],
-        "requestBody": {
-          "required": true,
-          "description": "Email verification OTP payload",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/VerifyEmailDto"
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
-            "description": "Email verified successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "example": true
-                    },
-                    "message": {
-                      "type": "string",
-                      "example": "Email verified successfully"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid or expired OTP"
+            "description": "Onboarding process started, returns current step and sends OTP if needed"
           },
           "401": {
             "description": "Unauthorized - Invalid or missing onboarding token"
@@ -2133,50 +2102,7 @@
             "bearer": []
           }
         ],
-        "summary": "Verify email address using OTP",
-        "tags": [
-          "Onboarding"
-        ]
-      }
-    },
-    "/cloud-api/onboarding/resend-email-otp": {
-      "post": {
-        "operationId": "OnboardingController_resendEmailOtp",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "OTP sent successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "example": true
-                    },
-                    "message": {
-                      "type": "string",
-                      "example": "OTP sent successfully"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized - Invalid or missing onboarding token"
-          },
-          "429": {
-            "description": "Too many requests - Rate limit exceeded"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Resend email verification OTP",
+        "summary": "Start or continue the onboarding process",
         "tags": [
           "Onboarding"
         ]
@@ -2200,29 +2126,6 @@
           }
         ],
         "summary": "Get current onboarding status",
-        "tags": [
-          "Onboarding"
-        ]
-      }
-    },
-    "/cloud-api/onboarding/start": {
-      "post": {
-        "operationId": "OnboardingController_startOnboarding",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "Onboarding process started, returns current step and sends OTP if needed"
-          },
-          "401": {
-            "description": "Unauthorized - Invalid or missing onboarding token"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Start or continue the onboarding process",
         "tags": [
           "Onboarding"
         ]
@@ -2282,9 +2185,86 @@
         ]
       }
     },
+    "/cloud-api/onboarding/email-verification/verify": {
+      "post": {
+        "operationId": "EmailVerificationController_verifyEmail",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "description": "Email verification OTP payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyEmailDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Email verified successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerifyEmailResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid or expired OTP"
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing onboarding token"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Verify email address using OTP",
+        "tags": [
+          "Onboarding - Email Verification"
+        ]
+      }
+    },
+    "/cloud-api/onboarding/email-verification/resend": {
+      "post": {
+        "operationId": "EmailVerificationController_resendEmailOtp",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OTP sent successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResendEmailOtpResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing onboarding token"
+          },
+          "429": {
+            "description": "Too many requests - Rate limit exceeded"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Resend email verification OTP",
+        "tags": [
+          "Onboarding - Email Verification"
+        ]
+      }
+    },
     "/cloud-api/onboarding/mobile-verification/initiate": {
       "post": {
-        "operationId": "OnboardingController_initiateMobileVerification",
+        "operationId": "MobileVerificationController_initiateMobileVerification",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -2299,7 +2279,14 @@
         },
         "responses": {
           "200": {
-            "description": "Mobile verification initiated successfully"
+            "description": "Mobile verification initiated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MobileVerificationStatusResponseDto"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid phone number or verification method"
@@ -2315,17 +2302,24 @@
         ],
         "summary": "Initiate mobile phone verification",
         "tags": [
-          "Onboarding"
+          "Onboarding - Mobile Verification"
         ]
       }
     },
     "/cloud-api/onboarding/mobile-verification/status": {
       "get": {
-        "operationId": "OnboardingController_getMobileVerificationStatus",
+        "operationId": "MobileVerificationController_getMobileVerificationStatus",
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Returns the current mobile verification status"
+            "description": "Returns the current mobile verification status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MobileVerificationStatusResponseDto"
+                }
+              }
+            }
           },
           "401": {
             "description": "Unauthorized - Invalid or missing onboarding token"
@@ -2341,13 +2335,13 @@
         ],
         "summary": "Get current mobile verification status",
         "tags": [
-          "Onboarding"
+          "Onboarding - Mobile Verification"
         ]
       }
     },
     "/cloud-api/onboarding/mobile-verification/resend": {
       "post": {
-        "operationId": "OnboardingController_resendMobileVerification",
+        "operationId": "MobileVerificationController_resendMobileVerification",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -2362,7 +2356,14 @@
         },
         "responses": {
           "200": {
-            "description": "Mobile verification code resent successfully"
+            "description": "Mobile verification code resent successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MobileVerificationStatusResponseDto"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid phone number or verification method"
@@ -2381,13 +2382,13 @@
         ],
         "summary": "Resend mobile verification code",
         "tags": [
-          "Onboarding"
+          "Onboarding - Mobile Verification"
         ]
       }
     },
     "/cloud-api/onboarding/mobile-verification/verify-otp": {
       "post": {
-        "operationId": "OnboardingController_verifyMobileOtp",
+        "operationId": "MobileVerificationController_verifyMobileOtp",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -2435,7 +2436,7 @@
         ],
         "summary": "Verify mobile phone number using OTP",
         "tags": [
-          "Onboarding"
+          "Onboarding - Mobile Verification"
         ]
       }
     },
@@ -3350,15 +3351,15 @@
             "description": "User email address",
             "example": "user@example.com"
           },
-          "firstName": {
-            "type": "object",
-            "description": "User first name",
-            "example": "John"
+          "fullName": {
+            "type": "string",
+            "description": "User full name",
+            "example": "John Doe"
           },
-          "lastName": {
-            "type": "object",
-            "description": "User last name",
-            "example": "Doe"
+          "displayName": {
+            "type": "string",
+            "description": "User display name",
+            "example": "John"
           },
           "accountStatus": {
             "type": "string",
@@ -3454,6 +3455,8 @@
         "required": [
           "id",
           "email",
+          "fullName",
+          "displayName",
           "accountStatus",
           "emailVerified",
           "phoneVerified",
@@ -3468,15 +3471,15 @@
       "UpdateUserDto": {
         "type": "object",
         "properties": {
-          "firstName": {
+          "fullName": {
             "type": "string",
-            "description": "The first name of the user",
-            "example": "John"
+            "description": "The full name of the user",
+            "example": "John Doe"
           },
-          "lastName": {
+          "displayName": {
             "type": "string",
-            "description": "The last name of the user",
-            "example": "Doe"
+            "description": "The display name of the user",
+            "example": "John"
           },
           "email": {
             "type": "string",
@@ -3720,22 +3723,16 @@
             "example": "SecureP@ss123",
             "minLength": 8
           },
-          "firstName": {
+          "fullName": {
             "type": "string",
-            "description": "User first name",
-            "example": "John"
-          },
-          "lastName": {
-            "type": "string",
-            "description": "User last name",
-            "example": "Doe"
+            "description": "User full name",
+            "example": "John Doe"
           }
         },
         "required": [
           "email",
           "password",
-          "firstName",
-          "lastName"
+          "fullName"
         ]
       },
       "TokenResponse": {
@@ -4141,22 +4138,22 @@
             "description": "Email address of the authenticated user",
             "example": "user@example.com"
           },
-          "firstName": {
-            "type": "object",
-            "description": "First name of the user",
-            "example": "John",
-            "nullable": true
+          "fullName": {
+            "type": "string",
+            "description": "Full name of the user",
+            "example": "John Doe"
           },
-          "lastName": {
-            "type": "object",
-            "description": "Last name of the user",
-            "example": "Doe",
-            "nullable": true
+          "displayName": {
+            "type": "string",
+            "description": "Display name of the user",
+            "example": "John"
           }
         },
         "required": [
           "id",
-          "email"
+          "email",
+          "fullName",
+          "displayName"
         ]
       },
       "MfaVerificationResponseDto": {
@@ -4388,6 +4385,20 @@
           "credential"
         ]
       },
+      "SetPasswordDto": {
+        "type": "object",
+        "properties": {
+          "password": {
+            "type": "string",
+            "description": "User password that must be at least 8 characters and contain at least one lowercase letter, uppercase letter, number, and special character",
+            "example": "SecureP@ss123",
+            "minLength": 8
+          }
+        },
+        "required": [
+          "password"
+        ]
+      },
       "VerifyEmailDto": {
         "type": "object",
         "properties": {
@@ -4403,18 +4414,42 @@
           "otp"
         ]
       },
-      "SetPasswordDto": {
+      "VerifyEmailResponseDto": {
         "type": "object",
         "properties": {
-          "password": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates whether the email was verified successfully",
+            "example": true
+          },
+          "message": {
             "type": "string",
-            "description": "User password that must be at least 8 characters and contain at least one lowercase letter, uppercase letter, number, and special character",
-            "example": "SecureP@ss123",
-            "minLength": 8
+            "description": "Confirmation message",
+            "example": "Email verified successfully"
           }
         },
         "required": [
-          "password"
+          "success",
+          "message"
+        ]
+      },
+      "ResendEmailOtpResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates whether the OTP was resent successfully",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "description": "Confirmation message",
+            "example": "OTP sent successfully"
+          }
+        },
+        "required": [
+          "success",
+          "message"
         ]
       },
       "InitiateMobileVerificationDto": {
@@ -4446,6 +4481,76 @@
             "default": "WHATSAPP_QR"
           }
         }
+      },
+      "MobileVerificationStatusResponseDto": {
+        "type": "object",
+        "properties": {
+          "verificationId": {
+            "type": "string",
+            "description": "Unique identifier for the verification session",
+            "example": "ver_abc123def456"
+          },
+          "method": {
+            "type": "string",
+            "description": "The verification method being used for mobile verification",
+            "example": "WHATSAPP_QR",
+            "enum": [
+              "WHATSAPP_QR",
+              "SMS_QR",
+              "MANUAL_OTP"
+            ]
+          },
+          "verificationToken": {
+            "type": "string",
+            "description": "Verification token that the user should send via WhatsApp or SMS to complete verification",
+            "example": "VRFY-A1B2C3"
+          },
+          "isVerified": {
+            "type": "boolean",
+            "description": "Indicates whether the mobile number has been successfully verified",
+            "example": false
+          },
+          "phone": {
+            "type": "object",
+            "description": "Phone number being verified in E.164 format. May be null for QR methods until webhook receives it.",
+            "example": "+919876543210",
+            "nullable": true
+          },
+          "phoneCountry": {
+            "type": "object",
+            "description": "ISO country code for the phone number. May be null for QR methods.",
+            "example": "IN",
+            "nullable": true
+          },
+          "expiresAt": {
+            "type": "string",
+            "description": "Timestamp when the verification session expires",
+            "example": "2024-01-15T10:30:00.000Z",
+            "format": "date-time"
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable message describing the current verification status",
+            "example": "Waiting for user to scan QR code and send verification token via WhatsApp"
+          },
+          "instructions": {
+            "type": "string",
+            "description": "Step-by-step instructions for the user to complete verification",
+            "example": "Open WhatsApp, scan the QR code, and send the verification token to complete verification."
+          },
+          "whatsappNumber": {
+            "type": "string",
+            "description": "WhatsApp business number that the frontend uses to generate the QR code universal link",
+            "example": "+14155238886"
+          }
+        },
+        "required": [
+          "verificationId",
+          "method",
+          "isVerified",
+          "expiresAt",
+          "message"
+        ]
       },
       "VerifyMobileOtpDto": {
         "type": "object",

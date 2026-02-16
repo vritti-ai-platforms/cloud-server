@@ -5,6 +5,7 @@ import { jwtConfigFactory } from '../../../config/jwt.config';
 import { ServicesModule } from '../../../services';
 import { OnboardingModule } from '../onboarding/onboarding.module';
 import { UserModule } from '../user/user.module';
+import { VerificationModule } from '../verification/verification.module';
 // MFA verification submodule
 import { MfaVerificationController } from './mfa-verification/controllers/mfa-verification.controller';
 import { MfaChallengeStore } from './mfa-verification/services/mfa-challenge.store';
@@ -40,6 +41,7 @@ import { SessionService } from './root/services/session.service';
       useFactory: jwtConfigFactory,
     }),
     ServicesModule,
+    VerificationModule,
     forwardRef(() => UserModule),
     forwardRef(() => OnboardingModule),
   ],

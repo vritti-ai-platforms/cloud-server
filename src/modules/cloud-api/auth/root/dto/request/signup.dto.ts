@@ -25,18 +25,10 @@ export class SignupDto {
   password: string;
 
   @ApiProperty({
-    description: 'User first name',
-    example: 'John',
+    description: 'User full name',
+    example: 'John Doe',
   })
   @IsString()
-  @IsNotEmpty({ message: 'First name is required' })
-  firstName: string;
-
-  @ApiProperty({
-    description: 'User last name',
-    example: 'Doe',
-  })
-  @IsString()
-  @IsNotEmpty({ message: 'Last name is required' })
-  lastName: string;
+  @IsNotEmpty({ message: 'Full name is required' })
+  fullName: string;
 }

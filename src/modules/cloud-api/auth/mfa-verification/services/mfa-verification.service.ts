@@ -1,8 +1,8 @@
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import { BadRequestException, UnauthorizedException } from '@vritti/api-sdk';
-import { SessionTypeValues, type TwoFactorAuth, TwoFactorMethodValues, type User } from '@/db/schema';
+import { SessionTypeValues, type TwoFactorAuth, TwoFactorMethodValues, type User, VerificationChannelValues } from '@/db/schema';
 import { TwoFactorAuthRepository } from '../../../onboarding/two-factor/repositories/two-factor-auth.repository';
-import { OtpService } from '../../../onboarding/root/services/otp.service';
+import { VerificationService } from '../../../verification/services/verification.service';
 import { TotpService } from '../../../onboarding/two-factor/services/totp.service';
 import { WebAuthnService } from '../../../onboarding/two-factor/services/webauthn.service';
 import { UserService } from '../../../user/services/user.service';
@@ -31,7 +31,7 @@ export class MfaVerificationService {
   constructor(
     private readonly mfaChallengeStore: MfaChallengeStore,
     private readonly totpService: TotpService,
-    private readonly otpService: OtpService,
+    private readonly verificationService: VerificationService,
     private readonly webAuthnService: WebAuthnService,
     private readonly twoFactorAuthRepo: TwoFactorAuthRepository,
     private readonly userService: UserService,
@@ -155,12 +155,15 @@ export class MfaVerificationService {
       });
     }
 
-    // Generate OTP
-    const otp = this.otpService.generateOtp();
-    const otpHash = await this.otpService.hashOtp(otp);
+    // Create verification record for SMS OTP
+    const { verificationId, otp } = await this.verificationService.createVerification(
+      challenge.userId,
+      VerificationChannelValues.SMS,
+      user.phone,
+    );
 
-    // Store OTP hash in challenge
-    this.mfaChallengeStore.update(sessionId, { smsOtpHash: otpHash });
+    // Store verification ID in challenge
+    this.mfaChallengeStore.update(sessionId, { smsVerificationId: verificationId });
 
     // TODO: Actually send SMS via SMS provider (Twilio, etc.)
     // For now, log it (in development only)
@@ -188,23 +191,15 @@ export class MfaVerificationService {
       });
     }
 
-    if (!challenge.smsOtpHash) {
+    if (!challenge.smsVerificationId) {
       throw new BadRequestException({
         label: 'Code Not Requested',
         detail: 'Please request a new verification code before attempting to verify.',
       });
     }
 
-    // Verify the OTP
-    const isValid = await this.otpService.verifyOtp(code, challenge.smsOtpHash);
-
-    if (!isValid) {
-      throw new BadRequestException({
-        label: 'Invalid Code',
-        errors: [{ field: 'code', message: 'Invalid verification code' }],
-        detail: 'The code you entered is incorrect. Please check your SMS and try again.',
-      });
-    }
+    // Verify the OTP against the unified verification record
+    await this.verificationService.verifyOtp(challenge.smsVerificationId, challenge.userId, code);
 
     // Complete MFA verification
     return this.completeMfaVerification(challenge);
@@ -381,8 +376,8 @@ export class MfaVerificationService {
         user: {
           id: user.id,
           email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
+          fullName: user.fullName,
+          displayName: user.displayName,
         },
       }),
       refreshToken, // Include for controller to set as cookie

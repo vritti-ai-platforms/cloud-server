@@ -110,15 +110,14 @@ export class AppleOAuthProvider implements IOAuthProvider {
 
       this.logger.log(`Retrieved Apple profile for user: ${decoded.email}`);
 
-      // Apple doesn't provide first/last name in subsequent logins
+      // Apple doesn't provide names in subsequent logins
       // They're only provided in the initial authorization response
       return {
         provider: OAuthProviderTypeValues.APPLE,
         providerId: decoded.sub,
         email: decoded.email,
-        displayName: decoded.email, // Apple doesn't provide name after first auth
-        firstName: undefined,
-        lastName: undefined,
+        fullName: undefined, // Not available after first auth
+        displayName: undefined, // Not available after first auth
         profilePictureUrl: undefined,
       };
     } catch (error) {

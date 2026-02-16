@@ -5,20 +5,20 @@ import { AccountStatusValues, OnboardingStepValues } from '@/db/schema';
 
 export class UpdateUserDto {
   @ApiPropertyOptional({
-    description: 'The first name of the user',
+    description: 'The full name of the user',
+    example: 'John Doe',
+  })
+  @IsString()
+  @IsOptional()
+  fullName?: string;
+
+  @ApiPropertyOptional({
+    description: 'The display name of the user',
     example: 'John',
   })
   @IsString()
   @IsOptional()
-  firstName?: string;
-
-  @ApiPropertyOptional({
-    description: 'The last name of the user',
-    example: 'Doe',
-  })
-  @IsString()
-  @IsOptional()
-  lastName?: string;
+  displayName?: string;
 
   @ApiPropertyOptional({
     description: 'The email address of the user',

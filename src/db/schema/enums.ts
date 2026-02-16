@@ -20,6 +20,8 @@ export const onboardingStepEnum = cloudSchema.enum('OnboardingStep', [
 ]);
 
 // Verification enums
+export const verificationChannelEnum = cloudSchema.enum('verification_channel', ['EMAIL', 'SMS']);
+
 export const verificationMethodEnum = cloudSchema.enum('VerificationMethod', [
   'WHATSAPP_QR',   // User sends token to WhatsApp via QR code
   'SMS_QR',        // User sends token via SMS via QR code
@@ -45,6 +47,7 @@ export type DatabaseType = (typeof databaseTypeEnum.enumValues)[number];
 export type TenantStatus = (typeof tenantStatusEnum.enumValues)[number];
 export type AccountStatus = (typeof accountStatusEnum.enumValues)[number];
 export type OnboardingStep = (typeof onboardingStepEnum.enumValues)[number];
+export type VerificationChannel = (typeof verificationChannelEnum.enumValues)[number];
 export type VerificationMethod = (typeof verificationMethodEnum.enumValues)[number];
 export type TwoFactorMethod = (typeof twoFactorMethodEnum.enumValues)[number];
 export type OAuthProviderType = (typeof oauthProviderTypeEnum.enumValues)[number];
@@ -74,6 +77,11 @@ export const OnboardingStepValues = {
   MOBILE_VERIFICATION: 'MOBILE_VERIFICATION' as const,
   TWO_FACTOR_SETUP: 'TWO_FACTOR_SETUP' as const,
   COMPLETE: 'COMPLETE' as const,
+};
+
+export const VerificationChannelValues = {
+  EMAIL: 'EMAIL' as const,
+  SMS: 'SMS' as const,
 };
 
 export const VerificationMethodValues = {

@@ -30,6 +30,12 @@ export class AuthService {
     private readonly passwordResetService: PasswordResetService,
   ) {}
 
+  // Extracts first word from fullName for auto-deriving displayName
+  private extractFirstWord(fullName: string): string {
+    if (!fullName?.trim()) return fullName;
+    return fullName.trim().split(/\s+/)[0];
+  }
+
   // Creates a new user or sets password for OAuth users without one
   async signup(
     dto: SignupDto,
@@ -58,7 +64,11 @@ export class AuthService {
     const passwordHash = await this.encryptionService.hashPassword(dto.password);
 
     const user = await this.userService.create(
-      { email: dto.email, firstName: dto.firstName, lastName: dto.lastName },
+      {
+        email: dto.email,
+        fullName: dto.fullName,
+        displayName: this.extractFirstWord(dto.fullName),
+      },
       passwordHash,
       true,
     );

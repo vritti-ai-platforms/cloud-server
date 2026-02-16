@@ -6,6 +6,16 @@ import type { IOAuthProvider } from '../interfaces/oauth-provider.interface';
 import type { OAuthTokenExchangePayload, OAuthTokens } from '../interfaces/oauth-tokens.interface';
 import type { OAuthUserProfile } from '../interfaces/oauth-user-profile.interface';
 
+interface GoogleUserInfo {
+  id: string;
+  email: string;
+  verified_email: boolean;
+  name?: string;
+  given_name?: string;
+  family_name?: string;
+  picture?: string;
+}
+
 @Injectable()
 export class GoogleOAuthProvider implements IOAuthProvider {
   private readonly logger = new Logger(GoogleOAuthProvider.name);
@@ -21,6 +31,12 @@ export class GoogleOAuthProvider implements IOAuthProvider {
     this.clientId = this.configService.getOrThrow<string>('GOOGLE_CLIENT_ID');
     this.clientSecret = this.configService.getOrThrow<string>('GOOGLE_CLIENT_SECRET');
     this.redirectUri = this.configService.getOrThrow<string>('GOOGLE_CALLBACK_URL');
+  }
+
+  // Extracts first word from fullName for auto-deriving displayName
+  private extractFirstWord(fullName: string): string {
+    if (!fullName?.trim()) return fullName;
+    return fullName.trim().split(/\s+/)[0];
   }
 
   // Builds the Google OAuth consent screen URL with PKCE support
@@ -82,23 +98,25 @@ export class GoogleOAuthProvider implements IOAuthProvider {
   // Fetches the user's profile from Google using the access token
   async getUserProfile(accessToken: string): Promise<OAuthUserProfile> {
     try {
-      const response = await axios.get(this.USER_INFO_URL, {
+      const response = await axios.get<GoogleUserInfo>(this.USER_INFO_URL, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
       });
 
-      const data = response.data;
+      const data: GoogleUserInfo = response.data;
 
       this.logger.log(`Retrieved Google profile for user: ${data.email}`);
+
+      const fullName = data.name || '';
+      const displayName = data.given_name || this.extractFirstWord(fullName) || '';
 
       return {
         provider: OAuthProviderTypeValues.GOOGLE,
         providerId: data.id,
         email: data.email,
-        displayName: data.name,
-        firstName: data.given_name,
-        lastName: data.family_name,
+        fullName,
+        displayName,
         profilePictureUrl: data.picture,
       };
     } catch (error) {

@@ -2,6 +2,7 @@ import { forwardRef, Module } from '@nestjs/common';
 import { EmailService, EncryptionService, SmsService } from '@/services';
 import { AuthModule } from '../auth/auth.module';
 import { OnboardingModule } from '../onboarding/onboarding.module';
+import { VerificationModule } from '../verification/verification.module';
 import { ContactChangeController } from './controllers/contact-change.controller';
 import { UserController } from './controllers/user.controller';
 import { ChangeRequestRateLimitRepository } from './repositories/change-request-rate-limit.repository';
@@ -14,7 +15,7 @@ import { UserRepository } from './repositories/user.repository';
 import { UserService } from './services/user.service';
 
 @Module({
-  imports: [forwardRef(() => AuthModule), forwardRef(() => OnboardingModule)],
+  imports: [forwardRef(() => AuthModule), forwardRef(() => OnboardingModule), VerificationModule],
   controllers: [UserController, ContactChangeController],
   providers: [
     UserService,

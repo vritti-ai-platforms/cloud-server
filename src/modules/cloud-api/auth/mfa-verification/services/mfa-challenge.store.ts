@@ -9,7 +9,7 @@ export interface MfaChallenge {
   defaultMethod: MfaMethod;
   maskedPhone?: string;
   passkeyChallenge?: string; // For passkey authentication
-  smsOtpHash?: string; // Hashed OTP for SMS verification
+  smsVerificationId?: string; // Unified verification record ID for SMS OTP
   expiresAt: Date;
   ipAddress?: string;
   userAgent?: string;
@@ -83,7 +83,7 @@ export class MfaChallengeStore {
   }
 
   // Updates mutable fields on an existing MFA challenge
-  update(sessionId: string, updates: Partial<Pick<MfaChallenge, 'passkeyChallenge' | 'smsOtpHash'>>): MfaChallenge | undefined {
+  update(sessionId: string, updates: Partial<Pick<MfaChallenge, 'passkeyChallenge' | 'smsVerificationId'>>): MfaChallenge | undefined {
     const challenge = this.get(sessionId);
     if (!challenge) {
       return undefined;

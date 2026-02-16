@@ -3,9 +3,9 @@ import { BadRequestException } from '@vritti/api-sdk';
 import { OnboardingStepValues } from '@/db/schema';
 import { EncryptionService } from '../../../../../services';
 import { UserService } from '../../../user/services/user.service';
+import { EmailVerificationService } from '../../email-verification/services/email-verification.service';
 import { OnboardingStatusResponseDto } from '../dto/entity/onboarding-status-response.dto';
 import { StartOnboardingResponseDto } from '../dto/response/start-onboarding-response.dto';
-import { EmailVerificationService } from './email-verification.service';
 
 @Injectable()
 export class OnboardingService {
@@ -16,6 +16,51 @@ export class OnboardingService {
     private readonly encryptionService: EncryptionService,
     private readonly emailVerificationService: EmailVerificationService,
   ) {}
+
+  // Starts onboarding flow - only EMAIL_VERIFICATION (email/password signup) or SET_PASSWORD (OAuth signup) are valid entry points
+  async startOnboarding(userId: string): Promise<StartOnboardingResponseDto> {
+    const user = await this.userService.findById(userId);
+    console.log('User onboarding step:', user);
+
+    switch (user.onboardingStep) {
+      case OnboardingStepValues.EMAIL_VERIFICATION:
+        if (!user.emailVerified) {
+          await this.emailVerificationService.sendVerificationOtp(user.id, user.email, user.displayName);
+          this.logger.log(`Started onboarding for user ${userId}, step: ${user.onboardingStep}`);
+          return new StartOnboardingResponseDto({
+            success: true,
+            message: 'Verification code sent to your email',
+          });
+        }
+
+        this.logger.log(`Started onboarding for user ${userId}, step: ${user.onboardingStep}`);
+        return new StartOnboardingResponseDto({
+          success: true,
+          message: 'Email already verified',
+        });
+
+      case OnboardingStepValues.SET_PASSWORD:
+        this.logger.log(`Started onboarding for user ${userId}, step: ${user.onboardingStep}`);
+        return new StartOnboardingResponseDto({
+          success: true,
+          message: 'Please set your password',
+        });
+
+      case OnboardingStepValues.COMPLETE:
+        this.logger.log(`Started onboarding for user ${userId}, step: ${user.onboardingStep}`);
+        return new StartOnboardingResponseDto({
+          success: true,
+          message: 'Onboarding already complete',
+        });
+
+      default:
+        // MOBILE_VERIFICATION and TWO_FACTOR_SETUP are unreachable after blocking incomplete account logins
+        throw new BadRequestException({
+          label: 'Invalid Onboarding State',
+          detail: 'This account is in an invalid state. Please sign up again to complete your registration.',
+        });
+    }
+  }
 
   // Fetches the user and maps their profile to an onboarding status response
   async getStatus(userId: string): Promise<OnboardingStatusResponseDto> {
@@ -52,76 +97,5 @@ export class OnboardingService {
     });
 
     this.logger.log(`Password set for OAuth user: ${user.email} (${userId})`);
-  }
-
-  // Determines the current onboarding step and triggers relevant actions (e.g. send OTP)
-  async startOnboarding(userId: string): Promise<StartOnboardingResponseDto> {
-    const user = await this.userService.findById(userId);
-
-    let otpSentTo: 'email' | 'phone' | null = null;
-    let otpDestination: string | undefined;
-    let message: string;
-
-    switch (user.onboardingStep) {
-      case OnboardingStepValues.EMAIL_VERIFICATION:
-        if (!user.emailVerified) {
-          await this.emailVerificationService.sendVerificationOtp(
-            user.id,
-            user.email,
-            user.firstName,
-          );
-          otpSentTo = 'email';
-          otpDestination = this.maskEmail(user.email);
-          message = 'Verification code sent to your email';
-        } else {
-          message = 'Email already verified';
-        }
-        break;
-
-      case OnboardingStepValues.SET_PASSWORD:
-        message = 'Please set your password';
-        break;
-
-      case OnboardingStepValues.MOBILE_VERIFICATION:
-        // TODO: Mobile OTP in Phase 2
-        message = 'Please verify your mobile number';
-        this.logger.debug('Mobile verification not yet implemented');
-        break;
-
-      case OnboardingStepValues.TWO_FACTOR_SETUP:
-        message = 'Please set up two-factor authentication';
-        break;
-
-      case OnboardingStepValues.COMPLETE:
-        message = 'Onboarding already complete';
-        break;
-
-      default:
-        message = 'Please continue with onboarding';
-        break;
-    }
-
-    this.logger.log(`Started onboarding for user ${userId}, step: ${user.onboardingStep}`);
-
-    return new StartOnboardingResponseDto({
-      success: true,
-      message,
-      currentStep: user.onboardingStep,
-      otpSentTo,
-      otpDestination,
-    });
-  }
-
-  private maskEmail(email: string): string {
-    const [localPart, domain] = email.split('@');
-    if (!localPart || !domain) {
-      return email;
-    }
-
-    if (localPart.length <= 2) {
-      return `${localPart[0]}***@${domain}`;
-    }
-
-    return `${localPart[0]}${'*'.repeat(Math.min(localPart.length - 1, 3))}@${domain}`;
   }
 }

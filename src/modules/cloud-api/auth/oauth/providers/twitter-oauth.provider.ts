@@ -6,6 +6,14 @@ import type { IOAuthProvider } from '../interfaces/oauth-provider.interface';
 import type { OAuthTokenExchangePayload, OAuthTokens } from '../interfaces/oauth-tokens.interface';
 import type { OAuthUserProfile } from '../interfaces/oauth-user-profile.interface';
 
+interface TwitterUserInfo {
+  id: string;
+  confirmed_email: string;
+  profile_image_url: string;
+  name: string;
+  username: string;
+}
+
 @Injectable()
 export class TwitterOAuthProvider implements IOAuthProvider {
   private readonly logger = new Logger(TwitterOAuthProvider.name);
@@ -21,6 +29,12 @@ export class TwitterOAuthProvider implements IOAuthProvider {
     this.clientId = this.configService.getOrThrow<string>('X_CLIENT_ID');
     this.clientSecret = this.configService.getOrThrow<string>('X_CLIENT_SECRET');
     this.redirectUri = this.configService.getOrThrow<string>('X_CALLBACK_URL');
+  }
+
+  // Extracts first word from fullName for auto-deriving displayName
+  private extractFirstWord(fullName: string): string {
+    if (!fullName?.trim()) return fullName;
+    return fullName.trim().split(/\s+/)[0];
   }
 
   // Builds the X (Twitter) OAuth 2.0 authorization URL with required PKCE
@@ -90,7 +104,7 @@ export class TwitterOAuthProvider implements IOAuthProvider {
   // Fetches the user's profile from X (Twitter) API v2 using the access token
   async getUserProfile(accessToken: string): Promise<OAuthUserProfile> {
     try {
-      const response = await axios.get(this.USER_INFO_URL, {
+      const response = await axios.get<{ data: TwitterUserInfo }>(this.USER_INFO_URL, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -99,21 +113,19 @@ export class TwitterOAuthProvider implements IOAuthProvider {
         },
       });
 
-      const data = response.data.data;
+      const data: TwitterUserInfo = response.data.data;
 
       this.logger.log(`Retrieved X (Twitter) profile for user: ${data.username}`);
 
-      // Twitter doesn't provide email by default (requires additional permissions)
-      // We'll use username@twitter.com as fallback
-      const email = data.confirmed_email;
+      const fullName = data.name || '';
+      const displayName = this.extractFirstWord(fullName) || '';
 
       return {
         provider: OAuthProviderTypeValues.X,
         providerId: data.id,
-        email,
-        displayName: data.name,
-        firstName: data.name?.split(' ')[0],
-        lastName: data.name?.split(' ').slice(1).join(' '),
+        email: data.confirmed_email || '',
+        fullName,
+        displayName,
         profilePictureUrl: data.profile_image_url,
       };
     } catch (error) {

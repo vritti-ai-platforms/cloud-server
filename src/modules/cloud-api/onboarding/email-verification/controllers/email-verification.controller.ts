@@ -1,0 +1,41 @@
+import { Body, Controller, HttpCode, HttpStatus, Logger, Post } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { Onboarding, UserId } from '@vritti/api-sdk';
+import { ApiResendEmailOtp, ApiVerifyEmail } from '../docs/email-verification.docs';
+import { VerifyEmailDto } from '../dto/request/verify-email.dto';
+import { ResendEmailOtpResponseDto } from '../dto/response/resend-email-otp-response.dto';
+import { VerifyEmailResponseDto } from '../dto/response/verify-email-response.dto';
+import { EmailVerificationService } from '../services/email-verification.service';
+
+@ApiTags('Onboarding - Email Verification')
+@ApiBearerAuth()
+@Controller('onboarding/email-verification')
+export class EmailVerificationController {
+  private readonly logger = new Logger(EmailVerificationController.name);
+
+  constructor(
+    private readonly emailVerificationService: EmailVerificationService,
+  ) {}
+
+  // Validates the email OTP and marks the user's email as verified
+  @Post('verify')
+  @Onboarding()
+  @HttpCode(HttpStatus.OK)
+  @ApiVerifyEmail()
+  async verifyEmail(@UserId() userId: string, @Body() dto: VerifyEmailDto): Promise<VerifyEmailResponseDto> {
+    this.logger.log(`POST /onboarding/email-verification/verify - User: ${userId}`);
+
+    return this.emailVerificationService.verifyEmail(userId, dto);
+  }
+
+  // Invalidates previous OTPs and sends a fresh email verification code
+  @Post('resend')
+  @Onboarding()
+  @HttpCode(HttpStatus.OK)
+  @ApiResendEmailOtp()
+  async resendEmailOtp(@UserId() userId: string): Promise<ResendEmailOtpResponseDto> {
+    this.logger.log(`POST /onboarding/email-verification/resend - User: ${userId}`);
+
+    return this.emailVerificationService.resendOtp(userId);
+  }
+}

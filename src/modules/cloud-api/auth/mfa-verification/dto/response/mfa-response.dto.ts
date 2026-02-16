@@ -15,19 +15,17 @@ class MfaVerificationUserDto {
   })
   email: string;
 
-  @ApiPropertyOptional({
-    description: 'First name of the user',
-    example: 'John',
-    nullable: true,
+  @ApiProperty({
+    description: 'Full name of the user',
+    example: 'John Doe',
   })
-  firstName?: string | null;
+  fullName: string;
 
-  @ApiPropertyOptional({
-    description: 'Last name of the user',
-    example: 'Doe',
-    nullable: true,
+  @ApiProperty({
+    description: 'Display name of the user',
+    example: 'John',
   })
-  lastName?: string | null;
+  displayName: string;
 }
 
 export class MfaChallengeDto {

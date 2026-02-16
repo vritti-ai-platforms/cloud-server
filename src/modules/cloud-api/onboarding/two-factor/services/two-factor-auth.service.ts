@@ -195,7 +195,7 @@ export class TwoFactorAuthService {
     const options = await this.webAuthnService.generateRegistrationOptions(
       userId,
       user.email,
-      `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email,
+      user.fullName || user.email,
       excludeCredentials,
     );
 
