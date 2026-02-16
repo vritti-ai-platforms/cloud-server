@@ -1,6 +1,6 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
-import { type VerificationMethod, VerificationMethodValues } from '@/db/schema/enums';
+import { type FrontendVerificationMethod } from '../../utils/method-mapping.util';
 
 export class InitiateMobileVerificationDto {
   @ApiPropertyOptional({
@@ -28,13 +28,11 @@ export class InitiateMobileVerificationDto {
   @MaxLength(5)
   phoneCountry?: string;
 
-  @ApiPropertyOptional({
-    description: 'Method to use for mobile verification. Defaults to WHATSAPP_QR.',
-    example: 'WHATSAPP_QR',
-    enum: Object.values(VerificationMethodValues),
-    default: VerificationMethodValues.WHATSAPP_QR,
+  @ApiProperty({
+    description: 'Method to use for mobile verification.',
+    example: 'whatsapp',
+    enum: ['whatsapp', 'sms', 'manual'],
   })
-  @IsEnum(Object.values(VerificationMethodValues))
-  @IsOptional()
-  method?: VerificationMethod = VerificationMethodValues.WHATSAPP_QR;
+  @IsEnum(['whatsapp', 'sms', 'manual'])
+  method: FrontendVerificationMethod;
 }

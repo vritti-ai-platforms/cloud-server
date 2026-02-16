@@ -1,4 +1,4 @@
-import { type VerificationMethod } from '@/db/schema/enums';
+import { type VerificationChannel } from '@/db/schema/enums';
 
 export interface SendVerificationResult {
   messageId?: string;
@@ -7,7 +7,7 @@ export interface SendVerificationResult {
 }
 
 export interface VerificationProvider {
-  readonly method: VerificationMethod;
+  readonly channel: VerificationChannel;
 
   sendVerification(phone: string, phoneCountry: string, token: string): Promise<SendVerificationResult>;
 

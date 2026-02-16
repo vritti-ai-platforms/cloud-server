@@ -1,13 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
-import { type VerificationMethod, VerificationMethodValues } from '@/db/schema/enums';
+import { type VerificationChannel, VerificationChannelValues } from '@/db/schema/enums';
 import { type SendVerificationResult, type VerificationProvider } from './verification-provider.interface';
 
 @Injectable()
 export class SMSInboundProvider implements VerificationProvider {
   private readonly logger = new Logger(SMSInboundProvider.name);
-  readonly method: VerificationMethod = VerificationMethodValues.SMS_QR as VerificationMethod;
+  readonly channel: VerificationChannel = VerificationChannelValues.SMS_IN;
   private readonly smsPhoneNumber: string;
   private readonly smsApiKey: string;
   private readonly smsApiSecret: string;

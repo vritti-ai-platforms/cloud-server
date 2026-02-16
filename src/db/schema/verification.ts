@@ -1,9 +1,9 @@
 import { boolean, index, integer, text, timestamp, uuid, varchar } from '@vritti/api-sdk/drizzle-pg-core';
 import { cloudSchema } from './cloud-schema';
-import { twoFactorMethodEnum, verificationChannelEnum, verificationMethodEnum } from './enums';
+import { twoFactorMethodEnum, verificationChannelEnum } from './enums';
 import { users } from './user';
 
-// Unified OTP verification — used for email and SMS verification across all flows
+// Unified verification — handles both OTP (outbound) and QR (inbound) verification flows
 export const verifications = cloudSchema.table(
   'verifications',
   {
@@ -12,8 +12,12 @@ export const verifications = cloudSchema.table(
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
     channel: verificationChannelEnum('channel').notNull(),
-    target: varchar('target', { length: 255 }).notNull(),
-    otp: varchar('otp', { length: 255 }).notNull(),
+    target: varchar('target', { length: 255 }), // Nullable for inbound channels (populated by webhook)
+
+    // Two storage approaches - use one based on channel direction
+    hashedOtp: varchar('hashed_otp', { length: 255 }), // For EMAIL, SMS_OUT (outbound OTP)
+    verificationId: varchar('verification_id', { length: 255 }).unique(), // For SMS_IN, WHATSAPP_IN (inbound QR)
+
     attempts: integer('attempts').notNull().default(0),
     isVerified: boolean('is_verified').notNull().default(false),
     expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
@@ -23,35 +27,7 @@ export const verifications = cloudSchema.table(
   (table) => [
     index('verifications_user_id_idx').on(table.userId),
     index('verifications_user_id_channel_target_idx').on(table.userId, table.channel, table.target),
-  ],
-);
-
-// Mobile verification — tracks QR verification for phone numbers (webhook-driven, not OTP-based)
-export const mobileVerifications = cloudSchema.table(
-  'mobile_verifications',
-  {
-    id: uuid('id').primaryKey().defaultRandom(),
-    userId: uuid('user_id')
-      .notNull()
-      .references(() => users.id, { onDelete: 'cascade' }),
-    // Phone is nullable for QR-based methods where phone comes from webhook
-    phone: varchar('phone', { length: 20 }),
-    phoneCountry: varchar('phone_country', { length: 5 }),
-    method: verificationMethodEnum('method').notNull(),
-    otp: varchar('otp', { length: 255 }),
-    verificationId: uuid('verification_id').references(() => verifications.id, { onDelete: 'set null' }),
-    attempts: integer('attempts').notNull().default(0),
-    isVerified: boolean('is_verified').notNull().default(false),
-    qrCode: text('qr_code'),
-    qrScannedAt: timestamp('qr_scanned_at', { withTimezone: true }),
-    qrVerificationId: varchar('qr_verification_id', { length: 255 }).unique(),
-    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
-    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-    verifiedAt: timestamp('verified_at', { withTimezone: true }),
-  },
-  (table) => [
-    index('mobile_verifications_user_id_phone_idx').on(table.userId, table.phone),
-    index('mobile_verifications_qr_verification_id_idx').on(table.qrVerificationId),
+    index('verifications_verification_id_idx').on(table.verificationId),
   ],
 );
 
@@ -181,8 +157,6 @@ export const changeRequestRateLimits = cloudSchema.table(
 // Type exports
 export type Verification = typeof verifications.$inferSelect;
 export type NewVerification = typeof verifications.$inferInsert;
-export type MobileVerification = typeof mobileVerifications.$inferSelect;
-export type NewMobileVerification = typeof mobileVerifications.$inferInsert;
 export type TwoFactorAuth = typeof twoFactorAuth.$inferSelect;
 export type NewTwoFactorAuth = typeof twoFactorAuth.$inferInsert;
 export type PasswordReset = typeof passwordResets.$inferSelect;

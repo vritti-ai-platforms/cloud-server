@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { BadRequestException } from '@vritti/api-sdk';
-import { type VerificationMethod, VerificationMethodValues } from '@/db/schema/enums';
+import { type VerificationChannel, VerificationChannelValues } from '@/db/schema/enums';
 import { SMSInboundProvider } from './sms-inbound.provider';
 import { SMSOtpProvider } from './sms-otp.provider';
 import { type VerificationProvider } from './verification-provider.interface';
@@ -16,23 +16,23 @@ export class VerificationProviderFactory {
     private readonly smsOtpProvider: SMSOtpProvider,
   ) {}
 
-  // Returns the provider instance corresponding to the given verification method
-  getProvider(method: VerificationMethod): VerificationProvider {
-    switch (method) {
-      case VerificationMethodValues.WHATSAPP_QR:
+  // Returns the provider instance corresponding to the given verification channel
+  getProvider(channel: VerificationChannel): VerificationProvider {
+    switch (channel) {
+      case VerificationChannelValues.WHATSAPP_IN:
         return this.whatsappProvider;
 
-      case VerificationMethodValues.SMS_QR:
+      case VerificationChannelValues.SMS_IN:
         return this.smsInboundProvider;
 
-      case VerificationMethodValues.MANUAL_OTP:
+      case VerificationChannelValues.SMS_OUT:
         return this.smsOtpProvider;
 
       default:
-        this.logger.error(`Unsupported verification method: ${method}`);
+        this.logger.error(`Unsupported verification channel: ${channel}`);
         throw new BadRequestException({
-          label: 'Unsupported Verification Method',
-          detail: `The method '${method}' is not available. Please use a different verification method.`,
+          label: 'Unsupported Verification Channel',
+          detail: `The channel '${channel}' is not available. Please use a different verification channel.`,
         });
     }
   }
@@ -54,10 +54,10 @@ export class VerificationProviderFactory {
     return providers;
   }
 
-  // Checks whether the given verification method has a configured provider
-  isMethodAvailable(method: VerificationMethod): boolean {
+  // Checks whether the given verification channel has a configured provider
+  isChannelAvailable(channel: VerificationChannel): boolean {
     try {
-      const provider = this.getProvider(method);
+      const provider = this.getProvider(channel);
       return provider.isConfigured();
     } catch {
       return false;

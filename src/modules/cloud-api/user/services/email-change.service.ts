@@ -281,7 +281,7 @@ export class EmailChangeService {
 
     // Send OTP to the target email (fire and forget)
     const user = await this.userService.findById(userId);
-    if (newVerification) {
+    if (newVerification && newVerification.target) {
       this.emailService
         .sendVerificationEmail(newVerification.target, result.otp, user.displayName || undefined)
         .catch((error) => {

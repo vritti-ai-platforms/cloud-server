@@ -2085,29 +2085,6 @@
         ]
       }
     },
-    "/cloud-api/onboarding/start": {
-      "post": {
-        "operationId": "OnboardingController_startOnboarding",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "Onboarding process started, returns current step and sends OTP if needed"
-          },
-          "401": {
-            "description": "Unauthorized - Invalid or missing onboarding token"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Start or continue the onboarding process",
-        "tags": [
-          "Onboarding"
-        ]
-      }
-    },
     "/cloud-api/onboarding/status": {
       "get": {
         "operationId": "OnboardingController_getStatus",
@@ -2172,6 +2149,39 @@
         "summary": "Set password for OAuth users",
         "tags": [
           "Onboarding"
+        ]
+      }
+    },
+    "/cloud-api/onboarding/email-verification/send": {
+      "post": {
+        "operationId": "EmailVerificationController_sendEmailOtp",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Verification code sent to your email",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResendEmailOtpResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Email already verified"
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing onboarding token"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Send initial email verification OTP",
+        "tags": [
+          "Onboarding - Email Verification"
         ]
       }
     },
@@ -4408,6 +4418,25 @@
           "message"
         ]
       },
+      "ResendEmailOtpResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates whether the OTP was resent successfully",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "description": "Confirmation message",
+            "example": "OTP sent successfully"
+          }
+        },
+        "required": [
+          "success",
+          "message"
+        ]
+      },
       "VerifyEmailDto": {
         "type": "object",
         "properties": {
@@ -4442,25 +4471,6 @@
           "message"
         ]
       },
-      "ResendEmailOtpResponseDto": {
-        "type": "object",
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "description": "Indicates whether the OTP was resent successfully",
-            "example": true
-          },
-          "message": {
-            "type": "string",
-            "description": "Confirmation message",
-            "example": "OTP sent successfully"
-          }
-        },
-        "required": [
-          "success",
-          "message"
-        ]
-      },
       "InitiateMobileVerificationDto": {
         "type": "object",
         "properties": {
@@ -4480,16 +4490,18 @@
           },
           "method": {
             "type": "string",
-            "description": "Method to use for mobile verification. Defaults to WHATSAPP_QR.",
-            "example": "WHATSAPP_QR",
+            "description": "Method to use for mobile verification.",
+            "example": "whatsapp",
             "enum": [
-              "WHATSAPP_QR",
-              "SMS_QR",
-              "MANUAL_OTP"
-            ],
-            "default": "WHATSAPP_QR"
+              "whatsapp",
+              "sms",
+              "manual"
+            ]
           }
-        }
+        },
+        "required": [
+          "method"
+        ]
       },
       "MobileVerificationStatusResponseDto": {
         "type": "object",
@@ -4502,11 +4514,11 @@
           "method": {
             "type": "string",
             "description": "The verification method being used for mobile verification",
-            "example": "WHATSAPP_QR",
+            "example": "whatsapp",
             "enum": [
-              "WHATSAPP_QR",
-              "SMS_QR",
-              "MANUAL_OTP"
+              "whatsapp",
+              "sms",
+              "manual"
             ]
           },
           "verificationToken": {

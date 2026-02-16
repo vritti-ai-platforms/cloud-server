@@ -158,7 +158,7 @@ export class MfaVerificationService {
     // Create verification record for SMS OTP
     const { verificationId, otp } = await this.verificationService.createVerification(
       challenge.userId,
-      VerificationChannelValues.SMS,
+      VerificationChannelValues.SMS_OUT,
       user.phone,
     );
 

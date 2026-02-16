@@ -44,7 +44,7 @@ export class PhoneChangeService {
     // Create unified verification and get plaintext OTP
     const { verificationId, otp, expiresAt } = await this.verificationService.createVerification(
       userId,
-      VerificationChannelValues.SMS,
+      VerificationChannelValues.SMS_OUT,
       user.phone,
     );
 
@@ -153,7 +153,7 @@ export class PhoneChangeService {
     // Create unified verification and get plaintext OTP
     const { verificationId, otp, expiresAt } = await this.verificationService.createVerification(
       userId,
-      VerificationChannelValues.SMS,
+      VerificationChannelValues.SMS_OUT,
       normalizedNewPhone,
     );
 

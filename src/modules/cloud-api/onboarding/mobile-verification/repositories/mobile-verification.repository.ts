@@ -1,16 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { PrimaryBaseRepository, PrimaryDatabaseService } from '@vritti/api-sdk';
 import { and, eq, lt, ne, sql } from '@vritti/api-sdk/drizzle-orm';
-import { type MobileVerification, mobileVerifications } from '@/db/schema';
+import { type Verification, verifications } from '@/db/schema';
 
 @Injectable()
-export class MobileVerificationRepository extends PrimaryBaseRepository<typeof mobileVerifications> {
+export class MobileVerificationRepository extends PrimaryBaseRepository<typeof verifications> {
   constructor(database: PrimaryDatabaseService) {
-    super(database, mobileVerifications);
+    super(database, verifications);
   }
 
   // Finds the most recent mobile verification record for a user
-  async findLatestByUserId(userId: string): Promise<MobileVerification | undefined> {
+  async findLatestByUserId(userId: string): Promise<Verification | undefined> {
     const results = await this.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
@@ -19,43 +19,42 @@ export class MobileVerificationRepository extends PrimaryBaseRepository<typeof m
     return results[0];
   }
 
-  // Looks up a verification record by its QR/token identifier
-  async findByVerificationId(qrVerificationId: string): Promise<MobileVerification | undefined> {
+  // Looks up a verification record by its verificationId token
+  async findByVerificationId(verificationId: string): Promise<Verification | undefined> {
     return this.model.findFirst({
-      where: { qrVerificationId },
+      where: { verificationId },
     });
   }
 
   // Atomically increments the attempt counter for a verification record
-  async incrementAttempts(id: string): Promise<MobileVerification> {
-    this.logger.debug(`Incrementing attempts for mobile verification: ${id}`);
+  async incrementAttempts(id: string): Promise<Verification> {
+    this.logger.debug(`Incrementing attempts for verification: ${id}`);
     const results = (await this.db
-      .update(mobileVerifications)
+      .update(verifications)
       .set({
-        attempts: sql`${mobileVerifications.attempts} + 1`,
+        attempts: sql`${verifications.attempts} + 1`,
       })
-      .where(eq(mobileVerifications.id, id))
-      .returning()) as MobileVerification[];
+      .where(eq(verifications.id, id))
+      .returning()) as Verification[];
 
     const result = results[0];
     if (!result) {
-      throw new Error(`Failed to increment attempts: mobile verification ${id} not found`);
+      throw new Error(`Failed to increment attempts: verification ${id} not found`);
     }
     return result;
   }
 
   // Marks a verification as verified with the current timestamp
-  async markAsVerified(id: string): Promise<MobileVerification> {
+  async markAsVerified(id: string): Promise<Verification> {
     return this.update(id, {
       isVerified: true,
       verifiedAt: new Date(),
-      qrScannedAt: new Date(),
     });
   }
 
-  // Removes all expired, unverified mobile verification records
+  // Removes all expired, unverified verification records
   async deleteExpired(): Promise<number> {
-    const condition = and(lt(mobileVerifications.expiresAt, new Date()), eq(mobileVerifications.isVerified, false));
+    const condition = and(lt(verifications.expiresAt, new Date()), eq(verifications.isVerified, false));
     if (!condition) {
       return 0;
     }
@@ -63,27 +62,26 @@ export class MobileVerificationRepository extends PrimaryBaseRepository<typeof m
     return result.count;
   }
 
-  // Checks whether the phone number is already verified by a different user
+  // Checks whether the phone number (target) is already verified by a different user
   async isPhoneVerifiedByOtherUser(phone: string, excludeUserId?: string): Promise<boolean> {
-    let condition = and(eq(mobileVerifications.phone, phone), eq(mobileVerifications.isVerified, true));
+    let condition = and(eq(verifications.target, phone), eq(verifications.isVerified, true));
 
     if (excludeUserId) {
-      condition = and(condition, ne(mobileVerifications.userId, excludeUserId));
+      condition = and(condition, ne(verifications.userId, excludeUserId));
     }
 
     const count = await this.db
       .select({ count: sql<number>`count(*)` })
-      .from(mobileVerifications)
+      .from(verifications)
       .where(condition);
 
     return Number(count[0]?.count) > 0;
   }
 
-  // Updates the phone number (and optionally country) on a verification record
-  async updatePhone(id: string, phone: string, phoneCountry?: string): Promise<MobileVerification> {
+  // Updates the phone number (target field) on a verification record
+  async updatePhone(id: string, phone: string): Promise<Verification> {
     return this.update(id, {
-      phone,
-      ...(phoneCountry ? { phoneCountry } : {}),
+      target: phone,
     });
   }
 }

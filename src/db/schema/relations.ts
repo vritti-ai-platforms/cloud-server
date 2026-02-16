@@ -19,7 +19,6 @@ export const relations = defineRelations(schema, (r) => ({
   // User relations
   users: {
     verifications: r.many.verifications(),
-    mobileVerifications: r.many.mobileVerifications(),
     twoFactorAuth: r.many.twoFactorAuth(),
     oauthProviders: r.many.oauthProviders(),
     sessions: r.many.sessions(),
@@ -45,14 +44,6 @@ export const relations = defineRelations(schema, (r) => ({
   verifications: {
     user: r.one.users({
       from: r.verifications.userId,
-      to: r.users.id,
-    }),
-  },
-
-  // Mobile verification relations
-  mobileVerifications: {
-    user: r.one.users({
-      from: r.mobileVerifications.userId,
       to: r.users.id,
     }),
   },

@@ -1,18 +1,19 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { BadRequestException, NotFoundException, extractCountryFromPhone, normalizePhoneNumber } from '@vritti/api-sdk';
-import { type VerificationMethod, VerificationChannelValues, VerificationMethodValues } from '@/db/schema/enums';
-import { type MobileVerification } from '@/db/schema';
+import { BadRequestException, extractCountryFromPhone, NotFoundException, normalizePhoneNumber } from '@vritti/api-sdk';
+import { type Verification } from '@/db/schema';
+import { VerificationChannelValues, type VerificationChannel } from '@/db/schema/enums';
+import { TIME_CONSTANTS } from '../../../../../constants/time-constants';
 import { UserService } from '../../../user/services/user.service';
-import { InitiateMobileVerificationDto } from '../dto/request/initiate-mobile-verification.dto';
-import { MobileVerificationStatusResponseDto } from '../dto/response/mobile-verification-status-response.dto';
-import { VerificationProviderFactory } from '../providers';
-import { VERIFICATION_EVENTS, MobileVerificationEvent } from '../events/verification.events';
-import { MobileVerificationRepository } from '../repositories/mobile-verification.repository';
 import { OtpService } from '../../../verification/services/otp.service';
 import { VerificationService } from '../../../verification/services/verification.service';
-import { TIME_CONSTANTS } from '../../../../../constants/time-constants';
+import { InitiateMobileVerificationDto } from '../dto/request/initiate-mobile-verification.dto';
+import { MobileVerificationStatusResponseDto } from '../dto/response/mobile-verification-status-response.dto';
+import { MobileVerificationEvent, VERIFICATION_EVENTS } from '../events/verification.events';
+import { VerificationProviderFactory } from '../providers';
+import { MobileVerificationRepository } from '../repositories/mobile-verification.repository';
+import { mapToFrontendMethod, mapToInternalChannel } from '../utils/method-mapping.util';
 
 @Injectable()
 export class MobileVerificationService {
@@ -44,9 +45,10 @@ export class MobileVerificationService {
       throw new BadRequestException('Phone number already verified');
     }
 
-    const method = (dto.method || VerificationMethodValues.WHATSAPP_QR) as VerificationMethod;
+    // Map frontend method to internal channel enum
+    const channel = mapToInternalChannel(dto.method);
 
-    if (method === VerificationMethodValues.MANUAL_OTP && !dto.phone) {
+    if (channel === VerificationChannelValues.SMS_OUT && !dto.phone) {
       throw new BadRequestException('Phone number is required for OTP verification');
     }
 
@@ -57,58 +59,39 @@ export class MobileVerificationService {
       }
     }
 
-    const provider = this.verificationProviderFactory.getProvider(method);
-
     const existingVerification = await this.mobileVerificationRepository.findLatestByUserId(userId);
 
     if (existingVerification && !existingVerification.isVerified && existingVerification.expiresAt > new Date()) {
-      this.logger.log(
-        `Reusing existing verification for user ${userId}: ${existingVerification.qrVerificationId}`,
-      );
+      this.logger.log(`Reusing existing verification for user ${userId}: ${existingVerification.verificationId}`);
 
       return this.buildStatusResponse(existingVerification);
     }
 
     const normalizedPhone = dto.phone ? normalizePhoneNumber(dto.phone) : null;
-    let verificationToken: string;
-    let otpToSend: string | undefined;
 
-    // For MANUAL_OTP: create unified verification record (bcrypt-hashed OTP)
-    if (method === VerificationMethodValues.MANUAL_OTP) {
-      if (!normalizedPhone) {
-        throw new BadRequestException('Phone number is required for OTP verification');
-      }
-      const result = await this.verificationService.createVerification(
-        userId,
-        VerificationChannelValues.SMS,
-        normalizedPhone,
-      );
-      verificationToken = result.verificationId;
-      otpToSend = result.otp;
-    } else {
-      // For QR methods: generate QR verification token
-      verificationToken = this.otpService.generateVerificationToken();
-    }
+    // Generate verification token based on channel type
+    const { verificationToken, otpToSend } =
+      channel === VerificationChannelValues.SMS_OUT
+        ? await this.initiateManualOtpVerification(userId, normalizedPhone!)
+        : this.initiateQrVerification();
 
     const verification = await this.mobileVerificationRepository.create({
       userId,
-      phone: normalizedPhone,
-      phoneCountry: dto.phoneCountry || null,
-      method: method,
-      qrVerificationId: verificationToken,
+      channel: channel,
+      target: normalizedPhone,
+      verificationId: verificationToken,
       isVerified: false,
       attempts: 0,
       expiresAt: new Date(Date.now() + this.verificationExpiryMinutes * 60 * 1000),
     });
 
-    this.logger.log(`Created mobile verification for user ${userId} with token ${verificationToken} using method ${method}`);
+    this.logger.log(
+      `Created mobile verification for user ${userId} with token ${verificationToken} using channel ${channel}`,
+    );
 
+    // Send verification message via provider
     if (dto.phone && dto.phoneCountry) {
-      const messageToSend = otpToSend || verificationToken;
-      provider.sendVerification(dto.phone, dto.phoneCountry, messageToSend).catch((error) => {
-        this.logger.error(`Failed to send verification message: ${error.message}`);
-        // Don't throw - user can still verify manually via QR
-      });
+      await this.sendVerificationMessage(channel, dto.phone, dto.phoneCountry, verificationToken, otpToSend);
     }
 
     return this.buildStatusResponse(verification);
@@ -152,12 +135,10 @@ export class MobileVerificationService {
 
     let phoneToUse = normalizedWebhookPhone;
 
-    if (verification.phone) {
-      const normalizedStoredPhone = normalizePhoneNumber(verification.phone);
+    if (verification.target) {
+      const normalizedStoredPhone = normalizePhoneNumber(verification.target);
       if (normalizedWebhookPhone !== normalizedStoredPhone) {
-        this.logger.warn(
-          `Phone number mismatch. Expected: ${normalizedStoredPhone}, Got: ${normalizedWebhookPhone}`,
-        );
+        this.logger.warn(`Phone number mismatch. Expected: ${normalizedStoredPhone}, Got: ${normalizedWebhookPhone}`);
         await this.mobileVerificationRepository.incrementAttempts(verification.id);
 
         this.eventEmitter.emit(
@@ -181,11 +162,13 @@ export class MobileVerificationService {
 
     await this.mobileVerificationRepository.markAsVerified(verification.id);
 
-    const countryCode = verification.phoneCountry || extractCountryFromPhone(phoneToUse);
+    const countryCode = extractCountryFromPhone(phoneToUse);
 
     await this.userService.markPhoneVerifiedAndAdvanceToMfa(verification.userId, phoneToUse, countryCode);
 
-    this.logger.log(`Successfully verified phone ${phoneToUse} (country: ${countryCode}) for user ${verification.userId} - advancing to MFA setup`);
+    this.logger.log(
+      `Successfully verified phone ${phoneToUse} (country: ${countryCode}) for user ${verification.userId} - advancing to MFA setup`,
+    );
 
     this.eventEmitter.emit(
       VERIFICATION_EVENTS.MOBILE_VERIFIED,
@@ -210,8 +193,8 @@ export class MobileVerificationService {
       throw new NotFoundException('No pending verification found. Please initiate verification first.');
     }
 
-    if (verification.method !== VerificationMethodValues.MANUAL_OTP) {
-      this.logger.warn(`Invalid verification method for OTP: ${verification.method}`);
+    if (verification.channel !== VerificationChannelValues.SMS_OUT) {
+      this.logger.warn(`Invalid verification channel for OTP: ${verification.channel}`);
       throw new BadRequestException(
         'This verification does not support OTP entry. Please use the correct verification method.',
       );
@@ -223,23 +206,25 @@ export class MobileVerificationService {
     }
 
     // Verify OTP via unified verification service (handles bcrypt validation, expiry, attempts)
-    if (!verification.qrVerificationId) {
+    if (!verification.verificationId) {
       throw new BadRequestException('Verification token not found');
     }
 
-    await this.verificationService.verifyOtp(verification.qrVerificationId, userId, otp);
+    await this.verificationService.verifyOtp(verification.verificationId, userId, otp);
 
     await this.mobileVerificationRepository.markAsVerified(verification.id);
 
-    if (!verification.phone) {
+    if (!verification.target) {
       throw new BadRequestException('Phone number is required for OTP verification');
     }
 
-    const countryCode = verification.phoneCountry || extractCountryFromPhone(verification.phone);
+    const countryCode = extractCountryFromPhone(verification.target);
 
-    await this.userService.markPhoneVerifiedAndAdvanceToMfa(verification.userId, verification.phone, countryCode);
+    await this.userService.markPhoneVerifiedAndAdvanceToMfa(verification.userId, verification.target, countryCode);
 
-    this.logger.log(`Successfully verified phone ${verification.phone} (country: ${countryCode}) for user ${verification.userId} via OTP - advancing to MFA setup`);
+    this.logger.log(
+      `Successfully verified phone ${verification.target} (country: ${countryCode}) for user ${verification.userId} via OTP - advancing to MFA setup`,
+    );
 
     return true;
   }
@@ -278,26 +263,26 @@ export class MobileVerificationService {
     return attempts >= this.maxAttempts;
   }
 
-  private buildStatusResponse(verification: MobileVerification): MobileVerificationStatusResponseDto {
+  private buildStatusResponse(verification: Verification): MobileVerificationStatusResponseDto {
     const isExpired = verification.expiresAt < new Date();
 
     let instructions: string | undefined;
-    if (!verification.isVerified && !isExpired && verification.qrVerificationId) {
+    if (!verification.isVerified && !isExpired && verification.verificationId) {
       try {
-        const provider = this.verificationProviderFactory.getProvider(verification.method as VerificationMethod);
-        instructions = provider.getInstructions(verification.qrVerificationId, verification.phone || undefined);
+        const provider = this.verificationProviderFactory.getProvider(verification.channel as VerificationChannel);
+        instructions = provider.getInstructions(verification.verificationId, verification.target || undefined);
       } catch {
-        instructions = `Use the verification code "${verification.qrVerificationId}" to verify your phone number.`;
+        instructions = `Use the verification code "${verification.verificationId}" to verify your phone number.`;
       }
     }
 
     return {
       verificationId: verification.id,
-      method: verification.method as VerificationMethod,
-      verificationToken: verification.qrVerificationId || undefined,
+      method: mapToFrontendMethod(verification.channel as VerificationChannel),
+      verificationToken: verification.verificationId || undefined,
       isVerified: verification.isVerified,
-      phone: verification.phone,
-      phoneCountry: verification.phoneCountry,
+      phone: verification.target,
+      phoneCountry: verification.target ? extractCountryFromPhone(verification.target) : undefined,
       expiresAt: verification.expiresAt,
       message: verification.isVerified
         ? 'Phone number verified successfully'
@@ -307,5 +292,49 @@ export class MobileVerificationService {
       instructions: verification.isVerified ? undefined : instructions,
       whatsappNumber: this.whatsappBusinessNumber || undefined,
     };
+  }
+
+  // Creates a unified verification record with bcrypt-hashed OTP for manual SMS verification
+  private async initiateManualOtpVerification(
+    userId: string,
+    normalizedPhone: string,
+  ): Promise<{ verificationToken: string; otpToSend: string }> {
+    const result = await this.verificationService.createVerification(
+      userId,
+      VerificationChannelValues.SMS_OUT,
+      normalizedPhone,
+    );
+
+    return {
+      verificationToken: result.verificationId,
+      otpToSend: result.otp,
+    };
+  }
+
+  // Generates a QR verification token for WhatsApp or SMS QR-based verification
+  private initiateQrVerification(): { verificationToken: string; otpToSend: undefined } {
+    const verificationToken = this.otpService.generateVerificationToken();
+
+    return {
+      verificationToken,
+      otpToSend: undefined,
+    };
+  }
+
+  // Sends verification message via the appropriate provider (WhatsApp, SMS, or manual OTP)
+  private async sendVerificationMessage(
+    channel: VerificationChannel,
+    phone: string,
+    phoneCountry: string,
+    verificationToken: string,
+    otpToSend: string | undefined,
+  ): Promise<void> {
+    const provider = this.verificationProviderFactory.getProvider(channel);
+    const messageToSend = otpToSend || verificationToken;
+
+    provider.sendVerification(phone, phoneCountry, messageToSend).catch((error) => {
+      this.logger.error(`Failed to send verification message: ${error.message}`);
+      // Don't throw - user can still verify manually via QR
+    });
   }
 }

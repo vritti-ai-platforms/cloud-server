@@ -33,7 +33,7 @@ export class VerificationService {
       userId,
       channel,
       target,
-      otp: hashedOtp,
+      hashedOtp: hashedOtp,
       expiresAt,
     });
 
@@ -58,7 +58,7 @@ export class VerificationService {
 
     this.otpService.validateOtpAttempt(verification);
 
-    const isValid = await this.otpService.verifyOtp(otp, verification.otp);
+    const isValid = await this.otpService.verifyOtp(otp, verification.hashedOtp!);
 
     if (!isValid) {
       await this.verificationRepo.incrementAttempts(verificationId);
@@ -89,7 +89,7 @@ export class VerificationService {
 
     this.otpService.validateOtpAttempt(verification);
 
-    const isValid = await this.otpService.verifyOtp(otp, verification.otp);
+    const isValid = await this.otpService.verifyOtp(otp, verification.hashedOtp!);
 
     if (!isValid) {
       await this.verificationRepo.incrementAttempts(verification.id);
@@ -120,6 +120,10 @@ export class VerificationService {
 
     await this.verificationRepo.delete(verificationId);
 
+    if (!existing.target) {
+      throw new BadRequestException('Cannot resend verification without a target.');
+    }
+
     return this.createVerification(userId, existing.channel, existing.target);
   }
 
@@ -138,6 +142,10 @@ export class VerificationService {
     }
 
     await this.verificationRepo.delete(existing.id);
+
+    if (!existing.target) {
+      throw new BadRequestException('Cannot resend verification without a target.');
+    }
 
     return this.createVerification(userId, existing.channel, existing.target);
   }
