@@ -19,21 +19,34 @@ export class EmailVerificationService {
   ) {}
 
   // Creates a verification record and sends the OTP email
-  async sendVerificationOtp(userId: string, email: string, displayName: string): Promise<void> {
+  async sendVerificationOtp(userId: string): Promise<ResendEmailOtpResponseDto> {
+    const userResponse = await this.userService.findById(userId);
+
+    if (userResponse.emailVerified) {
+      throw new BadRequestException(
+        'Your email has already been verified. You can proceed to the next step.',
+      );
+    }
+
     const { otp } = await this.verificationService.createVerification(
       userId,
       VerificationChannelValues.EMAIL,
-      email,
+      userResponse.email,
     );
 
     this.emailService
-      .sendVerificationEmail(email, otp, displayName)
+      .sendVerificationEmail(userResponse.email, otp, userResponse.displayName)
       .then(() => {
-        this.logger.log(`Sent email verification OTP to ${email} for user ${userId}`);
+        this.logger.log(`Sent email verification OTP to ${userResponse.email} for user ${userId}`);
       })
       .catch((error) => {
-        this.logger.error(`Failed to send verification email to ${email}: ${error.message}`);
+        this.logger.error(`Failed to send verification email to ${userResponse.email}: ${error.message}`);
       });
+
+    return {
+      success: true,
+      message: 'Verification code sent to your email',
+    };
   }
 
   // Validates the email OTP and marks the user's email as verified

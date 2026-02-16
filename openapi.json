@@ -2152,17 +2152,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "example": true
-                    },
-                    "message": {
-                      "type": "string",
-                      "example": "Password set successfully"
-                    }
-                  }
+                  "$ref": "#/components/schemas/StartOnboardingResponseDto"
                 }
               }
             }
@@ -4397,6 +4387,25 @@
         },
         "required": [
           "password"
+        ]
+      },
+      "StartOnboardingResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates whether the onboarding start request was successful",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable message describing the result of the operation",
+            "example": "Onboarding started successfully. OTP sent to your email."
+          }
+        },
+        "required": [
+          "success",
+          "message"
         ]
       },
       "VerifyEmailDto": {

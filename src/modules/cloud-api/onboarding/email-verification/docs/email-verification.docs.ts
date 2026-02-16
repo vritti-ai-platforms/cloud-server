@@ -4,6 +4,19 @@ import { VerifyEmailDto } from '../dto/request/verify-email.dto';
 import { ResendEmailOtpResponseDto } from '../dto/response/resend-email-otp-response.dto';
 import { VerifyEmailResponseDto } from '../dto/response/verify-email-response.dto';
 
+export function ApiSendEmailOtp() {
+  return applyDecorators(
+    ApiOperation({ summary: 'Send initial email verification OTP' }),
+    ApiResponse({
+      status: 200,
+      description: 'Verification code sent to your email',
+      type: ResendEmailOtpResponseDto,
+    }),
+    ApiResponse({ status: 400, description: 'Email already verified' }),
+    ApiResponse({ status: 401, description: 'Unauthorized - Invalid or missing onboarding token' }),
+  );
+}
+
 export function ApiVerifyEmail() {
   return applyDecorators(
     ApiOperation({ summary: 'Verify email address using OTP' }),

@@ -1,6 +1,7 @@
 import { applyDecorators } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { SetPasswordDto } from '../dto/request/set-password.dto';
+import { StartOnboardingResponseDto } from '../dto/response/start-onboarding-response.dto';
 
 export function ApiGetStatus() {
   return applyDecorators(
@@ -13,17 +14,6 @@ export function ApiGetStatus() {
   );
 }
 
-export function ApiStartOnboarding() {
-  return applyDecorators(
-    ApiOperation({ summary: 'Start or continue the onboarding process' }),
-    ApiResponse({
-      status: 200,
-      description: 'Onboarding process started, returns current step and sends OTP if needed',
-    }),
-    ApiResponse({ status: 401, description: 'Unauthorized - Invalid or missing onboarding token' }),
-  );
-}
-
 export function ApiSetPassword() {
   return applyDecorators(
     ApiOperation({ summary: 'Set password for OAuth users' }),
@@ -31,13 +21,7 @@ export function ApiSetPassword() {
     ApiResponse({
       status: 200,
       description: 'Password set successfully',
-      schema: {
-        type: 'object',
-        properties: {
-          success: { type: 'boolean', example: true },
-          message: { type: 'string', example: 'Password set successfully' },
-        },
-      },
+      type: StartOnboardingResponseDto,
     }),
     ApiResponse({ status: 400, description: 'Invalid password format or validation failed' }),
     ApiResponse({ status: 401, description: 'Unauthorized - Invalid or missing onboarding token' }),
