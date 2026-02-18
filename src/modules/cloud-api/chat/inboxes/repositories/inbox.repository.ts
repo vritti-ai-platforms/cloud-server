@@ -45,11 +45,7 @@ export class InboxRepository extends PrimaryBaseRepository<typeof inboxes> {
     await this.update(id, { channelConfig });
   }
 
-  /**
-   * Finds an inbox by tenant ID and Instagram user ID stored in channelConfig.
-   * Fetches all Instagram inboxes for the tenant and filters in-memory
-   * since channelConfig is a JSONB column.
-   */
+  // Finds an inbox by tenant ID and Instagram user ID in channelConfig (JSONB in-memory filter)
   async findByTenantAndInstagramId(
     tenantId: string,
     instagramUserId: string,
@@ -67,12 +63,7 @@ export class InboxRepository extends PrimaryBaseRepository<typeof inboxes> {
     });
   }
 
-  /**
-   * Finds an inbox by Instagram user ID across ALL tenants.
-   * Used by the generic webhook endpoint (no inboxId in URL) to route
-   * incoming Instagram messages to the correct inbox based on the
-   * recipient ID in the webhook payload.
-   */
+  // Finds an inbox by Instagram user ID across all tenants (for generic webhook routing)
   async findByInstagramUserId(instagramUserId: string): Promise<Inbox | undefined> {
     const instagramInboxes = await this.model.findMany({
       where: {
@@ -83,6 +74,20 @@ export class InboxRepository extends PrimaryBaseRepository<typeof inboxes> {
     return instagramInboxes.find((inbox) => {
       const config = inbox.channelConfig as Record<string, unknown> | null;
       return config?.instagramUserId === instagramUserId || config?.instagramId === instagramUserId;
+    });
+  }
+
+  // Finds an inbox by WhatsApp phone number ID across ALL tenants
+  async findByWhatsAppPhoneNumberId(phoneNumberId: string): Promise<Inbox | undefined> {
+    const whatsappInboxes = await this.model.findMany({
+      where: {
+        channelType: 'WHATSAPP' as ChannelType,
+      },
+    });
+
+    return whatsappInboxes.find((inbox) => {
+      const config = inbox.channelConfig as Record<string, unknown> | null;
+      return config?.phoneNumberId === phoneNumberId;
     });
   }
 }

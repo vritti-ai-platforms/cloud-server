@@ -21,6 +21,21 @@ export interface ParsedIncomingMessage {
 }
 
 /**
+ * Unified representation of a message delivery status update.
+ * Used by WhatsApp to report sent/delivered/read/failed statuses.
+ */
+export interface ParsedStatusUpdate {
+  // WhatsApp message ID (stored as externalMessageId in contentAttributes)
+  externalMessageId: string;
+  // Mapped status from the channel
+  status: 'SENT' | 'DELIVERED' | 'READ' | 'FAILED';
+  // Timestamp of the status update
+  timestamp: Date;
+  // Error details if status is FAILED
+  errorMessage?: string;
+}
+
+/**
  * Contract that every channel adapter must implement.
  * Each adapter is responsible for parsing the raw webhook payload
  * from its platform into the unified ParsedIncomingMessage format.

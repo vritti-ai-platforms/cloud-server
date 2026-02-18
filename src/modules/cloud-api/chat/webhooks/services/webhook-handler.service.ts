@@ -7,7 +7,7 @@ import { ContactInboxRepository } from '../../contacts/repositories/contact-inbo
 import { ConversationRepository } from '../../conversations/repositories/conversation.repository';
 import { MessageRepository } from '../../messages/repositories/message.repository';
 import { MessageResponseDto } from '../../messages/dto/entity/message-response.dto';
-import type { ParsedIncomingMessage } from './channel-adapter.interface';
+import type { ParsedIncomingMessage, ParsedStatusUpdate } from './channel-adapter.interface';
 
 // ============================================================================
 // Instagram Channel Config
@@ -30,17 +30,7 @@ export class WebhookHandlerService {
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
-  /**
-   * Main handler: processes a parsed incoming message for an inbox.
-   *
-   * Flow:
-   * 1. Find inbox (validates it exists and retrieves tenantId)
-   * 2. Find or create ContactInbox + Contact
-   * 3. Find existing OPEN conversation or create a new one
-   * 4. Create the message record
-   * 5. Update conversation denormalized fields
-   * 6. Emit SSE events for real-time UI updates
-   */
+  // Processes a parsed incoming message: resolves contact/conversation, creates message, emits events
   async handleIncomingMessage(inboxId: string, parsed: ParsedIncomingMessage): Promise<void> {
     // 1. Find inbox
     const inbox = await this.inboxRepository.findById(inboxId);
@@ -125,10 +115,32 @@ export class WebhookHandlerService {
     );
   }
 
-  /**
-   * Find an existing ContactInbox by the unique (inboxId, sourceId) pair,
-   * or create a new Contact + ContactInbox if none exists.
-   */
+  // Handles delivery/read status updates from WhatsApp Cloud API
+  async handleStatusUpdate(statusUpdate: ParsedStatusUpdate): Promise<void> {
+    const message = await this.messageRepository.findByExternalMessageId(statusUpdate.externalMessageId);
+
+    if (!message) {
+      this.logger.debug(`No message found for external ID: ${statusUpdate.externalMessageId}`);
+      return;
+    }
+
+    // Only update if the new status is a progression (SENT → DELIVERED → READ)
+    const statusOrder = { SENDING: 0, SENT: 1, DELIVERED: 2, READ: 3, FAILED: 4 };
+    const currentOrder = statusOrder[message.status as keyof typeof statusOrder] ?? 0;
+    const newOrder = statusOrder[statusUpdate.status] ?? 0;
+
+    // FAILED always overrides; otherwise only advance forward
+    if (statusUpdate.status !== 'FAILED' && newOrder <= currentOrder) {
+      return;
+    }
+
+    await this.messageRepository.updateStatus(message.id, statusUpdate.status);
+    this.logger.log(
+      `Updated message ${message.id} status to ${statusUpdate.status} (external: ${statusUpdate.externalMessageId})`,
+    );
+  }
+
+  // Finds an existing ContactInbox by (inboxId, sourceId) or creates a new Contact + ContactInbox
   private async findOrCreateContactInbox(
     tenantId: string,
     inboxId: string,
@@ -189,11 +201,7 @@ export class WebhookHandlerService {
     return { contactInbox, contact };
   }
 
-  /**
-   * Resolves the Instagram sender's display name and username by calling
-   * the Instagram Graph API. Instagram webhooks only include the sender's
-   * numeric ID — the profile must be fetched separately.
-   */
+  // Resolves the Instagram sender's display name and username via the Graph API
   private async resolveInstagramSenderName(
     senderId: string,
     channelConfig: InstagramChannelConfig,
@@ -230,10 +238,7 @@ export class WebhookHandlerService {
     }
   }
 
-  /**
-   * Find an existing OPEN conversation for this contactInbox,
-   * or create a new conversation if none exists.
-   */
+  // Finds an existing OPEN conversation for this contactInbox or creates a new one
   private async findOrCreateConversation(
     tenantId: string,
     inboxId: string,

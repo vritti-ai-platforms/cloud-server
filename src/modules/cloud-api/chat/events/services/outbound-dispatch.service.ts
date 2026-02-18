@@ -18,6 +18,33 @@ interface TelegramSendMessageResponse {
 }
 
 // ============================================================================
+// WhatsApp API Types
+// ============================================================================
+
+interface WhatsAppChannelConfig {
+  accessToken: string;
+  phoneNumberId: string;
+  businessAccountId: string;
+  verifyToken?: string;
+}
+
+interface WhatsAppSendMessageResponse {
+  messaging_product: string;
+  contacts: { input: string; wa_id: string }[];
+  messages: { id: string }[];
+}
+
+interface WhatsAppErrorResponse {
+  error: {
+    message: string;
+    type: string;
+    code: number;
+    error_subcode?: number;
+    fbtrace_id?: string;
+  };
+}
+
+// ============================================================================
 // Instagram API Types
 // ============================================================================
 
@@ -64,10 +91,7 @@ export class OutboundDispatchService {
   // Event Handler
   // ===========================================================================
 
-  /**
-   * Listens for new messages and dispatches agent replies to the external channel.
-   * Only processes outbound messages (sent by agents, not contacts).
-   */
+  // Dispatches agent replies to the external channel (skips contact messages)
   @OnEvent(CHAT_EVENTS.NEW_MESSAGE)
   async handleOutboundMessage(payload: NewMessageEvent): Promise<void> {
     try {
@@ -112,7 +136,7 @@ export class OutboundDispatchService {
           break;
 
         case ChannelTypeValues.WHATSAPP:
-          this.logger.log(`Outbound WhatsApp delivery not yet implemented for conversation ${conversationId}`);
+          await this.dispatchWhatsApp(message.id, message.content, inbox.channelConfig, contactInbox.sourceId);
           break;
 
         case ChannelTypeValues.INSTAGRAM:
@@ -135,10 +159,7 @@ export class OutboundDispatchService {
   // Channel Dispatchers
   // ===========================================================================
 
-  /**
-   * Extracts the bot token from an inbox's channelConfig.
-   * Returns null if the config is invalid or missing the botToken field.
-   */
+  // Extracts the bot token from an inbox's channelConfig
   private extractBotToken(channelConfig: unknown): string | null {
     if (
       typeof channelConfig === 'object' &&
@@ -151,7 +172,7 @@ export class OutboundDispatchService {
     return null;
   }
 
-  /** Sends a text message to a Telegram chat via the Bot API and updates the message status */
+  // Sends a text message to a Telegram chat via the Bot API and updates the message status
   private async dispatchTelegram(
     messageId: string,
     content: string,
@@ -210,11 +231,7 @@ export class OutboundDispatchService {
     }
   }
 
-  /**
-   * Extracts the Instagram channel config from an inbox's channelConfig.
-   * Supports both legacy (pageId) and OAuth (instagramUserId) configurations.
-   * Returns null if the config is invalid or missing required fields.
-   */
+  // Extracts Instagram channel config from an inbox's channelConfig (supports legacy and OAuth)
   private extractInstagramConfig(channelConfig: unknown): InstagramChannelConfig | null {
     if (typeof channelConfig !== 'object' || channelConfig === null) {
       return null;
@@ -245,7 +262,7 @@ export class OutboundDispatchService {
     };
   }
 
-  /** Sends a text message via the Instagram Graph API and updates the message status */
+  // Sends a text message via the Instagram Graph API and updates the message status
   private async dispatchInstagram(
     messageId: string,
     content: string,
@@ -322,15 +339,102 @@ export class OutboundDispatchService {
   }
 
   // ===========================================================================
+  // WhatsApp Dispatcher
+  // ===========================================================================
+
+  // Extracts WhatsApp channel config from an inbox's channelConfig
+  private extractWhatsAppConfig(channelConfig: unknown): WhatsAppChannelConfig | null {
+    if (typeof channelConfig !== 'object' || channelConfig === null) {
+      return null;
+    }
+
+    const raw = channelConfig as Record<string, unknown>;
+
+    if (typeof raw.accessToken !== 'string' || typeof raw.phoneNumberId !== 'string') {
+      return null;
+    }
+
+    return {
+      accessToken: raw.accessToken as string,
+      phoneNumberId: raw.phoneNumberId as string,
+      businessAccountId: (raw.businessAccountId as string) || '',
+      verifyToken: typeof raw.verifyToken === 'string' ? (raw.verifyToken as string) : undefined,
+    };
+  }
+
+  // Sends a text message via the WhatsApp Cloud API and updates the message status
+  private async dispatchWhatsApp(
+    messageId: string,
+    content: string,
+    channelConfig: unknown,
+    recipientPhone: string,
+  ): Promise<void> {
+    const config = this.extractWhatsAppConfig(channelConfig);
+
+    if (!config) {
+      this.logger.error(`Missing or invalid WhatsApp config in channelConfig for message ${messageId}`);
+      await this.messageRepository.updateStatus(messageId, 'FAILED');
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `https://graph.facebook.com/v22.0/${config.phoneNumberId}/messages`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${config.accessToken}`,
+          },
+          body: JSON.stringify({
+            messaging_product: 'whatsapp',
+            recipient_type: 'individual',
+            to: recipientPhone,
+            type: 'text',
+            text: { body: content },
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        const errorData = (await response.json()) as WhatsAppErrorResponse;
+        this.logger.error(
+          `WhatsApp API returned HTTP ${response.status} for message ${messageId}: ${errorData.error?.message}`,
+        );
+        await this.messageRepository.updateStatus(messageId, 'FAILED');
+        return;
+      }
+
+      const data = (await response.json()) as WhatsAppSendMessageResponse;
+      const externalMessageId = data.messages?.[0]?.id;
+
+      await this.messageRepository.updateStatus(messageId, 'SENT', {
+        externalMessageId,
+      });
+
+      this.logger.log(`WhatsApp message sent for message ${messageId} (wa_id: ${externalMessageId})`);
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error('Unknown error');
+      this.logger.error(
+        `WhatsApp sendMessage request failed for message ${messageId}: ${err.message}`,
+        err.stack,
+      );
+
+      try {
+        await this.messageRepository.updateStatus(messageId, 'FAILED');
+      } catch {
+        this.logger.error(`Failed to update message ${messageId} status to FAILED`);
+      }
+    }
+  }
+
+  // ===========================================================================
   // Instagram Token Refresh
   // ===========================================================================
 
   private static readonly TOKEN_REFRESH_THRESHOLD_MS = 10 * 24 * 60 * 60 * 1000; // 10 days
 
-  /**
-   * Checks if the Instagram token is within 10 days of expiry and refreshes it.
-   * Returns the current or refreshed access token.
-   */
+  // Refreshes the Instagram token if it expires within 10 days, returns current or refreshed token
   private async maybeRefreshInstagramToken(
     inboxId: string,
     config: InstagramChannelConfig,

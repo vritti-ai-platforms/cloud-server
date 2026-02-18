@@ -68,11 +68,13 @@ export class InboxService {
     };
   }
 
-  // Creates a WhatsApp inbox with full business account configuration
+  // Creates a WhatsApp inbox after validating the access token and phone number ID
   async createWhatsAppInbox(
     tenantId: string,
     dto: CreateWhatsAppInboxDto,
   ): Promise<{ inbox: InboxResponseDto; message: string }> {
+    const phoneInfo = await this.fetchWhatsAppPhoneInfo(dto.accessToken, dto.phoneNumberId);
+
     const inbox = await this.inboxRepository.create({
       tenantId,
       name: dto.name,
@@ -83,6 +85,8 @@ export class InboxService {
         phoneNumberId: dto.phoneNumberId,
         businessAccountId: dto.businessAccountId,
         verifyToken: dto.verifyToken,
+        displayPhoneNumber: phoneInfo.displayPhoneNumber,
+        verifiedName: phoneInfo.verifiedName,
       },
     });
 
@@ -209,6 +213,46 @@ export class InboxService {
       }
     } catch (error) {
       this.logger.warn(`Failed to delete Telegram webhook: ${error.message}`);
+    }
+  }
+
+  // Calls the WhatsApp Cloud API to validate the access token and phone number ID
+  private async fetchWhatsAppPhoneInfo(
+    accessToken: string,
+    phoneNumberId: string,
+  ): Promise<{ displayPhoneNumber: string; verifiedName: string }> {
+    try {
+      const response = await fetch(
+        `https://graph.facebook.com/v22.0/${phoneNumberId}?fields=display_phone_number,verified_name,quality_rating`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        },
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        const errorMsg = errorData?.error?.message || `HTTP ${response.status}`;
+        throw new BadRequestException({
+          label: 'Invalid WhatsApp Configuration',
+          detail: `Could not validate the phone number: ${errorMsg}`,
+          errors: [{ field: 'phoneNumberId', message: 'Invalid phone number ID' }],
+        });
+      }
+
+      const data = await response.json();
+
+      return {
+        displayPhoneNumber: data.display_phone_number || '',
+        verifiedName: data.verified_name || '',
+      };
+    } catch (error) {
+      if (error instanceof BadRequestException) throw error;
+
+      throw new BadRequestException({
+        label: 'Connection Failed',
+        detail: 'Could not connect to the WhatsApp Cloud API. Please verify your access token and try again.',
+        errors: [{ field: 'accessToken', message: 'Invalid access token' }],
+      });
     }
   }
 }

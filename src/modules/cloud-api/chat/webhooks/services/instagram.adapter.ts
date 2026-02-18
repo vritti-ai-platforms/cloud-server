@@ -3,15 +3,7 @@ import type { ChannelAdapter, ParsedIncomingMessage } from './channel-adapter.in
 
 @Injectable()
 export class InstagramAdapter implements ChannelAdapter {
-  /**
-   * Parses an Instagram Messaging webhook payload into a unified message.
-   * Instagram uses the same Meta webhook infrastructure but with a different
-   * payload structure (messaging[] instead of changes[]).
-   *
-   * Returns null if the payload does not contain a processable message.
-   *
-   * @see https://developers.facebook.com/docs/messenger-platform/instagram/features/webhook
-   */
+  // Parses an Instagram Messaging webhook payload into a unified message
   parseIncomingMessage(payload: any): ParsedIncomingMessage | null {
     const entry = payload?.entry?.[0];
     const messaging = entry?.messaging?.[0];
@@ -54,23 +46,12 @@ export class InstagramAdapter implements ChannelAdapter {
     }
   }
 
-  /**
-   * Extracts the recipient Instagram ID from the webhook payload.
-   * This is the Instagram account that received the message — used to
-   * look up the correct inbox when using the generic webhook endpoint.
-   *
-   * The `entry[].id` field contains the Instagram user ID of the recipient.
-   */
+  // Extracts the recipient Instagram ID from the webhook payload for inbox routing
   extractRecipientId(payload: any): string | null {
     return payload?.entry?.[0]?.id?.toString() || null;
   }
 
-  /**
-   * Verify the webhook subscription challenge from Meta.
-   * Instagram uses the same verification flow as WhatsApp.
-   *
-   * @returns The challenge string if verification succeeds, null otherwise
-   */
+  // Verifies the webhook subscription challenge from Meta
   verifyWebhook(
     query: { 'hub.mode'?: string; 'hub.verify_token'?: string; 'hub.challenge'?: string },
     expectedToken: string,

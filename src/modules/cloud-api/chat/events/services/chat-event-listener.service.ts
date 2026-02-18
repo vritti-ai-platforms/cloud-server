@@ -23,6 +23,7 @@ export class ChatEventListenerService {
   // Event Handlers
   // ===========================================================================
 
+  // Forwards new message events to the WebSocket tenant room
   @OnEvent(CHAT_EVENTS.NEW_MESSAGE)
   handleNewMessage(payload: NewMessageEvent): void {
     this.logger.log(
@@ -32,6 +33,7 @@ export class ChatEventListenerService {
     this.chatGateway.sendToTenant(payload.tenantId, WS_EVENTS.MESSAGE_CREATED, payload);
   }
 
+  // Forwards new conversation events to the WebSocket tenant room
   @OnEvent(CHAT_EVENTS.NEW_CONVERSATION)
   handleNewConversation(payload: NewConversationEvent): void {
     this.logger.log(
@@ -41,6 +43,7 @@ export class ChatEventListenerService {
     this.chatGateway.sendToTenant(payload.tenantId, WS_EVENTS.CONVERSATION_CREATED, payload);
   }
 
+  // Forwards conversation update events to the WebSocket tenant room
   @OnEvent(CHAT_EVENTS.CONVERSATION_UPDATED)
   handleConversationUpdated(payload: ConversationUpdatedEvent): void {
     this.logger.log(

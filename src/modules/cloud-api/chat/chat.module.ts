@@ -1,12 +1,15 @@
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
+import { TenantContextService } from '@vritti/api-sdk';
 import { jwtConfigFactory } from '../../../config/jwt.config';
 import { InboxRepository } from './inboxes/repositories/inbox.repository';
 import { InboxController } from './inboxes/controllers/inbox.controller';
 import { InboxService } from './inboxes/services/inbox.service';
 import { InstagramOAuthController } from './inboxes/controllers/instagram-oauth.controller';
+import { WhatsAppEmbeddedSignupController } from './inboxes/controllers/whatsapp-embedded-signup.controller';
 import { InstagramOAuthService } from './inboxes/services/instagram-oauth.service';
+import { WhatsAppEmbeddedSignupService } from './inboxes/services/whatsapp-embedded-signup.service';
 import { ConversationRepository } from './conversations/repositories/conversation.repository';
 import { ConversationController } from './conversations/controllers/conversation.controller';
 import { ConversationService } from './conversations/services/conversation.service';
@@ -42,6 +45,7 @@ const repositories = [
   ],
   controllers: [
     InstagramOAuthController,
+    WhatsAppEmbeddedSignupController,
     InboxController,
     ConversationController,
     MessageController,
@@ -49,9 +53,11 @@ const repositories = [
     CannedResponseController,
   ],
   providers: [
+    TenantContextService,
     ...repositories,
     InboxService,
     InstagramOAuthService,
+    WhatsAppEmbeddedSignupService,
     ConversationService,
     MessageService,
     ContactService,

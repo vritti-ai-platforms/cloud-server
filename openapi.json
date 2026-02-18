@@ -2897,13 +2897,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "url": {
-                      "type": "string",
-                      "example": "https://api.instagram.com/oauth/authorize?client_id=...&state=..."
-                    }
-                  }
+                  "$ref": "#/components/schemas/OAuthUrlResponseDto"
                 }
               }
             }
@@ -2950,7 +2944,7 @@
             "name": "error",
             "required": false,
             "in": "query",
-            "description": "Error code if the user denied authorization",
+            "description": "Error code if user denied authorization",
             "schema": {
               "type": "string"
             }
@@ -2971,6 +2965,81 @@
           }
         },
         "summary": "Handle Instagram OAuth callback",
+        "tags": [
+          "Inboxes"
+        ]
+      }
+    },
+    "/cloud-api/inboxes/whatsapp/config": {
+      "get": {
+        "description": "Returns the Facebook App ID and Config ID needed to initialize the Facebook JS SDK and launch the WhatsApp Embedded Signup popup on the frontend.",
+        "operationId": "WhatsAppEmbeddedSignupController_getConfig",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "WhatsApp configuration retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WhatsAppConfigResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get WhatsApp Embedded Signup configuration",
+        "tags": [
+          "Inboxes"
+        ]
+      }
+    },
+    "/cloud-api/inboxes/whatsapp/embedded-signup": {
+      "post": {
+        "description": "Processes the result of the WhatsApp Embedded Signup popup. Exchanges the authorization code for an access token, fetches phone number details, creates or reconnects the inbox, and subscribes to WABA webhooks.",
+        "operationId": "WhatsAppEmbeddedSignupController_processEmbeddedSignup",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WhatsAppEmbeddedSignupDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "WhatsApp inbox created or reconnected successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WhatsAppEmbeddedSignupResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input data or token exchange failed."
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Process WhatsApp Embedded Signup",
         "tags": [
           "Inboxes"
         ]
@@ -2997,16 +3066,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "inbox": {
-                      "$ref": "#/components/schemas/InboxResponseDto"
-                    },
-                    "message": {
-                      "type": "string",
-                      "example": "Telegram inbox created successfully."
-                    }
-                  }
+                  "$ref": "#/components/schemas/CreateInboxResponseDto"
                 }
               }
             }
@@ -3050,16 +3110,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "inbox": {
-                      "$ref": "#/components/schemas/InboxResponseDto"
-                    },
-                    "message": {
-                      "type": "string",
-                      "example": "Instagram inbox created successfully."
-                    }
-                  }
+                  "$ref": "#/components/schemas/CreateInboxResponseDto"
                 }
               }
             }
@@ -3103,16 +3154,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "inbox": {
-                      "$ref": "#/components/schemas/InboxResponseDto"
-                    },
-                    "message": {
-                      "type": "string",
-                      "example": "WhatsApp inbox created successfully."
-                    }
-                  }
+                  "$ref": "#/components/schemas/CreateInboxResponseDto"
                 }
               }
             }
@@ -3146,7 +3188,6 @@
             "in": "query",
             "description": "Page number (defaults to 1)",
             "schema": {
-              "example": 1,
               "type": "number"
             }
           },
@@ -3154,40 +3195,19 @@
             "name": "limit",
             "required": false,
             "in": "query",
-            "description": "Number of items per page (defaults to 20)",
+            "description": "Items per page (defaults to 20)",
             "schema": {
-              "example": 20,
               "type": "number"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "Paginated list of inboxes retrieved successfully.",
+            "description": "Paginated list of inboxes.",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "inboxes": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/InboxResponseDto"
-                      }
-                    },
-                    "total": {
-                      "type": "number",
-                      "example": 42
-                    },
-                    "page": {
-                      "type": "number",
-                      "example": 1
-                    },
-                    "limit": {
-                      "type": "number",
-                      "example": 20
-                    }
-                  }
+                  "$ref": "#/components/schemas/InboxListResponseDto"
                 }
               }
             }
@@ -3218,7 +3238,6 @@
             "in": "path",
             "description": "Unique identifier of the inbox",
             "schema": {
-              "example": "550e8400-e29b-41d4-a716-446655440000",
               "type": "string"
             }
           }
@@ -3252,7 +3271,7 @@
         ]
       },
       "delete": {
-        "description": "Permanently deletes an inbox and all associated data. This action cannot be undone. Only deletes inboxes belonging to the current tenant.",
+        "description": "Permanently deletes an inbox and all associated data. Only deletes inboxes belonging to the current tenant.",
         "operationId": "InboxController_delete",
         "parameters": [
           {
@@ -3261,7 +3280,6 @@
             "in": "path",
             "description": "Unique identifier of the inbox to delete",
             "schema": {
-              "example": "550e8400-e29b-41d4-a716-446655440000",
               "type": "string"
             }
           }
@@ -3367,37 +3385,17 @@
         ],
         "responses": {
           "200": {
-            "description": "Paginated list of conversations retrieved successfully",
+            "description": "Paginated list of conversations retrieved successfully.",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "conversations": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/ConversationResponseDto"
-                      }
-                    },
-                    "total": {
-                      "type": "number",
-                      "example": 42
-                    },
-                    "page": {
-                      "type": "number",
-                      "example": 1
-                    },
-                    "limit": {
-                      "type": "number",
-                      "example": 20
-                    }
-                  }
+                  "$ref": "#/components/schemas/ConversationListResponseDto"
                 }
               }
             }
           },
           "401": {
-            "description": "Unauthorized - Invalid or missing authentication"
+            "description": "Unauthorized - Invalid or missing authentication."
           }
         },
         "security": [
@@ -3418,39 +3416,17 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Conversation counts retrieved successfully",
+            "description": "Conversation counts retrieved successfully.",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "all": {
-                      "type": "number",
-                      "example": 42
-                    },
-                    "open": {
-                      "type": "number",
-                      "example": 15
-                    },
-                    "resolved": {
-                      "type": "number",
-                      "example": 20
-                    },
-                    "pending": {
-                      "type": "number",
-                      "example": 5
-                    },
-                    "snoozed": {
-                      "type": "number",
-                      "example": 2
-                    }
-                  }
+                  "$ref": "#/components/schemas/ConversationCountsResponseDto"
                 }
               }
             }
           },
           "401": {
-            "description": "Unauthorized - Invalid or missing authentication"
+            "description": "Unauthorized - Invalid or missing authentication."
           }
         },
         "security": [
@@ -4056,6 +4032,36 @@
           }
         },
         "summary": "WhatsApp webhook verification",
+        "tags": [
+          "Webhook"
+        ]
+      }
+    },
+    "/webhooks/whatsapp": {
+      "post": {
+        "description": "Receives incoming message updates from WhatsApp Cloud API. Looks up the inbox from the phone_number_id in the payload metadata.",
+        "operationId": "WebhookController_whatsappGenericWebhook",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Webhook received successfully."
+          }
+        },
+        "summary": "WhatsApp generic incoming webhook",
+        "tags": [
+          "Webhook"
+        ]
+      },
+      "get": {
+        "description": "Handles the Meta webhook subscription verification challenge. Uses the WHATSAPP_WEBHOOK_VERIFY_TOKEN environment variable.",
+        "operationId": "WebhookController_whatsappGenericVerify",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Verification challenge returned."
+          }
+        },
+        "summary": "WhatsApp generic webhook verification",
         "tags": [
           "Webhook"
         ]
@@ -5729,78 +5735,61 @@
           "credential"
         ]
       },
-      "CreateTelegramInboxDto": {
+      "OAuthUrlResponseDto": {
         "type": "object",
         "properties": {
-          "name": {
+          "url": {
             "type": "string",
-            "description": "Display name for the Telegram inbox. If not provided, the bot name from the Telegram API will be used.",
-            "example": "My Telegram Bot"
-          },
-          "botToken": {
-            "type": "string",
-            "description": "Telegram Bot API token obtained from @BotFather",
-            "example": "123456789:ABCdefGhIJKlmnoPQRstUVwxyZ"
+            "description": "OAuth authorization URL to redirect the user to",
+            "example": "https://api.instagram.com/oauth/authorize?client_id=...&state=..."
           }
         },
         "required": [
-          "botToken"
+          "url"
         ]
       },
-      "CreateInstagramInboxDto": {
+      "WhatsAppConfigResponseDto": {
         "type": "object",
         "properties": {
-          "name": {
+          "appId": {
             "type": "string",
-            "description": "Display name for the Instagram inbox",
-            "example": "My Instagram Page"
+            "description": "Facebook App ID for initializing the JS SDK",
+            "example": "25787113254284000"
           },
-          "accessToken": {
+          "configId": {
             "type": "string",
-            "description": "Instagram Graph API access token"
-          },
-          "pageId": {
-            "type": "string",
-            "description": "Facebook Page ID linked to the Instagram account"
+            "description": "WhatsApp Embedded Signup configuration ID from Meta Business Settings",
+            "example": "1463637715370795"
           }
         },
         "required": [
-          "name",
-          "accessToken",
-          "pageId"
+          "appId",
+          "configId"
         ]
       },
-      "CreateWhatsAppInboxDto": {
+      "WhatsAppEmbeddedSignupDto": {
         "type": "object",
         "properties": {
-          "name": {
+          "code": {
             "type": "string",
-            "description": "Display name for the WhatsApp inbox",
-            "example": "My WhatsApp Business"
+            "description": "Authorization code from Facebook JS SDK FB.login() callback",
+            "example": "AQB3z..."
           },
-          "accessToken": {
+          "wabaId": {
             "type": "string",
-            "description": "WhatsApp Business API access token"
+            "description": "WhatsApp Business Account ID from the WA_EMBEDDED_SIGNUP postMessage event",
+            "example": "100000000000001"
           },
           "phoneNumberId": {
             "type": "string",
-            "description": "WhatsApp phone number ID from Meta Business Suite"
-          },
-          "businessAccountId": {
-            "type": "string",
-            "description": "WhatsApp Business Account ID"
-          },
-          "verifyToken": {
-            "type": "string",
-            "description": "Webhook verification token for incoming message validation"
+            "description": "Phone Number ID from the WA_EMBEDDED_SIGNUP postMessage event",
+            "example": "100000000000000"
           }
         },
         "required": [
-          "name",
-          "accessToken",
-          "phoneNumberId",
-          "businessAccountId",
-          "verifyToken"
+          "code",
+          "wabaId",
+          "phoneNumberId"
         ]
       },
       "InboxResponseDto": {
@@ -5865,6 +5854,141 @@
           "channelConfig",
           "createdAt",
           "updatedAt"
+        ]
+      },
+      "WhatsAppEmbeddedSignupResponseDto": {
+        "type": "object",
+        "properties": {
+          "inbox": {
+            "$ref": "#/components/schemas/InboxResponseDto"
+          },
+          "message": {
+            "type": "string",
+            "example": "WhatsApp inbox connected successfully."
+          }
+        },
+        "required": [
+          "inbox",
+          "message"
+        ]
+      },
+      "CreateTelegramInboxDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Display name for the Telegram inbox. If not provided, the bot name from the Telegram API will be used.",
+            "example": "My Telegram Bot"
+          },
+          "botToken": {
+            "type": "string",
+            "description": "Telegram Bot API token obtained from @BotFather",
+            "example": "123456789:ABCdefGhIJKlmnoPQRstUVwxyZ"
+          }
+        },
+        "required": [
+          "botToken"
+        ]
+      },
+      "CreateInboxResponseDto": {
+        "type": "object",
+        "properties": {
+          "inbox": {
+            "$ref": "#/components/schemas/InboxResponseDto"
+          },
+          "message": {
+            "type": "string",
+            "example": "Inbox created successfully."
+          }
+        },
+        "required": [
+          "inbox",
+          "message"
+        ]
+      },
+      "CreateInstagramInboxDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Display name for the Instagram inbox",
+            "example": "My Instagram Page"
+          },
+          "accessToken": {
+            "type": "string",
+            "description": "Instagram Graph API access token"
+          },
+          "pageId": {
+            "type": "string",
+            "description": "Facebook Page ID linked to the Instagram account"
+          }
+        },
+        "required": [
+          "name",
+          "accessToken",
+          "pageId"
+        ]
+      },
+      "CreateWhatsAppInboxDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Display name for the WhatsApp inbox",
+            "example": "My WhatsApp Business"
+          },
+          "accessToken": {
+            "type": "string",
+            "description": "WhatsApp Business API access token"
+          },
+          "phoneNumberId": {
+            "type": "string",
+            "description": "WhatsApp phone number ID from Meta Business Suite"
+          },
+          "businessAccountId": {
+            "type": "string",
+            "description": "WhatsApp Business Account ID"
+          },
+          "verifyToken": {
+            "type": "string",
+            "description": "Webhook verification token for incoming message validation"
+          }
+        },
+        "required": [
+          "name",
+          "accessToken",
+          "phoneNumberId",
+          "businessAccountId",
+          "verifyToken"
+        ]
+      },
+      "InboxListResponseDto": {
+        "type": "object",
+        "properties": {
+          "inboxes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InboxResponseDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "example": 42
+          },
+          "page": {
+            "type": "number",
+            "example": 1
+          },
+          "limit": {
+            "type": "number",
+            "example": 20
+          }
+        },
+        "required": [
+          "inboxes",
+          "total",
+          "page",
+          "limit"
         ]
       },
       "ContactEmbedDto": {
@@ -6018,6 +6142,67 @@
           "unreadCount",
           "createdAt",
           "updatedAt"
+        ]
+      },
+      "ConversationListResponseDto": {
+        "type": "object",
+        "properties": {
+          "conversations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConversationResponseDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "example": 42
+          },
+          "page": {
+            "type": "number",
+            "example": 1
+          },
+          "limit": {
+            "type": "number",
+            "example": 20
+          }
+        },
+        "required": [
+          "conversations",
+          "total",
+          "page",
+          "limit"
+        ]
+      },
+      "ConversationCountsResponseDto": {
+        "type": "object",
+        "properties": {
+          "all": {
+            "type": "number",
+            "example": 42
+          },
+          "open": {
+            "type": "number",
+            "example": 15
+          },
+          "resolved": {
+            "type": "number",
+            "example": 20
+          },
+          "pending": {
+            "type": "number",
+            "example": 5
+          },
+          "snoozed": {
+            "type": "number",
+            "example": 2
+          }
+        },
+        "required": [
+          "all",
+          "open",
+          "resolved",
+          "pending",
+          "snoozed"
         ]
       },
       "UpdateConversationDto": {

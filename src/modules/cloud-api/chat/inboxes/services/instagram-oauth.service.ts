@@ -2,6 +2,9 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { UnauthorizedException } from '@vritti/api-sdk';
+import { ChannelTypeValues, InboxStatusValues } from '@/db/schema';
+import { InboxResponseDto } from '../dto/entity/inbox-response.dto';
+import { InboxRepository } from '../repositories/inbox.repository';
 
 // ============================================================================
 // Instagram API Response Types
@@ -24,7 +27,7 @@ interface InstagramRefreshTokenResponse {
   expires_in: number;
 }
 
-export interface InstagramProfile {
+interface InstagramProfile {
   id: string;
   username: string;
   userId: string;
@@ -50,7 +53,7 @@ interface InstagramApiErrorResponse {
 }
 
 // ============================================================================
-// OAuth State Payload
+// Configuration
 // ============================================================================
 
 interface OAuthStatePayload {
@@ -59,10 +62,6 @@ interface OAuthStatePayload {
     userId: string;
   };
 }
-
-// ============================================================================
-// Instagram OAuth Configuration
-// ============================================================================
 
 interface InstagramOAuthConfig {
   appId: string;
@@ -83,6 +82,7 @@ export class InstagramOAuthService {
   constructor(
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
+    private readonly inboxRepository: InboxRepository,
   ) {
     this.config = this.loadConfig();
   }
@@ -91,11 +91,7 @@ export class InstagramOAuthService {
   // Configuration
   // ===========================================================================
 
-  /**
-   * Loads Instagram OAuth configuration from environment variables.
-   * Returns null if any required variable is missing, allowing the app
-   * to start without Instagram OAuth support.
-   */
+  // Loads Instagram OAuth configuration from environment variables
   private loadConfig(): InstagramOAuthConfig | null {
     try {
       const appId = this.configService.getOrThrow<string>('INSTAGRAM_APP_ID');
@@ -105,21 +101,15 @@ export class InstagramOAuthService {
 
       return { appId, appSecret, callbackUrl, webhookVerifyToken };
     } catch {
-      this.logger.warn(
-        'Instagram OAuth environment variables are not configured. Instagram OAuth endpoints will not function.',
-      );
+      this.logger.warn('Instagram OAuth environment variables are not configured.');
       return null;
     }
   }
 
-  /**
-   * Returns the loaded config or throws if Instagram OAuth is not configured.
-   */
+  // Returns the loaded config or throws if not configured
   private getConfigOrThrow(): InstagramOAuthConfig {
     if (!this.config) {
-      throw new UnauthorizedException(
-        'Instagram OAuth is not configured. Please set the required environment variables.',
-      );
+      throw new UnauthorizedException('Instagram OAuth is not configured.');
     }
     return this.config;
   }
@@ -128,11 +118,7 @@ export class InstagramOAuthService {
   // Authorization URL
   // ===========================================================================
 
-  /**
-   * Generates the Instagram OAuth authorization URL with a signed JWT state token.
-   * The state token encodes the tenantId and userId so the callback can identify
-   * who initiated the flow.
-   */
+  // Generates the Instagram OAuth URL with a signed JWT state token
   generateAuthorizationUrl(tenantId: string, userId: string): string {
     const config = this.getConfigOrThrow();
 
@@ -158,14 +144,64 @@ export class InstagramOAuthService {
   }
 
   // ===========================================================================
+  // OAuth Callback Processing
+  // ===========================================================================
+
+  // Processes the full OAuth callback: validates state, exchanges tokens, creates inbox
+  async processOAuthCallback(
+    code: string,
+    state: string,
+  ): Promise<{ inboxId: string }> {
+    const { tenantId } = this.validateAndDecodeState(state);
+    this.logger.log(`Instagram OAuth callback for tenant ${tenantId}`);
+
+    const { accessToken, expiresIn } = await this.exchangeCodeForTokens(code);
+    const profile = await this.fetchUserProfile(accessToken);
+    this.logger.log(`Instagram profile fetched: @${profile.username} (ID: ${profile.userId})`);
+
+    const channelConfig = {
+      accessToken,
+      instagramId: profile.id,
+      instagramUserId: profile.userId,
+      username: profile.username,
+      tokenExpiresAt: new Date(Date.now() + expiresIn * 1000).toISOString(),
+      verifyToken: this.getConfigOrThrow().webhookVerifyToken,
+    };
+
+    const existingInbox = await this.inboxRepository.findByTenantAndInstagramId(
+      tenantId,
+      profile.userId,
+    );
+
+    let inboxId: string;
+
+    if (existingInbox) {
+      await this.inboxRepository.updateChannelConfig(existingInbox.id, { ...channelConfig });
+      inboxId = existingInbox.id;
+      this.logger.log(`Reconnected existing Instagram inbox ${inboxId}`);
+    } else {
+      const inbox = await this.inboxRepository.create({
+        tenantId,
+        name: profile.name || `@${profile.username}`,
+        channelType: ChannelTypeValues.INSTAGRAM,
+        status: InboxStatusValues.ACTIVE,
+        channelConfig,
+      });
+      inboxId = inbox.id;
+      this.logger.log(`Created new Instagram inbox ${inboxId}`);
+    }
+
+    await this.subscribeWebhooks(profile.userId, accessToken);
+
+    return { inboxId };
+  }
+
+  // ===========================================================================
   // State Validation
   // ===========================================================================
 
-  /**
-   * Validates and decodes the JWT state token from the OAuth callback.
-   * Throws UnauthorizedException if the token is invalid or expired.
-   */
-  validateAndDecodeState(state: string): { tenantId: string; userId: string } {
+  // Validates and decodes the JWT state token from the OAuth callback
+  private validateAndDecodeState(state: string): { tenantId: string; userId: string } {
     try {
       const payload = this.jwtService.verify<OAuthStatePayload>(state, {
         secret: this.configService.getOrThrow<string>('CSRF_HMAC_KEY'),
@@ -176,9 +212,7 @@ export class InstagramOAuthService {
         userId: payload.sub.userId,
       };
     } catch {
-      throw new UnauthorizedException(
-        'Invalid or expired Instagram OAuth state token. Please try connecting again.',
-      );
+      throw new UnauthorizedException('Invalid or expired Instagram OAuth state token.');
     }
   }
 
@@ -186,18 +220,10 @@ export class InstagramOAuthService {
   // Token Exchange
   // ===========================================================================
 
-  /**
-   * Exchanges an authorization code for tokens in two steps:
-   * 1. Exchange code for short-lived token
-   * 2. Exchange short-lived token for long-lived token (~60 days)
-   */
-  async exchangeCodeForTokens(code: string): Promise<{ accessToken: string; expiresIn: number }> {
+  // Exchanges authorization code for a long-lived token (~60 days)
+  private async exchangeCodeForTokens(code: string): Promise<{ accessToken: string; expiresIn: number }> {
     const config = this.getConfigOrThrow();
-
-    // Step 1: Exchange authorization code for short-lived token
     const shortLivedToken = await this.exchangeCodeForShortLivedToken(config, code);
-
-    // Step 2: Exchange short-lived token for long-lived token
     const longLivedToken = await this.exchangeForLongLivedToken(config, shortLivedToken);
 
     return {
@@ -206,14 +232,8 @@ export class InstagramOAuthService {
     };
   }
 
-  /**
-   * Exchanges the authorization code for a short-lived access token.
-   * Instagram's token endpoint expects application/x-www-form-urlencoded.
-   */
-  private async exchangeCodeForShortLivedToken(
-    config: InstagramOAuthConfig,
-    code: string,
-  ): Promise<string> {
+  // Exchanges the authorization code for a short-lived access token
+  private async exchangeCodeForShortLivedToken(config: InstagramOAuthConfig, code: string): Promise<string> {
     const body = new URLSearchParams({
       client_id: config.appId,
       client_secret: config.appSecret,
@@ -235,18 +255,12 @@ export class InstagramOAuthService {
     }
 
     const data = (await response.json()) as InstagramShortLivedTokenResponse | InstagramApiErrorResponse;
-
-    if ('error' in data) {
-      this.logger.error(`Instagram token exchange error: ${data.error.message}`);
-      throw new Error(`Instagram token exchange failed: ${data.error.message}`);
-    }
+    if ('error' in data) throw new Error(`Instagram token exchange failed: ${data.error.message}`);
 
     return data.access_token;
   }
 
-  /**
-   * Exchanges a short-lived token for a long-lived token (~60 days).
-   */
+  // Exchanges a short-lived token for a long-lived token (~60 days)
   private async exchangeForLongLivedToken(
     config: InstagramOAuthConfig,
     shortLivedToken: string,
@@ -267,11 +281,7 @@ export class InstagramOAuthService {
     }
 
     const data = (await response.json()) as InstagramLongLivedTokenResponse | InstagramApiErrorResponse;
-
-    if ('error' in data) {
-      this.logger.error(`Instagram long-lived token exchange error: ${data.error.message}`);
-      throw new Error(`Instagram long-lived token exchange failed: ${data.error.message}`);
-    }
+    if ('error' in data) throw new Error(`Instagram long-lived token exchange failed: ${data.error.message}`);
 
     return data;
   }
@@ -280,10 +290,8 @@ export class InstagramOAuthService {
   // User Profile
   // ===========================================================================
 
-  /**
-   * Fetches the Instagram user profile using the Graph API.
-   */
-  async fetchUserProfile(accessToken: string): Promise<InstagramProfile> {
+  // Fetches the Instagram user profile using the Graph API
+  private async fetchUserProfile(accessToken: string): Promise<InstagramProfile> {
     const params = new URLSearchParams({
       fields: 'id,username,user_id,name,profile_picture_url',
       access_token: accessToken,
@@ -298,11 +306,7 @@ export class InstagramOAuthService {
     }
 
     const data = (await response.json()) as InstagramProfileApiResponse | InstagramApiErrorResponse;
-
-    if ('error' in data) {
-      this.logger.error(`Instagram profile fetch error: ${data.error.message}`);
-      throw new Error(`Failed to fetch Instagram profile: ${data.error.message}`);
-    }
+    if ('error' in data) throw new Error(`Failed to fetch Instagram profile: ${data.error.message}`);
 
     return {
       id: data.id,
@@ -317,12 +321,8 @@ export class InstagramOAuthService {
   // Webhook Subscription
   // ===========================================================================
 
-  /**
-   * Subscribes the Instagram user to webhook notifications for messages.
-   * Logs a warning on failure instead of throwing, since inbox creation
-   * should still succeed even if webhook subscription fails.
-   */
-  async subscribeWebhooks(instagramUserId: string, accessToken: string): Promise<void> {
+  // Subscribes the Instagram user to webhook notifications (best-effort)
+  private async subscribeWebhooks(instagramUserId: string, accessToken: string): Promise<void> {
     try {
       const params = new URLSearchParams({
         subscribed_fields: 'messages',
@@ -336,27 +336,20 @@ export class InstagramOAuthService {
 
       if (!response.ok) {
         const errorText = await response.text();
-        this.logger.warn(
-          `Instagram webhook subscription failed for user ${instagramUserId} (HTTP ${response.status}): ${errorText}`,
-        );
+        this.logger.warn(`Instagram webhook subscription failed (HTTP ${response.status}): ${errorText}`);
         return;
       }
 
       const data = (await response.json()) as { success: boolean } | InstagramApiErrorResponse;
-
       if ('error' in data) {
-        this.logger.warn(
-          `Instagram webhook subscription error for user ${instagramUserId}: ${data.error.message}`,
-        );
+        this.logger.warn(`Instagram webhook subscription error: ${data.error.message}`);
         return;
       }
 
       this.logger.log(`Instagram webhook subscription successful for user ${instagramUserId}`);
     } catch (error) {
       const err = error instanceof Error ? error : new Error('Unknown error');
-      this.logger.warn(
-        `Instagram webhook subscription request failed for user ${instagramUserId}: ${err.message}`,
-      );
+      this.logger.warn(`Instagram webhook subscription failed: ${err.message}`);
     }
   }
 
@@ -364,11 +357,7 @@ export class InstagramOAuthService {
   // Token Refresh
   // ===========================================================================
 
-  /**
-   * Refreshes a long-lived Instagram access token.
-   * Long-lived tokens can be refreshed as long as they are at least 24 hours
-   * old and have not expired.
-   */
+  // Refreshes a long-lived Instagram access token
   async refreshToken(currentToken: string): Promise<{ accessToken: string; expiresIn: number }> {
     const params = new URLSearchParams({
       grant_type: 'ig_refresh_token',
@@ -384,27 +373,13 @@ export class InstagramOAuthService {
     }
 
     const data = (await response.json()) as InstagramRefreshTokenResponse | InstagramApiErrorResponse;
+    if ('error' in data) throw new Error(`Instagram token refresh failed: ${data.error.message}`);
 
-    if ('error' in data) {
-      this.logger.error(`Instagram token refresh error: ${data.error.message}`);
-      throw new Error(`Instagram token refresh failed: ${data.error.message}`);
-    }
-
-    return {
-      accessToken: data.access_token,
-      expiresIn: data.expires_in,
-    };
+    return { accessToken: data.access_token, expiresIn: data.expires_in };
   }
 
-  // ===========================================================================
-  // Helpers
-  // ===========================================================================
-
-  /**
-   * Returns the configured webhook verify token for Instagram.
-   */
+  // Returns the configured webhook verify token
   getWebhookVerifyToken(): string {
-    const config = this.getConfigOrThrow();
-    return config.webhookVerifyToken;
+    return this.getConfigOrThrow().webhookVerifyToken;
   }
 }

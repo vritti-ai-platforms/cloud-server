@@ -3,12 +3,7 @@ import type { ChannelAdapter, ParsedIncomingMessage } from './channel-adapter.in
 
 @Injectable()
 export class TelegramAdapter implements ChannelAdapter {
-  /**
-   * Parses a Telegram Bot API webhook payload into a unified message.
-   * Returns null if the payload does not contain a message object.
-   *
-   * @see https://core.telegram.org/bots/api#update
-   */
+  // Parses a Telegram Bot API webhook payload into a unified message
   parseIncomingMessage(payload: any): ParsedIncomingMessage | null {
     const message = payload?.message;
     if (!message) return null;

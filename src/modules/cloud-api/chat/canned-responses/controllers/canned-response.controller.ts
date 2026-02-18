@@ -18,12 +18,14 @@ import { CannedResponseService } from '../services/canned-response.service';
 export class CannedResponseController {
   constructor(private readonly cannedResponseService: CannedResponseService) {}
 
+  // Lists all canned responses for the tenant
   @Get()
   @ApiListCannedResponses()
   async findAll(@Tenant() tenant: TenantInfo): Promise<CannedResponseResponseDto[]> {
     return this.cannedResponseService.findAll(tenant.id);
   }
 
+  // Creates a new canned response for the tenant
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiCreateCannedResponse()
@@ -34,6 +36,7 @@ export class CannedResponseController {
     return this.cannedResponseService.create(tenant.id, dto);
   }
 
+  // Updates an existing canned response
   @Patch(':id')
   @ApiUpdateCannedResponse()
   async update(
@@ -44,6 +47,7 @@ export class CannedResponseController {
     return this.cannedResponseService.update(id, tenant.id, dto);
   }
 
+  // Deletes a canned response by ID
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiDeleteCannedResponse()

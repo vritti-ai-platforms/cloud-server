@@ -1,6 +1,8 @@
 import { applyDecorators } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse } from '@nestjs/swagger';
 import { ConversationResponseDto } from '../dto/entity/conversation-response.dto';
+import { ConversationListResponseDto } from '../dto/response/conversation-list-response.dto';
+import { ConversationCountsResponseDto } from '../dto/response/conversation-counts-response.dto';
 import { UpdateConversationDto } from '../dto/request/update-conversation.dto';
 
 export function ApiListConversations() {
@@ -16,20 +18,8 @@ export function ApiListConversations() {
     ApiQuery({ name: 'inboxId', required: false, description: 'Filter by inbox identifier' }),
     ApiQuery({ name: 'page', required: false, description: 'Page number (default: 1)' }),
     ApiQuery({ name: 'limit', required: false, description: 'Items per page (default: 20)' }),
-    ApiResponse({
-      status: 200,
-      description: 'Paginated list of conversations retrieved successfully',
-      schema: {
-        type: 'object',
-        properties: {
-          conversations: { type: 'array', items: { $ref: '#/components/schemas/ConversationResponseDto' } },
-          total: { type: 'number', example: 42 },
-          page: { type: 'number', example: 1 },
-          limit: { type: 'number', example: 20 },
-        },
-      },
-    }),
-    ApiResponse({ status: 401, description: 'Unauthorized - Invalid or missing authentication' }),
+    ApiResponse({ status: 200, description: 'Paginated list of conversations retrieved successfully.', type: ConversationListResponseDto }),
+    ApiResponse({ status: 401, description: 'Unauthorized - Invalid or missing authentication.' }),
   );
 }
 
@@ -39,21 +29,8 @@ export function ApiGetConversationCounts() {
       summary: 'Get conversation status counts',
       description: 'Returns the count of conversations grouped by status for the current tenant.',
     }),
-    ApiResponse({
-      status: 200,
-      description: 'Conversation counts retrieved successfully',
-      schema: {
-        type: 'object',
-        properties: {
-          all: { type: 'number', example: 42 },
-          open: { type: 'number', example: 15 },
-          resolved: { type: 'number', example: 20 },
-          pending: { type: 'number', example: 5 },
-          snoozed: { type: 'number', example: 2 },
-        },
-      },
-    }),
-    ApiResponse({ status: 401, description: 'Unauthorized - Invalid or missing authentication' }),
+    ApiResponse({ status: 200, description: 'Conversation counts retrieved successfully.', type: ConversationCountsResponseDto }),
+    ApiResponse({ status: 401, description: 'Unauthorized - Invalid or missing authentication.' }),
   );
 }
 

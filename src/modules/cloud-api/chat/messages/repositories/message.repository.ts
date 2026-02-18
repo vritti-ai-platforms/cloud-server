@@ -40,4 +40,18 @@ export class MessageRepository extends PrimaryBaseRepository<typeof messages> {
     }
     await this.update(messageId, updates);
   }
+
+  // Finds a message by its external message ID stored in contentAttributes
+  async findByExternalMessageId(externalMessageId: string): Promise<Message | undefined> {
+    const allMessages = await this.model.findMany({
+      where: { senderType: 'USER' },
+      orderBy: { createdAt: 'desc' },
+      limit: 100,
+    });
+
+    return allMessages.find((msg) => {
+      const attrs = msg.contentAttributes as Record<string, unknown> | null;
+      return attrs?.externalMessageId === externalMessageId;
+    });
+  }
 }

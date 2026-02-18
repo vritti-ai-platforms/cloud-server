@@ -37,6 +37,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
   // Lifecycle Hooks
   // ===========================================================================
 
+  // Logs that the WebSocket gateway is ready
   afterInit(): void {
     this.logger.log('WebSocket gateway initialized');
   }
@@ -45,6 +46,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
   // Connection Handling
   // ===========================================================================
 
+  // Authenticates the WebSocket client via JWT and joins the tenant room
   async handleConnection(client: Socket): Promise<void> {
     try {
       // 1. Extract and verify JWT token from handshake auth
@@ -112,6 +114,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
     }
   }
 
+  // Logs the WebSocket client disconnection
   handleDisconnect(client: Socket): void {
     const { tenantId, userId } = client.data ?? {};
     this.logger.log(`WebSocket disconnected: user ${userId ?? 'unknown'}, tenant ${tenantId ?? 'unknown'}`);
@@ -121,7 +124,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
   // Broadcasting
   // ===========================================================================
 
-  /** Emit an event to all connected clients in a tenant room */
+  // Emits an event to all connected clients in a tenant room
   sendToTenant(tenantId: string, event: string, data: unknown): void {
     const room = `tenant:${tenantId}`;
     this.logger.debug(`Emitting ${event} to ${room}`);

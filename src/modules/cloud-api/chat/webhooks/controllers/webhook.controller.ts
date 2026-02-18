@@ -14,6 +14,8 @@ import {
   ApiTelegramWebhook,
   ApiWhatsAppWebhook,
   ApiWhatsAppVerify,
+  ApiWhatsAppGenericWebhook,
+  ApiWhatsAppGenericVerify,
   ApiInstagramWebhook,
   ApiInstagramVerify,
   ApiInstagramGenericWebhook,
@@ -44,6 +46,7 @@ export class WebhookController {
   // Telegram
   // ──────────────────────────────────────────────────────────────────────────
 
+  // Receives Telegram webhook events and processes them asynchronously
   @Post('telegram/:inboxId')
   @Public()
   @HttpCode(HttpStatus.OK)
@@ -67,6 +70,7 @@ export class WebhookController {
   // WhatsApp
   // ──────────────────────────────────────────────────────────────────────────
 
+  // Receives WhatsApp webhook events (messages and status updates) and processes them asynchronously
   @Post('whatsapp/:inboxId')
   @Public()
   @HttpCode(HttpStatus.OK)
@@ -75,6 +79,16 @@ export class WebhookController {
     @Param('inboxId') inboxId: string,
     @Body() payload: any,
   ): Promise<{ ok: true }> {
+    // Handle message status updates (delivery/read receipts)
+    const statusUpdate = this.whatsappAdapter.parseStatusUpdate(payload);
+    if (statusUpdate) {
+      this.webhookHandler.handleStatusUpdate(statusUpdate).catch((err) => {
+        this.logger.error(`Error processing WhatsApp status update for inbox ${inboxId}`, err.stack);
+      });
+      return { ok: true };
+    }
+
+    // Handle incoming messages
     const parsed = this.whatsappAdapter.parseIncomingMessage(payload);
     if (!parsed) return { ok: true };
 
@@ -86,7 +100,7 @@ export class WebhookController {
     return { ok: true };
   }
 
-  /** WhatsApp verification challenge from Meta */
+  // Handles WhatsApp verification challenge from Meta
   @Get('whatsapp/:inboxId')
   @Public()
   @ApiWhatsAppVerify()
@@ -102,9 +116,66 @@ export class WebhookController {
   }
 
   // ──────────────────────────────────────────────────────────────────────────
+  // WhatsApp (Generic — app-level webhook, no inboxId in URL)
+  // ──────────────────────────────────────────────────────────────────────────
+
+  // Generic WhatsApp webhook endpoint for app-level subscription
+  @Post('whatsapp')
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @ApiWhatsAppGenericWebhook()
+  async whatsappGenericWebhook(@Body() payload: any): Promise<{ ok: true }> {
+    this.logger.log('POST /webhooks/whatsapp (generic) — received webhook event');
+
+    // Handle status updates
+    const statusUpdate = this.whatsappAdapter.parseStatusUpdate(payload);
+    if (statusUpdate) {
+      this.webhookHandler.handleStatusUpdate(statusUpdate).catch((err) => {
+        this.logger.error('Error processing WhatsApp status update (generic)', err.stack);
+      });
+      return { ok: true };
+    }
+
+    // Handle incoming messages
+    const parsed = this.whatsappAdapter.parseIncomingMessage(payload);
+    if (!parsed) return { ok: true };
+
+    // Extract phone_number_id from payload to find the inbox
+    const phoneNumberId = this.whatsappAdapter.extractPhoneNumberId(payload);
+    if (!phoneNumberId) {
+      this.logger.warn('WhatsApp webhook payload missing phone_number_id in metadata');
+      return { ok: true };
+    }
+
+    const inbox = await this.inboxRepository.findByWhatsAppPhoneNumberId(phoneNumberId);
+    if (!inbox) {
+      this.logger.warn(`No inbox found for WhatsApp phone_number_id: ${phoneNumberId}`);
+      return { ok: true };
+    }
+
+    this.logger.log(`Routing WhatsApp webhook to inbox ${inbox.id} (phone_number_id: ${phoneNumberId})`);
+
+    this.webhookHandler.handleIncomingMessage(inbox.id, parsed).catch((err) => {
+      this.logger.error(`Error processing WhatsApp generic webhook for inbox ${inbox.id}`, err.stack);
+    });
+
+    return { ok: true };
+  }
+
+  // Generic WhatsApp verification challenge from Meta
+  @Get('whatsapp')
+  @Public()
+  @ApiWhatsAppGenericVerify()
+  async whatsappGenericVerify(@Query() query: Record<string, string>): Promise<string> {
+    const verifyToken = this.configService.get<string>('WHATSAPP_WEBHOOK_VERIFY_TOKEN', '');
+    return this.whatsappAdapter.verifyWebhook(query, verifyToken) || '';
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────
   // Instagram
   // ──────────────────────────────────────────────────────────────────────────
 
+  // Receives Instagram webhook events and processes them asynchronously
   @Post('instagram/:inboxId')
   @Public()
   @HttpCode(HttpStatus.OK)
@@ -124,7 +195,7 @@ export class WebhookController {
     return { ok: true };
   }
 
-  /** Instagram verification challenge from Meta */
+  // Handles Instagram verification challenge from Meta
   @Get('instagram/:inboxId')
   @Public()
   @ApiInstagramVerify()
@@ -143,11 +214,7 @@ export class WebhookController {
   // Instagram (Generic — app-level webhook, no inboxId in URL)
   // ──────────────────────────────────────────────────────────────────────────
 
-  /**
-   * Generic Instagram webhook endpoint for app-level subscription.
-   * Meta sends ALL Instagram events to this single URL. The inbox is
-   * resolved from the recipient Instagram ID in the payload.
-   */
+  // Receives app-level Instagram webhook events and routes to the correct inbox
   @Post('instagram')
   @Public()
   @HttpCode(HttpStatus.OK)
@@ -186,7 +253,7 @@ export class WebhookController {
     return { ok: true };
   }
 
-  /** Generic Instagram verification challenge from Meta */
+  // Handles app-level Instagram verification challenge from Meta
   @Get('instagram')
   @Public()
   @ApiInstagramGenericVerify()

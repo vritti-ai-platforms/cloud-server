@@ -71,6 +71,30 @@ export function ApiInstagramVerify() {
   );
 }
 
+export function ApiWhatsAppGenericWebhook() {
+  return applyDecorators(
+    ApiOperation({
+      summary: 'WhatsApp generic incoming webhook',
+      description:
+        'Receives incoming message updates from WhatsApp Cloud API. ' +
+        'Looks up the inbox from the phone_number_id in the payload metadata.',
+    }),
+    ApiResponse({ status: 200, description: 'Webhook received successfully.' }),
+  );
+}
+
+export function ApiWhatsAppGenericVerify() {
+  return applyDecorators(
+    ApiOperation({
+      summary: 'WhatsApp generic webhook verification',
+      description:
+        'Handles the Meta webhook subscription verification challenge. ' +
+        'Uses the WHATSAPP_WEBHOOK_VERIFY_TOKEN environment variable.',
+    }),
+    ApiResponse({ status: 200, description: 'Verification challenge returned.' }),
+  );
+}
+
 export function ApiInstagramGenericWebhook() {
   return applyDecorators(
     ApiOperation({
