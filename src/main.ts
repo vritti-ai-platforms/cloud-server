@@ -4,7 +4,9 @@ import { ValidationPipe } from '@nestjs/common';
 import type { ValidationError } from 'class-validator';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
+import { type MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
+import { IoAdapter } from '@nestjs/platform-socket.io';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import {
   BadRequestException,
@@ -18,6 +20,7 @@ import fastifyRawBody from 'fastify-raw-body';
 import { readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { AppModule } from './app.module';
+import { CORS_ORIGINS } from './config/cors.config';
 
 // ============================================================================
 // Environment Configuration
@@ -32,6 +35,8 @@ const ENV = {
   // Cookie configuration
   refreshCookieName: process.env.REFRESH_COOKIE_NAME ?? 'vritti_refresh',
   refreshCookieDomain: process.env.REFRESH_COOKIE_DOMAIN,
+  // RabbitMQ configuration
+  rabbitmqUrl: process.env.RABBITMQ_URL,
 } as const;
 
 const protocol = ENV.useHttps ? 'https' : 'http';
@@ -40,17 +45,6 @@ const baseUrl = `${protocol}://${ENV.host}:${ENV.port}`;
 // ============================================================================
 // CORS Configuration
 // ============================================================================
-
-const CORS_ORIGINS = [
-  'http://localhost:5173', // Host app
-  'http://localhost:3001', // Auth MF
-  'http://localhost:3012', // Host app main port
-  'http://localhost:5174', // Other possible ports
-  `http://${ENV.host}:3012`,
-  `http://cloud.${ENV.host}:3012`,
-  `https://${ENV.host}:3012`,
-  `https://cloud.${ENV.host}:3012`,
-];
 
 const CORS_CONFIG = {
   origin: CORS_ORIGINS,
@@ -147,6 +141,9 @@ async function bootstrap() {
   // Create NestJS application
   const app = await NestFactory.create<NestFastifyApplication>(AppModule, fastifyAdapter, loggerOptions);
 
+  // Configure Socket.IO WebSocket adapter for Fastify
+  app.useWebSocketAdapter(new IoAdapter(app));
+
   // Get services from DI container
   const configService = app.get(ConfigService);
 
@@ -242,12 +239,34 @@ async function bootstrap() {
     },
   });
 
-  // Start the server
+  // Connect RabbitMQ microservice (only if RABBITMQ_URL is configured)
+  if (ENV.rabbitmqUrl) {
+    app.connectMicroservice<MicroserviceOptions>({
+      transport: Transport.RMQ,
+      options: {
+        urls: [ENV.rabbitmqUrl],
+        queue: 'api_nexus_queue',
+        queueOptions: {
+          durable: true,
+        },
+        noAck: false,
+      },
+    });
+
+    // Start microservices BEFORE HTTP server
+    await app.startAllMicroservices();
+  }
+
+  // Start the HTTP server
   await app.listen(ENV.port, '0.0.0.0');
 
   // Get logger from DI container for final bootstrap message
   const logger = app.get(LoggerService);
   logger.log(`API Nexus running on ${baseUrl}`, 'Bootstrap');
+
+  if (ENV.rabbitmqUrl) {
+    logger.log('RabbitMQ microservice connected', 'Bootstrap');
+  }
 }
 
 bootstrap();

@@ -8,5 +8,6 @@ export * from './enums';
 export * from './tenant';
 export * from './user';
 export * from './verification';
+export * from './chat';
 // Export relations last (depends on tables above)
 export * from './relations';
