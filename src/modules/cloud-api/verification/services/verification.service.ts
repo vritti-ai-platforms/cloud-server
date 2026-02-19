@@ -236,6 +236,20 @@ export class VerificationService {
     return this.verificationRepo.incrementAttempts(id);
   }
 
+  // Finds a verification record for a user and channel
+  async findByUserIdAndChannel(userId: string, channel: VerificationChannel): Promise<Verification | undefined> {
+    return this.verificationRepo.findByUserIdAndChannel(userId, channel);
+  }
+
+  // Upserts a verification record with custom token/OTP data (used by mobile verification)
+  async upsertByUserIdAndChannel(
+    userId: string,
+    channel: VerificationChannel,
+    data: { target: string | null; verificationId?: string; hashedOtp?: string; expiresAt: Date },
+  ): Promise<Verification> {
+    return this.verificationRepo.upsertByUserIdAndChannel(userId, channel, data);
+  }
+
   // Removes expired, unverified records (for scheduled cleanup)
   async deleteExpired(): Promise<number> {
     const count = await this.verificationRepo.deleteExpired();

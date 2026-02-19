@@ -4520,6 +4520,11 @@
             "type": "string",
             "description": "Verification code for QR-based methods (WhatsApp/SMS). User sends this code to complete verification. Not returned for manual OTP method.",
             "example": "VRFY-A1B2C3"
+          },
+          "whatsappNumber": {
+            "type": "string",
+            "description": "WhatsApp business number for generating QR code. Only returned for WhatsApp verification method.",
+            "example": "+14155238886"
           }
         },
         "required": [

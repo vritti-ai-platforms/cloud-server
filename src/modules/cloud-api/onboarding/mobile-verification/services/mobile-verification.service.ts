@@ -7,7 +7,6 @@ import { VerificationChannelValues, type VerificationChannel } from '@/db/schema
 import { TIME_CONSTANTS } from '../../../../../constants/time-constants';
 import { UserService } from '../../../user/services/user.service';
 import { VerificationService } from '../../../verification/services/verification.service';
-import { VerificationRepository } from '../../../verification/repositories/verification.repository';
 import { InitiateMobileVerificationDto } from '../dto/request/initiate-mobile-verification.dto';
 import { MobileVerificationStatusResponseDto } from '../dto/response/mobile-verification-status-response.dto';
 import { MobileVerificationEvent, VERIFICATION_EVENTS } from '../events/verification.events';
@@ -20,7 +19,6 @@ export class MobileVerificationService {
   private readonly whatsappBusinessNumber: string;
 
   constructor(
-    private readonly verificationRepository: VerificationRepository,
     private readonly verificationProviderFactory: VerificationProviderFactory,
     private readonly userService: UserService,
     private readonly configService: ConfigService,
@@ -64,7 +62,7 @@ export class MobileVerificationService {
         : this.initiateQrVerification();
 
     // Upsert verification record (update existing or create new)
-    const verification = await this.verificationRepository.upsertByUserIdAndChannel(userId, channel, {
+    const verification = await this.verificationService.upsertByUserIdAndChannel(userId, channel, {
       target: normalizedPhone,
       verificationId: channel !== VerificationChannelValues.SMS_OUT ? verificationToken : undefined,
       hashedOtp: channel === VerificationChannelValues.SMS_OUT ? hashedOtp : undefined,
@@ -176,7 +174,7 @@ export class MobileVerificationService {
 
   // Validates a manually-entered OTP against the stored verification token
   async verifyOtp(userId: string, otp: string): Promise<boolean> {
-    const verification = await this.verificationRepository.findByUserIdAndChannel(
+    const verification = await this.verificationService.findByUserIdAndChannel(
       userId,
       VerificationChannelValues.SMS_OUT,
     );
@@ -250,7 +248,7 @@ export class MobileVerificationService {
     ];
 
     const verifications = await Promise.all(
-      mobileChannels.map((channel) => this.verificationRepository.findByUserIdAndChannel(userId, channel)),
+      mobileChannels.map((channel) => this.verificationService.findByUserIdAndChannel(userId, channel)),
     );
 
     return verifications
