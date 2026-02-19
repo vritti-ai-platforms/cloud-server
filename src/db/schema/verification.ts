@@ -1,62 +1,37 @@
 import { boolean, index, integer, text, timestamp, uuid, varchar } from '@vritti/api-sdk/drizzle-pg-core';
 import { cloudSchema } from './cloud-schema';
-import { twoFactorMethodEnum, verificationMethodEnum } from './enums';
+import { twoFactorMethodEnum, verificationChannelEnum } from './enums';
 import { users } from './user';
 
-/**
- * Email verification - tracks OTP for email verification
- */
-export const emailVerifications = cloudSchema.table(
-  'email_verifications',
+// Unified verification — handles both OTP (outbound) and QR (inbound) verification flows
+export const verifications = cloudSchema.table(
+  'verifications',
   {
     id: uuid('id').primaryKey().defaultRandom(),
     userId: uuid('user_id')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
-    email: varchar('email', { length: 255 }).notNull(),
-    otp: varchar('otp', { length: 255 }).notNull(),
-    attempts: integer('attempts').notNull().default(0),
-    isVerified: boolean('is_verified').notNull().default(false),
-    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
-    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-    verifiedAt: timestamp('verified_at', { withTimezone: true }),
-  },
-  (table) => [index('email_verifications_user_id_email_idx').on(table.userId, table.email)],
-);
+    channel: verificationChannelEnum('channel').notNull(),
+    target: varchar('target', { length: 255 }), // Nullable for inbound channels (populated by webhook)
 
-/**
- * Mobile verification - tracks OTP and QR verification for phone numbers
- */
-export const mobileVerifications = cloudSchema.table(
-  'mobile_verifications',
-  {
-    id: uuid('id').primaryKey().defaultRandom(),
-    userId: uuid('user_id')
-      .notNull()
-      .references(() => users.id, { onDelete: 'cascade' }),
-    // Phone is nullable for QR-based methods where phone comes from webhook
-    phone: varchar('phone', { length: 20 }),
-    phoneCountry: varchar('phone_country', { length: 5 }),
-    method: verificationMethodEnum('method').notNull(),
-    otp: varchar('otp', { length: 255 }),
+    // Two storage approaches - use one based on channel direction
+    hashedOtp: varchar('hashed_otp', { length: 255 }), // For EMAIL, SMS_OUT (outbound OTP)
+    verificationId: varchar('verification_id', { length: 255 }).unique(), // For SMS_IN, WHATSAPP_IN (inbound QR)
+
     attempts: integer('attempts').notNull().default(0),
     isVerified: boolean('is_verified').notNull().default(false),
-    qrCode: text('qr_code'),
-    qrScannedAt: timestamp('qr_scanned_at', { withTimezone: true }),
-    qrVerificationId: varchar('qr_verification_id', { length: 255 }).unique(),
     expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     verifiedAt: timestamp('verified_at', { withTimezone: true }),
   },
   (table) => [
-    index('mobile_verifications_user_id_phone_idx').on(table.userId, table.phone),
-    index('mobile_verifications_qr_verification_id_idx').on(table.qrVerificationId),
+    index('verifications_user_id_idx').on(table.userId),
+    index('verifications_user_id_channel_target_idx').on(table.userId, table.channel, table.target),
+    index('verifications_verification_id_idx').on(table.verificationId),
   ],
 );
 
-/**
- * Two-factor authentication - stores 2FA settings
- */
+// Two-factor authentication — stores 2FA settings
 export const twoFactorAuth = cloudSchema.table(
   'two_factor_auth',
   {
@@ -84,9 +59,7 @@ export const twoFactorAuth = cloudSchema.table(
   (table) => [index('two_factor_auth_user_id_method_idx').on(table.userId, table.method)],
 );
 
-/**
- * Password resets - tracks OTP for forgot password flow
- */
+// Password resets — tracks forgot password flow with linked verification
 export const passwordResets = cloudSchema.table(
   'password_resets',
   {
@@ -95,22 +68,16 @@ export const passwordResets = cloudSchema.table(
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
     email: varchar('email', { length: 255 }).notNull(),
-    otp: varchar('otp', { length: 255 }).notNull(),
+    verificationId: uuid('verification_id').references(() => verifications.id, { onDelete: 'set null' }),
     resetToken: varchar('reset_token', { length: 255 }),
-    attempts: integer('attempts').notNull().default(0),
-    isVerified: boolean('is_verified').notNull().default(false),
     isUsed: boolean('is_used').notNull().default(false),
-    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-    verifiedAt: timestamp('verified_at', { withTimezone: true }),
     usedAt: timestamp('used_at', { withTimezone: true }),
   },
   (table) => [index('password_resets_user_id_email_idx').on(table.userId, table.email)],
 );
 
-/**
- * Email change requests - tracks email change workflow
- */
+// Email change requests — tracks email change workflow
 export const emailChangeRequests = cloudSchema.table(
   'email_change_requests',
   {
@@ -120,10 +87,10 @@ export const emailChangeRequests = cloudSchema.table(
       .references(() => users.id, { onDelete: 'cascade' }),
     oldEmail: varchar('old_email', { length: 255 }).notNull(),
     newEmail: varchar('new_email', { length: 255 }),
-    identityVerificationId: uuid('identity_verification_id').references(() => emailVerifications.id, {
+    identityVerificationId: uuid('identity_verification_id').references(() => verifications.id, {
       onDelete: 'set null',
     }),
-    newEmailVerificationId: uuid('new_email_verification_id').references(() => emailVerifications.id, {
+    newEmailVerificationId: uuid('new_email_verification_id').references(() => verifications.id, {
       onDelete: 'set null',
     }),
     isCompleted: boolean('is_completed').notNull().default(false),
@@ -136,9 +103,7 @@ export const emailChangeRequests = cloudSchema.table(
   (table) => [index('email_change_requests_user_id_idx').on(table.userId)],
 );
 
-/**
- * Phone change requests - tracks phone change workflow
- */
+// Phone change requests — tracks phone change workflow
 export const phoneChangeRequests = cloudSchema.table(
   'phone_change_requests',
   {
@@ -150,10 +115,10 @@ export const phoneChangeRequests = cloudSchema.table(
     oldPhoneCountry: varchar('old_phone_country', { length: 5 }),
     newPhone: varchar('new_phone', { length: 20 }),
     newPhoneCountry: varchar('new_phone_country', { length: 5 }),
-    identityVerificationId: uuid('identity_verification_id').references(() => mobileVerifications.id, {
+    identityVerificationId: uuid('identity_verification_id').references(() => verifications.id, {
       onDelete: 'set null',
     }),
-    newPhoneVerificationId: uuid('new_phone_verification_id').references(() => mobileVerifications.id, {
+    newPhoneVerificationId: uuid('new_phone_verification_id').references(() => verifications.id, {
       onDelete: 'set null',
     }),
     isCompleted: boolean('is_completed').notNull().default(false),
@@ -166,9 +131,7 @@ export const phoneChangeRequests = cloudSchema.table(
   (table) => [index('phone_change_requests_user_id_idx').on(table.userId)],
 );
 
-/**
- * Change request rate limits - tracks daily rate limits for email/phone changes
- */
+// Change request rate limits — tracks daily rate limits for email/phone changes
 export const changeRequestRateLimits = cloudSchema.table(
   'change_request_rate_limits',
   {
@@ -192,10 +155,8 @@ export const changeRequestRateLimits = cloudSchema.table(
 );
 
 // Type exports
-export type EmailVerification = typeof emailVerifications.$inferSelect;
-export type NewEmailVerification = typeof emailVerifications.$inferInsert;
-export type MobileVerification = typeof mobileVerifications.$inferSelect;
-export type NewMobileVerification = typeof mobileVerifications.$inferInsert;
+export type Verification = typeof verifications.$inferSelect;
+export type NewVerification = typeof verifications.$inferInsert;
 export type TwoFactorAuth = typeof twoFactorAuth.$inferSelect;
 export type NewTwoFactorAuth = typeof twoFactorAuth.$inferInsert;
 export type PasswordReset = typeof passwordResets.$inferSelect;

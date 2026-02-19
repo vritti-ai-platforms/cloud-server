@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrimaryBaseRepository, PrimaryDatabaseService } from '@vritti/api-sdk';
-import { AccountStatusValues, OnboardingStepValues, type User, users } from '@/db/schema';
+import { eq } from '@vritti/api-sdk/drizzle-orm';
+import { AccountStatusValues, OnboardingStepValues, oauthProviders, type User, users } from '@/db/schema';
 
 @Injectable()
 export class UserRepository extends PrimaryBaseRepository<typeof users> {
@@ -22,6 +23,34 @@ export class UserRepository extends PrimaryBaseRepository<typeof users> {
     return this.model.findFirst({
       where: { email },
     });
+  }
+
+  // Finds a user by ID with their active OAuth profile picture URL
+  async findByIdWithProfilePicture(id: string): Promise<
+    | (User & { oauthProfilePictureUrl: string | null })
+    | undefined
+  > {
+    this.logger.debug(`Finding user with profile picture: ${id}`);
+
+    const result = await this.db
+      .select({
+        user: users,
+        oauthProfilePictureUrl: oauthProviders.profilePictureUrl,
+      })
+      .from(users)
+      .leftJoin(
+        oauthProviders,
+        eq(oauthProviders.userId, users.id) && eq(oauthProviders.useProfilePictureUrl, true),
+      )
+      .where(eq(users.id, id))
+      .limit(1);
+
+    if (!result || result.length === 0) return undefined;
+
+    return {
+      ...result[0].user,
+      oauthProfilePictureUrl: result[0].oauthProfilePictureUrl || null,
+    };
   }
 
   // Finds a user by phone number
@@ -91,20 +120,43 @@ export class UserRepository extends PrimaryBaseRepository<typeof users> {
     });
   }
 
+  // Updates the profile picture URL from OAuth provider
+  async updateProfilePicture(id: string, profilePictureUrl: string | null): Promise<User> {
+    this.logger.debug(`Updating profile picture for user: ${id}`);
+    return this.update(id, { profilePictureUrl });
+  }
+
+  // Extracts first word from fullName for auto-deriving displayName
+  private extractFirstWord(fullName: string): string {
+    if (!fullName?.trim()) return fullName;
+    return fullName.trim().split(/\s+/)[0];
+  }
+
+  // Derives a name from email when OAuth provider doesn't provide one
+  private deriveNameFromEmail(email: string): string {
+    const localPart = email.split('@')[0];
+    return localPart.replace(/[._-]/g, ' ').trim() || email;
+  }
+
   // Creates a user from OAuth provider data without a password
   async createFromOAuth(data: {
     email: string;
-    firstName?: string | null;
-    lastName?: string | null;
+    fullName?: string | null;
+    displayName?: string | null;
     emailVerified?: boolean;
     onboardingStep?: (typeof users.$inferInsert)['onboardingStep'];
     profilePictureUrl?: string | null;
   }): Promise<User> {
     this.logger.log(`Creating user from OAuth: ${data.email}`);
+
+    // Ensure fullName is always set - derive from email if not provided
+    const fullName = data.fullName || this.deriveNameFromEmail(data.email);
+    const displayName = data.displayName || this.extractFirstWord(fullName);
+
     return this.create({
       email: data.email,
-      firstName: data.firstName,
-      lastName: data.lastName,
+      fullName,
+      displayName,
       passwordHash: null, // OAuth users don't have password initially
       emailVerified: data.emailVerified ?? false,
       onboardingStep: data.onboardingStep,

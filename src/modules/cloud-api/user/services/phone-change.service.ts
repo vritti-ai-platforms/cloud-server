@@ -1,11 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { BadRequestException, UnauthorizedException, normalizePhoneNumber } from '@vritti/api-sdk';
-import { eq } from '@vritti/api-sdk/drizzle-orm';
+import { BadRequestException, normalizePhoneNumber } from '@vritti/api-sdk';
 import * as crypto from 'crypto';
-import { mobileVerifications } from '@/db/schema';
+import { VerificationChannelValues } from '@/db/schema';
 import { SmsService } from '@/services';
 import { MobileVerificationRepository } from '../../onboarding/mobile-verification/repositories/mobile-verification.repository';
-import { OtpService } from '../../onboarding/root/services/otp.service';
+import { VerificationService } from '../../verification/services/verification.service';
 import { UserService } from './user.service';
 import { PhoneChangeRequestRepository } from '../repositories/phone-change-request.repository';
 import { RateLimitService } from './rate-limit.service';
@@ -18,7 +17,7 @@ export class PhoneChangeService {
   constructor(
     private readonly phoneChangeRequestRepo: PhoneChangeRequestRepository,
     private readonly mobileVerificationRepo: MobileVerificationRepository,
-    private readonly otpService: OtpService,
+    private readonly verificationService: VerificationService,
     private readonly smsService: SmsService,
     private readonly userService: UserService,
     private readonly rateLimitService: RateLimitService,
@@ -26,7 +25,6 @@ export class PhoneChangeService {
 
   // Sends OTP to current phone to confirm user identity (step 1)
   async requestIdentityVerification(userId: string): Promise<{ verificationId: string; expiresAt: Date }> {
-    // Get user details
     const user = await this.userService.findById(userId);
 
     if (!user.phoneVerified) {
@@ -43,37 +41,23 @@ export class PhoneChangeService {
       });
     }
 
-    // Generate OTP
-    const otp = this.otpService.generateOtp();
-    const hashedOtp = await this.otpService.hashOtp(otp);
-
-    // Create verification record
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-    const verification = await this.mobileVerificationRepo.create({
+    // Create unified verification and get plaintext OTP
+    const { verificationId, otp, expiresAt } = await this.verificationService.createVerification(
       userId,
-      phone: user.phone,
-      phoneCountry: user.phoneCountry || null,
-      method: 'MANUAL_OTP',
-      otp: hashedOtp,
-      qrVerificationId: null,
-      isVerified: false,
-      attempts: 0,
-      expiresAt,
-    });
+      VerificationChannelValues.SMS_OUT,
+      user.phone,
+    );
 
     // Send OTP to current phone (fire and forget)
     this.smsService
-      .sendVerificationSms(`+${user.phone}`, otp, user.firstName ?? undefined)
+      .sendVerificationSms(`+${user.phone}`, otp, user.displayName ?? undefined)
       .catch((error) => {
         this.logger.error(`Failed to send SMS to ${user.phone}: ${error.message}`);
       });
 
     this.logger.log(`Identity verification OTP sent to ${user.phone} for user ${userId}`);
 
-    return {
-      verificationId: verification.id,
-      expiresAt: verification.expiresAt,
-    };
+    return { verificationId, expiresAt };
   }
 
   // Verifies OTP sent to current phone and creates change request (step 2)
@@ -82,51 +66,12 @@ export class PhoneChangeService {
     verificationId: string,
     otpCode: string,
   ): Promise<{ changeRequestId: string; changeRequestsToday: number }> {
-    // Find verification
-    const verification = await this.mobileVerificationRepo.findById(verificationId);
-
-    if (!verification || verification.userId !== userId) {
-      throw new BadRequestException({
-        label: 'Verification Not Found',
-        detail: 'The verification code you provided is invalid or has expired.',
-      });
-    }
-
-    // Validate OTP attempt (expiry and max attempts)
-    this.otpService.validateOtpAttempt(verification);
-
-    // Verify OTP
-    if (!verification.otp) {
-      throw new BadRequestException({
-        label: 'OTP Not Found',
-        detail: 'No OTP was found for this verification.',
-      });
-    }
-
-    const isValid = await this.otpService.verifyOtp(otpCode, verification.otp);
-
-    if (!isValid) {
-      // Increment failed attempts
-      await this.mobileVerificationRepo.incrementAttempts(verification.id);
-      throw new UnauthorizedException({
-        label: 'Invalid Code',
-        detail: 'The verification code you entered is incorrect. Please check the code and try again.',
-        errors: [
-          {
-            field: 'code',
-            message: 'Invalid verification code',
-          },
-        ],
-      });
-    }
-
-    // Mark verification as complete
-    await this.mobileVerificationRepo.markAsVerified(verification.id);
+    // Verify OTP via unified verification service (throws on failure)
+    await this.verificationService.verifyOtp(verificationId, userId, otpCode);
 
     // Check rate limit
     const { requestsToday } = await this.rateLimitService.checkAndIncrementChangeRequestLimit(userId, 'phone');
 
-    // Get user details
     const user = await this.userService.findById(userId);
 
     if (!user.phone) {
@@ -144,7 +89,7 @@ export class PhoneChangeService {
       userId,
       oldPhone: user.phone,
       oldPhoneCountry: user.phoneCountry || null,
-      identityVerificationId: verification.id,
+      identityVerificationId: verificationId,
       isCompleted: false,
     });
 
@@ -163,7 +108,6 @@ export class PhoneChangeService {
     newPhone: string,
     newPhoneCountry: string,
   ): Promise<{ verificationId: string; expiresAt: Date }> {
-    // Find change request
     const changeRequest = await this.phoneChangeRequestRepo.findById(changeRequestId);
 
     if (!changeRequest || changeRequest.userId !== userId) {
@@ -184,7 +128,6 @@ export class PhoneChangeService {
     const normalizedNewPhone = normalizePhoneNumber(newPhone);
     const normalizedOldPhone = normalizePhoneNumber(changeRequest.oldPhone);
 
-    // Check if new phone is same as current
     if (normalizedNewPhone === normalizedOldPhone) {
       throw new BadRequestException({
         label: 'Same Phone Number',
@@ -207,46 +150,29 @@ export class PhoneChangeService {
       newPhoneCountry: newPhoneCountry,
     });
 
-    // Delete any existing verifications for this new phone
-    await this.mobileVerificationRepo.deleteMany(eq(mobileVerifications.phone, normalizedNewPhone));
-
-    // Generate OTP
-    const otp = this.otpService.generateOtp();
-    const hashedOtp = await this.otpService.hashOtp(otp);
-
-    // Create verification record
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-    const verification = await this.mobileVerificationRepo.create({
+    // Create unified verification and get plaintext OTP
+    const { verificationId, otp, expiresAt } = await this.verificationService.createVerification(
       userId,
-      phone: normalizedNewPhone,
-      phoneCountry: newPhoneCountry,
-      method: 'MANUAL_OTP',
-      otp: hashedOtp,
-      qrVerificationId: null,
-      isVerified: false,
-      attempts: 0,
-      expiresAt,
-    });
+      VerificationChannelValues.SMS_OUT,
+      normalizedNewPhone,
+    );
 
     // Update change request with new phone verification ID
     await this.phoneChangeRequestRepo.update(changeRequest.id, {
-      newPhoneVerificationId: verification.id,
+      newPhoneVerificationId: verificationId,
     });
 
     // Send OTP to new phone (fire and forget)
     const user = await this.userService.findById(userId);
     this.smsService
-      .sendVerificationSms(`+${normalizedNewPhone}`, otp, user.firstName ?? undefined)
+      .sendVerificationSms(`+${normalizedNewPhone}`, otp, user.displayName ?? undefined)
       .catch((error) => {
         this.logger.error(`Failed to send SMS to ${normalizedNewPhone}: ${error.message}`);
       });
 
     this.logger.log(`Verification OTP sent to new phone for change request ${changeRequest.id}`);
 
-    return {
-      verificationId: verification.id,
-      expiresAt: verification.expiresAt,
-    };
+    return { verificationId, expiresAt };
   }
 
   // Verifies OTP sent to new phone and completes the change (step 4)
@@ -256,7 +182,6 @@ export class PhoneChangeService {
     verificationId: string,
     otpCode: string,
   ): Promise<{ success: boolean; revertToken: string; revertExpiresAt: Date; newPhone: string }> {
-    // Find change request
     const changeRequest = await this.phoneChangeRequestRepo.findById(changeRequestId);
 
     if (!changeRequest || changeRequest.userId !== userId) {
@@ -280,46 +205,8 @@ export class PhoneChangeService {
       });
     }
 
-    // Find verification
-    const verification = await this.mobileVerificationRepo.findById(verificationId);
-
-    if (!verification || verification.userId !== userId) {
-      throw new BadRequestException({
-        label: 'Verification Not Found',
-        detail: 'The verification code you provided is invalid or has expired.',
-      });
-    }
-
-    // Validate OTP attempt (expiry and max attempts)
-    this.otpService.validateOtpAttempt(verification);
-
-    // Verify OTP
-    if (!verification.otp) {
-      throw new BadRequestException({
-        label: 'OTP Not Found',
-        detail: 'No OTP was found for this verification.',
-      });
-    }
-
-    const isValid = await this.otpService.verifyOtp(otpCode, verification.otp);
-
-    if (!isValid) {
-      // Increment failed attempts
-      await this.mobileVerificationRepo.incrementAttempts(verification.id);
-      throw new UnauthorizedException({
-        label: 'Invalid Code',
-        detail: 'The verification code you entered is incorrect. Please check the code and try again.',
-        errors: [
-          {
-            field: 'code',
-            message: 'Invalid verification code',
-          },
-        ],
-      });
-    }
-
-    // Mark verification as complete
-    await this.mobileVerificationRepo.markAsVerified(verification.id);
+    // Verify OTP via unified verification service (throws on failure)
+    await this.verificationService.verifyOtp(verificationId, userId, otpCode);
 
     // Generate revert token
     const revertToken = crypto.randomUUID();
@@ -336,11 +223,10 @@ export class PhoneChangeService {
     // Mark change request as completed
     await this.phoneChangeRequestRepo.markAsCompleted(changeRequest.id, revertToken, revertExpiresAt);
 
-    // Get user details for notification
     const user = await this.userService.findById(userId);
 
     // Send notification to old phone with revert instructions (fire and forget)
-    const revertMessage = `Hello${user.firstName ? ` ${user.firstName}` : ''}, your Vritti phone number was changed. If this wasn't you, use this token to revert within 72 hours: ${revertToken}`;
+    const revertMessage = `Hello${user.displayName ? ` ${user.displayName}` : ''}, your Vritti phone number was changed. If this wasn't you, use this token to revert within 72 hours: ${revertToken}`;
     this.smsService
       .sendVerificationSms(`+${changeRequest.oldPhone}`, revertMessage)
       .catch((error) => {
@@ -361,7 +247,6 @@ export class PhoneChangeService {
 
   // Reverts a completed phone change using the revert token
   async revertChange(revertToken: string): Promise<{ success: boolean; revertedPhone: string }> {
-    // Find change request by revert token
     const changeRequest = await this.phoneChangeRequestRepo.findCompletedByRevertToken(revertToken);
 
     if (!changeRequest) {
@@ -371,7 +256,6 @@ export class PhoneChangeService {
       });
     }
 
-    // Check token not expired
     if (changeRequest.revertExpiresAt && new Date() > changeRequest.revertExpiresAt) {
       throw new BadRequestException({
         label: 'Revert Token Expired',
@@ -379,7 +263,6 @@ export class PhoneChangeService {
       });
     }
 
-    // Check not already reverted
     if (changeRequest.revertedAt) {
       throw new BadRequestException({
         label: 'Already Reverted',
@@ -394,14 +277,12 @@ export class PhoneChangeService {
       phoneVerified: true,
     });
 
-    // Mark as reverted
     await this.phoneChangeRequestRepo.markAsReverted(changeRequest.id);
 
-    // Get user details for confirmation SMS
     const user = await this.userService.findById(changeRequest.userId);
 
     // Send confirmation SMS to restored phone (fire and forget)
-    const confirmMessage = `Hello${user.firstName ? ` ${user.firstName}` : ''}, your Vritti phone number has been successfully restored to this number.`;
+    const confirmMessage = `Hello${user.displayName ? ` ${user.displayName}` : ''}, your Vritti phone number has been successfully restored to this number.`;
     this.smsService
       .sendVerificationSms(`+${changeRequest.oldPhone}`, confirmMessage)
       .catch((error) => {
@@ -417,65 +298,29 @@ export class PhoneChangeService {
   }
 
   // Resends the verification OTP by deleting the old one and creating a new one
-  async resendOtp(userId: string, verificationId: string): Promise<{ success: boolean; expiresAt: Date }> {
-    // Find verification
-    const verification = await this.mobileVerificationRepo.findById(verificationId);
+  async resendOtp(userId: string, verificationId: string): Promise<{ success: boolean; verificationId: string; expiresAt: Date }> {
+    // Resend via unified verification service (handles validation, deletion, and recreation)
+    const result = await this.verificationService.resendVerification(verificationId, userId);
 
-    if (!verification || verification.userId !== userId) {
-      throw new BadRequestException({
-        label: 'Verification Not Found',
-        detail: 'The verification you are trying to resend is invalid or has expired.',
-      });
-    }
+    // Look up the new verification to get the target phone
+    const newVerification = await this.verificationService.findById(result.verificationId);
 
-    if (verification.isVerified) {
-      throw new BadRequestException({
-        label: 'Verification Already Completed',
-        detail: 'This verification has already been completed.',
-      });
-    }
-
-    if (!verification.phone) {
-      throw new BadRequestException({
-        label: 'Phone Number Not Found',
-        detail: 'No phone number is associated with this verification.',
-      });
-    }
-
-    // Delete old verification
-    await this.mobileVerificationRepo.delete(verification.id);
-
-    // Generate new OTP
-    const otp = this.otpService.generateOtp();
-    const hashedOtp = await this.otpService.hashOtp(otp);
-
-    // Create new verification record
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-    const newVerification = await this.mobileVerificationRepo.create({
-      userId,
-      phone: verification.phone,
-      phoneCountry: verification.phoneCountry,
-      method: 'MANUAL_OTP',
-      otp: hashedOtp,
-      qrVerificationId: null,
-      isVerified: false,
-      attempts: 0,
-      expiresAt,
-    });
-
-    // Send new OTP (fire and forget)
+    // Send OTP to the target phone (fire and forget)
     const user = await this.userService.findById(userId);
-    this.smsService
-      .sendVerificationSms(`+${verification.phone}`, otp, user.firstName ?? undefined)
-      .catch((error) => {
-        this.logger.error(`Failed to send SMS to ${verification.phone}: ${error.message}`);
-      });
+    if (newVerification) {
+      this.smsService
+        .sendVerificationSms(`+${newVerification.target}`, result.otp, user.displayName ?? undefined)
+        .catch((error) => {
+          this.logger.error(`Failed to resend SMS: ${error.message}`);
+        });
+    }
 
-    this.logger.log(`Resent OTP for user ${userId} to ${verification.phone}`);
+    this.logger.log(`Resent OTP for user ${userId}`);
 
     return {
       success: true,
-      expiresAt: newVerification.expiresAt,
+      verificationId: result.verificationId,
+      expiresAt: result.expiresAt,
     };
   }
 }

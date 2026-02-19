@@ -6,6 +6,22 @@ import type { IOAuthProvider } from '../interfaces/oauth-provider.interface';
 import type { FacebookTokenParams, OAuthTokens } from '../interfaces/oauth-tokens.interface';
 import type { OAuthUserProfile } from '../interfaces/oauth-user-profile.interface';
 
+interface FacebookUserInfo {
+  id: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  name: string;
+  picture?: {
+    data: {
+      height: number;
+      is_silhouette: boolean;
+      url: string;
+      width: number;
+    };
+  };
+}
+
 @Injectable()
 export class FacebookOAuthProvider implements IOAuthProvider {
   private readonly logger = new Logger(FacebookOAuthProvider.name);
@@ -21,6 +37,12 @@ export class FacebookOAuthProvider implements IOAuthProvider {
     this.clientId = this.configService.getOrThrow<string>('FACEBOOK_CLIENT_ID');
     this.clientSecret = this.configService.getOrThrow<string>('FACEBOOK_CLIENT_SECRET');
     this.redirectUri = this.configService.getOrThrow<string>('FACEBOOK_CALLBACK_URL');
+  }
+
+  // Extracts first word from fullName for auto-deriving displayName
+  private extractFirstWord(fullName: string): string {
+    if (!fullName?.trim()) return fullName;
+    return fullName.trim().split(/\s+/)[0];
   }
 
   // Builds the Facebook OAuth dialog URL with PKCE support
@@ -73,24 +95,26 @@ export class FacebookOAuthProvider implements IOAuthProvider {
   // Fetches the user's profile from Facebook Graph API using the access token
   async getUserProfile(accessToken: string): Promise<OAuthUserProfile> {
     try {
-      const response = await axios.get(this.USER_INFO_URL, {
+      const response = await axios.get<FacebookUserInfo>(this.USER_INFO_URL, {
         params: {
           fields: 'id,email,first_name,last_name,name,picture',
           access_token: accessToken,
         },
       });
 
-      const data = response.data;
+      const data: FacebookUserInfo = response.data;
 
       this.logger.log(`Retrieved Facebook profile for user: ${data.email}`);
+
+      const fullName = data.name || '';
+      const displayName = data.first_name || this.extractFirstWord(fullName) || '';
 
       return {
         provider: OAuthProviderTypeValues.FACEBOOK,
         providerId: data.id,
         email: data.email,
-        displayName: data.name,
-        firstName: data.first_name,
-        lastName: data.last_name,
+        fullName,
+        displayName,
         profilePictureUrl: data.picture?.data?.url,
       };
     } catch (error) {

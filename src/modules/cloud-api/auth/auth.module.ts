@@ -5,12 +5,13 @@ import { jwtConfigFactory } from '../../../config/jwt.config';
 import { ServicesModule } from '../../../services';
 import { OnboardingModule } from '../onboarding/onboarding.module';
 import { UserModule } from '../user/user.module';
+import { VerificationModule } from '../verification/verification.module';
 // MFA verification submodule
 import { MfaVerificationController } from './mfa-verification/controllers/mfa-verification.controller';
 import { MfaChallengeStore } from './mfa-verification/services/mfa-challenge.store';
 import { MfaVerificationService } from './mfa-verification/services/mfa-verification.service';
 // OAuth submodule
-import { AuthOAuthController } from './oauth/controllers/auth-oauth.controller';
+import { OAuthController } from './oauth/controllers/oauth.controller';
 import { AppleOAuthProvider } from './oauth/providers/apple-oauth.provider';
 import { FacebookOAuthProvider } from './oauth/providers/facebook-oauth.provider';
 import { GoogleOAuthProvider } from './oauth/providers/google-oauth.provider';
@@ -19,6 +20,7 @@ import { TwitterOAuthProvider } from './oauth/providers/twitter-oauth.provider';
 import { OAuthProviderRepository } from './oauth/repositories/oauth-provider.repository';
 import { OAuthStateRepository } from './oauth/repositories/oauth-state.repository';
 import { OAuthService } from './oauth/services/oauth.service';
+import { OAuthCryptoService } from './oauth/services/oauth-crypto.service';
 import { OAuthStateService } from './oauth/services/oauth-state.service';
 // Passkey submodule
 import { PasskeyAuthController } from './passkey/controllers/passkey-auth.controller';
@@ -39,10 +41,11 @@ import { SessionService } from './root/services/session.service';
       useFactory: jwtConfigFactory,
     }),
     ServicesModule,
+    VerificationModule,
     forwardRef(() => UserModule),
     forwardRef(() => OnboardingModule),
   ],
-  controllers: [AuthController, AuthOAuthController, PasskeyAuthController, MfaVerificationController],
+  controllers: [AuthController, OAuthController, PasskeyAuthController, MfaVerificationController],
   providers: [
     // Root
     AuthService,
@@ -54,6 +57,7 @@ import { SessionService } from './root/services/session.service';
     // Passkey
     PasskeyAuthService,
     // OAuth
+    OAuthCryptoService,
     OAuthService,
     OAuthStateService,
     OAuthProviderRepository,

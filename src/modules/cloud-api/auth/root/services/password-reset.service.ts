@@ -1,9 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { BadRequestException, UnauthorizedException } from '@vritti/api-sdk';
+import { BadRequestException } from '@vritti/api-sdk';
 import { randomUUID } from 'node:crypto';
+import { VerificationChannelValues } from '@/db/schema';
 import { EmailService, EncryptionService } from '../../../../../services';
-import { OtpService } from '../../../onboarding/root/services/otp.service';
 import { UserService } from '../../../user/services/user.service';
+import { VerificationService } from '../../../verification/services/verification.service';
 import { PasswordResetRepository } from '../repositories/password-reset.repository';
 import { SessionService } from './session.service';
 
@@ -11,12 +12,12 @@ import { SessionService } from './session.service';
 export class PasswordResetService {
   private readonly logger = new Logger(PasswordResetService.name);
 
-  /** Max time (in minutes) after OTP verification to use the reset token */
+  // Max time (in minutes) after OTP verification to use the reset token
   private readonly RESET_TOKEN_EXPIRY_MINUTES = 10;
 
   constructor(
     private readonly passwordResetRepo: PasswordResetRepository,
-    private readonly otpService: OtpService,
+    private readonly verificationService: VerificationService,
     private readonly emailService: EmailService,
     private readonly encryptionService: EncryptionService,
     private readonly userService: UserService,
@@ -45,23 +46,23 @@ export class PasswordResetService {
       return successResponse;
     }
 
-    // Generate OTP
-    const otp = this.otpService.generateOtp();
-    this.logger.log(`Generated password reset OTP for user ${user.id}`);
-    const hashedOtp = await this.otpService.hashOtp(otp);
-    const expiresAt = this.otpService.getOtpExpiryTime();
+    // Create unified verification record
+    const { verificationId, otp } = await this.verificationService.createVerification(
+      user.id,
+      VerificationChannelValues.EMAIL,
+      email,
+    );
 
-    // Store in database
+    // Store password reset with verification reference
     await this.passwordResetRepo.create({
       userId: user.id,
       email,
-      otp: hashedOtp,
-      expiresAt,
+      verificationId,
     });
 
     // Fire and forget - don't block response waiting for email
     this.emailService
-      .sendPasswordResetEmail(email, otp, user.firstName || undefined)
+      .sendPasswordResetEmail(email, otp, user.displayName || undefined)
       .then(() => {
         this.logger.log(`Sent password reset email to ${email} for user ${user.id}`);
       })
@@ -74,37 +75,24 @@ export class PasswordResetService {
 
   // Validates the OTP and returns a one-time reset token for password change
   async verifyResetOtp(email: string, otp: string): Promise<{ resetToken: string }> {
-    // Find latest non-verified, non-used reset request for this email
+    // Find latest unused reset request for this email
     const resetRequest = await this.passwordResetRepo.findLatestByEmail(email);
 
-    if (!resetRequest) {
+    if (!resetRequest || !resetRequest.verificationId) {
       throw new BadRequestException({
         label: 'Reset Request Not Found',
         detail: "We couldn't find a password reset request for this email. Please request a new code to continue.",
       });
     }
 
-    // Validate OTP attempt (expiry and max attempts)
-    this.otpService.validateOtpAttempt(resetRequest);
-
-    // Verify OTP
-    const isValid = await this.otpService.verifyOtp(otp, resetRequest.otp);
-
-    if (!isValid) {
-      // Increment failed attempts
-      await this.passwordResetRepo.incrementAttempts(resetRequest.id);
-      throw new UnauthorizedException({
-        label: 'Invalid Code',
-        detail: 'The code you entered is incorrect. Please check the code and try again.',
-        errors: [{ field: 'code', message: 'Invalid code' }],
-      });
-    }
+    // Verify OTP via unified verification service (throws on failure)
+    await this.verificationService.verifyOtp(resetRequest.verificationId, resetRequest.userId, otp);
 
     // Generate reset token
     const resetToken = randomUUID();
 
-    // Mark as verified and store reset token
-    await this.passwordResetRepo.markAsVerified(resetRequest.id, resetToken);
+    // Store reset token on the password reset record
+    await this.passwordResetRepo.storeResetToken(resetRequest.id, resetToken);
 
     this.logger.log(`Password reset OTP verified for email ${email}`);
 
@@ -113,19 +101,21 @@ export class PasswordResetService {
 
   // Sets a new password using a verified reset token and invalidates all sessions
   async resetPassword(resetToken: string, newPassword: string): Promise<{ success: boolean; message: string }> {
-    // Find the verified reset request by token
+    // Find the reset request by token
     const resetRequest = await this.passwordResetRepo.findByResetToken(resetToken);
 
-    if (!resetRequest) {
+    if (!resetRequest || !resetRequest.verificationId) {
       throw new BadRequestException({
         label: 'Invalid Reset Token',
         detail: 'This password reset link is invalid or has expired. Please request a new password reset.',
       });
     }
 
-    // Check if reset token has expired (10 minutes from verification)
-    if (resetRequest.verifiedAt) {
-      const expiryTime = new Date(resetRequest.verifiedAt);
+    // Look up the verification record for verifiedAt timestamp
+    const verification = await this.verificationService.findById(resetRequest.verificationId);
+
+    if (verification?.verifiedAt) {
+      const expiryTime = new Date(verification.verifiedAt);
       expiryTime.setMinutes(expiryTime.getMinutes() + this.RESET_TOKEN_EXPIRY_MINUTES);
 
       if (new Date() > expiryTime) {

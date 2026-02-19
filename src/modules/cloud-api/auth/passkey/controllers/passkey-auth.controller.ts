@@ -55,8 +55,8 @@ export class PasskeyAuthController {
       user: {
         id: result.user.id,
         email: result.user.email,
-        firstName: result.user.firstName,
-        lastName: result.user.lastName,
+        fullName: result.user.fullName,
+        displayName: result.user.displayName,
       },
     };
   }

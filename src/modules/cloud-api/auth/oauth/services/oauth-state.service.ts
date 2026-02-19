@@ -1,31 +1,24 @@
-import * as crypto from 'node:crypto';
 import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { UnauthorizedException } from '@vritti/api-sdk';
 import type { OAuthProviderType } from '@/db/schema';
 import type { OAuthStateData } from '../interfaces/oauth-state.interface';
 import { OAuthStateRepository } from '../repositories/oauth-state.repository';
+import { OAuthCryptoService } from './oauth-crypto.service';
 
 @Injectable()
 export class OAuthStateService {
   private readonly logger = new Logger(OAuthStateService.name);
-  private readonly hmacSecret: string;
   private readonly STATE_EXPIRY_MINUTES = 10;
 
   constructor(
     private readonly stateRepository: OAuthStateRepository,
-    private readonly configService: ConfigService,
-  ) {
-    this.hmacSecret = this.configService.getOrThrow<string>('CSRF_HMAC_KEY');
-  }
+    private readonly oauthCryptoService: OAuthCryptoService,
+  ) {}
 
   // Generates a signed state token with PKCE verifier and stores it in the database
   async generateState(provider: OAuthProviderType, userId: string | undefined, codeVerifier: string): Promise<string> {
-    // Generate cryptographically secure random state token
-    const stateToken = crypto.randomBytes(32).toString('hex');
-
-    // Sign state token with HMAC
-    const signedStateToken = this.signStateToken(stateToken);
+    const stateToken = this.oauthCryptoService.generateRandomToken();
+    const signedStateToken = this.oauthCryptoService.signToken(stateToken);
 
     // Calculate expiry time (10 minutes from now)
     const expiresAt = new Date();
@@ -48,7 +41,7 @@ export class OAuthStateService {
   // Validates the HMAC signature, checks expiry, and consumes the one-time state token
   async validateAndConsumeState(stateToken: string): Promise<OAuthStateData> {
     // Verify HMAC signature
-    if (!this.verifyStateToken(stateToken)) {
+    if (!this.oauthCryptoService.verifyToken(stateToken)) {
       this.logger.warn('Invalid OAuth state token signature');
       throw new UnauthorizedException(
         'The authentication request could not be verified. Please try logging in again.',
@@ -67,7 +60,6 @@ export class OAuthStateService {
 
     // Check expiry
     if (new Date() > stateRecord.expiresAt) {
-      // Delete expired state
       await this.stateRepository.delete(stateRecord.id);
       this.logger.warn('OAuth state token expired');
       throw new UnauthorizedException(
@@ -80,7 +72,6 @@ export class OAuthStateService {
 
     this.logger.log(`Validated and consumed OAuth state for provider: ${stateRecord.provider}`);
 
-    // Return state data
     return {
       provider: stateRecord.provider,
       userId: stateRecord.userId || undefined,
@@ -97,27 +88,5 @@ export class OAuthStateService {
     }
 
     return result.count;
-  }
-
-  private signStateToken(stateToken: string): string {
-    const hmac = crypto.createHmac('sha256', this.hmacSecret);
-    hmac.update(stateToken);
-    const signature = hmac.digest('hex');
-    return `${stateToken}.${signature}`;
-  }
-
-  private verifyStateToken(signedStateToken: string): boolean {
-    const parts = signedStateToken.split('.');
-    if (parts.length !== 2) {
-      return false;
-    }
-
-    const [stateToken, providedSignature] = parts;
-    const hmac = crypto.createHmac('sha256', this.hmacSecret);
-    hmac.update(stateToken);
-    const expectedSignature = hmac.digest('hex');
-
-    // Use constant-time comparison to prevent timing attacks
-    return crypto.timingSafeEqual(Buffer.from(providedSignature, 'hex'), Buffer.from(expectedSignature, 'hex'));
   }
 }

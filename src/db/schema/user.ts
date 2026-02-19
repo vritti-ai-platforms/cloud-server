@@ -8,8 +8,8 @@ import { accountStatusEnum, onboardingStepEnum } from './enums';
 export const users = cloudSchema.table('users', {
   id: uuid('id').primaryKey().defaultRandom(),
   email: varchar('email', { length: 255 }).notNull().unique(),
-  firstName: varchar('first_name', { length: 255 }),
-  lastName: varchar('last_name', { length: 255 }),
+  fullName: varchar('full_name', { length: 255 }).notNull(),
+  displayName: varchar('display_name', { length: 100 }).notNull(),
   passwordHash: varchar('password_hash', { length: 255 }),
   accountStatus: accountStatusEnum('account_status').notNull().default('PENDING_VERIFICATION'),
   emailVerified: boolean('email_verified').notNull().default(false),

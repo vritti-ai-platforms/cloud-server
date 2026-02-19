@@ -1,9 +1,15 @@
 import { Body, Controller, HttpCode, HttpStatus, Logger, Post, Res } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { ApiSendSmsOtp, ApiStartPasskeyMfa, ApiVerifyPasskeyMfa, ApiVerifySmsOtp, ApiVerifyTotp } from '../docs/mfa-verification.docs';
 import { Public } from '@vritti/api-sdk';
 import type { FastifyReply } from 'fastify';
 import { getRefreshCookieName, getRefreshCookieOptionsFromConfig } from '../../root/services/session.service';
+import {
+  ApiSendSmsOtp,
+  ApiStartPasskeyMfa,
+  ApiVerifyPasskeyMfa,
+  ApiVerifySmsOtp,
+  ApiVerifyTotp,
+} from '../docs/mfa-verification.docs';
 import {
   MfaVerificationResponseDto,
   PasskeyMfaOptionsDto,

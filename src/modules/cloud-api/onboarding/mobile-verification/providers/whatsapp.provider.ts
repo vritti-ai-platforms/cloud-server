@@ -1,13 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { WhatsAppService } from '@/services';
-import { type VerificationMethod, VerificationMethodValues } from '@/db/schema/enums';
+import { type VerificationChannel, VerificationChannelValues } from '@/db/schema/enums';
 import { type SendVerificationResult, type VerificationProvider } from './verification-provider.interface';
 
 @Injectable()
 export class WhatsAppProvider implements VerificationProvider {
   private readonly logger = new Logger(WhatsAppProvider.name);
-  readonly method: VerificationMethod = VerificationMethodValues.WHATSAPP_QR as VerificationMethod;
+  readonly channel: VerificationChannel = VerificationChannelValues.WHATSAPP_IN;
   private readonly whatsappBusinessNumber: string;
 
   constructor(

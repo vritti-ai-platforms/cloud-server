@@ -8,11 +8,11 @@ export class UserDto {
   @ApiProperty({ description: 'User email address', example: 'user@example.com' })
   email: string;
 
-  @ApiPropertyOptional({ description: 'User first name', example: 'John' })
-  firstName?: string | null;
+  @ApiProperty({ description: 'User full name', example: 'John Doe' })
+  fullName: string;
 
-  @ApiPropertyOptional({ description: 'User last name', example: 'Doe' })
-  lastName?: string | null;
+  @ApiProperty({ description: 'User display name', example: 'John' })
+  displayName: string;
 
   @ApiProperty({
     description: 'Account status',
@@ -76,8 +76,8 @@ export class UserDto {
     return new UserDto({
       id: user.id,
       email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
+      fullName: user.fullName,
+      displayName: user.displayName,
       accountStatus: user.accountStatus,
       emailVerified: user.emailVerified,
       phoneVerified: user.phoneVerified,

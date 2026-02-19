@@ -59,10 +59,10 @@ export class EmailService {
    * Send email verification OTP
    * @param email Recipient email address
    * @param otp One-time password
-   * @param firstName Optional recipient first name for personalization
+   * @param displayName Optional recipient display name for personalization
    */
-  async sendVerificationEmail(email: string, otp: string, firstName?: string): Promise<void> {
-    const displayName = firstName || 'there';
+  async sendVerificationEmail(email: string, otp: string, displayName?: string): Promise<void> {
+    const name = displayName || 'there';
     const subject = 'Verify Your Email - Vritti AI Cloud';
 
     const htmlContent = `
@@ -88,7 +88,7 @@ export class EmailService {
                   <tr>
                     <td style="padding: 40px;">
                       <p style="margin: 0 0 20px; color: #333333; font-size: 16px; line-height: 1.6;">
-                        Hello <strong>${displayName}</strong>,
+                        Hello <strong>${name}</strong>,
                       </p>
                       <p style="margin: 0 0 30px; color: #333333; font-size: 16px; line-height: 1.6;">
                         Thank you for signing up with Vritti AI Cloud. Please use the following verification code to complete your registration:
@@ -130,7 +130,7 @@ export class EmailService {
     `;
 
     const textContent = `
-Hello ${displayName},
+Hello ${name},
 
 Thank you for signing up with Vritti AI Cloud. Please use the following verification code to complete your registration:
 
@@ -146,7 +146,7 @@ This is an automated message, please do not reply.
     `.trim();
 
     await this.sendEmail({
-      to: [{ email, name: displayName }],
+      to: [{ email, name }],
       subject,
       htmlContent,
       textContent,
@@ -159,10 +159,10 @@ This is an automated message, please do not reply.
    * Send password reset OTP
    * @param email Recipient email address
    * @param otp One-time password
-   * @param firstName Optional recipient first name for personalization
+   * @param displayName Optional recipient display name for personalization
    */
-  async sendPasswordResetEmail(email: string, otp: string, firstName?: string): Promise<void> {
-    const displayName = firstName || 'there';
+  async sendPasswordResetEmail(email: string, otp: string, displayName?: string): Promise<void> {
+    const name = displayName || 'there';
     const subject = 'Reset Your Password - Vritti AI Cloud';
 
     const htmlContent = `
@@ -188,7 +188,7 @@ This is an automated message, please do not reply.
                   <tr>
                     <td style="padding: 40px;">
                       <p style="margin: 0 0 20px; color: #333333; font-size: 16px; line-height: 1.6;">
-                        Hello <strong>${displayName}</strong>,
+                        Hello <strong>${name}</strong>,
                       </p>
                       <p style="margin: 0 0 30px; color: #333333; font-size: 16px; line-height: 1.6;">
                         We received a request to reset your password. Use the following code to complete the process:
@@ -235,7 +235,7 @@ This is an automated message, please do not reply.
     `;
 
     const textContent = `
-Hello ${displayName},
+Hello ${name},
 
 We received a request to reset your password. Use the following code to complete the process:
 
@@ -253,7 +253,7 @@ This is an automated message, please do not reply.
     `.trim();
 
     await this.sendEmail({
-      to: [{ email, name: displayName }],
+      to: [{ email, name }],
       subject,
       htmlContent,
       textContent,
@@ -351,16 +351,16 @@ This is an automated message, please do not reply.
    * @param newEmail New email address
    * @param revertToken Revert token for the change
    * @param revertExpiresAt Expiry date of revert token
-   * @param firstName Optional recipient first name for personalization
+   * @param displayName Optional recipient display name for personalization
    */
   async sendEmailChangeNotification(
     oldEmail: string,
     newEmail: string,
     revertToken: string,
     revertExpiresAt: Date,
-    firstName?: string,
+    displayName?: string,
   ): Promise<void> {
-    const displayName = firstName || 'there';
+    const name = displayName || 'there';
     const subject = 'Your Email Address Has Been Changed - Vritti AI Cloud';
 
     // Calculate hours until expiry
@@ -392,7 +392,7 @@ This is an automated message, please do not reply.
                   <tr>
                     <td style="padding: 40px;">
                       <p style="margin: 0 0 20px; color: #333333; font-size: 16px; line-height: 1.6;">
-                        Hello <strong>${displayName}</strong>,
+                        Hello <strong>${name}</strong>,
                       </p>
                       <p style="margin: 0 0 30px; color: #333333; font-size: 16px; line-height: 1.6;">
                         We're writing to inform you that your Vritti AI Cloud email address has been successfully changed.
@@ -453,7 +453,7 @@ This is an automated message, please do not reply.
     `;
 
     const textContent = `
-Hello ${displayName},
+Hello ${name},
 
 We're writing to inform you that your Vritti AI Cloud email address has been successfully changed.
 
@@ -473,7 +473,7 @@ This is an automated message, please do not reply.
     `.trim();
 
     await this.sendEmail({
-      to: [{ email: oldEmail, name: displayName }],
+      to: [{ email: oldEmail, name }],
       subject,
       htmlContent,
       textContent,
@@ -485,10 +485,10 @@ This is an automated message, please do not reply.
   /**
    * Send email revert confirmation
    * @param email Email address that was restored
-   * @param firstName Optional recipient first name for personalization
+   * @param displayName Optional recipient display name for personalization
    */
-  async sendEmailRevertConfirmation(email: string, firstName?: string): Promise<void> {
-    const displayName = firstName || 'there';
+  async sendEmailRevertConfirmation(email: string, displayName?: string): Promise<void> {
+    const name = displayName || 'there';
     const subject = 'Email Address Change Reverted - Vritti AI Cloud';
 
     const htmlContent = `
@@ -514,7 +514,7 @@ This is an automated message, please do not reply.
                   <tr>
                     <td style="padding: 40px;">
                       <p style="margin: 0 0 20px; color: #333333; font-size: 16px; line-height: 1.6;">
-                        Hello <strong>${displayName}</strong>,
+                        Hello <strong>${name}</strong>,
                       </p>
                       <p style="margin: 0 0 30px; color: #333333; font-size: 16px; line-height: 1.6;">
                         Your recent email address change has been successfully reverted. Your email is now:
@@ -552,7 +552,7 @@ This is an automated message, please do not reply.
     `;
 
     const textContent = `
-Hello ${displayName},
+Hello ${name},
 
 Your recent email address change has been successfully reverted. Your email is now:
 
@@ -566,7 +566,7 @@ This is an automated message, please do not reply.
     `.trim();
 
     await this.sendEmail({
-      to: [{ email, name: displayName }],
+      to: [{ email, name }],
       subject,
       htmlContent,
       textContent,

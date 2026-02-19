@@ -6,6 +6,21 @@ import type { IOAuthProvider } from '../interfaces/oauth-provider.interface';
 import type { OAuthTokenExchangePayload, OAuthTokens } from '../interfaces/oauth-tokens.interface';
 import type { OAuthUserProfile } from '../interfaces/oauth-user-profile.interface';
 
+interface MicrosoftUserInfo {
+  '@odata.context': string;
+  userPrincipalName: string;
+  id: string;
+  displayName: string;
+  surname: string;
+  givenName: string;
+  preferredLanguage: string;
+  mail: string | null;
+  mobilePhone: string | null;
+  jobTitle: string | null;
+  officeLocation: string | null;
+  businessPhones: string[];
+}
+
 @Injectable()
 export class MicrosoftOAuthProvider implements IOAuthProvider {
   private readonly logger = new Logger(MicrosoftOAuthProvider.name);
@@ -16,11 +31,47 @@ export class MicrosoftOAuthProvider implements IOAuthProvider {
   private readonly AUTHORIZATION_URL = 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize';
   private readonly TOKEN_URL = 'https://login.microsoftonline.com/common/oauth2/v2.0/token';
   private readonly USER_INFO_URL = 'https://graph.microsoft.com/v1.0/me';
+  private readonly PHOTO_URL = 'https://graph.microsoft.com/v1.0/me/photo/$value';
 
   constructor(private readonly configService: ConfigService) {
     this.clientId = this.configService.getOrThrow<string>('MICROSOFT_CLIENT_ID');
     this.clientSecret = this.configService.getOrThrow<string>('MICROSOFT_CLIENT_SECRET');
     this.redirectUri = this.configService.getOrThrow<string>('MICROSOFT_CALLBACK_URL');
+  }
+
+  // Extracts first word from fullName for auto-deriving displayName
+  private extractFirstWord(fullName: string): string {
+    if (!fullName?.trim()) return fullName;
+    return fullName.trim().split(/\s+/)[0];
+  }
+
+  // Fetches the user's profile photo from Microsoft Graph API and converts to data URL
+  private async fetchProfilePhoto(accessToken: string): Promise<string | undefined> {
+    try {
+      const response = await axios.get(this.PHOTO_URL, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        responseType: 'arraybuffer',
+      });
+
+      // Convert binary data to base64
+      const base64 = Buffer.from(response.data, 'binary').toString('base64');
+      const contentType = response.headers['content-type'] || 'image/jpeg';
+
+      this.logger.debug('Successfully fetched Microsoft profile photo');
+      return `data:${contentType};base64,${base64}`;
+    } catch (error) {
+      // 404 is expected when user has no profile photo - don't log as error
+      if (axios.isAxiosError(error) && error.response?.status === 404) {
+        this.logger.debug('No profile photo available for Microsoft user');
+        return undefined;
+      }
+
+      // Log unexpected errors
+      this.logger.warn('Unexpected error fetching Microsoft profile photo', error);
+      return undefined;
+    }
   }
 
   // Builds the Microsoft OAuth authorization URL with PKCE support
@@ -81,24 +132,29 @@ export class MicrosoftOAuthProvider implements IOAuthProvider {
   // Fetches the user's profile from Microsoft Graph API using the access token
   async getUserProfile(accessToken: string): Promise<OAuthUserProfile> {
     try {
-      const response = await axios.get(this.USER_INFO_URL, {
+      const response = await axios.get<MicrosoftUserInfo>(this.USER_INFO_URL, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
       });
 
-      const data = response.data;
+      const data: MicrosoftUserInfo = response.data;
 
       this.logger.log(`Retrieved Microsoft profile for user: ${data.userPrincipalName}`);
+
+      const fullName = data.displayName || '';
+      const displayName = data.givenName || this.extractFirstWord(fullName) || '';
+
+      // Fetch profile photo (returns undefined if not available)
+      const profilePictureUrl = await this.fetchProfilePhoto(accessToken);
 
       return {
         provider: OAuthProviderTypeValues.MICROSOFT,
         providerId: data.id,
-        email: data.userPrincipalName || data.mail,
-        displayName: data.displayName,
-        firstName: data.givenName,
-        lastName: data.surname,
-        profilePictureUrl: undefined, // Microsoft Graph API requires separate call for photo
+        email: data.userPrincipalName || data.mail || '',
+        fullName,
+        displayName,
+        profilePictureUrl,
       };
     } catch (error) {
       this.logger.error('Failed to get Microsoft user profile', error);

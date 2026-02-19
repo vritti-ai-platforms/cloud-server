@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { BadRequestException } from '@vritti/api-sdk';
-import { EncryptionService } from '../../../../../services';
-import { TIME_CONSTANTS } from '../../../../../constants/time-constants';
+import { TIME_CONSTANTS } from '../../../../constants/time-constants';
+import { EncryptionService } from '../../../../services';
 
 @Injectable()
 export class OtpService {

@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { type VerificationMethod, VerificationMethodValues } from '@/db/schema/enums';
+import { type FrontendVerificationMethod } from '../../utils/method-mapping.util';
 
 export class MobileVerificationStatusResponseDto {
   @ApiProperty({
@@ -10,10 +10,10 @@ export class MobileVerificationStatusResponseDto {
 
   @ApiProperty({
     description: 'The verification method being used for mobile verification',
-    example: 'WHATSAPP_QR',
-    enum: Object.values(VerificationMethodValues),
+    example: 'whatsapp',
+    enum: ['whatsapp', 'sms', 'manual'],
   })
-  method: VerificationMethod;
+  method: FrontendVerificationMethod;
 
   @ApiPropertyOptional({
     description: 'Verification token that the user should send via WhatsApp or SMS to complete verification',

@@ -7,11 +7,9 @@ export interface OAuthUserProfile {
 
   email: string;
 
+  fullName?: string;
+
   displayName?: string;
-
-  firstName?: string;
-
-  lastName?: string;
 
   profilePictureUrl?: string;
 }

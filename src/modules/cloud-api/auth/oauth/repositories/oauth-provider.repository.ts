@@ -47,8 +47,6 @@ export class OAuthProviderRepository extends PrimaryBaseRepository<typeof oauthP
     if (existing) {
       // Update existing provider with new tokens and profile data
       return this.update(existing.id, {
-        email: profile.email,
-        displayName: profile.displayName,
         profilePictureUrl: profile.profilePictureUrl,
         accessToken,
         refreshToken,
@@ -56,17 +54,42 @@ export class OAuthProviderRepository extends PrimaryBaseRepository<typeof oauthP
       });
     }
 
-    // Create new provider
+    // Check if user has any existing OAuth providers
+    const existingProviders = await this.findByUserId(userId);
+    const isFirstProvider = existingProviders.length === 0;
+
+    // Create new provider - set useProfilePictureUrl=true only if first provider
     return this.create({
       userId,
       provider: profile.provider as OAuthProvider['provider'],
       providerId: profile.providerId,
-      email: profile.email,
-      displayName: profile.displayName,
       profilePictureUrl: profile.profilePictureUrl,
+      useProfilePictureUrl: isFirstProvider,
       accessToken,
       refreshToken,
       tokenExpiresAt,
     });
+  }
+
+  // Finds the OAuth provider marked as the active profile picture source for a user
+  async findActiveProfilePictureProvider(userId: string): Promise<OAuthProvider | undefined> {
+    return this.findOne({ userId, useProfilePictureUrl: true });
+  }
+
+  // Sets a specific provider as the active profile picture source (unsets all others for this user)
+  async setActiveProfilePictureProvider(userId: string, providerId: string): Promise<void> {
+    // First, set all providers for this user to false
+    const allProviders = await this.findByUserId(userId);
+    await Promise.all(
+      allProviders.map((provider) =>
+        this.update(provider.id, { useProfilePictureUrl: false }),
+      ),
+    );
+
+    // Then set the target provider to true
+    const targetProvider = allProviders.find((p) => p.id === providerId);
+    if (targetProvider) {
+      await this.update(targetProvider.id, { useProfilePictureUrl: true });
+    }
   }
 }

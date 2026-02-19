@@ -30,6 +30,12 @@ export class AuthService {
     private readonly passwordResetService: PasswordResetService,
   ) {}
 
+  // Extracts first word from fullName for auto-deriving displayName
+  private extractFirstWord(fullName: string): string {
+    if (!fullName?.trim()) return fullName;
+    return fullName.trim().split(/\s+/)[0];
+  }
+
   // Creates a new user or sets password for OAuth users without one
   async signup(
     dto: SignupDto,
@@ -58,7 +64,11 @@ export class AuthService {
     const passwordHash = await this.encryptionService.hashPassword(dto.password);
 
     const user = await this.userService.create(
-      { email: dto.email, firstName: dto.firstName, lastName: dto.lastName },
+      {
+        email: dto.email,
+        fullName: dto.fullName,
+        displayName: this.extractFirstWord(dto.fullName),
+      },
       passwordHash,
       true,
     );
@@ -106,27 +116,14 @@ export class AuthService {
       });
     }
 
-    // Incomplete onboarding — create ONBOARDING session so user can access onboarding endpoints
+    // Incomplete onboarding — reject login and ask user to signup again
     if (user.onboardingStep !== OnboardingStepValues.COMPLETE) {
-      const { accessToken, refreshToken } = await this.sessionService.createSession(
-        user.id,
-        SessionTypeValues.ONBOARDING,
-        ipAddress,
-        userAgent,
-      );
+      this.logger.warn(`Login blocked for incomplete account: ${user.email} (${user.id})`);
 
-      this.logger.log(`User login - requires onboarding: ${user.email} (${user.id})`);
-
-      return {
-        ...new LoginResponse({
-          accessToken,
-          expiresIn: this.jwtService.getExpiryInSeconds(TokenType.ACCESS),
-          requiresOnboarding: true,
-          onboardingStep: user.onboardingStep,
-          user: UserDto.from(user),
-        }),
-        refreshToken,
-      };
+      throw new UnauthorizedException({
+        label: 'Incomplete Account',
+        detail: 'This is an incomplete account. Please sign up again to complete your onboarding.',
+      });
     }
 
     // Only ACTIVE users can login
@@ -196,7 +193,13 @@ export class AuthService {
 
       // Onboarding sessions return tokens but are not fully authenticated
       if (sessionType === SessionTypeValues.ONBOARDING) {
-        return new AuthStatusResponse({ isAuthenticated: false, requiresOnboarding: true, user, accessToken, expiresIn });
+        return new AuthStatusResponse({
+          isAuthenticated: false,
+          requiresOnboarding: true,
+          user,
+          accessToken,
+          expiresIn,
+        });
       }
 
       this.logger.log(`Session recovered for user: ${userId}`);
