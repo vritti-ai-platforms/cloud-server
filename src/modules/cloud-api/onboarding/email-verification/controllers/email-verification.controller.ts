@@ -18,22 +18,22 @@ export class EmailVerificationController {
   ) {}
 
   // Creates a verification record and sends the initial email OTP
-  @Post('send')
+  @Post('send-otp')
   @Onboarding()
   @HttpCode(HttpStatus.OK)
   @ApiSendEmailOtp()
   async sendEmailOtp(@UserId() userId: string): Promise<ResendEmailOtpResponseDto> {
-    this.logger.log(`POST /onboarding/email-verification/send - User: ${userId}`);
+    this.logger.log(`POST /onboarding/email-verification/send-otp - User: ${userId}`);
     return this.emailVerificationService.sendVerificationOtp(userId);
   }
 
   // Validates the email OTP and marks the user's email as verified
-  @Post('verify')
+  @Post('verify-otp')
   @Onboarding()
   @HttpCode(HttpStatus.OK)
   @ApiVerifyEmail()
   async verifyEmail(@UserId() userId: string, @Body() dto: VerifyEmailDto): Promise<VerifyEmailResponseDto> {
-    this.logger.log(`POST /onboarding/email-verification/verify - User: ${userId}`);
+    this.logger.log(`POST /onboarding/email-verification/verify-otp - User: ${userId}`);
     return this.emailVerificationService.verifyEmail(userId, dto);
   }
 }

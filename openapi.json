@@ -2132,7 +2132,7 @@
         ]
       }
     },
-    "/cloud-api/onboarding/email-verification/send": {
+    "/cloud-api/onboarding/email-verification/send-otp": {
       "post": {
         "operationId": "EmailVerificationController_sendEmailOtp",
         "parameters": [],
@@ -2165,7 +2165,7 @@
         ]
       }
     },
-    "/cloud-api/onboarding/email-verification/verify": {
+    "/cloud-api/onboarding/email-verification/verify-otp": {
       "post": {
         "operationId": "EmailVerificationController_verifyEmail",
         "parameters": [],
