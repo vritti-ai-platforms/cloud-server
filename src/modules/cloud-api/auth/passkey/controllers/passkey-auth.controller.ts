@@ -4,6 +4,8 @@ import { Public } from '@vritti/api-sdk';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { ApiStartPasskeyAuth, ApiVerifyPasskeyAuth } from '../docs/passkey-auth.docs';
 import { StartPasskeyAuthDto, VerifyPasskeyAuthDto } from '../dto/request/verify-passkey-auth.dto';
+import { PasskeyAuthOptionsDto } from '../dto/response/passkey-auth-options.dto';
+import { PasskeyAuthResponseDto } from '../dto/response/passkey-auth-response.dto';
 import { PasskeyAuthService } from '../services/passkey-auth.service';
 import { getRefreshCookieName, getRefreshCookieOptionsFromConfig } from '../../root/services/session.service';
 
@@ -19,9 +21,9 @@ export class PasskeyAuthController {
   @Public()
   @HttpCode(HttpStatus.OK)
   @ApiStartPasskeyAuth()
-  async startPasskeyAuth(@Body() dto: StartPasskeyAuthDto) {
+  async startPasskeyAuth(@Body() dto: StartPasskeyAuthDto): Promise<PasskeyAuthOptionsDto> {
     this.logger.log(`POST /auth/passkey/start - Email: ${dto.email || 'none'}`);
-    return await this.passkeyAuthService.startAuthentication(dto.email);
+    return this.passkeyAuthService.startAuthentication(dto.email);
   }
 
   // Verifies the passkey credential and creates an authenticated session
@@ -33,31 +35,19 @@ export class PasskeyAuthController {
     @Body() dto: VerifyPasskeyAuthDto,
     @Req() req: FastifyRequest,
     @Res({ passthrough: true }) res: FastifyReply,
-  ) {
+  ): Promise<PasskeyAuthResponseDto> {
     this.logger.log('POST /auth/passkey/verify');
-
-    const ipAddress = req.ip;
-    const userAgent = req.headers['user-agent'];
 
     const result = await this.passkeyAuthService.verifyAuthentication(
       dto.sessionId,
       dto.credential,
-      ipAddress,
-      userAgent,
+      req.ip,
+      req.headers['user-agent'],
     );
 
     // Set refresh token cookie (domain from REFRESH_COOKIE_DOMAIN env var)
-    res.setCookie(getRefreshCookieName(), result.session.refreshToken, getRefreshCookieOptionsFromConfig());
+    res.setCookie(getRefreshCookieName(), result.refreshToken, getRefreshCookieOptionsFromConfig());
 
-    return {
-      accessToken: result.session.accessToken,
-      expiresIn: result.session.expiresIn,
-      user: {
-        id: result.user.id,
-        email: result.user.email,
-        fullName: result.user.fullName,
-        displayName: result.user.displayName,
-      },
-    };
+    return result;
   }
 }

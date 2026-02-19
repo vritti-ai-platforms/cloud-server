@@ -54,7 +54,7 @@ export class MfaVerificationController {
   @ApiSendSmsOtp()
   async sendSmsOtp(@Body() dto: SendSmsOtpDto): Promise<SmsOtpSentResponseDto> {
     this.logger.log(`POST /auth/mfa/sms/send - sessionId: ${dto.sessionId}`);
-    return await this.mfaVerificationService.sendSmsOtp(dto.sessionId);
+    return this.mfaVerificationService.sendSmsOtp(dto.sessionId);
   }
 
   // Verifies the SMS OTP code to complete MFA login
@@ -82,7 +82,7 @@ export class MfaVerificationController {
   @ApiStartPasskeyMfa()
   async startPasskeyMfa(@Body() dto: StartPasskeyMfaDto): Promise<PasskeyMfaOptionsDto> {
     this.logger.log(`POST /auth/mfa/passkey/start - sessionId: ${dto.sessionId}`);
-    return await this.mfaVerificationService.startPasskeyMfa(dto.sessionId);
+    return this.mfaVerificationService.startPasskeyMfa(dto.sessionId);
   }
 
   // Verifies the passkey authentication response to complete MFA login

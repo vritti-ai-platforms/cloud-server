@@ -1,20 +1,20 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import type { TwoFactorMethod } from '@/db/schema';
+import type { MfaMethod } from '@/db/schema';
 
-export class TwoFactorStatusResponseDto {
+export class MfaStatusResponseDto {
   @ApiProperty({
-    description: 'Indicates whether two-factor authentication is enabled for the user',
+    description: 'Indicates whether multi-factor authentication is enabled for the user',
     example: true,
   })
   isEnabled: boolean;
 
   @ApiPropertyOptional({
-    description: 'The two-factor authentication method configured by the user',
+    description: 'The multi-factor authentication method configured by the user',
     example: 'TOTP',
     enum: ['TOTP', 'PASSKEY', 'SMS', 'EMAIL'],
     nullable: true,
   })
-  method: TwoFactorMethod | null;
+  method: MfaMethod | null;
 
   @ApiProperty({
     description: 'Number of unused backup codes remaining for account recovery',
@@ -23,7 +23,7 @@ export class TwoFactorStatusResponseDto {
   backupCodesRemaining: number;
 
   @ApiPropertyOptional({
-    description: 'Timestamp when two-factor authentication was last used',
+    description: 'Timestamp when multi-factor authentication was last used',
     example: '2024-01-15T10:30:00.000Z',
     type: String,
     format: 'date-time',
@@ -32,7 +32,7 @@ export class TwoFactorStatusResponseDto {
   lastUsedAt: Date | null;
 
   @ApiPropertyOptional({
-    description: 'Timestamp when two-factor authentication was initially configured',
+    description: 'Timestamp when multi-factor authentication was initially configured',
     example: '2024-01-01T08:00:00.000Z',
     type: String,
     format: 'date-time',
@@ -40,7 +40,7 @@ export class TwoFactorStatusResponseDto {
   })
   createdAt: Date | null;
 
-  constructor(partial: Partial<TwoFactorStatusResponseDto>) {
+  constructor(partial: Partial<MfaStatusResponseDto>) {
     Object.assign(this, partial);
   }
 }

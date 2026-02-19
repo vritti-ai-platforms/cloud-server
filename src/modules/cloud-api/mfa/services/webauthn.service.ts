@@ -7,61 +7,7 @@ import {
   verifyRegistrationResponse,
 } from '@simplewebauthn/server';
 import { isoBase64URL, isoUint8Array } from '@simplewebauthn/server/helpers';
-
-type AuthenticatorTransportFuture = 'ble' | 'cable' | 'hybrid' | 'internal' | 'nfc' | 'smart-card' | 'usb';
-
-interface PublicKeyCredentialCreationOptionsJSON {
-  rp: { name: string; id?: string };
-  user: { id: string; name: string; displayName: string };
-  challenge: string;
-  pubKeyCredParams: Array<{ alg: number; type: 'public-key' }>;
-  timeout?: number;
-  excludeCredentials?: Array<{ id: string; type: 'public-key'; transports?: AuthenticatorTransportFuture[] }>;
-  authenticatorSelection?: {
-    authenticatorAttachment?: 'platform' | 'cross-platform';
-    residentKey?: 'discouraged' | 'preferred' | 'required';
-    requireResidentKey?: boolean;
-    userVerification?: 'discouraged' | 'preferred' | 'required';
-  };
-  attestation?: 'none' | 'indirect' | 'direct' | 'enterprise';
-  extensions?: Record<string, unknown>;
-}
-
-interface PublicKeyCredentialRequestOptionsJSON {
-  challenge: string;
-  timeout?: number;
-  rpId?: string;
-  allowCredentials?: Array<{ id: string; type: 'public-key'; transports?: AuthenticatorTransportFuture[] }>;
-  userVerification?: 'discouraged' | 'preferred' | 'required';
-  extensions?: Record<string, unknown>;
-}
-
-interface RegistrationResponseJSON {
-  id: string;
-  rawId: string;
-  response: {
-    clientDataJSON: string;
-    attestationObject: string;
-    transports?: AuthenticatorTransportFuture[];
-  };
-  authenticatorAttachment?: 'platform' | 'cross-platform';
-  clientExtensionResults: Record<string, unknown>;
-  type: 'public-key';
-}
-
-interface AuthenticationResponseJSON {
-  id: string;
-  rawId: string;
-  response: {
-    clientDataJSON: string;
-    authenticatorData: string;
-    signature: string;
-    userHandle?: string;
-  };
-  authenticatorAttachment?: 'platform' | 'cross-platform';
-  clientExtensionResults: Record<string, unknown>;
-  type: 'public-key';
-}
+import type { AuthenticatorTransportFuture, AuthenticationResponseJSON, RegistrationResponseJSON } from '../types/webauthn.types';
 
 @Injectable()
 export class WebAuthnService {
@@ -91,18 +37,18 @@ export class WebAuthnService {
       userName: userEmail,
       userDisplayName: userName || userEmail,
       userID: isoUint8Array.fromUTF8String(userId),
-      attestationType: 'none', // Don't require attestation (better UX)
+      attestationType: 'none',
       excludeCredentials: existingCredentials.map((cred) => ({
         id: cred.id,
         transports: cred.transports,
       })),
       authenticatorSelection: {
-        residentKey: 'preferred', // Discoverable credential for passwordless
-        userVerification: 'required', // Require biometric/PIN verification
-        authenticatorAttachment: 'platform', // Prefer built-in (Touch ID, Face ID)
+        residentKey: 'preferred',
+        userVerification: 'required',
+        authenticatorAttachment: 'platform',
       },
-      supportedAlgorithmIDs: [-7, -257], // ES256, RS256
-      timeout: 300000, // 5 minutes
+      supportedAlgorithmIDs: [-7, -257],
+      timeout: 300000,
     });
 
     this.logger.debug(`Generated registration options for user: ${userId}`);
@@ -116,7 +62,7 @@ export class WebAuthnService {
       expectedChallenge,
       expectedOrigin: this.origin,
       expectedRPID: this.rpID,
-      requireUserVerification: true, // Require biometric/PIN verification
+      requireUserVerification: true,
     });
 
     if (!verification.verified || !verification.registrationInfo) {
@@ -134,7 +80,7 @@ export class WebAuthnService {
     const options = await generateAuthenticationOptions({
       rpID: this.rpID,
       userVerification: 'preferred',
-      timeout: 300000, // 5 minutes
+      timeout: 300000,
       allowCredentials: allowCredentials?.map((cred) => ({
         id: cred.id,
         transports: cred.transports,

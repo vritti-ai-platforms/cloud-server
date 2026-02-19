@@ -27,7 +27,7 @@ export const verificationChannelEnum = cloudSchema.enum('verification_channel', 
   'WHATSAPP_IN',  // Inbound WhatsApp with code (user sends to us via QR)
 ]);
 
-export const twoFactorMethodEnum = cloudSchema.enum('TwoFactorMethod', ['TOTP', 'PASSKEY']);
+export const mfaMethodEnum = cloudSchema.enum('MfaMethod', ['TOTP', 'PASSKEY']);
 
 // OAuth enums
 export const oauthProviderTypeEnum = cloudSchema.enum('OAuthProviderType', [
@@ -47,7 +47,7 @@ export type TenantStatus = (typeof tenantStatusEnum.enumValues)[number];
 export type AccountStatus = (typeof accountStatusEnum.enumValues)[number];
 export type OnboardingStep = (typeof onboardingStepEnum.enumValues)[number];
 export type VerificationChannel = (typeof verificationChannelEnum.enumValues)[number];
-export type TwoFactorMethod = (typeof twoFactorMethodEnum.enumValues)[number];
+export type MfaMethod = (typeof mfaMethodEnum.enumValues)[number];
 export type OAuthProviderType = (typeof oauthProviderTypeEnum.enumValues)[number];
 export type SessionType = (typeof sessionTypeEnum.enumValues)[number];
 
@@ -84,7 +84,7 @@ export const VerificationChannelValues = {
   WHATSAPP_IN: 'WHATSAPP_IN' as const,
 };
 
-export const TwoFactorMethodValues = {
+export const MfaMethodValues = {
   TOTP: 'TOTP' as const,
   PASSKEY: 'PASSKEY' as const,
 };
