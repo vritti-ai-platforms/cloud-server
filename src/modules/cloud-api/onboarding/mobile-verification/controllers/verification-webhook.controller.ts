@@ -21,6 +21,7 @@ import { SMSInboundProvider } from '../providers';
 import { WhatsAppWebhookDto } from '../dto/request/whatsapp-webhook.dto';
 import { TwilioSmsWebhookDto } from '../dto/request/sms-webhook.dto';
 import { MobileVerificationService } from '../services/mobile-verification.service';
+import { VerificationChannelValues } from '@/db/schema/enums';
 
 type WebhookProvider = 'whatsapp' | 'sms';
 
@@ -194,7 +195,11 @@ export class VerificationWebhookController {
 
             this.logger.log(`Found verification token: ${verificationToken} from phone: ${phoneNumber}`);
 
-            const success = await this.mobileVerificationService.verifyFromWebhook(verificationToken, phoneNumber);
+            const success = await this.mobileVerificationService.verifyFromWebhook(
+              verificationToken,
+              phoneNumber,
+              VerificationChannelValues.WHATSAPP_IN,
+            );
 
             if (success) {
               this.logger.log(`Successfully verified phone ${phoneNumber} with token ${verificationToken}`);
@@ -228,7 +233,11 @@ export class VerificationWebhookController {
 
       const normalizedPhone = phoneNumber.startsWith('+') ? phoneNumber.substring(1) : phoneNumber;
 
-      const success = await this.mobileVerificationService.verifyFromWebhook(verificationToken, normalizedPhone);
+      const success = await this.mobileVerificationService.verifyFromWebhook(
+        verificationToken,
+        normalizedPhone,
+        VerificationChannelValues.SMS_IN,
+      );
 
       if (success) {
         this.logger.log(`Successfully verified phone ${phoneNumber} with token ${verificationToken}`);

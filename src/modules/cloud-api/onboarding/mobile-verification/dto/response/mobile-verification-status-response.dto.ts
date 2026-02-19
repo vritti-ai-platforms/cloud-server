@@ -1,68 +1,26 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { type FrontendVerificationMethod } from '../../utils/method-mapping.util';
 
 export class MobileVerificationStatusResponseDto {
   @ApiProperty({
-    description: 'Unique identifier for the verification session',
-    example: 'ver_abc123def456',
+    description: 'Indicates whether the verification was initiated successfully',
+    example: true,
   })
-  verificationId: string;
+  success: boolean;
 
   @ApiProperty({
-    description: 'The verification method being used for mobile verification',
-    example: 'whatsapp',
-    enum: ['whatsapp', 'sms', 'manual'],
-  })
-  method: FrontendVerificationMethod;
-
-  @ApiPropertyOptional({
-    description: 'Verification token that the user should send via WhatsApp or SMS to complete verification',
-    example: 'VRFY-A1B2C3',
-  })
-  verificationToken?: string;
-
-  @ApiProperty({
-    description: 'Indicates whether the mobile number has been successfully verified',
-    example: false,
-  })
-  isVerified: boolean;
-
-  @ApiPropertyOptional({
-    description: 'Phone number being verified in E.164 format. May be null for QR methods until webhook receives it.',
-    example: '+919876543210',
-    nullable: true,
-  })
-  phone?: string | null;
-
-  @ApiPropertyOptional({
-    description: 'ISO country code for the phone number. May be null for QR methods.',
-    example: 'IN',
-    nullable: true,
-  })
-  phoneCountry?: string | null;
-
-  @ApiProperty({
-    description: 'Timestamp when the verification session expires',
-    example: '2024-01-15T10:30:00.000Z',
-    type: String,
-    format: 'date-time',
-  })
-  expiresAt: Date;
-
-  @ApiProperty({
-    description: 'Human-readable message describing the current verification status',
-    example: 'Waiting for user to scan QR code and send verification token via WhatsApp',
+    description: 'Human-readable message describing the verification status',
+    example: 'Verification initiated successfully',
   })
   message: string;
 
   @ApiPropertyOptional({
-    description: 'Step-by-step instructions for the user to complete verification',
-    example: 'Open WhatsApp, scan the QR code, and send the verification token to complete verification.',
+    description: 'Verification code for QR-based methods (WhatsApp/SMS). User sends this code to complete verification. Not returned for manual OTP method.',
+    example: 'VRFY-A1B2C3',
   })
-  instructions?: string;
+  verificationCode?: string;
 
   @ApiPropertyOptional({
-    description: 'WhatsApp business number that the frontend uses to generate the QR code universal link',
+    description: 'WhatsApp business number for generating QR code. Only returned for WhatsApp verification method.',
     example: '+14155238886',
   })
   whatsappNumber?: string;

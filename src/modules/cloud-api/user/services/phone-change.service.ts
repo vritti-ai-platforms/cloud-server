@@ -3,7 +3,6 @@ import { BadRequestException, normalizePhoneNumber } from '@vritti/api-sdk';
 import * as crypto from 'crypto';
 import { VerificationChannelValues } from '@/db/schema';
 import { SmsService } from '@/services';
-import { MobileVerificationRepository } from '../../onboarding/mobile-verification/repositories/mobile-verification.repository';
 import { VerificationService } from '../../verification/services/verification.service';
 import { UserService } from './user.service';
 import { PhoneChangeRequestRepository } from '../repositories/phone-change-request.repository';
@@ -16,7 +15,6 @@ export class PhoneChangeService {
 
   constructor(
     private readonly phoneChangeRequestRepo: PhoneChangeRequestRepository,
-    private readonly mobileVerificationRepo: MobileVerificationRepository,
     private readonly verificationService: VerificationService,
     private readonly smsService: SmsService,
     private readonly userService: UserService,
@@ -67,7 +65,7 @@ export class PhoneChangeService {
     otpCode: string,
   ): Promise<{ changeRequestId: string; changeRequestsToday: number }> {
     // Verify OTP via unified verification service (throws on failure)
-    await this.verificationService.verifyOtp(verificationId, userId, otpCode);
+    await this.verificationService.validateOtp(verificationId, userId, otpCode);
 
     // Check rate limit
     const { requestsToday } = await this.rateLimitService.checkAndIncrementChangeRequestLimit(userId, 'phone');
@@ -136,7 +134,7 @@ export class PhoneChangeService {
     }
 
     // Check if new phone is already in use by another user
-    const phoneInUse = await this.mobileVerificationRepo.isPhoneVerifiedByOtherUser(normalizedNewPhone, userId);
+    const phoneInUse = await this.verificationService.isTargetVerifiedByOtherUser(normalizedNewPhone, userId);
     if (phoneInUse) {
       throw new BadRequestException({
         label: 'Phone Already In Use',
@@ -206,7 +204,7 @@ export class PhoneChangeService {
     }
 
     // Verify OTP via unified verification service (throws on failure)
-    await this.verificationService.verifyOtp(verificationId, userId, otpCode);
+    await this.verificationService.validateOtp(verificationId, userId, otpCode);
 
     // Generate revert token
     const revertToken = crypto.randomUUID();

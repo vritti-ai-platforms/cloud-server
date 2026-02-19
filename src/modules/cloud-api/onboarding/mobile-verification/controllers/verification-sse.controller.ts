@@ -26,21 +26,19 @@ export class VerificationSseController {
   async subscribeToVerificationEvents(@UserId() userId: string): Promise<Observable<MessageEvent>> {
     this.logger.log(`SSE connection requested by user ${userId}`);
 
-    let expiresAt: Date;
-    try {
-      const verification = await this.mobileVerificationService.getVerificationStatus(userId);
-      expiresAt = new Date(verification.expiresAt);
+    const verification = await this.mobileVerificationService.findLatestVerification(userId);
 
-      if (verification.isVerified) {
-        this.logger.warn(`User ${userId} already verified, rejecting SSE connection`);
-        throw new NotFoundException('Verification already completed');
-      }
-    } catch (error) {
-      if (error instanceof NotFoundException) {
-        throw error;
-      }
-      expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    if (!verification) {
+      this.logger.warn(`No verification found for user ${userId}, rejecting SSE connection`);
+      throw new NotFoundException('No verification found. Please initiate verification first.');
     }
+
+    if (verification.isVerified) {
+      this.logger.warn(`User ${userId} already verified, rejecting SSE connection`);
+      throw new NotFoundException('Verification already completed');
+    }
+
+    const expiresAt = verification.expiresAt;
 
     const timeoutMs = Math.max(0, expiresAt.getTime() - Date.now());
 
