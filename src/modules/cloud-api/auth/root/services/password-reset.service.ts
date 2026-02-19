@@ -86,7 +86,7 @@ export class PasswordResetService {
     }
 
     // Verify OTP via unified verification service (throws on failure)
-    await this.verificationService.verifyOtp(resetRequest.verificationId, resetRequest.userId, otp);
+    await this.verificationService.validateOtp(resetRequest.verificationId, resetRequest.userId, otp);
 
     // Generate reset token
     const resetToken = randomUUID();

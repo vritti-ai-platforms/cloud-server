@@ -58,7 +58,7 @@ export class EmailChangeService {
     otpCode: string,
   ): Promise<{ changeRequestId: string; changeRequestsToday: number }> {
     // Verify OTP via unified verification service (throws on failure)
-    await this.verificationService.verifyOtp(verificationId, userId, otpCode);
+    await this.verificationService.validateOtp(verificationId, userId, otpCode);
 
     // Check rate limit
     const { requestsToday } = await this.rateLimitService.checkAndIncrementChangeRequestLimit(userId, 'email');
@@ -180,7 +180,7 @@ export class EmailChangeService {
     }
 
     // Verify OTP via unified verification service (throws on failure)
-    await this.verificationService.verifyOtp(verificationId, userId, otpCode);
+    await this.verificationService.validateOtp(verificationId, userId, otpCode);
 
     // Generate revert token
     const revertToken = crypto.randomUUID();

@@ -1,24 +1,88 @@
 import { Injectable } from '@nestjs/common';
 import { PrimaryBaseRepository, PrimaryDatabaseService } from '@vritti/api-sdk';
-import { and, desc, eq, lt, sql } from '@vritti/api-sdk/drizzle-orm';
+import { and, eq, lt, ne, sql } from '@vritti/api-sdk/drizzle-orm';
 import { type Verification, verifications } from '@/db/schema';
 import type { VerificationChannel } from '@/db/schema/enums';
 
+// Repository pattern: Prefer this.model for simple queries, use this.db for complex operations
+// - Use this.model.findFirst({ where: { field: value } }) for simple lookups with equality checks
+// - Use this.db when you need: complex conditions (ne, or, not), SQL expressions (sql``), aggregations (count, sum), atomic operations (increment)
 @Injectable()
 export class VerificationRepository extends PrimaryBaseRepository<typeof verifications> {
   constructor(database: PrimaryDatabaseService) {
     super(database, verifications);
   }
 
-  // Finds the most recent verification record for a user and channel
-  async findLatestByUserIdAndChannel(userId: string, channel: VerificationChannel): Promise<Verification | undefined> {
-    const results = (await this.db
-      .select()
+  // Finds the verification record for a user and channel (single record due to unique constraint)
+  async findByUserIdAndChannel(userId: string, channel: VerificationChannel): Promise<Verification | undefined> {
+    return this.model.findFirst({
+      where: { userId, channel },
+    });
+  }
+
+  // Finds or creates a verification record for a user and channel, resetting it to pending state
+  async upsertByUserIdAndChannel(
+    userId: string,
+    channel: VerificationChannel,
+    data: {
+      target: string | null;
+      verificationId?: string;
+      hashedOtp?: string;
+      expiresAt: Date;
+    },
+  ): Promise<Verification> {
+    const existing = await this.findByUserIdAndChannel(userId, channel);
+
+    if (existing) {
+      // Update existing record, resetting verification state
+      return this.update(existing.id, {
+        target: data.target,
+        verificationId: data.verificationId,
+        hashedOtp: data.hashedOtp,
+        expiresAt: data.expiresAt,
+        attempts: 0,
+        isVerified: false,
+        verifiedAt: null,
+      });
+    }
+
+    // Create new record
+    return this.create({
+      userId,
+      channel,
+      target: data.target,
+      verificationId: data.verificationId,
+      hashedOtp: data.hashedOtp,
+      expiresAt: data.expiresAt,
+      attempts: 0,
+      isVerified: false,
+    });
+  }
+
+  // Looks up a verification record by its verificationId token and channel
+  async findByVerificationIdAndChannel(
+    verificationId: string,
+    channel: VerificationChannel,
+  ): Promise<Verification | undefined> {
+    return this.model.findFirst({
+      where: { verificationId, channel },
+    });
+  }
+
+  // Checks whether the target (email/phone) is already verified by a different user
+  async isTargetVerifiedByOtherUser(target: string, excludeUserId?: string): Promise<boolean> {
+    let condition = and(eq(verifications.target, target), eq(verifications.isVerified, true));
+
+    if (excludeUserId) {
+      condition = and(condition, ne(verifications.userId, excludeUserId));
+    }
+
+    const count = await this.db
+      .select({ count: sql<number>`count(*)` })
       .from(verifications)
-      .where(and(eq(verifications.userId, userId), eq(verifications.channel, channel)))
-      .orderBy(desc(verifications.createdAt))
-      .limit(1)) as Verification[];
-    return results[0];
+      .where(condition);
+
+    return Number(count[0]?.count) > 0;
   }
 
   // Atomically increments the attempt counter for a verification record

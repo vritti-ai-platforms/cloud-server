@@ -1,4 +1,4 @@
-import { boolean, index, integer, text, timestamp, uuid, varchar } from '@vritti/api-sdk/drizzle-pg-core';
+import { boolean, index, integer, text, timestamp, uniqueIndex, uuid, varchar } from '@vritti/api-sdk/drizzle-pg-core';
 import { cloudSchema } from './cloud-schema';
 import { twoFactorMethodEnum, verificationChannelEnum } from './enums';
 import { users } from './user';
@@ -28,8 +28,9 @@ export const verifications = cloudSchema.table(
     index('verifications_user_id_idx').on(table.userId),
     index('verifications_user_id_channel_target_idx').on(table.userId, table.channel, table.target),
     index('verifications_verification_id_idx').on(table.verificationId),
+    uniqueIndex('verifications_user_id_channel_unique').on(table.userId, table.channel),
   ],
-);
+);;
 
 // Two-factor authentication — stores 2FA settings
 export const twoFactorAuth = cloudSchema.table(

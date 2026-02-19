@@ -199,7 +199,7 @@ export class MfaVerificationService {
     }
 
     // Verify the OTP against the unified verification record
-    await this.verificationService.verifyOtp(challenge.smsVerificationId, challenge.userId, code);
+    await this.verificationService.validateOtp(challenge.smsVerificationId, challenge.userId, code);
 
     // Complete MFA verification
     return this.completeMfaVerification(challenge);

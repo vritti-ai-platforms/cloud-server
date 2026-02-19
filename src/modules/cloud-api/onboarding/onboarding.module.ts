@@ -20,7 +20,6 @@ import {
   VerificationProviderFactory,
   WhatsAppProvider,
 } from './mobile-verification/providers';
-import { MobileVerificationRepository } from './mobile-verification/repositories/mobile-verification.repository';
 import { MobileVerificationService } from './mobile-verification/services/mobile-verification.service';
 import { SseConnectionService } from './mobile-verification/services/sse-connection.service';
 import { VerificationEventListener } from './mobile-verification/services/verification-event.listener';
@@ -40,7 +39,7 @@ import { WebAuthnService } from './two-factor/services/webauthn.service';
     }),
     ServicesModule,
     forwardRef(() => UserModule), // Import UserModule to use UserService
-    VerificationModule, // Import VerificationModule for VerificationService and OtpService
+    VerificationModule, // Import VerificationModule for VerificationService
   ],
   controllers: [
     OnboardingController,
@@ -64,7 +63,6 @@ import { WebAuthnService } from './two-factor/services/webauthn.service';
     WebAuthnService,
     JwtAuthService,
 
-    MobileVerificationRepository,
     SessionRepository,
 
     SseConnectionService,
@@ -81,7 +79,6 @@ import { WebAuthnService } from './two-factor/services/webauthn.service';
     WebAuthnService,
     TwoFactorAuthRepository,
     TotpService,
-    MobileVerificationRepository,
   ],
 })
 export class OnboardingModule {}
