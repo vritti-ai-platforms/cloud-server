@@ -1,12 +1,12 @@
+import * as crypto from 'node:crypto';
 import { Injectable, Logger } from '@nestjs/common';
 import { BadRequestException } from '@vritti/api-sdk';
-import * as crypto from 'crypto';
 import { VerificationChannelValues } from '@/db/schema';
 import { EmailService } from '@/services';
 import { VerificationService } from '../../verification/services/verification.service';
-import { UserService } from './user.service';
 import { EmailChangeRequestRepository } from '../repositories/email-change-request.repository';
 import { RateLimitService } from './rate-limit.service';
+import { UserService } from './user.service';
 
 @Injectable()
 export class EmailChangeService {
@@ -40,11 +40,9 @@ export class EmailChangeService {
     );
 
     // Send OTP email (fire and forget)
-    this.emailService
-      .sendVerificationEmail(user.email, otp, user.displayName || undefined)
-      .catch((error) => {
-        this.logger.error(`Failed to send identity verification email to ${user.email}: ${error.message}`);
-      });
+    this.emailService.sendVerificationEmail(user.email, otp, user.displayName || undefined).catch((error) => {
+      this.logger.error(`Failed to send identity verification email to ${user.email}: ${error.message}`);
+    });
 
     this.logger.log(`Identity verification OTP sent to ${user.email} for user ${userId}`);
 
@@ -138,11 +136,9 @@ export class EmailChangeService {
 
     // Send OTP to new email (fire and forget)
     const user = await this.userService.findById(userId);
-    this.emailService
-      .sendVerificationEmail(newEmail, otp, user.displayName || undefined)
-      .catch((error) => {
-        this.logger.error(`Failed to send verification email to ${newEmail}: ${error.message}`);
-      });
+    this.emailService.sendVerificationEmail(newEmail, otp, user.displayName || undefined).catch((error) => {
+      this.logger.error(`Failed to send verification email to ${newEmail}: ${error.message}`);
+    });
 
     this.logger.log(`Verification OTP sent to new email for change request ${changeRequest.id}`);
 
@@ -237,7 +233,8 @@ export class EmailChangeService {
     if (changeRequest.revertExpiresAt && new Date() > changeRequest.revertExpiresAt) {
       throw new BadRequestException({
         label: 'Revert Token Expired',
-        detail: 'The revert link has expired. You can no longer revert this email change. Please contact support if you need assistance.',
+        detail:
+          'The revert link has expired. You can no longer revert this email change. Please contact support if you need assistance.',
       });
     }
 
@@ -259,9 +256,11 @@ export class EmailChangeService {
     const user = await this.userService.findById(changeRequest.userId);
 
     // Send confirmation email to restored email (fire and forget)
-    this.emailService.sendEmailRevertConfirmation(changeRequest.oldEmail, user.displayName ?? undefined).catch((error) => {
-      this.logger.error(`Failed to send email revert confirmation: ${error.message}`);
-    });
+    this.emailService
+      .sendEmailRevertConfirmation(changeRequest.oldEmail, user.displayName ?? undefined)
+      .catch((error) => {
+        this.logger.error(`Failed to send email revert confirmation: ${error.message}`);
+      });
 
     this.logger.log(`Email change reverted for user ${changeRequest.userId}. Restored to ${changeRequest.oldEmail}`);
 
@@ -272,7 +271,10 @@ export class EmailChangeService {
   }
 
   // Resends the verification OTP by deleting the old one and creating a new one
-  async resendOtp(userId: string, verificationId: string): Promise<{ success: boolean; verificationId: string; expiresAt: Date }> {
+  async resendOtp(
+    userId: string,
+    verificationId: string,
+  ): Promise<{ success: boolean; verificationId: string; expiresAt: Date }> {
     // Resend via unified verification service (handles validation, deletion, and recreation)
     const result = await this.verificationService.resendVerification(verificationId, userId);
 
