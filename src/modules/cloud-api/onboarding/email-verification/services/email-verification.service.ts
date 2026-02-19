@@ -1,9 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { BadRequestException } from '@vritti/api-sdk';
+import { BadRequestException, ConflictException, ForbiddenException } from '@vritti/api-sdk';
 import { OnboardingStepValues, VerificationChannelValues } from '@/db/schema';
 import { EmailService } from '../../../../../services';
 import { UserService } from '../../../user/services/user.service';
 import { VerificationService } from '../../../verification/services/verification.service';
+import { type ChangeEmailDto } from '../dto/request/change-email.dto';
 import { VerifyEmailDto } from '../dto/request/verify-email.dto';
 import { type ResendEmailOtpResponseDto } from '../dto/response/resend-email-otp-response.dto';
 import { type VerifyEmailResponseDto } from '../dto/response/verify-email-response.dto';
@@ -63,6 +64,48 @@ export class EmailVerificationService {
       success: true,
       message: 'Email verified successfully',
     };
+  }
+
+  // Updates the user's email and sends a new verification OTP to it
+  async changeEmail(userId: string, dto: ChangeEmailDto): Promise<ResendEmailOtpResponseDto> {
+    const user = await this.userService.findById(userId);
+
+    if (user.emailVerified || user.onboardingStep === OnboardingStepValues.COMPLETE) {
+      throw new ForbiddenException('Email cannot be changed using this API.');
+    }
+
+    if (dto.email.toLowerCase() === user.email.toLowerCase()) {
+      throw new BadRequestException({
+        label: 'Same Email',
+        detail: 'New email must be different from your current email address.',
+        errors: [{ field: 'email', message: 'Same as current email' }],
+      });
+    }
+
+    const emailTaken = await this.userService.emailExists(dto.email);
+    if (emailTaken) {
+      throw new ConflictException({
+        label: 'Email Already In Use',
+        detail: 'This email address is already associated with another account.',
+        errors: [{ field: 'email', message: 'Email already taken' }],
+      });
+    }
+
+    await this.userService.update(userId, { email: dto.email, emailVerified: false });
+
+    const { otp, expiresAt } = await this.verificationService.createVerification(
+      userId,
+      VerificationChannelValues.EMAIL,
+      dto.email,
+    );
+
+    this.emailService
+      .sendVerificationEmail(dto.email, otp, expiresAt, user.displayName ?? undefined)
+      .catch((error) => {
+        this.logger.error(`Failed to send verification email to ${dto.email}: ${error.message}`);
+      });
+
+    return { success: true, message: 'Email updated. A new verification code has been sent.' };
   }
 
 }

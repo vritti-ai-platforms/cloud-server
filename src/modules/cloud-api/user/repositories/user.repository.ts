@@ -53,6 +53,12 @@ export class UserRepository extends PrimaryBaseRepository<typeof users> {
     };
   }
 
+  // Returns true if any user exists with this email (LIMIT 1 index lookup)
+  async existsByEmail(email: string): Promise<boolean> {
+    const row = await this.model.findFirst({ where: { email } });
+    return row !== undefined;
+  }
+
   // Finds a user by phone number
   async findByPhone(phone: string): Promise<User | undefined> {
     this.logger.debug(`Finding user by phone: ${phone}`);

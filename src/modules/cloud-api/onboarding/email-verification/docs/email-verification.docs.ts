@@ -1,5 +1,6 @@
 import { applyDecorators } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ChangeEmailDto } from '../dto/request/change-email.dto';
 import { VerifyEmailDto } from '../dto/request/verify-email.dto';
 import { ResendEmailOtpResponseDto } from '../dto/response/resend-email-otp-response.dto';
 import { VerifyEmailResponseDto } from '../dto/response/verify-email-response.dto';
@@ -31,3 +32,12 @@ export function ApiVerifyEmail() {
   );
 }
 
+export function ApiChangeEmail() {
+  return applyDecorators(
+    ApiOperation({ summary: 'Change email during onboarding', description: 'Updates the user email and sends a new OTP to it.' }),
+    ApiBody({ type: ChangeEmailDto }),
+    ApiResponse({ status: 200, description: 'Email updated and new OTP sent.', type: ResendEmailOtpResponseDto }),
+    ApiResponse({ status: 400, description: 'Same email or validation error' }),
+    ApiResponse({ status: 409, description: 'Email already in use' }),
+  );
+}

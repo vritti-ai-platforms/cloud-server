@@ -66,6 +66,11 @@ export class UserService {
     return this.userRepository.findByEmail(email);
   }
 
+  // Checks email availability without fetching the full user record
+  async emailExists(email: string): Promise<boolean> {
+    return this.userRepository.existsByEmail(email);
+  }
+
   // Finds a user by phone number
   async findByPhone(phone: string): Promise<User | undefined> {
     return this.userRepository.findByPhone(phone);

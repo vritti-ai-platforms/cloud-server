@@ -2209,6 +2209,50 @@
         ]
       }
     },
+    "/cloud-api/onboarding/email-verification/change-email": {
+      "post": {
+        "description": "Updates the user email and sends a new OTP to it.",
+        "operationId": "EmailVerificationController_changeEmail",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeEmailDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Email updated and new OTP sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResendEmailOtpResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Same email or validation error"
+          },
+          "409": {
+            "description": "Email already in use"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change email during onboarding",
+        "tags": [
+          "Onboarding - Email Verification"
+        ]
+      }
+    },
     "/cloud-api/onboarding/mobile-verification/initiate": {
       "post": {
         "operationId": "MobileVerificationController_initiateMobileVerification",
@@ -4354,6 +4398,18 @@
         "required": [
           "success",
           "message"
+        ]
+      },
+      "ChangeEmailDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "new@example.com"
+          }
+        },
+        "required": [
+          "email"
         ]
       },
       "InitiateMobileVerificationDto": {
