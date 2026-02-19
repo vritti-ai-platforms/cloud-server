@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { TIME_CONSTANTS } from '@/constants/time-constants';
 
 export type MfaMethod = 'totp' | 'sms' | 'passkey';
 
@@ -19,7 +20,7 @@ export interface MfaChallenge {
 export class MfaChallengeStore {
   private readonly logger = new Logger(MfaChallengeStore.name);
   private readonly challenges = new Map<string, MfaChallenge>();
-  private readonly MFA_CHALLENGE_TTL_MINUTES = 5;
+  private readonly MFA_CHALLENGE_TTL_MINUTES = TIME_CONSTANTS.MFA_CHALLENGE_TTL_MINUTES;
 
   // Creates a new MFA challenge with available methods and stores it in memory
   create(

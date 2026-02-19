@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { jwtConfigFactory } from '../../../config/jwt.config';
 import { ServicesModule } from '../../../services';
-import { OnboardingModule } from '../onboarding/onboarding.module';
+import { MfaModule } from '../mfa/mfa.module';
 import { UserModule } from '../user/user.module';
 import { VerificationModule } from '../verification/verification.module';
 // MFA verification submodule
@@ -43,7 +43,7 @@ import { SessionService } from './root/services/session.service';
     ServicesModule,
     VerificationModule,
     forwardRef(() => UserModule),
-    forwardRef(() => OnboardingModule),
+    MfaModule,
   ],
   controllers: [AuthController, OAuthController, PasskeyAuthController, MfaVerificationController],
   providers: [

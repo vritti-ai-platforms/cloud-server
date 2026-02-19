@@ -1,28 +1,16 @@
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import { BadRequestException, UnauthorizedException } from '@vritti/api-sdk';
-import { SessionTypeValues, type TwoFactorAuth, TwoFactorMethodValues, type User, VerificationChannelValues } from '@/db/schema';
-import { TwoFactorAuthRepository } from '../../../onboarding/two-factor/repositories/two-factor-auth.repository';
+import { type MfaAuth, MfaMethodValues, SessionTypeValues, type User, VerificationChannelValues } from '@/db/schema';
+import { MfaRepository } from '../../../mfa/repositories/mfa.repository';
+import { BackupCodeService } from '../../../mfa/services/backup-code.service';
+import { TotpService } from '../../../mfa/services/totp.service';
+import { WebAuthnService } from '../../../mfa/services/webauthn.service';
+import type { AuthenticationResponseJSON } from '../../../mfa/types/webauthn.types';
 import { VerificationService } from '../../../verification/services/verification.service';
-import { TotpService } from '../../../onboarding/two-factor/services/totp.service';
-import { WebAuthnService } from '../../../onboarding/two-factor/services/webauthn.service';
 import { UserService } from '../../../user/services/user.service';
 import { SessionService } from '../../root/services/session.service';
 import { MfaVerificationResponseDto, PasskeyMfaOptionsDto, SmsOtpSentResponseDto } from '../dto';
 import { type MfaChallenge, MfaChallengeStore, type MfaMethod } from './mfa-challenge.store';
-
-interface AuthenticationResponseJSON {
-  id: string;
-  rawId: string;
-  response: {
-    clientDataJSON: string;
-    authenticatorData: string;
-    signature: string;
-    userHandle?: string;
-  };
-  authenticatorAttachment?: 'platform' | 'cross-platform';
-  clientExtensionResults: Record<string, unknown>;
-  type: 'public-key';
-}
 
 @Injectable()
 export class MfaVerificationService {
@@ -31,35 +19,36 @@ export class MfaVerificationService {
   constructor(
     private readonly mfaChallengeStore: MfaChallengeStore,
     private readonly totpService: TotpService,
+    private readonly backupCodeService: BackupCodeService,
     private readonly verificationService: VerificationService,
     private readonly webAuthnService: WebAuthnService,
-    private readonly twoFactorAuthRepo: TwoFactorAuthRepository,
+    private readonly mfaRepo: MfaRepository,
     private readonly userService: UserService,
     @Inject(forwardRef(() => SessionService))
     private readonly sessionService: SessionService,
   ) {}
 
-  // Creates an MFA challenge if the user has 2FA enabled, returning null otherwise
+  // Creates an MFA challenge if the user has MFA enabled, returning null otherwise
   async createMfaChallenge(
     user: User,
     options: { ipAddress?: string; userAgent?: string } = {},
   ): Promise<MfaChallenge | null> {
-    // Get user's 2FA settings
-    const twoFactorAuth = await this.twoFactorAuthRepo.findActiveByUserId(user.id);
+    // Get user's MFA settings
+    const mfaRecord = await this.mfaRepo.findActiveByUserId(user.id);
 
-    if (!twoFactorAuth) {
-      // User doesn't have 2FA enabled
+    if (!mfaRecord) {
+      // User doesn't have MFA enabled
       return null;
     }
 
     // Determine available methods
     const availableMethods: MfaMethod[] = [];
 
-    if (twoFactorAuth.method === TwoFactorMethodValues.TOTP) {
+    if (mfaRecord.method === MfaMethodValues.TOTP) {
       availableMethods.push('totp');
     }
 
-    if (twoFactorAuth.method === TwoFactorMethodValues.PASSKEY) {
+    if (mfaRecord.method === MfaMethodValues.PASSKEY) {
       availableMethods.push('passkey');
     }
 
@@ -69,8 +58,8 @@ export class MfaVerificationService {
     }
 
     if (availableMethods.length === 0) {
-      // No 2FA methods available - shouldn't happen, but handle gracefully
-      this.logger.warn(`User ${user.id} has 2FA record but no valid methods`);
+      // No MFA methods available - shouldn't happen, but handle gracefully
+      this.logger.warn(`User ${user.id} has MFA record but no valid methods`);
       return null;
     }
 
@@ -88,7 +77,7 @@ export class MfaVerificationService {
     return challenge;
   }
 
-  // Verifies a TOTP code or backup code against the user's 2FA configuration
+  // Verifies a TOTP code or backup code against the user's MFA configuration
   async verifyTotp(sessionId: string, code: string): Promise<MfaVerificationResponseDto & { refreshToken: string }> {
     const challenge = this.getMfaChallengeOrThrow(sessionId);
 
@@ -99,13 +88,13 @@ export class MfaVerificationService {
       });
     }
 
-    // Get user's 2FA configuration
-    const twoFactorAuth = await this.twoFactorAuthRepo.findByUserIdAndMethod(
+    // Get user's MFA configuration
+    const mfaRecord = await this.mfaRepo.findByUserIdAndMethod(
       challenge.userId,
-      TwoFactorMethodValues.TOTP,
+      MfaMethodValues.TOTP,
     );
 
-    if (!twoFactorAuth || !twoFactorAuth.totpSecret) {
+    if (!mfaRecord || !mfaRecord.totpSecret) {
       throw new UnauthorizedException({
         label: 'TOTP Not Configured',
         detail: 'TOTP authentication is not properly configured for your account.',
@@ -113,11 +102,11 @@ export class MfaVerificationService {
     }
 
     // Verify the TOTP code
-    const isValid = this.totpService.verifyToken(code, twoFactorAuth.totpSecret);
+    const isValid = this.totpService.verifyToken(code, mfaRecord.totpSecret);
 
     if (!isValid) {
       // Try backup code
-      const backupResult = await this.tryBackupCode(code, twoFactorAuth);
+      const backupResult = await this.tryBackupCode(code, mfaRecord);
       if (!backupResult.valid) {
         throw new BadRequestException({
           label: 'Invalid Code',
@@ -128,7 +117,7 @@ export class MfaVerificationService {
     }
 
     // Update last used timestamp
-    await this.twoFactorAuthRepo.updateLastUsed(twoFactorAuth.id);
+    await this.mfaRepo.updateLastUsed(mfaRecord.id);
 
     // Complete MFA verification
     return this.completeMfaVerification(challenge);
@@ -217,7 +206,7 @@ export class MfaVerificationService {
     }
 
     // Get user's passkeys
-    const passkeys = await this.twoFactorAuthRepo.findAllPasskeysByUserId(challenge.userId);
+    const passkeys = await this.mfaRepo.findAllPasskeysByUserId(challenge.userId);
 
     if (passkeys.length === 0) {
       throw new UnauthorizedException({
@@ -229,11 +218,11 @@ export class MfaVerificationService {
     // Generate authentication options
     // Don't pass transports hint - let browser discover the best way to reach the authenticator
     // This avoids QR code prompt when 'hybrid' transport is stored for synced passkeys
-    const allowCredentials = passkeys.map((pk) => ({
-      id: pk.passkeyCredentialId!,
-    }));
+    const allowCredentials = passkeys
+      .filter((pk) => pk.passkeyCredentialId)
+      .map((pk) => ({ id: pk.passkeyCredentialId! }));
 
-    const options = await this.webAuthnService.generateAuthenticationOptions(allowCredentials as any);
+    const options = await this.webAuthnService.generateAuthenticationOptions(allowCredentials);
 
     // Store challenge
     this.mfaChallengeStore.update(sessionId, { passkeyChallenge: options.challenge });
@@ -265,7 +254,7 @@ export class MfaVerificationService {
     }
 
     // Find passkey by credential ID
-    const passkey = await this.twoFactorAuthRepo.findByCredentialId(credential.id);
+    const passkey = await this.mfaRepo.findByCredentialId(credential.id);
 
     if (!passkey) {
       throw new UnauthorizedException({
@@ -282,22 +271,27 @@ export class MfaVerificationService {
       });
     }
 
+    // Validate passkey data integrity
+    if (!passkey.passkeyPublicKey || !passkey.passkeyCredentialId) {
+      throw new UnauthorizedException('Passkey data is corrupted.');
+    }
+
     // Verify authentication
     try {
-      const publicKey = this.webAuthnService.base64urlToUint8Array(passkey.passkeyPublicKey!);
+      const publicKey = this.webAuthnService.base64urlToUint8Array(passkey.passkeyPublicKey);
       const transports = passkey.passkeyTransports ? JSON.parse(passkey.passkeyTransports) : undefined;
 
       const verification = await this.webAuthnService.verifyAuthentication(
-        credential as any,
+        credential,
         challenge.passkeyChallenge,
         publicKey,
         passkey.passkeyCounter ?? 0,
-        passkey.passkeyCredentialId!,
+        passkey.passkeyCredentialId,
         transports,
       );
 
       // Update counter
-      await this.twoFactorAuthRepo.updatePasskeyCounter(passkey.id, verification.authenticationInfo.newCounter);
+      await this.mfaRepo.updatePasskeyCounter(passkey.id, verification.authenticationInfo.newCounter);
     } catch (error) {
       this.logger.error(`Passkey MFA verification failed: ${(error as Error).message}`);
       throw new UnauthorizedException({
@@ -325,24 +319,25 @@ export class MfaVerificationService {
 
   private async tryBackupCode(
     code: string,
-    twoFactorAuth: TwoFactorAuth,
+    mfaRecord: MfaAuth,
   ): Promise<{ valid: boolean }> {
-    if (!twoFactorAuth.totpBackupCodes) {
+    if (!mfaRecord.totpBackupCodes) {
       return { valid: false };
     }
 
     try {
-      const hashedCodes = JSON.parse(twoFactorAuth.totpBackupCodes) as string[];
-      const result = await this.totpService.verifyBackupCode(code, hashedCodes);
+      const hashedCodes = JSON.parse(mfaRecord.totpBackupCodes) as string[];
+      const result = await this.backupCodeService.verifyBackupCode(code, hashedCodes);
 
       if (result.valid) {
         // Update remaining backup codes
-        await this.twoFactorAuthRepo.updateBackupCodes(twoFactorAuth.id, result.remainingHashes);
-        this.logger.log(`Backup code used for user: ${twoFactorAuth.userId}`);
+        await this.mfaRepo.updateBackupCodes(mfaRecord.id, result.remainingHashes);
+        this.logger.log(`Backup code used for user: ${mfaRecord.userId}`);
       }
 
       return { valid: result.valid };
-    } catch {
+    } catch (error) {
+      this.logger.warn(`Failed to parse backup codes for MFA ${mfaRecord.id}: ${(error as Error).message}`);
       return { valid: false };
     }
   }

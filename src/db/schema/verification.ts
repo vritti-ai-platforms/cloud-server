@@ -1,6 +1,6 @@
 import { boolean, index, integer, text, timestamp, uniqueIndex, uuid, varchar } from '@vritti/api-sdk/drizzle-pg-core';
 import { cloudSchema } from './cloud-schema';
-import { twoFactorMethodEnum, verificationChannelEnum } from './enums';
+import { mfaMethodEnum, verificationChannelEnum } from './enums';
 import { users } from './user';
 
 // Unified verification — handles both OTP (outbound) and QR (inbound) verification flows
@@ -32,15 +32,15 @@ export const verifications = cloudSchema.table(
   ],
 );;
 
-// Two-factor authentication — stores 2FA settings
-export const twoFactorAuth = cloudSchema.table(
-  'two_factor_auth',
+// MFA authentication — stores MFA settings (TOTP, Passkey)
+export const mfaAuth = cloudSchema.table(
+  'mfa_auth',
   {
     id: uuid('id').primaryKey().defaultRandom(),
     userId: uuid('user_id')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
-    method: twoFactorMethodEnum('method').notNull(),
+    method: mfaMethodEnum('method').notNull(),
     isActive: boolean('is_active').notNull().default(true),
     totpSecret: varchar('totp_secret', { length: 255 }),
     totpBackupCodes: text('totp_backup_codes'),
@@ -57,7 +57,7 @@ export const twoFactorAuth = cloudSchema.table(
       .$onUpdate(() => new Date()),
     lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
   },
-  (table) => [index('two_factor_auth_user_id_method_idx').on(table.userId, table.method)],
+  (table) => [index('mfa_auth_user_id_method_idx').on(table.userId, table.method)],
 );
 
 // Password resets — tracks forgot password flow with linked verification
@@ -158,8 +158,8 @@ export const changeRequestRateLimits = cloudSchema.table(
 // Type exports
 export type Verification = typeof verifications.$inferSelect;
 export type NewVerification = typeof verifications.$inferInsert;
-export type TwoFactorAuth = typeof twoFactorAuth.$inferSelect;
-export type NewTwoFactorAuth = typeof twoFactorAuth.$inferInsert;
+export type MfaAuth = typeof mfaAuth.$inferSelect;
+export type NewMfaAuth = typeof mfaAuth.$inferInsert;
 export type PasswordReset = typeof passwordResets.$inferSelect;
 export type NewPasswordReset = typeof passwordResets.$inferInsert;
 export type EmailChangeRequest = typeof emailChangeRequests.$inferSelect;

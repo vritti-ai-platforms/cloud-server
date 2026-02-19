@@ -19,7 +19,7 @@ export const relations = defineRelations(schema, (r) => ({
   // User relations
   users: {
     verifications: r.many.verifications(),
-    twoFactorAuth: r.many.twoFactorAuth(),
+    mfaAuth: r.many.mfaAuth(),
     oauthProviders: r.many.oauthProviders(),
     sessions: r.many.sessions(),
   },
@@ -48,10 +48,10 @@ export const relations = defineRelations(schema, (r) => ({
     }),
   },
 
-  // Two-factor auth relations
-  twoFactorAuth: {
+  // MFA auth relations
+  mfaAuth: {
     user: r.one.users({
-      from: r.twoFactorAuth.userId,
+      from: r.mfaAuth.userId,
       to: r.users.id,
     }),
   },

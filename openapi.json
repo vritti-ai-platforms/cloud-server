@@ -2728,19 +2728,26 @@
         ]
       }
     },
-    "/cloud-api/onboarding/2fa/totp/setup": {
+    "/cloud-api/onboarding/mfa/totp/setup": {
       "post": {
-        "operationId": "TwoFactorController_initiateTotpSetup",
+        "operationId": "TotpSetupController_initiateTotpSetup",
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Returns QR code and manual key for TOTP setup"
+            "description": "Returns QR code and manual key for TOTP setup",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TotpSetupResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "2FA already enabled for this user"
           },
           "401": {
             "description": "Unauthorized - Invalid or missing onboarding token"
-          },
-          "409": {
-            "description": "TOTP already configured for this user"
           }
         },
         "security": [
@@ -2750,17 +2757,16 @@
         ],
         "summary": "Initiate TOTP (Time-based One-Time Password) setup",
         "tags": [
-          "Onboarding - Two-Factor Authentication"
+          "Onboarding - TOTP"
         ]
       }
     },
-    "/cloud-api/onboarding/2fa/totp/verify": {
+    "/cloud-api/onboarding/mfa/totp/verify": {
       "post": {
-        "operationId": "TwoFactorController_verifyTotpSetup",
+        "operationId": "TotpSetupController_verifyTotpSetup",
         "parameters": [],
         "requestBody": {
           "required": true,
-          "description": "TOTP verification payload",
           "content": {
             "application/json": {
               "schema": {
@@ -2771,10 +2777,17 @@
         },
         "responses": {
           "200": {
-            "description": "TOTP verified successfully, returns backup codes"
+            "description": "TOTP verified successfully, returns backup codes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackupCodesResponseDto"
+                }
+              }
+            }
           },
           "400": {
-            "description": "Invalid TOTP code"
+            "description": "Invalid TOTP code or session expired"
           },
           "401": {
             "description": "Unauthorized - Invalid or missing onboarding token"
@@ -2787,31 +2800,120 @@
         ],
         "summary": "Verify TOTP setup with a code from authenticator app",
         "tags": [
-          "Onboarding - Two-Factor Authentication"
+          "Onboarding - TOTP"
         ]
       }
     },
-    "/cloud-api/onboarding/2fa/skip": {
+    "/cloud-api/onboarding/mfa/passkey/setup": {
       "post": {
-        "operationId": "TwoFactorController_skip2FASetup",
+        "operationId": "PasskeySetupController_initiatePasskeySetup",
         "parameters": [],
         "responses": {
           "200": {
-            "description": "2FA setup skipped successfully",
+            "description": "Returns WebAuthn registration options for passkey setup",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "example": true
-                    },
-                    "message": {
-                      "type": "string",
-                      "example": "Two-factor authentication setup skipped. You can enable it later in settings."
-                    }
-                  }
+                  "$ref": "#/components/schemas/PasskeyRegistrationOptionsDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "2FA already enabled for this user"
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing onboarding token"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Initiate Passkey/WebAuthn setup",
+        "tags": [
+          "Onboarding - Passkey"
+        ]
+      }
+    },
+    "/cloud-api/onboarding/mfa/passkey/verify": {
+      "post": {
+        "operationId": "PasskeySetupController_verifyPasskeySetup",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyPasskeyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Passkey registered successfully, returns backup codes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackupCodesResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid passkey credential or session expired"
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing onboarding token"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Verify Passkey/WebAuthn credential registration",
+        "tags": [
+          "Onboarding - Passkey"
+        ]
+      }
+    },
+    "/cloud-api/onboarding/mfa/skip": {
+      "post": {
+        "operationId": "MfaStatusController_skipMfaSetup",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "MFA setup skipped successfully"
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing onboarding token"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Skip MFA setup",
+        "tags": [
+          "Onboarding - MFA"
+        ]
+      }
+    },
+    "/cloud-api/onboarding/mfa/status": {
+      "get": {
+        "operationId": "MfaStatusController_getMfaStatus",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Returns the current MFA configuration status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MfaStatusResponseDto"
                 }
               }
             }
@@ -2825,95 +2927,9 @@
             "bearer": []
           }
         ],
-        "summary": "Skip two-factor authentication setup",
+        "summary": "Get current MFA status",
         "tags": [
-          "Onboarding - Two-Factor Authentication"
-        ]
-      }
-    },
-    "/cloud-api/onboarding/2fa/status": {
-      "get": {
-        "operationId": "TwoFactorController_get2FAStatus",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "Returns the current 2FA configuration status"
-          },
-          "401": {
-            "description": "Unauthorized - Invalid or missing onboarding token"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get current two-factor authentication status",
-        "tags": [
-          "Onboarding - Two-Factor Authentication"
-        ]
-      }
-    },
-    "/cloud-api/onboarding/2fa/passkey/setup": {
-      "post": {
-        "operationId": "TwoFactorController_initiatePasskeySetup",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "Returns WebAuthn registration options for passkey setup"
-          },
-          "401": {
-            "description": "Unauthorized - Invalid or missing onboarding token"
-          },
-          "409": {
-            "description": "Passkey already configured for this user"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Initiate Passkey/WebAuthn setup",
-        "tags": [
-          "Onboarding - Two-Factor Authentication"
-        ]
-      }
-    },
-    "/cloud-api/onboarding/2fa/passkey/verify": {
-      "post": {
-        "operationId": "TwoFactorController_verifyPasskeySetup",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "description": "Passkey credential verification payload",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/VerifyPasskeyDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Passkey registered successfully, returns backup codes"
-          },
-          "400": {
-            "description": "Invalid passkey credential"
-          },
-          "401": {
-            "description": "Unauthorized - Invalid or missing onboarding token"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Verify Passkey/WebAuthn credential registration",
-        "tags": [
-          "Onboarding - Two-Factor Authentication"
+          "Onboarding - MFA"
         ]
       }
     }
@@ -4547,6 +4563,37 @@
           "otp"
         ]
       },
+      "TotpSetupResponseDto": {
+        "type": "object",
+        "properties": {
+          "qrCodeDataUrl": {
+            "type": "string",
+            "description": "Base64-encoded data URL of the QR code image for scanning with authenticator apps",
+            "example": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA..."
+          },
+          "manualSetupKey": {
+            "type": "string",
+            "description": "Manual setup key for users who cannot scan the QR code, to be entered manually in authenticator app",
+            "example": "JBSWY3DPEHPK3PXP"
+          },
+          "issuer": {
+            "type": "string",
+            "description": "Name of the service/application issuing the TOTP",
+            "example": "Vritti"
+          },
+          "accountName": {
+            "type": "string",
+            "description": "Account identifier displayed in the authenticator app, typically the user email",
+            "example": "john.doe@example.com"
+          }
+        },
+        "required": [
+          "qrCodeDataUrl",
+          "manualSetupKey",
+          "issuer",
+          "accountName"
+        ]
+      },
       "VerifyTotpDto": {
         "type": "object",
         "properties": {
@@ -4560,6 +4607,86 @@
         },
         "required": [
           "token"
+        ]
+      },
+      "BackupCodesResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates whether the backup codes were generated successfully",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable message describing the result of the operation",
+            "example": "Backup codes generated successfully. Store them securely."
+          },
+          "backupCodes": {
+            "description": "Array of one-time use backup codes for account recovery",
+            "example": [
+              "ABC123DE",
+              "FGH456IJ",
+              "KLM789NO",
+              "PQR012ST",
+              "UVW345XY",
+              "ZAB678CD",
+              "EFG901HI",
+              "JKL234MN"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "warning": {
+            "type": "string",
+            "description": "Important warning message about storing backup codes securely",
+            "example": "These codes will only be shown once. Store them in a secure location. Each code can only be used once."
+          }
+        },
+        "required": [
+          "success",
+          "message",
+          "backupCodes",
+          "warning"
+        ]
+      },
+      "PasskeyRegistrationOptionsDto": {
+        "type": "object",
+        "properties": {
+          "options": {
+            "type": "object",
+            "description": "WebAuthn PublicKeyCredentialCreationOptions object containing challenge, relying party info, user info, and supported algorithms for passkey registration",
+            "example": {
+              "challenge": "base64url-encoded-challenge",
+              "rp": {
+                "name": "Vritti",
+                "id": "vritti.com"
+              },
+              "user": {
+                "id": "base64url-user-id",
+                "name": "john.doe@example.com",
+                "displayName": "John Doe"
+              },
+              "pubKeyCredParams": [
+                {
+                  "type": "public-key",
+                  "alg": -7
+                }
+              ],
+              "timeout": 60000,
+              "attestation": "none",
+              "authenticatorSelection": {
+                "authenticatorAttachment": "platform",
+                "requireResidentKey": false,
+                "userVerification": "preferred"
+              }
+            }
+          }
+        },
+        "required": [
+          "options"
         ]
       },
       "VerifyPasskeyDto": {
@@ -4587,6 +4714,51 @@
         },
         "required": [
           "credential"
+        ]
+      },
+      "MfaStatusResponseDto": {
+        "type": "object",
+        "properties": {
+          "isEnabled": {
+            "type": "boolean",
+            "description": "Indicates whether two-factor authentication is enabled for the user",
+            "example": true
+          },
+          "method": {
+            "type": "string",
+            "description": "The two-factor authentication method configured by the user",
+            "example": "TOTP",
+            "enum": [
+              "TOTP",
+              "PASSKEY",
+              "SMS",
+              "EMAIL"
+            ],
+            "nullable": true
+          },
+          "backupCodesRemaining": {
+            "type": "number",
+            "description": "Number of unused backup codes remaining for account recovery",
+            "example": 8
+          },
+          "lastUsedAt": {
+            "type": "string",
+            "description": "Timestamp when two-factor authentication was last used",
+            "example": "2024-01-15T10:30:00.000Z",
+            "format": "date-time",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "Timestamp when two-factor authentication was initially configured",
+            "example": "2024-01-01T08:00:00.000Z",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": [
+          "isEnabled",
+          "backupCodesRemaining"
         ]
       }
     }

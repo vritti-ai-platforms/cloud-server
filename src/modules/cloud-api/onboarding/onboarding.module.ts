@@ -4,6 +4,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { SseAuthGuard } from '@vritti/api-sdk';
 import { jwtConfigFactory } from '../../../config/jwt.config';
 import { ServicesModule } from '../../../services';
+import { MfaModule } from '../mfa/mfa.module';
 import { SessionRepository } from '../auth/root/repositories/session.repository';
 import { JwtAuthService } from '../auth/root/services/jwt.service';
 import { SessionService } from '../auth/root/services/session.service';
@@ -23,13 +24,14 @@ import {
 import { MobileVerificationService } from './mobile-verification/services/mobile-verification.service';
 import { SseConnectionService } from './mobile-verification/services/sse-connection.service';
 import { VerificationEventListener } from './mobile-verification/services/verification-event.listener';
+import { PasskeySetupController } from './passkey/controllers/passkey-setup.controller';
+import { PasskeySetupService } from './passkey/services/passkey-setup.service';
 import { OnboardingController } from './root/controllers/onboarding.controller';
+import { MfaStatusController } from './root/controllers/mfa-status.controller';
 import { OnboardingService } from './root/services/onboarding.service';
-import { TwoFactorController } from './two-factor/controllers/two-factor.controller';
-import { TwoFactorAuthRepository } from './two-factor/repositories/two-factor-auth.repository';
-import { TotpService } from './two-factor/services/totp.service';
-import { TwoFactorAuthService } from './two-factor/services/two-factor-auth.service';
-import { WebAuthnService } from './two-factor/services/webauthn.service';
+import { MfaStatusService } from './root/services/mfa-status.service';
+import { TotpSetupController } from './totp/controllers/totp-setup.controller';
+import { TotpSetupService } from './totp/services/totp-setup.service';
 
 @Module({
   imports: [
@@ -38,8 +40,9 @@ import { WebAuthnService } from './two-factor/services/webauthn.service';
       useFactory: jwtConfigFactory,
     }),
     ServicesModule,
-    forwardRef(() => UserModule), // Import UserModule to use UserService
-    VerificationModule, // Import VerificationModule for VerificationService
+    MfaModule,
+    forwardRef(() => UserModule),
+    VerificationModule,
   ],
   controllers: [
     OnboardingController,
@@ -47,38 +50,39 @@ import { WebAuthnService } from './two-factor/services/webauthn.service';
     MobileVerificationController,
     VerificationWebhookController,
     VerificationSseController,
-    TwoFactorController,
+    TotpSetupController,
+    PasskeySetupController,
+    MfaStatusController,
   ],
   providers: [
+    // Root
     OnboardingService,
+    MfaStatusService,
+    // Email verification
     EmailVerificationService,
+    // Mobile verification
     MobileVerificationService,
-    SessionService,
     WhatsAppProvider,
     SMSInboundProvider,
     SMSOtpProvider,
     VerificationProviderFactory,
-    TotpService,
-    TwoFactorAuthService,
-    WebAuthnService,
-    JwtAuthService,
-
-    SessionRepository,
-
     SseConnectionService,
     VerificationEventListener,
     SseAuthGuard,
-    TwoFactorAuthRepository,
+    // TOTP setup
+    TotpSetupService,
+    // Passkey setup
+    PasskeySetupService,
+    // Auth (needed for session management during onboarding)
+    SessionService,
+    JwtAuthService,
+    SessionRepository,
   ],
   exports: [
     OnboardingService,
     EmailVerificationService,
     MobileVerificationService,
     VerificationProviderFactory,
-    TwoFactorAuthService,
-    WebAuthnService,
-    TwoFactorAuthRepository,
-    TotpService,
   ],
 })
 export class OnboardingModule {}

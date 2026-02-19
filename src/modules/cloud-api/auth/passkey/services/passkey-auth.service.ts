@@ -1,25 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { BadRequestException, UnauthorizedException } from '@vritti/api-sdk';
-import { TwoFactorAuthRepository } from '../../../onboarding/two-factor/repositories/two-factor-auth.repository';
-import { WebAuthnService } from '../../../onboarding/two-factor/services/webauthn.service';
+import { MfaRepository } from '../../../mfa/repositories/mfa.repository';
+import { WebAuthnService } from '../../../mfa/services/webauthn.service';
+import type { AuthenticatorTransportFuture, AuthenticationResponseJSON } from '../../../mfa/types/webauthn.types';
 import { UserService } from '../../../user/services/user.service';
 import { PasskeyAuthOptionsDto } from '../dto/response/passkey-auth-options.dto';
+import { PasskeyAuthResponseDto } from '../dto/response/passkey-auth-response.dto';
 import { SessionService } from '../../root/services/session.service';
-
-// Type for WebAuthn authentication response
-interface AuthenticationResponseJSON {
-  id: string;
-  rawId: string;
-  response: {
-    clientDataJSON: string;
-    authenticatorData: string;
-    signature: string;
-    userHandle?: string;
-  };
-  authenticatorAttachment?: string;
-  clientExtensionResults: Record<string, unknown>;
-  type: string;
-}
+import { TIME_CONSTANTS } from '@/constants/time-constants';
 
 const pendingAuthentications = new Map<
   string,
@@ -29,7 +17,6 @@ const pendingAuthentications = new Map<
     expiresAt: Date;
   }
 >();
-const PENDING_AUTH_TTL_MINUTES = 5;
 
 @Injectable()
 export class PasskeyAuthService {
@@ -37,14 +24,14 @@ export class PasskeyAuthService {
 
   constructor(
     private readonly webAuthnService: WebAuthnService,
-    private readonly twoFactorAuthRepo: TwoFactorAuthRepository,
+    private readonly mfaRepo: MfaRepository,
     private readonly userService: UserService,
     private readonly sessionService: SessionService,
   ) {}
 
   // Generates WebAuthn authentication options, optionally scoped to a user's passkeys
   async startAuthentication(email?: string): Promise<PasskeyAuthOptionsDto> {
-    let allowCredentials: Array<{ id: string; transports?: string[] }> | undefined;
+    let allowCredentials: Array<{ id: string; transports?: AuthenticatorTransportFuture[] }> | undefined;
     let userId: string | undefined;
 
     // If email provided, get user's passkeys
@@ -52,25 +39,25 @@ export class PasskeyAuthService {
       const user = await this.userService.findByEmail(email);
       if (user) {
         userId = user.id;
-        const passkeys = await this.twoFactorAuthRepo.findAllPasskeysByUserId(user.id);
+        const passkeys = await this.mfaRepo.findAllPasskeysByUserId(user.id);
         if (passkeys.length > 0) {
           // Don't pass transports hint - let browser discover the best way
           // This avoids QR code prompt when 'hybrid' transport is stored
-          allowCredentials = passkeys.map((pk) => ({
-            id: pk.passkeyCredentialId!,
-          }));
+          allowCredentials = passkeys
+            .filter((pk) => pk.passkeyCredentialId)
+            .map((pk) => ({ id: pk.passkeyCredentialId! }));
         }
       }
     }
 
-    const options = await this.webAuthnService.generateAuthenticationOptions(allowCredentials as any);
+    const options = await this.webAuthnService.generateAuthenticationOptions(allowCredentials);
 
     // Generate session ID for this authentication attempt
     const sessionId = crypto.randomUUID();
 
     // Store challenge
     const expiresAt = new Date();
-    expiresAt.setMinutes(expiresAt.getMinutes() + PENDING_AUTH_TTL_MINUTES);
+    expiresAt.setMinutes(expiresAt.getMinutes() + TIME_CONSTANTS.PASSKEY_AUTH_CHALLENGE_TTL_MINUTES);
     pendingAuthentications.set(sessionId, {
       challenge: options.challenge,
       userId,
@@ -88,7 +75,7 @@ export class PasskeyAuthService {
     credential: AuthenticationResponseJSON,
     ipAddress?: string,
     userAgent?: string,
-  ) {
+  ): Promise<PasskeyAuthResponseDto> {
     // Get pending authentication
     const pending = pendingAuthentications.get(sessionId);
     if (!pending) {
@@ -108,7 +95,7 @@ export class PasskeyAuthService {
     }
 
     // Find passkey by credential ID
-    const passkey = await this.twoFactorAuthRepo.findByCredentialId(credential.id);
+    const passkey = await this.mfaRepo.findByCredentialId(credential.id);
     if (!passkey) {
       throw new UnauthorizedException({
         label: 'Passkey Not Registered',
@@ -116,18 +103,23 @@ export class PasskeyAuthService {
       });
     }
 
+    // Validate passkey data integrity
+    if (!passkey.passkeyPublicKey || !passkey.passkeyCredentialId) {
+      throw new UnauthorizedException('Passkey data is corrupted.');
+    }
+
     // Verify authentication
     let verification;
     try {
-      const publicKey = this.webAuthnService.base64urlToUint8Array(passkey.passkeyPublicKey!);
+      const publicKey = this.webAuthnService.base64urlToUint8Array(passkey.passkeyPublicKey);
       const transports = passkey.passkeyTransports ? JSON.parse(passkey.passkeyTransports) : undefined;
 
       verification = await this.webAuthnService.verifyAuthentication(
-        credential as any,
+        credential,
         pending.challenge,
         publicKey,
         passkey.passkeyCounter ?? 0,
-        passkey.passkeyCredentialId!,
+        passkey.passkeyCredentialId,
         transports,
       );
     } catch (error) {
@@ -140,28 +132,29 @@ export class PasskeyAuthService {
 
     // Update counter (replay protection)
     const newCounter = verification.authenticationInfo.newCounter;
-    await this.twoFactorAuthRepo.updatePasskeyCounter(passkey.id, newCounter);
+    await this.mfaRepo.updatePasskeyCounter(passkey.id, newCounter);
 
     // Clean up
     pendingAuthentications.delete(sessionId);
 
-    // Get user
+    // Get user (findById throws NotFoundException if not found)
     const user = await this.userService.findById(passkey.userId);
-    if (!user) {
-      throw new UnauthorizedException({
-        label: 'User Not Found',
-        detail: 'User account not found.',
-      });
-    }
 
     // Create session
     const session = await this.sessionService.createSession(user.id, 'CLOUD', ipAddress, userAgent);
 
     this.logger.log(`Passkey authentication successful for user: ${user.id}`);
 
-    return {
-      user,
-      session,
-    };
+    return new PasskeyAuthResponseDto({
+      accessToken: session.accessToken,
+      expiresIn: session.expiresIn,
+      refreshToken: session.refreshToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        fullName: user.fullName,
+        displayName: user.displayName,
+      },
+    });
   }
 }

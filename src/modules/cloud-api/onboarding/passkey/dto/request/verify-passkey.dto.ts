@@ -1,18 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsObject } from 'class-validator';
-
-interface RegistrationResponseJSON {
-  id: string;
-  rawId: string;
-  response: {
-    clientDataJSON: string;
-    attestationObject: string;
-    transports?: string[];
-  };
-  authenticatorAttachment?: 'platform' | 'cross-platform';
-  clientExtensionResults: Record<string, unknown>;
-  type: 'public-key';
-}
+import type { RegistrationResponseJSON } from '../../../../mfa/types/webauthn.types';
 
 export class VerifyPasskeyDto {
   @ApiProperty({

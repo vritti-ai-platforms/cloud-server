@@ -2,70 +2,69 @@ import { Injectable } from '@nestjs/common';
 import { PrimaryBaseRepository, PrimaryDatabaseService } from '@vritti/api-sdk';
 import { and, eq } from '@vritti/api-sdk/drizzle-orm';
 import {
-  type TwoFactorAuth,
-  type TwoFactorMethod,
-  TwoFactorMethodValues,
-  twoFactorAuth,
+  type MfaAuth,
+  type MfaMethod,
+  MfaMethodValues,
+  mfaAuth,
 } from '@/db/schema';
 
 @Injectable()
-export class TwoFactorAuthRepository extends PrimaryBaseRepository<typeof twoFactorAuth> {
+export class MfaRepository extends PrimaryBaseRepository<typeof mfaAuth> {
   constructor(database: PrimaryDatabaseService) {
-    super(database, twoFactorAuth);
+    super(database, mfaAuth);
   }
 
-  // Finds the active 2FA record for a user, if one exists
-  async findActiveByUserId(userId: string): Promise<TwoFactorAuth | undefined> {
-    this.logger.debug(`Finding active 2FA for user: ${userId}`);
+  // Finds the active MFA record for a user, if one exists
+  async findActiveByUserId(userId: string): Promise<MfaAuth | undefined> {
+    this.logger.debug(`Finding active MFA for user: ${userId}`);
     return this.model.findFirst({
       where: { userId, isActive: true },
     });
   }
 
-  // Finds a 2FA record for a specific user and method combination
-  async findByUserIdAndMethod(userId: string, method: TwoFactorMethod): Promise<TwoFactorAuth | undefined> {
-    this.logger.debug(`Finding 2FA for user ${userId} with method ${method}`);
+  // Finds a MFA record for a specific user and method combination
+  async findByUserIdAndMethod(userId: string, method: MfaMethod): Promise<MfaAuth | undefined> {
+    this.logger.debug(`Finding MFA for user ${userId} with method ${method}`);
     return this.model.findFirst({
       where: { userId, method },
     });
   }
 
-  // Deactivates all active 2FA records for a user before enabling a new method
+  // Deactivates all active MFA records for a user before enabling a new method
   async deactivateAllByUserId(userId: string): Promise<number> {
-    this.logger.log(`Deactivating all 2FA for user: ${userId}`);
-    const condition = and(eq(twoFactorAuth.userId, userId), eq(twoFactorAuth.isActive, true));
-    if (!condition) return 0;
+    this.logger.log(`Deactivating all MFA for user: ${userId}`);
+    const condition = and(eq(mfaAuth.userId, userId), eq(mfaAuth.isActive, true))!;
     const result = await this.updateMany(condition, { isActive: false });
     return result.count;
   }
 
   // Replaces the stored backup codes with a new set of hashed codes
-  async updateBackupCodes(id: string, hashedCodes: string[]): Promise<TwoFactorAuth> {
-    this.logger.log(`Updating backup codes for 2FA: ${id}`);
+  async updateBackupCodes(id: string, hashedCodes: string[]): Promise<MfaAuth> {
+    this.logger.log(`Updating backup codes for MFA: ${id}`);
     return this.update(id, {
       totpBackupCodes: JSON.stringify(hashedCodes),
     });
   }
 
-  // Updates the last-used timestamp on a 2FA record
-  async updateLastUsed(id: string): Promise<TwoFactorAuth> {
-    this.logger.debug(`Updating last used for 2FA: ${id}`);
+  // Updates the last-used timestamp on a MFA record
+  async updateLastUsed(id: string): Promise<MfaAuth> {
+    this.logger.debug(`Updating last used for MFA: ${id}`);
     return this.update(id, { lastUsedAt: new Date() });
   }
 
-  // Creates an active TOTP-based 2FA record with the secret and backup codes
-  async createTotp(userId: string, totpSecret: string, hashedBackupCodes: string[]): Promise<TwoFactorAuth> {
-    this.logger.log(`Creating TOTP 2FA for user: ${userId}`);
+  // Creates an active TOTP-based MFA record with the secret and backup codes
+  async createTotp(userId: string, totpSecret: string, hashedBackupCodes: string[]): Promise<MfaAuth> {
+    this.logger.log(`Creating TOTP MFA for user: ${userId}`);
     return this.create({
       userId,
-      method: TwoFactorMethodValues.TOTP,
+      method: MfaMethodValues.TOTP,
       isActive: true,
       totpSecret,
       totpBackupCodes: JSON.stringify(hashedBackupCodes),
     });
   }
 
-  // Creates an active passkey-based 2FA record with the WebAuthn credential data
+  // Creates an active passkey-based MFA record with the WebAuthn credential data
   async createPasskey(
     userId: string,
     credentialId: string,
@@ -73,11 +72,11 @@ export class TwoFactorAuthRepository extends PrimaryBaseRepository<typeof twoFac
     counter: number,
     transports: string[],
     hashedBackupCodes: string[],
-  ): Promise<TwoFactorAuth> {
-    this.logger.log(`Creating Passkey 2FA for user: ${userId}`);
+  ): Promise<MfaAuth> {
+    this.logger.log(`Creating Passkey MFA for user: ${userId}`);
     return this.create({
       userId,
-      method: TwoFactorMethodValues.PASSKEY,
+      method: MfaMethodValues.PASSKEY,
       isActive: true,
       passkeyCredentialId: credentialId,
       passkeyPublicKey: publicKey,
@@ -88,7 +87,7 @@ export class TwoFactorAuthRepository extends PrimaryBaseRepository<typeof twoFac
   }
 
   // Looks up an active passkey record by its WebAuthn credential ID
-  async findByCredentialId(credentialId: string): Promise<TwoFactorAuth | undefined> {
+  async findByCredentialId(credentialId: string): Promise<MfaAuth | undefined> {
     this.logger.debug('Finding passkey by credential ID');
     return this.model.findFirst({
       where: { passkeyCredentialId: credentialId, isActive: true },
@@ -96,19 +95,19 @@ export class TwoFactorAuthRepository extends PrimaryBaseRepository<typeof twoFac
   }
 
   // Retrieves all active passkey records for a user to populate exclude lists
-  async findAllPasskeysByUserId(userId: string): Promise<TwoFactorAuth[]> {
+  async findAllPasskeysByUserId(userId: string): Promise<MfaAuth[]> {
     this.logger.debug(`Finding all passkeys for user: ${userId}`);
     return this.model.findMany({
       where: {
         userId,
-        method: TwoFactorMethodValues.PASSKEY,
+        method: MfaMethodValues.PASSKEY,
         isActive: true,
       },
     });
   }
 
   // Updates the passkey signature counter and last-used timestamp after authentication
-  async updatePasskeyCounter(id: string, newCounter: number): Promise<TwoFactorAuth> {
+  async updatePasskeyCounter(id: string, newCounter: number): Promise<MfaAuth> {
     this.logger.debug(`Updating passkey counter for: ${id}`);
     return this.update(id, {
       passkeyCounter: newCounter,
