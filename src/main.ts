@@ -181,7 +181,7 @@ async function bootstrap() {
       path: '/', // Cookie must be available for all endpoints
     },
     csrfOpts: {
-      hmacKey: configService.getOrThrow<string>('CSRF_HMAC_KEY'),
+      hmacKey: configService.getOrThrow<string>('HMAC_KEY'),
     },
   });
 

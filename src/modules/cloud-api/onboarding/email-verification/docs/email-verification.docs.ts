@@ -31,15 +31,3 @@ export function ApiVerifyEmail() {
   );
 }
 
-export function ApiResendEmailOtp() {
-  return applyDecorators(
-    ApiOperation({ summary: 'Resend email verification OTP' }),
-    ApiResponse({
-      status: 200,
-      description: 'OTP sent successfully',
-      type: ResendEmailOtpResponseDto,
-    }),
-    ApiResponse({ status: 401, description: 'Unauthorized - Invalid or missing onboarding token' }),
-    ApiResponse({ status: 429, description: 'Too many requests - Rate limit exceeded' }),
-  );
-}

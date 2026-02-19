@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { BadRequestException, normalizePhoneNumber } from '@vritti/api-sdk';
+import { BadRequestException, NotFoundException, normalizePhoneNumber } from '@vritti/api-sdk';
 import * as crypto from 'crypto';
 import { VerificationChannelValues } from '@/db/schema';
 import { SmsService } from '@/services';
@@ -22,7 +22,7 @@ export class PhoneChangeService {
   ) {}
 
   // Sends OTP to current phone to confirm user identity (step 1)
-  async requestIdentityVerification(userId: string): Promise<{ verificationId: string; expiresAt: Date }> {
+  async requestIdentityVerification(userId: string): Promise<{ expiresAt: Date }> {
     const user = await this.userService.findById(userId);
 
     if (!user.phoneVerified) {
@@ -40,7 +40,7 @@ export class PhoneChangeService {
     }
 
     // Create unified verification and get plaintext OTP
-    const { verificationId, otp, expiresAt } = await this.verificationService.createVerification(
+    const { otp, expiresAt } = await this.verificationService.createVerification(
       userId,
       VerificationChannelValues.SMS_OUT,
       user.phone,
@@ -55,17 +55,16 @@ export class PhoneChangeService {
 
     this.logger.log(`Identity verification OTP sent to ${user.phone} for user ${userId}`);
 
-    return { verificationId, expiresAt };
+    return { expiresAt };
   }
 
   // Verifies OTP sent to current phone and creates change request (step 2)
   async verifyIdentity(
     userId: string,
-    verificationId: string,
     otpCode: string,
   ): Promise<{ changeRequestId: string; changeRequestsToday: number }> {
     // Verify OTP via unified verification service (throws on failure)
-    await this.verificationService.validateOtp(verificationId, userId, otpCode);
+    await this.verificationService.verifyVerification(otpCode, VerificationChannelValues.SMS_OUT, userId);
 
     // Check rate limit
     const { requestsToday } = await this.rateLimitService.checkAndIncrementChangeRequestLimit(userId, 'phone');
@@ -87,7 +86,6 @@ export class PhoneChangeService {
       userId,
       oldPhone: user.phone,
       oldPhoneCountry: user.phoneCountry || null,
-      identityVerificationId: verificationId,
       isCompleted: false,
     });
 
@@ -105,7 +103,7 @@ export class PhoneChangeService {
     changeRequestId: string,
     newPhone: string,
     newPhoneCountry: string,
-  ): Promise<{ verificationId: string; expiresAt: Date }> {
+  ): Promise<{ expiresAt: Date }> {
     const changeRequest = await this.phoneChangeRequestRepo.findById(changeRequestId);
 
     if (!changeRequest || changeRequest.userId !== userId) {
@@ -149,16 +147,11 @@ export class PhoneChangeService {
     });
 
     // Create unified verification and get plaintext OTP
-    const { verificationId, otp, expiresAt } = await this.verificationService.createVerification(
+    const { otp, expiresAt } = await this.verificationService.createVerification(
       userId,
       VerificationChannelValues.SMS_OUT,
       normalizedNewPhone,
     );
-
-    // Update change request with new phone verification ID
-    await this.phoneChangeRequestRepo.update(changeRequest.id, {
-      newPhoneVerificationId: verificationId,
-    });
 
     // Send OTP to new phone (fire and forget)
     const user = await this.userService.findById(userId);
@@ -170,14 +163,13 @@ export class PhoneChangeService {
 
     this.logger.log(`Verification OTP sent to new phone for change request ${changeRequest.id}`);
 
-    return { verificationId, expiresAt };
+    return { expiresAt };
   }
 
   // Verifies OTP sent to new phone and completes the change (step 4)
   async verifyNewPhone(
     userId: string,
     changeRequestId: string,
-    verificationId: string,
     otpCode: string,
   ): Promise<{ success: boolean; revertToken: string; revertExpiresAt: Date; newPhone: string }> {
     const changeRequest = await this.phoneChangeRequestRepo.findById(changeRequestId);
@@ -204,7 +196,7 @@ export class PhoneChangeService {
     }
 
     // Verify OTP via unified verification service (throws on failure)
-    await this.verificationService.validateOtp(verificationId, userId, otpCode);
+    await this.verificationService.verifyVerification(otpCode, VerificationChannelValues.SMS_OUT, userId);
 
     // Generate revert token
     const revertToken = crypto.randomUUID();
@@ -295,30 +287,20 @@ export class PhoneChangeService {
     };
   }
 
-  // Resends the verification OTP by deleting the old one and creating a new one
-  async resendOtp(userId: string, verificationId: string): Promise<{ success: boolean; verificationId: string; expiresAt: Date }> {
-    // Resend via unified verification service (handles validation, deletion, and recreation)
-    const result = await this.verificationService.resendVerification(verificationId, userId);
-
-    // Look up the new verification to get the target phone
-    const newVerification = await this.verificationService.findById(result.verificationId);
-
-    // Send OTP to the target phone (fire and forget)
-    const user = await this.userService.findById(userId);
-    if (newVerification) {
-      this.smsService
-        .sendVerificationSms(`+${newVerification.target}`, result.otp, user.displayName ?? undefined)
-        .catch((error) => {
-          this.logger.error(`Failed to resend SMS: ${error.message}`);
-        });
+  // Resends the verification OTP by looking up the active verification and creating a new one
+  async resendOtp(userId: string): Promise<{ success: boolean; expiresAt: Date }> {
+    const existing = await this.verificationService.findByUserIdAndChannel(userId, VerificationChannelValues.SMS_OUT);
+    if (!existing || !existing.target) {
+      throw new NotFoundException('No active verification found. Please start the process again.');
     }
-
+    const { otp, expiresAt } = await this.verificationService.createVerification(userId, VerificationChannelValues.SMS_OUT, existing.target);
+    const user = await this.userService.findById(userId);
+    this.smsService
+      .sendVerificationSms(`+${existing.target}`, otp, user.displayName ?? undefined)
+      .catch((error) => {
+        this.logger.error(`Failed to resend SMS: ${error.message}`);
+      });
     this.logger.log(`Resent OTP for user ${userId}`);
-
-    return {
-      success: true,
-      verificationId: result.verificationId,
-      expiresAt: result.expiresAt,
-    };
+    return { success: true, expiresAt };
   }
 }

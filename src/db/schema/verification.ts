@@ -14,9 +14,8 @@ export const verifications = cloudSchema.table(
     channel: verificationChannelEnum('channel').notNull(),
     target: varchar('target', { length: 255 }), // Nullable for inbound channels (populated by webhook)
 
-    // Two storage approaches - use one based on channel direction
-    hashedOtp: varchar('hashed_otp', { length: 255 }), // For EMAIL, SMS_OUT (outbound OTP)
-    verificationId: varchar('verification_id', { length: 255 }).unique(), // For SMS_IN, WHATSAPP_IN (inbound QR)
+    // Stores bcrypt hash for OTP channels (EMAIL, SMS_OUT) or HMAC-SHA256 for inbound channels (SMS_IN, WHATSAPP_IN)
+    hash: varchar('hash', { length: 255 }).notNull(),
 
     attempts: integer('attempts').notNull().default(0),
     isVerified: boolean('is_verified').notNull().default(false),
@@ -27,7 +26,7 @@ export const verifications = cloudSchema.table(
   (table) => [
     index('verifications_user_id_idx').on(table.userId),
     index('verifications_user_id_channel_target_idx').on(table.userId, table.channel, table.target),
-    index('verifications_verification_id_idx').on(table.verificationId),
+    index('verifications_hash_channel_idx').on(table.hash, table.channel),
     uniqueIndex('verifications_user_id_channel_unique').on(table.userId, table.channel),
   ],
 );;

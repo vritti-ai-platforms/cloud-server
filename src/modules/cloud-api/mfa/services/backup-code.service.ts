@@ -30,7 +30,7 @@ export class BackupCodeService {
   async hashBackupCodes(codes: string[]): Promise<string[]> {
     const hashedCodes: string[] = [];
     for (const code of codes) {
-      const hash = await this.encryptionService.hashOtp(code);
+      const hash = await this.encryptionService.hashCode(code);
       hashedCodes.push(hash);
     }
     return hashedCodes;

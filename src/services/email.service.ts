@@ -61,8 +61,9 @@ export class EmailService {
    * @param otp One-time password
    * @param displayName Optional recipient display name for personalization
    */
-  async sendVerificationEmail(email: string, otp: string, displayName?: string): Promise<void> {
+  async sendVerificationEmail(email: string, otp: string, expiresAt: Date, displayName?: string): Promise<void> {
     const name = displayName || 'there';
+    const expiryMinutes = Math.ceil((expiresAt.getTime() - Date.now()) / 60_000);
     const subject = 'Verify Your Email - Vritti AI Cloud';
 
     const htmlContent = `
@@ -102,7 +103,7 @@ export class EmailService {
                       </div>
 
                       <p style="margin: 30px 0 20px; color: #666666; font-size: 14px; line-height: 1.6;">
-                        <strong>Important:</strong> This code will expire in <strong>10 minutes</strong>.
+                        <strong>Important:</strong> This code will expire in <strong>${expiryMinutes} minute${expiryMinutes === 1 ? '' : 's'}</strong>.
                       </p>
                       <p style="margin: 0; color: #666666; font-size: 14px; line-height: 1.6;">
                         If you didn't request this verification, please ignore this email.
@@ -136,7 +137,7 @@ Thank you for signing up with Vritti AI Cloud. Please use the following verifica
 
 Verification Code: ${otp}
 
-This code will expire in 10 minutes.
+This code will expire in ${expiryMinutes} minute${expiryMinutes === 1 ? '' : 's'}.
 
 If you didn't request this verification, please ignore this email.
 
@@ -161,8 +162,9 @@ This is an automated message, please do not reply.
    * @param otp One-time password
    * @param displayName Optional recipient display name for personalization
    */
-  async sendPasswordResetEmail(email: string, otp: string, displayName?: string): Promise<void> {
+  async sendPasswordResetEmail(email: string, otp: string, expiresAt: Date, displayName?: string): Promise<void> {
     const name = displayName || 'there';
+    const expiryMinutes = Math.ceil((expiresAt.getTime() - Date.now()) / 60_000);
     const subject = 'Reset Your Password - Vritti AI Cloud';
 
     const htmlContent = `
@@ -202,7 +204,7 @@ This is an automated message, please do not reply.
                       </div>
 
                       <p style="margin: 30px 0 20px; color: #666666; font-size: 14px; line-height: 1.6;">
-                        <strong>Important:</strong> This code will expire in <strong>10 minutes</strong>.
+                        <strong>Important:</strong> This code will expire in <strong>${expiryMinutes} minute${expiryMinutes === 1 ? '' : 's'}</strong>.
                       </p>
                       <p style="margin: 0 0 20px; color: #666666; font-size: 14px; line-height: 1.6;">
                         If you didn't request a password reset, please ignore this email and your password will remain unchanged.
@@ -241,7 +243,7 @@ We received a request to reset your password. Use the following code to complete
 
 Reset Code: ${otp}
 
-This code will expire in 10 minutes.
+This code will expire in ${expiryMinutes} minute${expiryMinutes === 1 ? '' : 's'}.
 
 If you didn't request a password reset, please ignore this email and your password will remain unchanged.
 

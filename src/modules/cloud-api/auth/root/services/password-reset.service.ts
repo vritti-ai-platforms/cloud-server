@@ -1,6 +1,6 @@
+import { randomUUID } from 'node:crypto';
 import { Injectable, Logger } from '@nestjs/common';
 import { BadRequestException } from '@vritti/api-sdk';
-import { randomUUID } from 'node:crypto';
 import { VerificationChannelValues } from '@/db/schema';
 import { EmailService, EncryptionService } from '../../../../../services';
 import { UserService } from '../../../user/services/user.service';
@@ -47,22 +47,21 @@ export class PasswordResetService {
     }
 
     // Create unified verification record
-    const { verificationId, otp } = await this.verificationService.createVerification(
+    const { otp, expiresAt } = await this.verificationService.createVerification(
       user.id,
       VerificationChannelValues.EMAIL,
       email,
     );
 
-    // Store password reset with verification reference
+    // Store password reset request
     await this.passwordResetRepo.create({
       userId: user.id,
       email,
-      verificationId,
     });
 
     // Fire and forget - don't block response waiting for email
     this.emailService
-      .sendPasswordResetEmail(email, otp, user.displayName || undefined)
+      .sendPasswordResetEmail(email, otp, expiresAt, user.displayName || undefined)
       .then(() => {
         this.logger.log(`Sent password reset email to ${email} for user ${user.id}`);
       })
@@ -78,7 +77,7 @@ export class PasswordResetService {
     // Find latest unused reset request for this email
     const resetRequest = await this.passwordResetRepo.findLatestByEmail(email);
 
-    if (!resetRequest || !resetRequest.verificationId) {
+    if (!resetRequest) {
       throw new BadRequestException({
         label: 'Reset Request Not Found',
         detail: "We couldn't find a password reset request for this email. Please request a new code to continue.",
@@ -86,7 +85,7 @@ export class PasswordResetService {
     }
 
     // Verify OTP via unified verification service (throws on failure)
-    await this.verificationService.validateOtp(resetRequest.verificationId, resetRequest.userId, otp);
+    await this.verificationService.verifyVerification(otp, VerificationChannelValues.EMAIL, resetRequest.userId);
 
     // Generate reset token
     const resetToken = randomUUID();
@@ -104,7 +103,7 @@ export class PasswordResetService {
     // Find the reset request by token
     const resetRequest = await this.passwordResetRepo.findByResetToken(resetToken);
 
-    if (!resetRequest || !resetRequest.verificationId) {
+    if (!resetRequest) {
       throw new BadRequestException({
         label: 'Invalid Reset Token',
         detail: 'This password reset link is invalid or has expired. Please request a new password reset.',
@@ -112,7 +111,10 @@ export class PasswordResetService {
     }
 
     // Look up the verification record for verifiedAt timestamp
-    const verification = await this.verificationService.findById(resetRequest.verificationId);
+    const verification = await this.verificationService.findByUserIdAndChannel(
+      resetRequest.userId,
+      VerificationChannelValues.EMAIL,
+    );
 
     if (verification?.verifiedAt) {
       const expiryTime = new Date(verification.verifiedAt);

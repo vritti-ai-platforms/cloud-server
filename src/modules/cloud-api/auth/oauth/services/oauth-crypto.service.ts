@@ -7,7 +7,7 @@ export class OAuthCryptoService {
   private readonly hmacSecret: string;
 
   constructor(private readonly configService: ConfigService) {
-    this.hmacSecret = this.configService.getOrThrow<string>('CSRF_HMAC_KEY');
+    this.hmacSecret = this.configService.getOrThrow<string>('HMAC_KEY');
   }
 
   // Generates a random 32-byte base64url string for PKCE code verifier

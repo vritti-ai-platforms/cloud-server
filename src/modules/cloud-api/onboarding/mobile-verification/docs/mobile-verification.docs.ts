@@ -31,21 +31,6 @@ export function ApiGetMobileVerificationStatus() {
   );
 }
 
-export function ApiResendMobileVerification() {
-  return applyDecorators(
-    ApiOperation({ summary: 'Resend mobile verification code' }),
-    ApiBody({ type: InitiateMobileVerificationDto, description: 'Mobile verification resend payload' }),
-    ApiResponse({
-      status: 200,
-      description: 'Mobile verification code resent successfully',
-      type: MobileVerificationStatusResponseDto,
-    }),
-    ApiResponse({ status: 400, description: 'Invalid phone number or verification method' }),
-    ApiResponse({ status: 401, description: 'Unauthorized - Invalid or missing onboarding token' }),
-    ApiResponse({ status: 429, description: 'Too many requests - Rate limit exceeded' }),
-  );
-}
-
 export function ApiVerifyMobileOtp() {
   return applyDecorators(
     ApiOperation({ summary: 'Verify mobile phone number using OTP' }),

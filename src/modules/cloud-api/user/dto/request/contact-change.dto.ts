@@ -3,14 +3,6 @@ import { IsEmail, IsNotEmpty, IsString, IsUUID, Length, Matches } from 'class-va
 
 export class VerifyIdentityDto {
   @ApiProperty({
-    description: 'Verification ID from step 1',
-    example: '550e8400-e29b-41d4-a716-446655440000',
-  })
-  @IsUUID()
-  @IsNotEmpty()
-  verificationId: string;
-
-  @ApiProperty({
     description: '6-digit OTP code sent to current email/phone',
     example: '123456',
     minLength: 6,
@@ -50,14 +42,6 @@ export class VerifyNewEmailDto {
   changeRequestId: string;
 
   @ApiProperty({
-    description: 'Verification ID from step 3',
-    example: '550e8400-e29b-41d4-a716-446655440000',
-  })
-  @IsUUID()
-  @IsNotEmpty()
-  verificationId: string;
-
-  @ApiProperty({
     description: '6-digit OTP code sent to new email',
     example: '123456',
     minLength: 6,
@@ -77,16 +61,6 @@ export class RevertEmailChangeDto {
   @IsUUID()
   @IsNotEmpty()
   revertToken: string;
-}
-
-export class ResendOtpDto {
-  @ApiProperty({
-    description: 'Verification ID to resend OTP for',
-    example: '550e8400-e29b-41d4-a716-446655440000',
-  })
-  @IsUUID()
-  @IsNotEmpty()
-  verificationId: string;
 }
 
 export class SubmitNewPhoneDto {
@@ -125,14 +99,6 @@ export class VerifyNewPhoneDto {
   @IsUUID()
   @IsNotEmpty()
   changeRequestId: string;
-
-  @ApiProperty({
-    description: 'Verification ID from step 3',
-    example: '550e8400-e29b-41d4-a716-446655440000',
-  })
-  @IsUUID()
-  @IsNotEmpty()
-  verificationId: string;
 
   @ApiProperty({
     description: '6-digit OTP code sent to new phone',

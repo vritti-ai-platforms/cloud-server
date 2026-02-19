@@ -4,7 +4,6 @@ import { Onboarding, UserId } from '@vritti/api-sdk';
 import {
   ApiGetMobileVerificationStatus,
   ApiInitiateMobileVerification,
-  ApiResendMobileVerification,
   ApiVerifyMobileOtp,
 } from '../docs/mobile-verification.docs';
 import { InitiateMobileVerificationDto } from '../dto/request/initiate-mobile-verification.dto';
@@ -44,20 +43,6 @@ export class MobileVerificationController {
     this.logger.log(`GET /onboarding/mobile-verification/status - User: ${userId}`);
 
     return this.mobileVerificationService.getVerificationStatus(userId);
-  }
-
-  // Cancels the existing verification and initiates a new one
-  @Post('resend')
-  @Onboarding()
-  @HttpCode(HttpStatus.OK)
-  @ApiResendMobileVerification()
-  async resendMobileVerification(
-    @UserId() userId: string,
-    @Body() dto: InitiateMobileVerificationDto,
-  ): Promise<MobileVerificationStatusResponseDto> {
-    this.logger.log(`POST /onboarding/mobile-verification/resend - User: ${userId}`);
-
-    return this.mobileVerificationService.resendVerification(userId, dto);
   }
 
   // Validates the manually-entered OTP for mobile phone verification

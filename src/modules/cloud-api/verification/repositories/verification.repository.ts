@@ -24,21 +24,14 @@ export class VerificationRepository extends PrimaryBaseRepository<typeof verific
   async upsertByUserIdAndChannel(
     userId: string,
     channel: VerificationChannel,
-    data: {
-      target: string | null;
-      verificationId?: string;
-      hashedOtp?: string;
-      expiresAt: Date;
-    },
+    data: { target: string | null; hash: string; expiresAt: Date },
   ): Promise<Verification> {
     const existing = await this.findByUserIdAndChannel(userId, channel);
 
     if (existing) {
-      // Update existing record, resetting verification state
       return this.update(existing.id, {
         target: data.target,
-        verificationId: data.verificationId,
-        hashedOtp: data.hashedOtp,
+        hash: data.hash,
         expiresAt: data.expiresAt,
         attempts: 0,
         isVerified: false,
@@ -46,26 +39,21 @@ export class VerificationRepository extends PrimaryBaseRepository<typeof verific
       });
     }
 
-    // Create new record
     return this.create({
       userId,
       channel,
       target: data.target,
-      verificationId: data.verificationId,
-      hashedOtp: data.hashedOtp,
+      hash: data.hash,
       expiresAt: data.expiresAt,
       attempts: 0,
       isVerified: false,
     });
   }
 
-  // Looks up a verification record by its verificationId token and channel
-  async findByVerificationIdAndChannel(
-    verificationId: string,
-    channel: VerificationChannel,
-  ): Promise<Verification | undefined> {
+  // Finds a QR verification record by HMAC hash of its inbound token
+  async findByHashAndChannel(hash: string, channel: VerificationChannel): Promise<Verification | undefined> {
     return this.model.findFirst({
-      where: { verificationId, channel },
+      where: { hash, channel },
     });
   }
 

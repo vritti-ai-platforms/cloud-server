@@ -1,6 +1,6 @@
 import * as crypto from 'node:crypto';
 import { Injectable, Logger } from '@nestjs/common';
-import { BadRequestException } from '@vritti/api-sdk';
+import { BadRequestException, NotFoundException } from '@vritti/api-sdk';
 import { VerificationChannelValues } from '@/db/schema';
 import { EmailService } from '@/services';
 import { VerificationService } from '../../verification/services/verification.service';
@@ -22,7 +22,7 @@ export class EmailChangeService {
   ) {}
 
   // Sends OTP to current email to confirm user identity (step 1)
-  async requestIdentityVerification(userId: string): Promise<{ verificationId: string; expiresAt: Date }> {
+  async requestIdentityVerification(userId: string): Promise<{ expiresAt: Date }> {
     const user = await this.userService.findById(userId);
 
     if (!user.emailVerified) {
@@ -33,30 +33,29 @@ export class EmailChangeService {
     }
 
     // Create unified verification and get plaintext OTP
-    const { verificationId, otp, expiresAt } = await this.verificationService.createVerification(
+    const { otp, expiresAt } = await this.verificationService.createVerification(
       userId,
       VerificationChannelValues.EMAIL,
       user.email,
     );
 
     // Send OTP email (fire and forget)
-    this.emailService.sendVerificationEmail(user.email, otp, user.displayName || undefined).catch((error) => {
+    this.emailService.sendVerificationEmail(user.email, otp, expiresAt, user.displayName || undefined).catch((error) => {
       this.logger.error(`Failed to send identity verification email to ${user.email}: ${error.message}`);
     });
 
     this.logger.log(`Identity verification OTP sent to ${user.email} for user ${userId}`);
 
-    return { verificationId, expiresAt };
+    return { expiresAt };
   }
 
   // Verifies OTP sent to current email and creates change request (step 2)
   async verifyIdentity(
     userId: string,
-    verificationId: string,
     otpCode: string,
   ): Promise<{ changeRequestId: string; changeRequestsToday: number }> {
     // Verify OTP via unified verification service (throws on failure)
-    await this.verificationService.validateOtp(verificationId, userId, otpCode);
+    await this.verificationService.verifyVerification(otpCode, VerificationChannelValues.EMAIL, userId);
 
     // Check rate limit
     const { requestsToday } = await this.rateLimitService.checkAndIncrementChangeRequestLimit(userId, 'email');
@@ -70,7 +69,6 @@ export class EmailChangeService {
     const changeRequest = await this.emailChangeRequestRepo.create({
       userId,
       oldEmail: user.email,
-      identityVerificationId: verificationId,
       isCompleted: false,
     });
 
@@ -87,7 +85,7 @@ export class EmailChangeService {
     userId: string,
     changeRequestId: string,
     newEmail: string,
-  ): Promise<{ verificationId: string; expiresAt: Date }> {
+  ): Promise<{ expiresAt: Date }> {
     const changeRequest = await this.emailChangeRequestRepo.findById(changeRequestId);
 
     if (!changeRequest || changeRequest.userId !== userId) {
@@ -123,33 +121,27 @@ export class EmailChangeService {
     await this.emailChangeRequestRepo.update(changeRequest.id, { newEmail });
 
     // Create unified verification and get plaintext OTP
-    const { verificationId, otp, expiresAt } = await this.verificationService.createVerification(
+    const { otp, expiresAt } = await this.verificationService.createVerification(
       userId,
       VerificationChannelValues.EMAIL,
       newEmail,
     );
 
-    // Update change request with new email verification ID
-    await this.emailChangeRequestRepo.update(changeRequest.id, {
-      newEmailVerificationId: verificationId,
-    });
-
     // Send OTP to new email (fire and forget)
     const user = await this.userService.findById(userId);
-    this.emailService.sendVerificationEmail(newEmail, otp, user.displayName || undefined).catch((error) => {
+    this.emailService.sendVerificationEmail(newEmail, otp, expiresAt, user.displayName || undefined).catch((error) => {
       this.logger.error(`Failed to send verification email to ${newEmail}: ${error.message}`);
     });
 
     this.logger.log(`Verification OTP sent to new email for change request ${changeRequest.id}`);
 
-    return { verificationId, expiresAt };
+    return { expiresAt };
   }
 
   // Verifies OTP sent to new email and completes the change (step 4)
   async verifyNewEmail(
     userId: string,
     changeRequestId: string,
-    verificationId: string,
     otpCode: string,
   ): Promise<{ success: boolean; revertToken: string; revertExpiresAt: Date; newEmail: string }> {
     const changeRequest = await this.emailChangeRequestRepo.findById(changeRequestId);
@@ -176,7 +168,7 @@ export class EmailChangeService {
     }
 
     // Verify OTP via unified verification service (throws on failure)
-    await this.verificationService.validateOtp(verificationId, userId, otpCode);
+    await this.verificationService.verifyVerification(otpCode, VerificationChannelValues.EMAIL, userId);
 
     // Generate revert token
     const revertToken = crypto.randomUUID();
@@ -270,33 +262,20 @@ export class EmailChangeService {
     };
   }
 
-  // Resends the verification OTP by deleting the old one and creating a new one
-  async resendOtp(
-    userId: string,
-    verificationId: string,
-  ): Promise<{ success: boolean; verificationId: string; expiresAt: Date }> {
-    // Resend via unified verification service (handles validation, deletion, and recreation)
-    const result = await this.verificationService.resendVerification(verificationId, userId);
-
-    // Look up the new verification to get the target email
-    const newVerification = await this.verificationService.findById(result.verificationId);
-
-    // Send OTP to the target email (fire and forget)
-    const user = await this.userService.findById(userId);
-    if (newVerification && newVerification.target) {
-      this.emailService
-        .sendVerificationEmail(newVerification.target, result.otp, user.displayName || undefined)
-        .catch((error) => {
-          this.logger.error(`Failed to resend verification email: ${error.message}`);
-        });
+  // Resends the verification OTP by looking up the active verification and creating a new one
+  async resendOtp(userId: string): Promise<{ success: boolean; expiresAt: Date }> {
+    const existing = await this.verificationService.findByUserIdAndChannel(userId, VerificationChannelValues.EMAIL);
+    if (!existing || !existing.target) {
+      throw new NotFoundException('No active verification found. Please start the process again.');
     }
-
+    const { otp, expiresAt } = await this.verificationService.createVerification(userId, VerificationChannelValues.EMAIL, existing.target);
+    const user = await this.userService.findById(userId);
+    this.emailService
+      .sendVerificationEmail(existing.target, otp, expiresAt, user.displayName || undefined)
+      .catch((error) => {
+        this.logger.error(`Failed to resend verification email: ${error.message}`);
+      });
     this.logger.log(`Resent OTP for user ${userId}`);
-
-    return {
-      success: true,
-      verificationId: result.verificationId,
-      expiresAt: result.expiresAt,
-    };
+    return { success: true, expiresAt };
   }
 }

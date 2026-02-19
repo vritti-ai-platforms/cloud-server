@@ -145,14 +145,11 @@ export class MfaVerificationService {
     }
 
     // Create verification record for SMS OTP
-    const { verificationId, otp } = await this.verificationService.createVerification(
+    const { otp } = await this.verificationService.createVerification(
       challenge.userId,
       VerificationChannelValues.SMS_OUT,
       user.phone,
     );
-
-    // Store verification ID in challenge
-    this.mfaChallengeStore.update(sessionId, { smsVerificationId: verificationId });
 
     // TODO: Actually send SMS via SMS provider (Twilio, etc.)
     // For now, log it (in development only)
@@ -180,15 +177,20 @@ export class MfaVerificationService {
       });
     }
 
-    if (!challenge.smsVerificationId) {
+    const pending = await this.verificationService.findByUserIdAndChannel(
+      challenge.userId,
+      VerificationChannelValues.SMS_OUT,
+    );
+
+    if (!pending) {
       throw new BadRequestException({
         label: 'Code Not Requested',
         detail: 'Please request a new verification code before attempting to verify.',
       });
     }
 
-    // Verify the OTP against the unified verification record
-    await this.verificationService.validateOtp(challenge.smsVerificationId, challenge.userId, code);
+    // Verify the OTP against the current SMS_OUT verification record
+    await this.verificationService.verifyVerification(code, VerificationChannelValues.SMS_OUT, challenge.userId);
 
     // Complete MFA verification
     return this.completeMfaVerification(challenge);

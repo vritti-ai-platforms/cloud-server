@@ -748,16 +748,6 @@
         "description": "Resends the verification OTP to the email address",
         "operationId": "ContactChangeController_resendEmailOtp",
         "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ResendOtpDto"
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
             "description": "OTP resent successfully",
@@ -1052,16 +1042,6 @@
         "description": "Resends the verification OTP to the phone number",
         "operationId": "ContactChangeController_resendPhoneOtp",
         "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ResendOtpDto"
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
             "description": "OTP resent successfully",
@@ -2229,39 +2209,6 @@
         ]
       }
     },
-    "/cloud-api/onboarding/email-verification/resend": {
-      "post": {
-        "operationId": "EmailVerificationController_resendEmailOtp",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "OTP sent successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ResendEmailOtpResponseDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized - Invalid or missing onboarding token"
-          },
-          "429": {
-            "description": "Too many requests - Rate limit exceeded"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Resend email verification OTP",
-        "tags": [
-          "Onboarding - Email Verification"
-        ]
-      }
-    },
     "/cloud-api/onboarding/mobile-verification/initiate": {
       "post": {
         "operationId": "MobileVerificationController_initiateMobileVerification",
@@ -2334,53 +2281,6 @@
           }
         ],
         "summary": "Get current mobile verification status",
-        "tags": [
-          "Onboarding - Mobile Verification"
-        ]
-      }
-    },
-    "/cloud-api/onboarding/mobile-verification/resend": {
-      "post": {
-        "operationId": "MobileVerificationController_resendMobileVerification",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "description": "Mobile verification resend payload",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/InitiateMobileVerificationDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Mobile verification code resent successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MobileVerificationStatusResponseDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid phone number or verification method"
-          },
-          "401": {
-            "description": "Unauthorized - Invalid or missing onboarding token"
-          },
-          "429": {
-            "description": "Too many requests - Rate limit exceeded"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Resend mobile verification code",
         "tags": [
           "Onboarding - Mobile Verification"
         ]
@@ -3569,11 +3469,6 @@
       "VerifyIdentityDto": {
         "type": "object",
         "properties": {
-          "verificationId": {
-            "type": "string",
-            "description": "Verification ID from step 1",
-            "example": "550e8400-e29b-41d4-a716-446655440000"
-          },
           "otpCode": {
             "type": "string",
             "description": "6-digit OTP code sent to current email/phone",
@@ -3583,7 +3478,6 @@
           }
         },
         "required": [
-          "verificationId",
           "otpCode"
         ]
       },
@@ -3614,11 +3508,6 @@
             "description": "Change request ID from step 2",
             "example": "550e8400-e29b-41d4-a716-446655440000"
           },
-          "verificationId": {
-            "type": "string",
-            "description": "Verification ID from step 3",
-            "example": "550e8400-e29b-41d4-a716-446655440000"
-          },
           "otpCode": {
             "type": "string",
             "description": "6-digit OTP code sent to new email",
@@ -3629,7 +3518,6 @@
         },
         "required": [
           "changeRequestId",
-          "verificationId",
           "otpCode"
         ]
       },
@@ -3644,19 +3532,6 @@
         },
         "required": [
           "revertToken"
-        ]
-      },
-      "ResendOtpDto": {
-        "type": "object",
-        "properties": {
-          "verificationId": {
-            "type": "string",
-            "description": "Verification ID to resend OTP for",
-            "example": "550e8400-e29b-41d4-a716-446655440000"
-          }
-        },
-        "required": [
-          "verificationId"
         ]
       },
       "SubmitNewPhoneDto": {
@@ -3692,11 +3567,6 @@
             "description": "Change request ID from step 2",
             "example": "550e8400-e29b-41d4-a716-446655440000"
           },
-          "verificationId": {
-            "type": "string",
-            "description": "Verification ID from step 3",
-            "example": "550e8400-e29b-41d4-a716-446655440000"
-          },
           "otpCode": {
             "type": "string",
             "description": "6-digit OTP code sent to new phone",
@@ -3707,7 +3577,6 @@
         },
         "required": [
           "changeRequestId",
-          "verificationId",
           "otpCode"
         ]
       },
@@ -4721,12 +4590,12 @@
         "properties": {
           "isEnabled": {
             "type": "boolean",
-            "description": "Indicates whether two-factor authentication is enabled for the user",
+            "description": "Indicates whether multi-factor authentication is enabled for the user",
             "example": true
           },
           "method": {
             "type": "string",
-            "description": "The two-factor authentication method configured by the user",
+            "description": "The multi-factor authentication method configured by the user",
             "example": "TOTP",
             "enum": [
               "TOTP",
@@ -4743,14 +4612,14 @@
           },
           "lastUsedAt": {
             "type": "string",
-            "description": "Timestamp when two-factor authentication was last used",
+            "description": "Timestamp when multi-factor authentication was last used",
             "example": "2024-01-15T10:30:00.000Z",
             "format": "date-time",
             "nullable": true
           },
           "createdAt": {
             "type": "string",
-            "description": "Timestamp when two-factor authentication was initially configured",
+            "description": "Timestamp when multi-factor authentication was initially configured",
             "example": "2024-01-01T08:00:00.000Z",
             "format": "date-time",
             "nullable": true
