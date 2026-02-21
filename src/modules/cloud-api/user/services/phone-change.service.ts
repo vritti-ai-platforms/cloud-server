@@ -64,7 +64,7 @@ export class PhoneChangeService {
     otpCode: string,
   ): Promise<{ changeRequestId: string; changeRequestsToday: number }> {
     // Verify OTP via unified verification service (throws on failure)
-    await this.verificationService.verifyVerification(otpCode, VerificationChannelValues.SMS_OUT, userId);
+    const verification = await this.verificationService.verifyVerification(otpCode, VerificationChannelValues.SMS_OUT, userId);
 
     // Check rate limit
     const { requestsToday } = await this.rateLimitService.checkAndIncrementChangeRequestLimit(userId, 'phone');
@@ -81,12 +81,13 @@ export class PhoneChangeService {
     // Clean up any incomplete change requests
     await this.phoneChangeRequestRepo.deleteIncompleteForUser(userId);
 
-    // Create phone change request
+    // Create phone change request linked to the identity verification
     const changeRequest = await this.phoneChangeRequestRepo.create({
       userId,
       oldPhone: user.phone,
       oldPhoneCountry: user.phoneCountry || null,
       isCompleted: false,
+      identityVerificationId: verification.id,
     });
 
     this.logger.log(`Identity verified for phone change request ${changeRequest.id} by user ${userId}`);
@@ -140,18 +141,19 @@ export class PhoneChangeService {
       });
     }
 
-    // Update change request with new phone
-    await this.phoneChangeRequestRepo.update(changeRequest.id, {
-      newPhone: normalizedNewPhone,
-      newPhoneCountry: newPhoneCountry,
-    });
-
     // Create unified verification and get plaintext OTP
-    const { otp, expiresAt } = await this.verificationService.createVerification(
+    const { verificationId, otp, expiresAt } = await this.verificationService.createVerification(
       userId,
       VerificationChannelValues.SMS_OUT,
       normalizedNewPhone,
     );
+
+    // Update change request with new phone and link to the new phone verification
+    await this.phoneChangeRequestRepo.update(changeRequest.id, {
+      newPhone: normalizedNewPhone,
+      newPhoneCountry: newPhoneCountry,
+      newPhoneVerificationId: verificationId,
+    });
 
     // Send OTP to new phone (fire and forget)
     const user = await this.userService.findById(userId);

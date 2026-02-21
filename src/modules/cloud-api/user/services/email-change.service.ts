@@ -55,7 +55,7 @@ export class EmailChangeService {
     otpCode: string,
   ): Promise<{ changeRequestId: string; changeRequestsToday: number }> {
     // Verify OTP via unified verification service (throws on failure)
-    await this.verificationService.verifyVerification(otpCode, VerificationChannelValues.EMAIL, userId);
+    const verification = await this.verificationService.verifyVerification(otpCode, VerificationChannelValues.EMAIL, userId);
 
     // Check rate limit
     const { requestsToday } = await this.rateLimitService.checkAndIncrementChangeRequestLimit(userId, 'email');
@@ -65,11 +65,12 @@ export class EmailChangeService {
     // Clean up any incomplete change requests
     await this.emailChangeRequestRepo.deleteIncompleteForUser(userId);
 
-    // Create email change request
+    // Create email change request linked to the identity verification
     const changeRequest = await this.emailChangeRequestRepo.create({
       userId,
       oldEmail: user.email,
       isCompleted: false,
+      identityVerificationId: verification.id,
     });
 
     this.logger.log(`Identity verified for email change request ${changeRequest.id} by user ${userId}`);
@@ -117,15 +118,15 @@ export class EmailChangeService {
       });
     }
 
-    // Update change request with new email
-    await this.emailChangeRequestRepo.update(changeRequest.id, { newEmail });
-
     // Create unified verification and get plaintext OTP
-    const { otp, expiresAt } = await this.verificationService.createVerification(
+    const { verificationId, otp, expiresAt } = await this.verificationService.createVerification(
       userId,
       VerificationChannelValues.EMAIL,
       newEmail,
     );
+
+    // Update change request with new email and link to the new email verification
+    await this.emailChangeRequestRepo.update(changeRequest.id, { newEmail, newEmailVerificationId: verificationId });
 
     // Send OTP to new email (fire and forget)
     const user = await this.userService.findById(userId);

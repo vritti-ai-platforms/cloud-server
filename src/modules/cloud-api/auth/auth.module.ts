@@ -27,7 +27,6 @@ import { PasskeyAuthController } from './passkey/controllers/passkey-auth.contro
 import { PasskeyAuthService } from './passkey/services/passkey-auth.service';
 // Root submodule
 import { AuthController } from './root/controllers/auth.controller';
-import { PasswordResetRepository } from './root/repositories/password-reset.repository';
 import { SessionRepository } from './root/repositories/session.repository';
 import { AuthService } from './root/services/auth.service';
 import { JwtAuthService } from './root/services/jwt.service';
@@ -53,7 +52,6 @@ import { SessionService } from './root/services/session.service';
     SessionService,
     SessionRepository,
     PasswordResetService,
-    PasswordResetRepository,
     // Passkey
     PasskeyAuthService,
     // OAuth

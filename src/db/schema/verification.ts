@@ -29,7 +29,7 @@ export const verifications = cloudSchema.table(
     index('verifications_hash_channel_idx').on(table.hash, table.channel),
     uniqueIndex('verifications_user_id_channel_unique').on(table.userId, table.channel),
   ],
-);;
+);
 
 // MFA authentication — stores MFA settings (TOTP, Passkey)
 export const mfaAuth = cloudSchema.table(
@@ -57,24 +57,6 @@ export const mfaAuth = cloudSchema.table(
     lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
   },
   (table) => [index('mfa_auth_user_id_method_idx').on(table.userId, table.method)],
-);
-
-// Password resets — tracks forgot password flow with linked verification
-export const passwordResets = cloudSchema.table(
-  'password_resets',
-  {
-    id: uuid('id').primaryKey().defaultRandom(),
-    userId: uuid('user_id')
-      .notNull()
-      .references(() => users.id, { onDelete: 'cascade' }),
-    email: varchar('email', { length: 255 }).notNull(),
-    verificationId: uuid('verification_id').references(() => verifications.id, { onDelete: 'set null' }),
-    resetToken: varchar('reset_token', { length: 255 }),
-    isUsed: boolean('is_used').notNull().default(false),
-    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-    usedAt: timestamp('used_at', { withTimezone: true }),
-  },
-  (table) => [index('password_resets_user_id_email_idx').on(table.userId, table.email)],
 );
 
 // Email change requests — tracks email change workflow
@@ -159,8 +141,6 @@ export type Verification = typeof verifications.$inferSelect;
 export type NewVerification = typeof verifications.$inferInsert;
 export type MfaAuth = typeof mfaAuth.$inferSelect;
 export type NewMfaAuth = typeof mfaAuth.$inferInsert;
-export type PasswordReset = typeof passwordResets.$inferSelect;
-export type NewPasswordReset = typeof passwordResets.$inferInsert;
 export type EmailChangeRequest = typeof emailChangeRequests.$inferSelect;
 export type NewEmailChangeRequest = typeof emailChangeRequests.$inferInsert;
 export type PhoneChangeRequest = typeof phoneChangeRequests.$inferSelect;

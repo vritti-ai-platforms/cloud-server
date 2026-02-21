@@ -7,6 +7,7 @@ import { EncryptionService } from '../../../../services';
 import { VerificationRepository } from '../repositories/verification.repository';
 
 export interface CreateVerificationResult {
+  verificationId: string;
   otp: string;
   expiresAt: Date;
 }
@@ -49,7 +50,7 @@ export class VerificationService {
 
     this.logger.log(`Upserted ${channel} verification ${record.id} for user ${userId}`);
 
-    return { otp, expiresAt };
+    return { verificationId: record.id, otp, expiresAt };
   }
 
   // Verifies a code for the given channel — throws on any failure, returns the verified record

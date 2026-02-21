@@ -6,9 +6,10 @@ import { ForgotPasswordDto, ResetPasswordDto, VerifyResetOtpDto } from '../dto/r
 import { LoginDto } from '../dto/request/login.dto';
 import { SignupDto } from '../dto/request/signup.dto';
 import { AuthStatusResponse } from '../dto/response/auth-status-response.dto';
+import { ForgotPasswordResponseDto } from '../dto/response/forgot-password-response.dto';
 import { LoginResponse } from '../dto/response/login-response.dto';
 import { MessageResponse } from '../dto/response/message-response.dto';
-import { ResetTokenResponse } from '../dto/response/reset-token-response.dto';
+import { ResetPasswordResponseDto } from '../dto/response/reset-password-response.dto';
 import { SuccessResponse } from '../dto/response/success-response.dto';
 import { TokenResponse } from '../dto/response/token-response.dto';
 
@@ -103,36 +104,52 @@ export function ApiForgotPassword() {
   return applyDecorators(
     ApiOperation({
       summary: 'Request password reset',
-      description: 'Sends a password reset OTP to the provided email. Always returns success to prevent email enumeration.',
+      description:
+        'Sends a password reset OTP to the provided email and creates a RESET session. Always returns success to prevent email enumeration.',
     }),
     ApiBody({ type: ForgotPasswordDto }),
-    ApiResponse({ status: 200, description: 'Password reset email sent (if account exists).', type: SuccessResponse }),
+    ApiResponse({ status: 200, description: 'Password reset email sent (if account exists).', type: ForgotPasswordResponseDto }),
     ApiResponse({ status: 400, description: 'Invalid input data.' }),
+  );
+}
+
+export function ApiResendResetOtp() {
+  return applyDecorators(
+    ApiBearerAuth(),
+    ApiOperation({
+      summary: 'Resend password reset OTP',
+      description: 'Resends the password reset OTP to the user email. Requires an active RESET session.',
+    }),
+    ApiResponse({ status: 200, description: 'OTP resent successfully.', type: SuccessResponse }),
+    ApiResponse({ status: 401, description: 'Unauthorized or invalid RESET session.' }),
   );
 }
 
 export function ApiVerifyResetOtp() {
   return applyDecorators(
+    ApiBearerAuth(),
     ApiOperation({
       summary: 'Verify password reset OTP',
-      description: 'Validates the OTP sent to the user email and returns a reset token.',
+      description: 'Validates the OTP using the authenticated RESET session.',
     }),
     ApiBody({ type: VerifyResetOtpDto }),
-    ApiResponse({ status: 200, description: 'OTP verified successfully.', type: ResetTokenResponse }),
+    ApiResponse({ status: 200, description: 'OTP verified successfully.', type: SuccessResponse }),
     ApiResponse({ status: 400, description: 'No reset request found or OTP expired.' }),
-    ApiResponse({ status: 401, description: 'Invalid OTP.' }),
+    ApiResponse({ status: 401, description: 'Unauthorized or invalid RESET session.' }),
   );
 }
 
 export function ApiResetPassword() {
   return applyDecorators(
+    ApiBearerAuth(),
     ApiOperation({
       summary: 'Reset password',
-      description: 'Sets a new password using the reset token. Invalidates all active sessions.',
+      description: 'Resets password, invalidates all sessions, creates a new session.',
     }),
     ApiBody({ type: ResetPasswordDto }),
-    ApiResponse({ status: 200, description: 'Password reset successfully.', type: SuccessResponse }),
-    ApiResponse({ status: 400, description: 'Invalid or expired reset token.' }),
+    ApiResponse({ status: 200, description: 'Password reset successfully.', type: ResetPasswordResponseDto }),
+    ApiResponse({ status: 400, description: 'OTP not verified or reset window expired.' }),
+    ApiResponse({ status: 401, description: 'Unauthorized or invalid RESET session.' }),
   );
 }
 

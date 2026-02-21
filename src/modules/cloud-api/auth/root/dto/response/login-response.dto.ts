@@ -1,5 +1,4 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import type { OnboardingStep } from '@/db/schema';
 import type { UserDto } from '../../../../user/dto/entity/user.dto';
 
 export type MfaMethodType = 'totp' | 'sms' | 'passkey';
@@ -47,19 +46,6 @@ export class LoginResponse {
     description: 'User information',
   })
   user?: UserDto;
-
-  @ApiPropertyOptional({
-    description: 'Whether user requires onboarding',
-    example: false,
-  })
-  requiresOnboarding?: boolean;
-
-  @ApiPropertyOptional({
-    description: 'Current onboarding step',
-    example: 'EMAIL_VERIFICATION',
-    enum: ['EMAIL_VERIFICATION', 'PASSWORD_SETUP', 'PHONE_VERIFICATION', 'TWO_FACTOR_SETUP', 'COMPLETE'],
-  })
-  onboardingStep?: OnboardingStep;
 
   @ApiPropertyOptional({
     description: 'Whether MFA verification is required',

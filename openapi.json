@@ -1437,9 +1437,18 @@
     },
     "/cloud-api/auth/forgot-password": {
       "post": {
-        "description": "Sends a password reset OTP to the provided email. Always returns success to prevent email enumeration.",
+        "description": "Sends a password reset OTP to the provided email and creates a RESET session. Always returns success to prevent email enumeration.",
         "operationId": "AuthController_forgotPassword",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "user-agent",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -1456,7 +1465,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SuccessResponse"
+                  "$ref": "#/components/schemas/ForgotPasswordResponseDto"
                 }
               }
             }
@@ -1471,9 +1480,40 @@
         ]
       }
     },
+    "/cloud-api/auth/resend-reset-otp": {
+      "post": {
+        "description": "Resends the password reset OTP to the user email. Requires an active RESET session.",
+        "operationId": "AuthController_resendResetOtp",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OTP resent successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized or invalid RESET session."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Resend password reset OTP",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
     "/cloud-api/auth/verify-reset-otp": {
       "post": {
-        "description": "Validates the OTP sent to the user email and returns a reset token.",
+        "description": "Validates the OTP using the authenticated RESET session.",
         "operationId": "AuthController_verifyResetOtp",
         "parameters": [],
         "requestBody": {
@@ -1492,7 +1532,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ResetTokenResponse"
+                  "$ref": "#/components/schemas/SuccessResponse"
                 }
               }
             }
@@ -1501,9 +1541,14 @@
             "description": "No reset request found or OTP expired."
           },
           "401": {
-            "description": "Invalid OTP."
+            "description": "Unauthorized or invalid RESET session."
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Verify password reset OTP",
         "tags": [
           "Auth"
@@ -1512,9 +1557,18 @@
     },
     "/cloud-api/auth/reset-password": {
       "post": {
-        "description": "Sets a new password using the reset token. Invalidates all active sessions.",
+        "description": "Resets password, invalidates all sessions, creates a new session.",
         "operationId": "AuthController_resetPassword",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "user-agent",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -1531,15 +1585,23 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SuccessResponse"
+                  "$ref": "#/components/schemas/ResetPasswordResponseDto"
                 }
               }
             }
           },
           "400": {
-            "description": "Invalid or expired reset token."
+            "description": "OTP not verified or reset window expired."
+          },
+          "401": {
+            "description": "Unauthorized or invalid RESET session."
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Reset password",
         "tags": [
           "Auth"
@@ -3716,23 +3778,6 @@
             "type": "object",
             "description": "User information"
           },
-          "requiresOnboarding": {
-            "type": "boolean",
-            "description": "Whether user requires onboarding",
-            "example": false
-          },
-          "onboardingStep": {
-            "type": "string",
-            "description": "Current onboarding step",
-            "example": "EMAIL_VERIFICATION",
-            "enum": [
-              "EMAIL_VERIFICATION",
-              "PASSWORD_SETUP",
-              "PHONE_VERIFICATION",
-              "TWO_FACTOR_SETUP",
-              "COMPLETE"
-            ]
-          },
           "requiresMfa": {
             "type": "boolean",
             "description": "Whether MFA verification is required",
@@ -3873,6 +3918,27 @@
           "email"
         ]
       },
+      "ForgotPasswordResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "accessToken": {
+            "type": "string"
+          },
+          "expiresIn": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "success",
+          "message"
+        ]
+      },
       "SuccessResponse": {
         "type": "object",
         "properties": {
@@ -3893,12 +3959,6 @@
       "VerifyResetOtpDto": {
         "type": "object",
         "properties": {
-          "email": {
-            "type": "string",
-            "description": "User email address",
-            "example": "user@example.com",
-            "format": "email"
-          },
           "otp": {
             "type": "string",
             "description": "6 digit OTP sent to the user email",
@@ -3906,29 +3966,12 @@
           }
         },
         "required": [
-          "email",
           "otp"
-        ]
-      },
-      "ResetTokenResponse": {
-        "type": "object",
-        "properties": {
-          "resetToken": {
-            "type": "string",
-            "example": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
-          }
-        },
-        "required": [
-          "resetToken"
         ]
       },
       "ResetPasswordDto": {
         "type": "object",
         "properties": {
-          "resetToken": {
-            "type": "string",
-            "description": "Reset token received after OTP verification"
-          },
           "newPassword": {
             "type": "string",
             "description": "New password (min 8 chars, must include uppercase, lowercase, number, and special character)",
@@ -3937,8 +3980,34 @@
           }
         },
         "required": [
-          "resetToken",
           "newPassword"
+        ]
+      },
+      "ResetPasswordResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "accessToken": {
+            "type": "string"
+          },
+          "expiresIn": {
+            "type": "number"
+          },
+          "sessionType": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "message",
+          "accessToken",
+          "expiresIn",
+          "sessionType"
         ]
       },
       "StartPasskeyAuthDto": {
