@@ -5,12 +5,12 @@ import { BadRequestException, extractCountryFromPhone, normalizePhoneNumber } fr
 import { concat, Observable, of } from 'rxjs';
 import { type Verification } from '@/db/schema';
 import { type VerificationChannel, VerificationChannelValues } from '@/db/schema/enums';
+import { SmsService } from '@/services';
 import { UserService } from '../../../user/services/user.service';
 import { VerificationService } from '../../../verification/services/verification.service';
 import { InitiateMobileVerificationDto } from '../dto/request/initiate-mobile-verification.dto';
 import { MobileVerificationStatusResponseDto } from '../dto/response/mobile-verification-status-response.dto';
 import { MobileVerificationEvent, VERIFICATION_EVENTS } from '../events/verification.events';
-import { VerificationProviderFactory } from '../providers';
 import { mapToInternalChannel } from '../utils/method-mapping.util';
 import { SseConnectionService } from './sse-connection.service';
 
@@ -20,12 +20,12 @@ export class MobileVerificationService {
   private readonly whatsappBusinessNumber: string;
 
   constructor(
-    private readonly verificationProviderFactory: VerificationProviderFactory,
     private readonly userService: UserService,
     private readonly configService: ConfigService,
     private readonly verificationService: VerificationService,
     private readonly eventEmitter: EventEmitter2,
     private readonly sseConnectionService: SseConnectionService,
+    private readonly smsService: SmsService,
   ) {
     this.whatsappBusinessNumber = this.configService.get<string>('WHATSAPP_BUSINESS_NUMBER') || '';
   }
@@ -60,8 +60,8 @@ export class MobileVerificationService {
 
     this.logger.log(`Created mobile verification for user ${userId} using channel ${channel}`);
 
-    if (dto.phone && dto.phoneCountry) {
-      await this.sendVerificationMessage(channel, dto.phone, dto.phoneCountry, otp);
+    if (channel === VerificationChannelValues.SMS_OUT && dto.phone) {
+      this.sendVerificationSms(dto.phone, otp);
     }
 
     const isQrChannel =
@@ -111,7 +111,7 @@ export class MobileVerificationService {
     }
 
     if (channel !== VerificationChannelValues.WHATSAPP_IN && channel !== VerificationChannelValues.SMS_IN) {
-      throw new BadRequestException('This endpoint only supports QR-based verification channels');
+      throw new BadRequestException('This endpoint only supports INBOUND verification channels');
     }
 
     const { otp, expiresAt } = await this.verificationService.createVerification(userId, channel, null);
@@ -169,6 +169,16 @@ export class MobileVerificationService {
     );
     if (alreadyUsed) {
       this.logger.warn(`Phone ${normalizedPhone} is already verified by another user`);
+      this.eventEmitter.emit(
+        VERIFICATION_EVENTS.MOBILE_FAILED,
+        new MobileVerificationEvent(
+          verification.userId,
+          verification.id,
+          'failed',
+          normalizedPhone,
+          'This phone number is already verified by another account',
+        ),
+      );
       return false;
     }
 
@@ -218,17 +228,10 @@ export class MobileVerificationService {
     return true;
   }
 
-  // Sends verification message via the appropriate provider
-  private async sendVerificationMessage(
-    channel: VerificationChannel,
-    phone: string,
-    phoneCountry: string,
-    secret: string,
-  ): Promise<void> {
-    const provider = this.verificationProviderFactory.getProvider(channel);
-
-    provider.sendVerification(phone, phoneCountry, secret).catch((error: Error) => {
-      this.logger.error(`Failed to send verification message: ${error.message}`);
+  // Sends the OTP via SMS to the user's phone number
+  private sendVerificationSms(phone: string, otp: string): void {
+    this.smsService.sendVerificationSms(phone, otp).catch((error: Error) => {
+      this.logger.error(`Failed to send verification SMS: ${error.message}`);
     });
   }
 }

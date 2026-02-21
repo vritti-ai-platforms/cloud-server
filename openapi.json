@@ -2474,6 +2474,19 @@
         "operationId": "VerificationWebhookController_verifyWebhook",
         "parameters": [
           {
+            "name": "provider",
+            "required": true,
+            "in": "path",
+            "description": "Webhook provider type",
+            "schema": {
+              "enum": [
+                "whatsapp",
+                "sms"
+              ],
+              "type": "string"
+            }
+          },
+          {
             "name": "hub.mode",
             "required": false,
             "in": "query",
@@ -2517,19 +2530,6 @@
             "schema": {
               "type": "string"
             }
-          },
-          {
-            "name": "provider",
-            "required": true,
-            "in": "path",
-            "description": "Webhook provider type",
-            "schema": {
-              "enum": [
-                "whatsapp",
-                "sms"
-              ],
-              "type": "string"
-            }
           }
         ],
         "responses": {
@@ -2560,6 +2560,19 @@
         "operationId": "VerificationWebhookController_handleWebhook",
         "parameters": [
           {
+            "name": "provider",
+            "required": true,
+            "in": "path",
+            "description": "Webhook provider type",
+            "schema": {
+              "enum": [
+                "whatsapp",
+                "sms"
+              ],
+              "type": "string"
+            }
+          },
+          {
             "name": "x-hub-signature-256",
             "required": false,
             "in": "header",
@@ -2574,19 +2587,6 @@
             "in": "header",
             "description": "Twilio SMS webhook signature (HMAC-SHA1)",
             "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "provider",
-            "required": true,
-            "in": "path",
-            "description": "Webhook provider type",
-            "schema": {
-              "enum": [
-                "whatsapp",
-                "sms"
-              ],
               "type": "string"
             }
           }

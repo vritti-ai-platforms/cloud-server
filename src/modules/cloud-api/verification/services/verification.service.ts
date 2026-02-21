@@ -4,6 +4,7 @@ import { BadRequestException, NotFoundException, UnauthorizedException } from '@
 import type { Verification, VerificationChannel } from '@/db/schema';
 import { VerificationChannelValues } from '@/db/schema/enums';
 import { EncryptionService } from '../../../../services';
+import { parseExpiryToMs } from '../../../../utils/parse-expiry.util';
 import { VerificationRepository } from '../repositories/verification.repository';
 
 export interface CreateVerificationResult {
@@ -15,7 +16,7 @@ export interface CreateVerificationResult {
 @Injectable()
 export class VerificationService {
   private readonly logger = new Logger(VerificationService.name);
-  private readonly expiryMinutes: number;
+  private readonly expiryMs: number;
   private readonly maxAttempts: number;
 
   constructor(
@@ -23,7 +24,7 @@ export class VerificationService {
     private readonly encryptionService: EncryptionService,
     private readonly configService: ConfigService,
   ) {
-    this.expiryMinutes = this.configService.get<number>('OTP_EXPIRY_MINUTES', 10);
+    this.expiryMs = parseExpiryToMs(this.configService.get<string>('OTP_EXPIRY', '10m'));
     this.maxAttempts = this.configService.get<number>('OTP_MAX_ATTEMPTS', 5);
   }
 
@@ -109,9 +110,7 @@ export class VerificationService {
 
   // Calculates the expiration timestamp from the current time
   private getOtpExpiryTime(): Date {
-    const expiryTime = new Date();
-    expiryTime.setMinutes(expiryTime.getMinutes() + this.expiryMinutes);
-    return expiryTime;
+    return new Date(Date.now() + this.expiryMs);
   }
 
   // Throws if the verification is already used, expired, or has exceeded the attempt limit

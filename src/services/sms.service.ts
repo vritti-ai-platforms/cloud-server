@@ -1,41 +1,27 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import * as crypto from 'crypto';
 
-/**
- * SMS Service for sending SMS and WhatsApp messages
- * Currently mocked - ready to integrate with Twilio or other providers
- */
 @Injectable()
 export class SmsService {
   private readonly logger = new Logger(SmsService.name);
+  private readonly webhookSecret: string;
+  private readonly isDevelopment: boolean;
 
-  constructor() {
+  constructor(private readonly configService: ConfigService) {
+    this.webhookSecret = this.configService.get<string>('SMS_WEBHOOK_SECRET') || '';
+    this.isDevelopment = this.configService.get<string>('NODE_ENV') !== 'production';
+
     this.logger.warn('SMS service is currently in mock mode');
   }
 
-  /**
-   * Send SMS verification OTP
-   * @param phoneNumber - Phone number with country code (e.g., +1234567890)
-   * @param otp - 6-digit OTP code
-   * @param firstName - Optional user's first name for personalization
-   */
+  // Sends a verification OTP via SMS (mock in development)
   async sendVerificationSms(phoneNumber: string, otp: string, firstName?: string): Promise<void> {
     try {
-      const _message = `Hello${firstName ? ` ${firstName}` : ''}, your Vritti AI Cloud verification code is: ${otp}. This code will expire in 10 minutes.`;
+      const message = `Hello${firstName ? ` ${firstName}` : ''}, your Vritti AI Cloud verification code is: ${otp}. This code will expire in 10 minutes.`;
 
       // TODO: Integrate with Twilio or other SMS provider
-      // const accountSid = this.configService.get<string>('TWILIO_ACCOUNT_SID');
-      // const authToken = this.configService.get<string>('TWILIO_AUTH_TOKEN');
-      // const fromNumber = this.configService.get<string>('TWILIO_PHONE_NUMBER');
-      //
-      // const client = twilio(accountSid, authToken);
-      // await client.messages.create({
-      //   body: message,
-      //   from: fromNumber,
-      //   to: phoneNumber,
-      // });
-
-      // Security: Never log OTP values in production - GDPR/PCI compliance
-      console.log(_message);
+      console.log(message);
       this.logger.warn(`[MOCK] SMS verification would be sent to ${phoneNumber}`);
     } catch (error) {
       this.logger.error(`Failed to send SMS to ${phoneNumber}:`, error);
@@ -43,44 +29,39 @@ export class SmsService {
     }
   }
 
-  /**
-   * Send WhatsApp verification OTP
-   * @param phoneNumber - Phone number with country code (e.g., +1234567890)
-   * @param otp - 6-digit OTP code
-   * @param firstName - Optional user's first name for personalization
-   */
-  async sendVerificationWhatsApp(phoneNumber: string, otp: string, firstName?: string): Promise<void> {
+  // Validates the inbound SMS webhook signature using HMAC-SHA1
+  validateWebhookSignature(payload: string, signature: string): boolean {
+    if (this.isDevelopment) {
+      this.logger.debug('Dev mode: Skipping SMS webhook signature validation');
+      return true;
+    }
+
     try {
-      const _message = `Hello${firstName ? ` ${firstName}` : ''}, your Vritti AI Cloud verification code is: ${otp}. This code will expire in 10 minutes.`;
+      if (!signature || !this.webhookSecret) {
+        this.logger.warn('Missing signature or webhook secret for SMS validation');
+        return false;
+      }
 
-      // TODO: Integrate with Twilio WhatsApp API
-      // const accountSid = this.configService.get<string>('TWILIO_ACCOUNT_SID');
-      // const authToken = this.configService.get<string>('TWILIO_AUTH_TOKEN');
-      // const fromNumber = this.configService.get<string>('TWILIO_WHATSAPP_NUMBER'); // e.g., 'whatsapp:+14155238886'
-      //
-      // const client = twilio(accountSid, authToken);
-      // await client.messages.create({
-      //   body: message,
-      //   from: fromNumber,
-      //   to: `whatsapp:${phoneNumber}`,
-      // });
+      const hmac = crypto.createHmac('sha1', this.webhookSecret);
+      hmac.update(payload);
+      const expectedSignature = hmac.digest('base64');
 
-      // Security: Never log OTP values in production - GDPR/PCI compliance
-      this.logger.warn(`[MOCK] WhatsApp verification would be sent to ${phoneNumber}`);
+      const isValid = crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature));
+
+      if (!isValid) {
+        this.logger.warn('SMS webhook signature validation failed');
+      }
+
+      return isValid;
     } catch (error) {
-      this.logger.error(`Failed to send WhatsApp message to ${phoneNumber}:`, error);
-      throw new Error('Failed to send WhatsApp message');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Error validating SMS webhook signature: ${errorMessage}`);
+      return false;
     }
   }
 
-  /**
-   * Verify phone number format
-   * @param phoneNumber - Phone number to verify
-   * @returns True if format is valid, false otherwise
-   */
+  // Validates phone number is in E.164 format
   validatePhoneNumber(phoneNumber: string): boolean {
-    // Basic E.164 format validation: +[country code][number]
-    const e164Regex = /^\+[1-9]\d{1,14}$/;
-    return e164Regex.test(phoneNumber);
+    return /^\+[1-9]\d{1,14}$/.test(phoneNumber);
   }
 }

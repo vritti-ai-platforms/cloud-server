@@ -129,7 +129,11 @@ class EnvironmentVariables {
 
   @IsString()
   @IsOptional()
-  WHATSAPP_APP_SECRET: string;
+  META_CLIENT_ID: string;
+
+  @IsString()
+  @IsOptional()
+  META_CLIENT_SECRET: string;
 
   @IsString()
   @IsOptional()
@@ -138,6 +142,10 @@ class EnvironmentVariables {
   @IsString()
   @IsOptional()
   WHATSAPP_API_VERSION: string = 'v18.0';
+
+  @IsString()
+  @IsOptional()
+  WHATSAPP_BUSINESS_NUMBER: string;
 
   // WebAuthn Configuration
   @IsString()

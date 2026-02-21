@@ -20,7 +20,7 @@ export class WhatsAppService {
     // Get WhatsApp configuration
     this.phoneNumberId = this.configService.get<string>('WHATSAPP_PHONE_NUMBER_ID') || '';
     this.accessToken = this.configService.get<string>('WHATSAPP_ACCESS_TOKEN') || '';
-    this.appSecret = this.configService.get<string>('WHATSAPP_APP_SECRET') || '';
+    this.appSecret = this.configService.get<string>('META_CLIENT_SECRET') || '';
     this.apiVersion = this.configService.get<string>('WHATSAPP_API_VERSION') || 'v18.0';
 
     // Validate configuration

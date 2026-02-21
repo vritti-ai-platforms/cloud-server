@@ -32,7 +32,8 @@
     "db:push:w": "npx dotenv-cli cross-env NODE_TLS_REJECT_UNAUTHORIZED=0 -- drizzle-kit push",
     "db:migrate:w": "npx dotenv-cli cross-env NODE_TLS_REJECT_UNAUTHORIZED=0 -- drizzle-kit migrate",
     "db:studio:w": "npx dotenv-cli cross-env NODE_TLS_REJECT_UNAUTHORIZED=0 -- drizzle-kit studio",
-    "db:reset:w": "npx dotenv-cli cross-env NODE_TLS_REJECT_UNAUTHORIZED=0 -- drizzle-kit push --force"
+    "db:reset:w": "npx dotenv-cli cross-env NODE_TLS_REJECT_UNAUTHORIZED=0 -- drizzle-kit push --force",
+    "webhook": "cloudflared tunnel --no-tls-verify --url https://local.vrittiai.com:3000 run vritti-webhook"
   },
   "dependencies": {
     "@fastify/cookie": "^11.0.2",

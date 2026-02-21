@@ -13,15 +13,10 @@ import { EmailVerificationController } from './email-verification/controllers/em
 import { EmailVerificationService } from './email-verification/services/email-verification.service';
 import { MobileVerificationController } from './mobile-verification/controllers/mobile-verification.controller';
 import { VerificationWebhookController } from './mobile-verification/controllers/verification-webhook.controller';
-import {
-  SMSInboundProvider,
-  SMSOtpProvider,
-  VerificationProviderFactory,
-  WhatsAppProvider,
-} from './mobile-verification/providers';
 import { MobileVerificationService } from './mobile-verification/services/mobile-verification.service';
 import { SseConnectionService } from './mobile-verification/services/sse-connection.service';
-import { VerificationEventListener } from './mobile-verification/services/verification-event.listener';
+import { VerificationEventListener } from './mobile-verification/listeners/verification-event.listener';
+import { VerificationWebhookService } from './mobile-verification/services/verification-webhook.service';
 import { PasskeySetupController } from './passkey/controllers/passkey-setup.controller';
 import { PasskeySetupService } from './passkey/services/passkey-setup.service';
 import { OnboardingController } from './root/controllers/onboarding.controller';
@@ -59,10 +54,7 @@ import { TotpSetupService } from './totp/services/totp-setup.service';
     EmailVerificationService,
     // Mobile verification
     MobileVerificationService,
-    WhatsAppProvider,
-    SMSInboundProvider,
-    SMSOtpProvider,
-    VerificationProviderFactory,
+    VerificationWebhookService,
     SseConnectionService,
     VerificationEventListener,
     // TOTP setup
@@ -78,7 +70,6 @@ import { TotpSetupService } from './totp/services/totp-setup.service';
     OnboardingService,
     EmailVerificationService,
     MobileVerificationService,
-    VerificationProviderFactory,
   ],
 })
 export class OnboardingModule {}

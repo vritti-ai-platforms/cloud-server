@@ -34,8 +34,8 @@ export class FacebookOAuthProvider implements IOAuthProvider {
   private readonly USER_INFO_URL = 'https://graph.facebook.com/v18.0/me';
 
   constructor(private readonly configService: ConfigService) {
-    this.clientId = this.configService.getOrThrow<string>('FACEBOOK_CLIENT_ID');
-    this.clientSecret = this.configService.getOrThrow<string>('FACEBOOK_CLIENT_SECRET');
+    this.clientId = this.configService.getOrThrow<string>('META_CLIENT_ID');
+    this.clientSecret = this.configService.getOrThrow<string>('META_CLIENT_SECRET');
     this.redirectUri = this.configService.getOrThrow<string>('FACEBOOK_CALLBACK_URL');
   }
 

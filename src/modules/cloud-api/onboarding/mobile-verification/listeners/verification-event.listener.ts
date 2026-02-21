@@ -1,7 +1,7 @@
 import { Injectable, Logger, type MessageEvent } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import { VERIFICATION_EVENTS, MobileVerificationEvent } from '../events/verification.events';
-import { SseConnectionService } from './sse-connection.service';
+import { MobileVerificationEvent, VERIFICATION_EVENTS } from '../events/verification.events';
+import { SseConnectionService } from '../services/sse-connection.service';
 
 @Injectable()
 export class VerificationEventListener {
@@ -39,7 +39,6 @@ export class VerificationEventListener {
     };
 
     this.sseConnectionService.sendToUser(event.userId, message);
-    // Don't close connection on failure - user might retry
   }
 
   // Forwards the expiration event to the SSE stream and closes the connection
