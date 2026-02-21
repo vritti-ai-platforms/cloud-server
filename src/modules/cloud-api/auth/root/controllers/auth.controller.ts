@@ -198,20 +198,13 @@ export class AuthController {
   ): Promise<ForgotPasswordResponseDto> {
     this.logger.log(`POST /auth/forgot-password - Email: ${dto.email}`);
 
-    const result = await this.passwordResetService.requestPasswordReset(dto.email, ipAddress, userAgent);
+    const { refreshToken, ...response } = await this.passwordResetService.requestPasswordReset(dto.email, ipAddress, userAgent);
 
-    if (!result) {
-      return { success: true, message: 'If an account exists, a reset code has been sent.' };
+    if (refreshToken) {
+      reply.setCookie(getRefreshCookieName(), refreshToken, getRefreshCookieOptionsFromConfig());
     }
 
-    reply.setCookie(getRefreshCookieName(), result.refreshToken, getRefreshCookieOptionsFromConfig());
-
-    return {
-      success: true,
-      message: 'If an account exists, a reset code has been sent.',
-      accessToken: result.accessToken,
-      expiresIn: result.expiresIn,
-    };
+    return response;
   }
 
   // Resends OTP using the RESET session

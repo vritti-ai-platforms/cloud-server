@@ -21,23 +21,26 @@ export class PasswordResetService {
     private readonly sessionService: SessionService,
   ) {}
 
-  // Sends OTP and creates a RESET session. Returns null if user not found (no enumeration).
+  // Security message — identical for found and not-found cases to prevent email enumeration
+  private readonly RESET_MESSAGE = 'If an account exists, a reset code has been sent.';
+
+  // Sends OTP and creates a RESET session. Returns generic message if user not found (no enumeration).
   async requestPasswordReset(
     email: string,
     ipAddress?: string,
     userAgent?: string,
-  ): Promise<{ accessToken: string; expiresIn: number; refreshToken: string } | null> {
+  ): Promise<{ success: boolean; message: string; accessToken?: string; expiresIn?: number; refreshToken?: string }> {
     const user = await this.userService.findByEmail(email);
 
     if (!user) {
       this.logger.log(`Password reset requested for non-existent email: ${email}`);
-      return null;
+      return { success: true, message: this.RESET_MESSAGE };
     }
 
     // OAuth-only accounts have no password to reset
     if (!user.passwordHash) {
       this.logger.log(`Password reset requested for OAuth-only user: ${user.id}`);
-      return null;
+      return { success: true, message: this.RESET_MESSAGE };
     }
 
     // Create verification record with OTP
@@ -67,7 +70,7 @@ export class PasswordResetService {
 
     this.logger.log(`Created RESET session for user: ${user.id}`);
 
-    return { accessToken, refreshToken, expiresIn };
+    return { success: true, message: this.RESET_MESSAGE, accessToken, refreshToken, expiresIn };
   }
 
   // Resends OTP using userId from the RESET session
