@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { BadRequestException } from '@vritti/api-sdk';
-import { AccountStatusValues, OnboardingStepValues } from '@/db/schema';
+import { AccountStatusValues, OnboardingStepValues, SessionTypeValues } from '@/db/schema';
 import type { RegistrationResponseJSON } from '../../../mfa/types/webauthn.types';
 import { BackupCodeService } from '../../../mfa/services/backup-code.service';
 import { MfaRepository } from '../../../mfa/repositories/mfa.repository';
@@ -127,7 +127,7 @@ export class PasskeySetupService {
       accountStatus: AccountStatusValues.ACTIVE,
     });
 
-    await this.sessionService.upgradeToCloudSession(userId);
+    await this.sessionService.upgradeSession(userId, SessionTypeValues.ONBOARDING, SessionTypeValues.CLOUD);
 
     this.logger.log(`Passkey setup completed for user: ${userId}`);
 

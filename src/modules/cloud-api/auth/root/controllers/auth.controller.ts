@@ -13,7 +13,7 @@ import {
   Res,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { AccessToken, Public, RefreshTokenCookie, UserId } from '@vritti/api-sdk';
+import { AccessToken, Public, RefreshTokenCookie, Reset, UserId } from '@vritti/api-sdk';
 import type { FastifyReply } from 'fastify';
 import {
   ApiChangePassword,
@@ -25,6 +25,7 @@ import {
   ApiLogout,
   ApiLogoutAll,
   ApiRefreshTokens,
+  ApiResendResetOtp,
   ApiResetPassword,
   ApiRevokeSession,
   ApiSignup,
@@ -36,13 +37,15 @@ import { ForgotPasswordDto, ResetPasswordDto, VerifyResetOtpDto } from '../dto/r
 import { LoginDto } from '../dto/request/login.dto';
 import { SignupDto } from '../dto/request/signup.dto';
 import type { AuthStatusResponse } from '../dto/response/auth-status-response.dto';
+import type { ForgotPasswordResponseDto } from '../dto/response/forgot-password-response.dto';
 import type { LoginResponse } from '../dto/response/login-response.dto';
 import type { MessageResponse } from '../dto/response/message-response.dto';
-import type { ResetTokenResponse } from '../dto/response/reset-token-response.dto';
+import type { ResetPasswordResponseDto } from '../dto/response/reset-password-response.dto';
 import type { SignupResponseDto } from '../dto/response/signup-response.dto';
 import type { SuccessResponse } from '../dto/response/success-response.dto';
 import type { TokenResponse } from '../dto/response/token-response.dto';
 import { AuthService } from '../services/auth.service';
+import { PasswordResetService } from '../services/password-reset.service';
 import { getRefreshCookieName, getRefreshCookieOptionsFromConfig } from '../services/session.service';
 
 @ApiTags('Auth')
@@ -50,7 +53,10 @@ import { getRefreshCookieName, getRefreshCookieOptionsFromConfig } from '../serv
 export class AuthController {
   private readonly logger = new Logger(AuthController.name);
 
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly passwordResetService: PasswordResetService,
+  ) {}
 
   // Creates a new user account and initiates onboarding
   @Post('signup')
@@ -179,33 +185,67 @@ export class AuthController {
     return { message: 'Password changed successfully' };
   }
 
-  // Sends password reset OTP to the given email
+  // Sends OTP and creates a RESET session
   @Post('forgot-password')
   @Public()
   @HttpCode(HttpStatus.OK)
   @ApiForgotPassword()
-  async forgotPassword(@Body() dto: ForgotPasswordDto): Promise<SuccessResponse> {
+  async forgotPassword(
+    @Body() dto: ForgotPasswordDto,
+    @Res({ passthrough: true }) reply: FastifyReply,
+    @Ip() ipAddress: string,
+    @Headers('user-agent') userAgent: string,
+  ): Promise<ForgotPasswordResponseDto> {
     this.logger.log(`POST /auth/forgot-password - Email: ${dto.email}`);
-    return this.authService.requestPasswordReset(dto.email);
+
+    const { refreshToken, ...response } = await this.passwordResetService.requestPasswordReset(dto.email, ipAddress, userAgent);
+
+    if (refreshToken) {
+      reply.setCookie(getRefreshCookieName(), refreshToken, getRefreshCookieOptionsFromConfig());
+    }
+
+    return response;
   }
 
-  // Validates the reset OTP and returns a one-time reset token
+  // Resends OTP using the RESET session
+  @Post('resend-reset-otp')
+  @Reset()
+  @HttpCode(HttpStatus.OK)
+  @ApiResendResetOtp()
+  async resendResetOtp(@UserId() userId: string): Promise<SuccessResponse> {
+    this.logger.log(`POST /auth/resend-reset-otp - User: ${userId}`);
+    return this.passwordResetService.resendOtp(userId);
+  }
+
+  // Verifies OTP using the RESET session
   @Post('verify-reset-otp')
-  @Public()
+  @Reset()
   @HttpCode(HttpStatus.OK)
   @ApiVerifyResetOtp()
-  async verifyResetOtp(@Body() dto: VerifyResetOtpDto): Promise<ResetTokenResponse> {
-    this.logger.log(`POST /auth/verify-reset-otp - Email: ${dto.email}`);
-    return this.authService.verifyResetOtp(dto.email, dto.otp);
+  async verifyResetOtp(@UserId() userId: string, @Body() dto: VerifyResetOtpDto): Promise<SuccessResponse> {
+    this.logger.log(`POST /auth/verify-reset-otp - User: ${userId}`);
+    return this.passwordResetService.verifyResetOtp(userId, dto.otp);
   }
 
-  // Sets a new password using the verified reset token
+  // Resets password and creates a new session
   @Post('reset-password')
-  @Public()
+  @Reset()
   @HttpCode(HttpStatus.OK)
   @ApiResetPassword()
-  async resetPassword(@Body() dto: ResetPasswordDto): Promise<SuccessResponse> {
-    this.logger.log('POST /auth/reset-password');
-    return this.authService.resetPassword(dto.resetToken, dto.newPassword);
+  async resetPassword(
+    @UserId() userId: string,
+    @Body() dto: ResetPasswordDto,
+    @Res({ passthrough: true }) reply: FastifyReply,
+    @Ip() ipAddress: string,
+    @Headers('user-agent') userAgent: string,
+  ): Promise<ResetPasswordResponseDto> {
+    this.logger.log(`POST /auth/reset-password - User: ${userId}`);
+
+    const { refreshToken, ...response } = await this.passwordResetService.resetPassword(userId, dto.newPassword, ipAddress, userAgent);
+
+    reply.clearCookie(getRefreshCookieName(), { path: '/' });
+    reply.setCookie(getRefreshCookieName(), refreshToken, getRefreshCookieOptionsFromConfig());
+
+    return response;
   }
 }

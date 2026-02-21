@@ -134,23 +134,23 @@ export class SessionService {
     return { accessToken, expiresIn };
   }
 
-  // Upgrades all ONBOARDING sessions to CLOUD and regenerates tokens
-  async upgradeToCloudSession(userId: string): Promise<void> {
-    const onboardingSessions = await this.sessionRepository.findMany({
-      where: { userId, type: SessionTypeValues.ONBOARDING, isActive: true },
+  // Upgrades all active sessions of one type to another and regenerates tokens
+  async upgradeSession(userId: string, fromType: SessionType, toType: SessionType): Promise<void> {
+    const targetSessions = await this.sessionRepository.findMany({
+      where: { userId, type: fromType, isActive: true },
     });
 
-    for (const session of onboardingSessions) {
-      const refreshToken = this.jwtService.generateRefreshToken(userId, session.id, SessionTypeValues.CLOUD);
+    for (const session of targetSessions) {
+      const refreshToken = this.jwtService.generateRefreshToken(userId, session.id, toType);
       const accessToken = this.jwtService.generateAccessToken(
         userId,
         session.id,
-        SessionTypeValues.CLOUD,
+        toType,
         refreshToken,
       );
 
       await this.sessionRepository.update(session.id, {
-        type: SessionTypeValues.CLOUD,
+        type: toType,
         accessToken,
         refreshToken,
         accessTokenExpiresAt: this.jwtService.getExpiryTime(TokenType.ACCESS),
@@ -158,8 +158,8 @@ export class SessionService {
       });
     }
 
-    if (onboardingSessions.length > 0) {
-      this.logger.log(`Upgraded ${onboardingSessions.length} onboarding sessions to CLOUD for user: ${userId}`);
+    if (targetSessions.length > 0) {
+      this.logger.log(`Upgraded ${targetSessions.length} ${fromType} sessions to ${toType} for user: ${userId}`);
     }
   }
 

@@ -13,7 +13,6 @@ import { AuthStatusResponse } from '../dto/response/auth-status-response.dto';
 import { LoginResponse } from '../dto/response/login-response.dto';
 import { SignupResponseDto } from '../dto/response/signup-response.dto';
 import { JwtAuthService } from './jwt.service';
-import { PasswordResetService } from './password-reset.service';
 import { SessionService } from './session.service';
 
 @Injectable()
@@ -27,7 +26,6 @@ export class AuthService {
     private readonly jwtService: JwtAuthService,
     @Inject(forwardRef(() => MfaVerificationService))
     private readonly mfaVerificationService: MfaVerificationService,
-    private readonly passwordResetService: PasswordResetService,
   ) {}
 
   // Extracts first word from fullName for auto-deriving displayName
@@ -202,6 +200,11 @@ export class AuthService {
         });
       }
 
+      // RESET sessions are temporary password-reset flows, not authenticated
+      if (sessionType === SessionTypeValues.RESET) {
+        return new AuthStatusResponse({ isAuthenticated: false });
+      }
+
       this.logger.log(`Session recovered for user: ${userId}`);
 
       return new AuthStatusResponse({ isAuthenticated: true, user, accessToken, expiresIn });
@@ -319,20 +322,5 @@ export class AuthService {
     await this.userService.update(user.id, { passwordHash: newPasswordHash });
 
     this.logger.log(`Password changed for user: ${user.id}`);
-  }
-
-  // Sends password reset OTP to the given email
-  async requestPasswordReset(email: string): Promise<{ success: boolean; message: string }> {
-    return this.passwordResetService.requestPasswordReset(email);
-  }
-
-  // Validates password reset OTP and returns a reset token
-  async verifyResetOtp(email: string, otp: string): Promise<{ resetToken: string }> {
-    return this.passwordResetService.verifyResetOtp(email, otp);
-  }
-
-  // Sets new password using the verified reset token
-  async resetPassword(resetToken: string, newPassword: string): Promise<{ success: boolean; message: string }> {
-    return this.passwordResetService.resetPassword(resetToken, newPassword);
   }
 }

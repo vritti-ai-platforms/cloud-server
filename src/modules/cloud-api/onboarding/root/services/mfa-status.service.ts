@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { AccountStatusValues, OnboardingStepValues } from '@/db/schema';
+import { AccountStatusValues, OnboardingStepValues, SessionTypeValues } from '@/db/schema';
 import { MfaRepository } from '../../../mfa/repositories/mfa.repository';
 import { SessionService } from '../../../auth/root/services/session.service';
 import { UserService } from '../../../user/services/user.service';
@@ -22,7 +22,7 @@ export class MfaStatusService {
       accountStatus: AccountStatusValues.ACTIVE,
     });
 
-    await this.sessionService.upgradeToCloudSession(userId);
+    await this.sessionService.upgradeSession(userId, SessionTypeValues.ONBOARDING, SessionTypeValues.CLOUD);
 
     this.logger.log(`User ${userId} skipped MFA setup`);
 
