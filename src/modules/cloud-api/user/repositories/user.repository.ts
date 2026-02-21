@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrimaryBaseRepository, PrimaryDatabaseService } from '@vritti/api-sdk';
 import { eq } from '@vritti/api-sdk/drizzle-orm';
-import { AccountStatusValues, OnboardingStepValues, oauthProviders, type User, users } from '@/db/schema';
+import { AccountStatusValues, OnboardingStepValues, type SignupMethod, SignupMethodValues, oauthProviders, type User, users } from '@/db/schema';
 
 @Injectable()
 export class UserRepository extends PrimaryBaseRepository<typeof users> {
@@ -152,6 +152,7 @@ export class UserRepository extends PrimaryBaseRepository<typeof users> {
     emailVerified?: boolean;
     onboardingStep?: (typeof users.$inferInsert)['onboardingStep'];
     profilePictureUrl?: string | null;
+    signupMethod?: SignupMethod;
   }): Promise<User> {
     this.logger.log(`Creating user from OAuth: ${data.email}`);
 
@@ -164,6 +165,7 @@ export class UserRepository extends PrimaryBaseRepository<typeof users> {
       fullName,
       displayName,
       passwordHash: null, // OAuth users don't have password initially
+      signupMethod: data.signupMethod ?? SignupMethodValues.OAUTH,
       emailVerified: data.emailVerified ?? false,
       onboardingStep: data.onboardingStep,
       profilePictureUrl: data.profilePictureUrl,

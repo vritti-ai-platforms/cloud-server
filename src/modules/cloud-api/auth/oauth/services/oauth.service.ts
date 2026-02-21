@@ -5,8 +5,9 @@ import {
   type OAuthProviderType,
   OAuthProviderTypeValues,
   OnboardingStepValues,
-  SessionType,
+  type SessionType,
   SessionTypeValues,
+  SignupMethodValues,
   type User,
 } from '@/db/schema';
 import { UserRepository } from '../../../user/repositories/user.repository';
@@ -193,6 +194,7 @@ export class OAuthService {
       emailVerified: true,
       onboardingStep: OnboardingStepValues.SET_PASSWORD,
       profilePictureUrl: profile.profilePictureUrl,
+      signupMethod: SignupMethodValues.OAUTH,
     });
 
     return this.linkProviderAndCreateSession(user, profile, tokens, SessionTypeValues.ONBOARDING);

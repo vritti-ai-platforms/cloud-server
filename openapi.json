@@ -2253,8 +2253,9 @@
         ]
       }
     },
-    "/cloud-api/onboarding/mobile-verification/initiate": {
+    "/cloud-api/onboarding/mobile-verification/initiate/manual": {
       "post": {
+        "description": "Sends an OTP via SMS to the provided phone number for manual entry. Use the SSE endpoints for QR-based WhatsApp or SMS verification.",
         "operationId": "MobileVerificationController_initiateMobileVerification",
         "parameters": [],
         "requestBody": {
@@ -2270,7 +2271,7 @@
         },
         "responses": {
           "200": {
-            "description": "Mobile verification initiated successfully",
+            "description": "Manual OTP verification initiated successfully",
             "content": {
               "application/json": {
                 "schema": {
@@ -2291,32 +2292,26 @@
             "bearer": []
           }
         ],
-        "summary": "Initiate mobile phone verification",
+        "summary": "Initiate manual OTP mobile verification",
         "tags": [
           "Onboarding - Mobile Verification"
         ]
       }
     },
-    "/cloud-api/onboarding/mobile-verification/status": {
+    "/cloud-api/onboarding/mobile-verification/events/whatsapp": {
       "get": {
-        "operationId": "MobileVerificationController_getMobileVerificationStatus",
+        "description": "SSE endpoint that initiates WhatsApp verification and immediately streams status updates.\nThe first event is type \"initiated\" containing the verification code and WhatsApp number.\nSubsequent events are pushed when the user sends the code via WhatsApp.",
+        "operationId": "MobileVerificationController_subscribeWhatsApp",
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Returns the current mobile verification status",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MobileVerificationStatusResponseDto"
-                }
-              }
-            }
+            "description": "SSE stream established. First event is \"initiated\", followed by status updates."
+          },
+          "400": {
+            "description": "Phone number already verified"
           },
           "401": {
             "description": "Unauthorized - Invalid or missing onboarding token"
-          },
-          "404": {
-            "description": "No active mobile verification found"
           }
         },
         "security": [
@@ -2324,7 +2319,34 @@
             "bearer": []
           }
         ],
-        "summary": "Get current mobile verification status",
+        "summary": "Initiate WhatsApp QR verification and subscribe to events",
+        "tags": [
+          "Onboarding - Mobile Verification"
+        ]
+      }
+    },
+    "/cloud-api/onboarding/mobile-verification/events/sms": {
+      "get": {
+        "description": "SSE endpoint that initiates SMS QR verification and immediately streams status updates.\nThe first event is type \"initiated\" containing the verification code to send via SMS.\nSubsequent events are pushed when the user sends the code via SMS.",
+        "operationId": "MobileVerificationController_subscribeSms",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "SSE stream established. First event is \"initiated\", followed by status updates."
+          },
+          "400": {
+            "description": "Phone number already verified"
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing onboarding token"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Initiate SMS QR verification and subscribe to events",
         "tags": [
           "Onboarding - Mobile Verification"
         ]
@@ -2588,87 +2610,6 @@
         "summary": "Handle incoming webhook events from WhatsApp or SMS providers",
         "tags": [
           "Onboarding - Webhooks"
-        ]
-      }
-    },
-    "/cloud-api/onboarding/mobile-verification/events": {
-      "get": {
-        "description": "Real-time SSE endpoint for mobile verification status updates.\n    Client connects after initiating verification and receives push notifications when:\n    - Verification succeeds (webhook received valid token)\n    - Verification fails (invalid token, phone mismatch)\n    - Verification expires (10 minute timeout)\n\n    Note: Uses query parameter authentication since EventSource API cannot send headers.",
-        "operationId": "VerificationSseController_subscribeToVerificationEvents",
-        "parameters": [
-          {
-            "name": "token",
-            "required": true,
-            "in": "query",
-            "description": "JWT onboarding token for authentication",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "SSE connection established. Events will be streamed as verification status changes.",
-            "content": {
-              "text/event-stream": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "data": {
-                      "type": "object",
-                      "properties": {
-                        "type": {
-                          "type": "string",
-                          "enum": [
-                            "SUCCESS",
-                            "FAILED",
-                            "EXPIRED"
-                          ],
-                          "description": "Verification status"
-                        },
-                        "verificationId": {
-                          "type": "string",
-                          "description": "Unique verification identifier"
-                        },
-                        "phone": {
-                          "type": "string",
-                          "description": "Masked phone number"
-                        },
-                        "message": {
-                          "type": "string",
-                          "description": "Human-readable status message"
-                        },
-                        "timestamp": {
-                          "type": "string",
-                          "format": "date-time",
-                          "description": "Event timestamp"
-                        }
-                      }
-                    },
-                    "id": {
-                      "type": "string",
-                      "description": "Event ID for reconnection"
-                    },
-                    "type": {
-                      "type": "string",
-                      "example": "verification",
-                      "description": "Event type"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized - Invalid or missing token in query parameter"
-          },
-          "404": {
-            "description": "Verification already completed or not found"
-          }
-        },
-        "summary": "Subscribe to mobile verification events via Server-Sent Events",
-        "tags": [
-          "Onboarding - Verification Events"
         ]
       }
     },
@@ -3359,6 +3300,15 @@
             "description": "Whether user has set a password",
             "example": true
           },
+          "signupMethod": {
+            "type": "string",
+            "description": "Method used for signup",
+            "example": "email",
+            "enum": [
+              "email",
+              "oauth"
+            ]
+          },
           "phone": {
             "type": "object",
             "description": "Phone number",
@@ -3422,6 +3372,7 @@
           "phoneVerified",
           "onboardingStep",
           "hasPassword",
+          "signupMethod",
           "locale",
           "timezone",
           "createdAt",

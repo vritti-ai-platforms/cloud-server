@@ -1,7 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, type MessageEvent } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { BadRequestException, extractCountryFromPhone, NotFoundException, normalizePhoneNumber } from '@vritti/api-sdk';
+import { BadRequestException, extractCountryFromPhone, normalizePhoneNumber } from '@vritti/api-sdk';
+import { concat, Observable, of } from 'rxjs';
 import { type Verification } from '@/db/schema';
 import { type VerificationChannel, VerificationChannelValues } from '@/db/schema/enums';
 import { UserService } from '../../../user/services/user.service';
@@ -11,6 +12,7 @@ import { MobileVerificationStatusResponseDto } from '../dto/response/mobile-veri
 import { MobileVerificationEvent, VERIFICATION_EVENTS } from '../events/verification.events';
 import { VerificationProviderFactory } from '../providers';
 import { mapToInternalChannel } from '../utils/method-mapping.util';
+import { SseConnectionService } from './sse-connection.service';
 
 @Injectable()
 export class MobileVerificationService {
@@ -23,11 +25,12 @@ export class MobileVerificationService {
     private readonly configService: ConfigService,
     private readonly verificationService: VerificationService,
     private readonly eventEmitter: EventEmitter2,
+    private readonly sseConnectionService: SseConnectionService,
   ) {
     this.whatsappBusinessNumber = this.configService.get<string>('WHATSAPP_BUSINESS_NUMBER') || '';
   }
 
-  // Creates a verification record, selects the provider, and sends the verification message
+  // Creates a manual OTP verification record and sends the verification message via SMS
   async initiateVerification(
     userId: string,
     dto: InitiateMobileVerificationDto,
@@ -75,6 +78,74 @@ export class MobileVerificationService {
     };
   }
 
+  // Initiates QR verification and returns an Observable with the initiated event prepended
+  async initiateAndSubscribe(userId: string, channel: VerificationChannel): Promise<Observable<MessageEvent>> {
+    const result = await this.initiateQrVerification(userId, channel);
+
+    const subject = this.sseConnectionService.getOrCreateConnection(userId, result.expiresAt);
+
+    this.scheduleExpiry(userId, result.expiresAt);
+
+    const initiatedEvent: MessageEvent = {
+      data: JSON.stringify({
+        verificationCode: result.verificationCode,
+        instructions: result.instructions,
+        expiresAt: result.expiresAt,
+        whatsappNumber: result.whatsappNumber,
+      }),
+      type: 'initiated',
+    };
+
+    return concat(of(initiatedEvent), subject.asObservable());
+  }
+
+  // Extracts QR-specific logic: validates state, creates verification, returns initiation data
+  private async initiateQrVerification(
+    userId: string,
+    channel: VerificationChannel,
+  ): Promise<{ verificationCode: string; instructions: string; expiresAt: Date; whatsappNumber?: string }> {
+    const user = await this.userService.findById(userId);
+
+    if (user.phoneVerified) {
+      throw new BadRequestException('Phone number already verified');
+    }
+
+    if (channel !== VerificationChannelValues.WHATSAPP_IN && channel !== VerificationChannelValues.SMS_IN) {
+      throw new BadRequestException('This endpoint only supports QR-based verification channels');
+    }
+
+    const { otp, expiresAt } = await this.verificationService.createVerification(userId, channel, null);
+
+    this.logger.log(`Created QR verification for user ${userId} using channel ${channel}`);
+
+    const isWhatsApp = channel === VerificationChannelValues.WHATSAPP_IN;
+
+    const instructions = isWhatsApp
+      ? `Send the code to our WhatsApp number to verify your phone`
+      : `Send the code via SMS to our number to verify your phone`;
+
+    return {
+      verificationCode: otp,
+      instructions,
+      expiresAt,
+      whatsappNumber: isWhatsApp && this.whatsappBusinessNumber ? this.whatsappBusinessNumber : undefined,
+    };
+  }
+
+  // Schedules an expiry event to be emitted when the verification window closes
+  private scheduleExpiry(userId: string, expiresAt: Date): void {
+    const timeoutMs = Math.max(0, expiresAt.getTime() - Date.now());
+
+    setTimeout(() => {
+      if (this.sseConnectionService.hasConnection(userId)) {
+        this.eventEmitter.emit(
+          VERIFICATION_EVENTS.MOBILE_EXPIRED,
+          new MobileVerificationEvent(userId, '', 'expired', undefined, 'Verification window expired'),
+        );
+      }
+    }, timeoutMs);
+  }
+
   // Processes an inbound webhook token, validates the phone, and marks verification complete
   async verifyFromWebhook(
     verificationToken: string,
@@ -92,7 +163,10 @@ export class MobileVerificationService {
       return false;
     }
 
-    const alreadyUsed = await this.verificationService.isTargetVerifiedByOtherUser(normalizedPhone, verification.userId);
+    const alreadyUsed = await this.verificationService.isTargetVerifiedByOtherUser(
+      normalizedPhone,
+      verification.userId,
+    );
     if (alreadyUsed) {
       this.logger.warn(`Phone ${normalizedPhone} is already verified by another user`);
       return false;
@@ -142,54 +216,6 @@ export class MobileVerificationService {
     );
 
     return true;
-  }
-
-  // Retrieves the latest mobile verification record and builds a status response
-  async getVerificationStatus(userId: string): Promise<MobileVerificationStatusResponseDto> {
-    await this.userService.findById(userId);
-
-    const verification = await this.findLatestMobileVerification(userId);
-
-    if (!verification) {
-      throw new NotFoundException('No mobile verification found. Please initiate verification first.');
-    }
-
-    return this.buildStatusResponse(verification);
-  }
-
-  // Retrieves the latest verification record for SSE connection setup
-  async findLatestVerification(userId: string): Promise<Verification | undefined> {
-    return this.findLatestMobileVerification(userId);
-  }
-
-  // Finds the most recent verification across all mobile channels
-  private async findLatestMobileVerification(userId: string): Promise<Verification | undefined> {
-    const mobileChannels = [
-      VerificationChannelValues.SMS_OUT,
-      VerificationChannelValues.SMS_IN,
-      VerificationChannelValues.WHATSAPP_IN,
-    ];
-
-    const verifications = await Promise.all(
-      mobileChannels.map((channel) => this.verificationService.findByUserIdAndChannel(userId, channel)),
-    );
-
-    return verifications
-      .filter((v): v is Verification => v !== undefined)
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0];
-  }
-
-  // Builds the status response DTO from a verification record
-  private buildStatusResponse(verification: Verification): MobileVerificationStatusResponseDto {
-    return {
-      success: true,
-      message: verification.isVerified ? 'Phone number verified successfully' : 'Verification initiated successfully',
-      verificationCode: undefined,
-      whatsappNumber:
-        verification.channel === VerificationChannelValues.WHATSAPP_IN && this.whatsappBusinessNumber
-          ? this.whatsappBusinessNumber
-          : undefined,
-    };
   }
 
   // Sends verification message via the appropriate provider

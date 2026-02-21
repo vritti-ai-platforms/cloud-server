@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import type { AccountStatus, OnboardingStep, User } from '@/db/schema';
+import type { AccountStatus, OnboardingStep, SignupMethod, User } from '@/db/schema';
 
 export class UserDto {
   @ApiProperty({ description: 'User unique identifier', example: 'usr_abc123xyz' })
@@ -36,6 +36,9 @@ export class UserDto {
 
   @ApiProperty({ description: 'Whether user has set a password', example: true })
   hasPassword: boolean;
+
+  @ApiProperty({ description: 'Method used for signup', example: 'email', enum: ['email', 'oauth'] })
+  signupMethod: SignupMethod;
 
   @ApiPropertyOptional({ description: 'Phone number', example: '+14155551234' })
   phone?: string | null;
@@ -83,6 +86,7 @@ export class UserDto {
       phoneVerified: user.phoneVerified,
       onboardingStep: user.onboardingStep,
       hasPassword: user.passwordHash !== null,
+      signupMethod: user.signupMethod,
       phone: user.phone,
       phoneCountry: user.phoneCountry,
       profilePictureUrl: user.profilePictureUrl,

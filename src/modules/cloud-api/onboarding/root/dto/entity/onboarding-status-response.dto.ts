@@ -36,25 +36,21 @@ export class OnboardingStatusResponseDto {
 
   // Builds onboarding status from User entity
   static fromUser(user: User): OnboardingStatusResponseDto {
-    const signupMethod: 'email' | 'oauth' = user.passwordHash === null ? 'oauth' : 'email';
-
     return new OnboardingStatusResponseDto({
       email: user.email,
       currentStep: user.onboardingStep,
       onboardingComplete: user.onboardingStep === OnboardingStepValues.COMPLETE,
-      signupMethod,
+      signupMethod: user.signupMethod,
     });
   }
 
   // Builds onboarding status from UserDto
   static fromUserDto(userResponse: UserDto): OnboardingStatusResponseDto {
-    const signupMethod: 'email' | 'oauth' = userResponse.hasPassword ? 'email' : 'oauth';
-
     return new OnboardingStatusResponseDto({
       email: userResponse.email,
       currentStep: userResponse.onboardingStep,
       onboardingComplete: userResponse.onboardingStep === OnboardingStepValues.COMPLETE,
-      signupMethod,
+      signupMethod: userResponse.signupMethod,
     });
   }
 }

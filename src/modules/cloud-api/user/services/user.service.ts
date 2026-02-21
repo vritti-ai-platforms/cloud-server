@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConflictException, NotFoundException } from '@vritti/api-sdk';
-import type { User } from '@/db/schema';
+import { type SignupMethod, type User, SignupMethodValues } from '@/db/schema';
 import type { CreateUserDto } from '../dto/request/create-user.dto';
 import type { UpdateUserDto } from '../dto/request/update-user.dto';
 import { UserDto } from '../dto/entity/user.dto';
@@ -17,6 +17,7 @@ export class UserService {
     createUserDto: CreateUserDto,
     passwordHash?: string,
     skipEmailCheck = false,
+    signupMethod: SignupMethod = SignupMethodValues.EMAIL,
   ): Promise<UserDto> {
     // Validate email uniqueness (skip if caller has already verified)
     if (!skipEmailCheck) {
@@ -34,6 +35,7 @@ export class UserService {
     const user = await this.userRepository.create({
       ...createUserDto,
       passwordHash,
+      signupMethod,
     });
 
     this.logger.log(`Created user: ${user.email} (${user.id})`);

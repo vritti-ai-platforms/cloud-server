@@ -38,6 +38,9 @@ export const oauthProviderTypeEnum = cloudSchema.enum('OAuthProviderType', [
   'X',
 ]);
 
+// Signup method enum
+export const signupMethodEnum = cloudSchema.enum('SignupMethod', ['email', 'oauth']);
+
 // Session enums
 export const sessionTypeEnum = cloudSchema.enum('SessionType', ['ONBOARDING', 'CLOUD', 'COMPANY']);
 
@@ -49,6 +52,7 @@ export type OnboardingStep = (typeof onboardingStepEnum.enumValues)[number];
 export type VerificationChannel = (typeof verificationChannelEnum.enumValues)[number];
 export type MfaMethod = (typeof mfaMethodEnum.enumValues)[number];
 export type OAuthProviderType = (typeof oauthProviderTypeEnum.enumValues)[number];
+export type SignupMethod = (typeof signupMethodEnum.enumValues)[number];
 export type SessionType = (typeof sessionTypeEnum.enumValues)[number];
 
 // Runtime enum value objects for use in code
@@ -95,6 +99,11 @@ export const OAuthProviderTypeValues = {
   APPLE: 'APPLE' as const,
   FACEBOOK: 'FACEBOOK' as const,
   X: 'X' as const,
+};
+
+export const SignupMethodValues = {
+  EMAIL: 'email' as const,
+  OAUTH: 'oauth' as const,
 };
 
 export const SessionTypeValues = {

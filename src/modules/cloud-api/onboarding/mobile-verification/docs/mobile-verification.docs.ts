@@ -1,16 +1,19 @@
 import { applyDecorators } from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiProduces, ApiResponse } from '@nestjs/swagger';
 import { InitiateMobileVerificationDto } from '../dto/request/initiate-mobile-verification.dto';
 import { VerifyMobileOtpDto } from '../dto/request/verify-mobile-otp.dto';
 import { MobileVerificationStatusResponseDto } from '../dto/response/mobile-verification-status-response.dto';
 
-export function ApiInitiateMobileVerification() {
+export function ApiInitiateManualMobileVerification() {
   return applyDecorators(
-    ApiOperation({ summary: 'Initiate mobile phone verification' }),
+    ApiOperation({
+      summary: 'Initiate manual OTP mobile verification',
+      description: 'Sends an OTP via SMS to the provided phone number for manual entry. Use the SSE endpoints for QR-based WhatsApp or SMS verification.',
+    }),
     ApiBody({ type: InitiateMobileVerificationDto, description: 'Mobile verification initiation payload' }),
     ApiResponse({
       status: 200,
-      description: 'Mobile verification initiated successfully',
+      description: 'Manual OTP verification initiated successfully',
       type: MobileVerificationStatusResponseDto,
     }),
     ApiResponse({ status: 400, description: 'Invalid phone number or verification method' }),
@@ -18,16 +21,39 @@ export function ApiInitiateMobileVerification() {
   );
 }
 
-export function ApiGetMobileVerificationStatus() {
+export function ApiSubscribeWhatsApp() {
   return applyDecorators(
-    ApiOperation({ summary: 'Get current mobile verification status' }),
+    ApiOperation({
+      summary: 'Initiate WhatsApp QR verification and subscribe to events',
+      description: `SSE endpoint that initiates WhatsApp verification and immediately streams status updates.
+The first event is type "initiated" containing the verification code and WhatsApp number.
+Subsequent events are pushed when the user sends the code via WhatsApp.`,
+    }),
+    ApiProduces('text/event-stream'),
     ApiResponse({
       status: 200,
-      description: 'Returns the current mobile verification status',
-      type: MobileVerificationStatusResponseDto,
+      description: 'SSE stream established. First event is "initiated", followed by status updates.',
     }),
+    ApiResponse({ status: 400, description: 'Phone number already verified' }),
     ApiResponse({ status: 401, description: 'Unauthorized - Invalid or missing onboarding token' }),
-    ApiResponse({ status: 404, description: 'No active mobile verification found' }),
+  );
+}
+
+export function ApiSubscribeSms() {
+  return applyDecorators(
+    ApiOperation({
+      summary: 'Initiate SMS QR verification and subscribe to events',
+      description: `SSE endpoint that initiates SMS QR verification and immediately streams status updates.
+The first event is type "initiated" containing the verification code to send via SMS.
+Subsequent events are pushed when the user sends the code via SMS.`,
+    }),
+    ApiProduces('text/event-stream'),
+    ApiResponse({
+      status: 200,
+      description: 'SSE stream established. First event is "initiated", followed by status updates.',
+    }),
+    ApiResponse({ status: 400, description: 'Phone number already verified' }),
+    ApiResponse({ status: 401, description: 'Unauthorized - Invalid or missing onboarding token' }),
   );
 }
 

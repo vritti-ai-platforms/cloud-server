@@ -1,7 +1,6 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
-import { SseAuthGuard } from '@vritti/api-sdk';
 import { jwtConfigFactory } from '../../../config/jwt.config';
 import { ServicesModule } from '../../../services';
 import { MfaModule } from '../mfa/mfa.module';
@@ -13,7 +12,6 @@ import { VerificationModule } from '../verification/verification.module';
 import { EmailVerificationController } from './email-verification/controllers/email-verification.controller';
 import { EmailVerificationService } from './email-verification/services/email-verification.service';
 import { MobileVerificationController } from './mobile-verification/controllers/mobile-verification.controller';
-import { VerificationSseController } from './mobile-verification/controllers/verification-sse.controller';
 import { VerificationWebhookController } from './mobile-verification/controllers/verification-webhook.controller';
 import {
   SMSInboundProvider,
@@ -49,7 +47,6 @@ import { TotpSetupService } from './totp/services/totp-setup.service';
     EmailVerificationController,
     MobileVerificationController,
     VerificationWebhookController,
-    VerificationSseController,
     TotpSetupController,
     PasskeySetupController,
     MfaStatusController,
@@ -68,7 +65,6 @@ import { TotpSetupService } from './totp/services/totp-setup.service';
     VerificationProviderFactory,
     SseConnectionService,
     VerificationEventListener,
-    SseAuthGuard,
     // TOTP setup
     TotpSetupService,
     // Passkey setup

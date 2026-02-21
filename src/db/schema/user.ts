@@ -1,16 +1,15 @@
 import { boolean, text, timestamp, uuid, varchar } from '@vritti/api-sdk/drizzle-pg-core';
 import { cloudSchema } from './cloud-schema';
-import { accountStatusEnum, onboardingStepEnum } from './enums';
+import { accountStatusEnum, onboardingStepEnum, signupMethodEnum } from './enums';
 
-/**
- * User account - core user entity
- */
+// User account - core user entity
 export const users = cloudSchema.table('users', {
   id: uuid('id').primaryKey().defaultRandom(),
   email: varchar('email', { length: 255 }).notNull().unique(),
   fullName: varchar('full_name', { length: 255 }).notNull(),
   displayName: varchar('display_name', { length: 100 }).notNull(),
   passwordHash: varchar('password_hash', { length: 255 }),
+  signupMethod: signupMethodEnum('signup_method').notNull().default('email'),
   accountStatus: accountStatusEnum('account_status').notNull().default('PENDING_VERIFICATION'),
   emailVerified: boolean('email_verified').notNull().default(false),
   phoneVerified: boolean('phone_verified').notNull().default(false),

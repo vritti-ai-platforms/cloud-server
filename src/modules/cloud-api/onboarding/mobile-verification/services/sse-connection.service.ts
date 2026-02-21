@@ -1,9 +1,8 @@
-import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
+import { Injectable, Logger, type MessageEvent, OnModuleDestroy } from '@nestjs/common';
 import { Subject } from 'rxjs';
-import { MobileVerificationEvent } from '../events/verification.events';
 
 interface UserConnection {
-  subject: Subject<MobileVerificationEvent>;
+  subject: Subject<MessageEvent>;
   expiresAt: Date;
   createdAt: Date;
 }
@@ -28,7 +27,7 @@ export class SseConnectionService implements OnModuleDestroy {
   }
 
   // Returns an existing SSE subject for the user or creates a new one
-  getOrCreateConnection(userId: string, expiresAt: Date): Subject<MobileVerificationEvent> {
+  getOrCreateConnection(userId: string, expiresAt: Date): Subject<MessageEvent> {
     const existing = this.connections.get(userId);
 
     if (existing && !existing.subject.closed) {
@@ -36,7 +35,7 @@ export class SseConnectionService implements OnModuleDestroy {
       return existing.subject;
     }
 
-    const subject = new Subject<MobileVerificationEvent>();
+    const subject = new Subject<MessageEvent>();
     this.connections.set(userId, {
       subject,
       expiresAt,
@@ -48,7 +47,7 @@ export class SseConnectionService implements OnModuleDestroy {
   }
 
   // Pushes a verification event to the user's SSE stream if connected
-  sendToUser(userId: string, event: MobileVerificationEvent): boolean {
+  sendToUser(userId: string, event: MessageEvent): boolean {
     const connection = this.connections.get(userId);
 
     if (!connection || connection.subject.closed) {
@@ -56,7 +55,7 @@ export class SseConnectionService implements OnModuleDestroy {
       return false;
     }
 
-    this.logger.log(`Sending verification event to user ${userId}: ${event.status}`);
+    this.logger.log(`Sending verification event to user ${userId}: ${event.type}`);
     connection.subject.next(event);
     return true;
   }

@@ -1,9 +1,12 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Logger, Post } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Logger, type MessageEvent, Post, Sse } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Onboarding, UserId } from '@vritti/api-sdk';
+import { Observable } from 'rxjs';
+import { VerificationChannelValues } from '@/db/schema/enums';
 import {
-  ApiGetMobileVerificationStatus,
-  ApiInitiateMobileVerification,
+  ApiInitiateManualMobileVerification,
+  ApiSubscribeSms,
+  ApiSubscribeWhatsApp,
   ApiVerifyMobileOtp,
 } from '../docs/mobile-verification.docs';
 import { InitiateMobileVerificationDto } from '../dto/request/initiate-mobile-verification.dto';
@@ -17,32 +20,40 @@ import { MobileVerificationService } from '../services/mobile-verification.servi
 export class MobileVerificationController {
   private readonly logger = new Logger(MobileVerificationController.name);
 
-  constructor(
-    private readonly mobileVerificationService: MobileVerificationService,
-  ) {}
+  constructor(private readonly mobileVerificationService: MobileVerificationService) {}
 
-  // Starts mobile verification using the chosen method (WhatsApp, SMS, or OTP)
-  @Post('initiate')
+  // Starts manual OTP verification via SMS (requires phone number in body)
+  @Post('initiate/manual')
   @Onboarding()
   @HttpCode(HttpStatus.OK)
-  @ApiInitiateMobileVerification()
+  @ApiInitiateManualMobileVerification()
   async initiateMobileVerification(
     @UserId() userId: string,
     @Body() dto: InitiateMobileVerificationDto,
   ): Promise<MobileVerificationStatusResponseDto> {
-    this.logger.log(`POST /onboarding/mobile-verification/initiate - User: ${userId}`);
+    this.logger.log(`POST /onboarding/mobile-verification/initiate/manual - User: ${userId}`);
 
     return this.mobileVerificationService.initiateVerification(userId, dto);
   }
 
-  // Returns the current mobile verification state for the user
-  @Get('status')
+  // Initiates WhatsApp verification and streams real-time status events
+  @Sse('events/whatsapp')
   @Onboarding()
-  @ApiGetMobileVerificationStatus()
-  async getMobileVerificationStatus(@UserId() userId: string): Promise<MobileVerificationStatusResponseDto> {
-    this.logger.log(`GET /onboarding/mobile-verification/status - User: ${userId}`);
+  @ApiSubscribeWhatsApp()
+  async subscribeWhatsApp(@UserId() userId: string): Promise<Observable<MessageEvent>> {
+    this.logger.log(`SSE /onboarding/mobile-verification/events/whatsapp - User: ${userId}`);
 
-    return this.mobileVerificationService.getVerificationStatus(userId);
+    return this.mobileVerificationService.initiateAndSubscribe(userId, VerificationChannelValues.WHATSAPP_IN);
+  }
+
+  // Initiates SMS QR verification and streams real-time status events
+  @Sse('events/sms')
+  @Onboarding()
+  @ApiSubscribeSms()
+  async subscribeSms(@UserId() userId: string): Promise<Observable<MessageEvent>> {
+    this.logger.log(`SSE /onboarding/mobile-verification/events/sms - User: ${userId}`);
+
+    return this.mobileVerificationService.initiateAndSubscribe(userId, VerificationChannelValues.SMS_IN);
   }
 
   // Validates the manually-entered OTP for mobile phone verification
