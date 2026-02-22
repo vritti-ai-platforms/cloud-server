@@ -97,7 +97,7 @@ export class MfaVerificationController {
     this.logger.log(`POST /auth/mfa/passkey/verify - sessionId: ${dto.sessionId}`);
     const { refreshToken, ...response } = await this.mfaVerificationService.verifyPasskeyMfa(
       dto.sessionId,
-      dto.credential as any,
+      dto.credential,
     );
 
     // Set refresh token in httpOnly cookie

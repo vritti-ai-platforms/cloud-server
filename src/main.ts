@@ -104,7 +104,7 @@ function createSwaggerConfig() {
     .addTag('Auth - Passkey', 'Passkey/WebAuthn authentication')
     .addTag('MFA', 'Multi-factor authentication verification')
     .addTag('Onboarding', 'User onboarding flow')
-    .addTag('Onboarding - Two-Factor Authentication', '2FA setup during onboarding')
+    .addTag('Onboarding - MFA Setup', 'MFA setup during onboarding')
     .addTag('Onboarding - Verification Events', 'SSE events for verification status')
     .addTag('Onboarding - Webhooks', 'Webhook handlers for SMS/WhatsApp')
     .addTag('Tenants', 'Tenant management')

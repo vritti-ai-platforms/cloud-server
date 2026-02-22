@@ -83,7 +83,7 @@ export class AuthService {
     return { ...SignupResponseDto.from(user, accessToken, expiresIn), refreshToken };
   }
 
-  // Validates credentials and creates session, or returns MFA challenge if 2FA enabled
+  // Validates credentials and creates session, or returns MFA challenge if MFA is enabled
   async login(
     dto: LoginDto,
     ipAddress?: string,
@@ -132,7 +132,7 @@ export class AuthService {
       });
     }
 
-    // Check if user has 2FA enabled
+    // Check if user has MFA enabled
     const mfaChallenge = await this.mfaVerificationService.createMfaChallenge(user, {
       ipAddress,
       userAgent,
@@ -152,7 +152,7 @@ export class AuthService {
       });
     }
 
-    // No 2FA — create CLOUD session
+    // No MFA — create CLOUD session
     const { accessToken, refreshToken } = await this.sessionService.createSession(
       user.id,
       SessionTypeValues.CLOUD,

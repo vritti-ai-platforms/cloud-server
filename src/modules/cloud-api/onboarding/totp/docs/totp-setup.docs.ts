@@ -9,7 +9,7 @@ export function ApiInitiateTotpSetup() {
     ApiOperation({ summary: 'Initiate TOTP (Time-based One-Time Password) setup' }),
     ApiResponse({ status: 200, description: 'Returns QR code and manual key for TOTP setup', type: TotpSetupResponseDto }),
     ApiResponse({ status: 401, description: 'Unauthorized - Invalid or missing onboarding token' }),
-    ApiResponse({ status: 400, description: '2FA already enabled for this user' }),
+    ApiResponse({ status: 400, description: 'MFA already enabled for this user' }),
   );
 }
 

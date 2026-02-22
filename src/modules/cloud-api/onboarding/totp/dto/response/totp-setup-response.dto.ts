@@ -2,10 +2,10 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class TotpSetupResponseDto {
   @ApiProperty({
-    description: 'Base64-encoded data URL of the QR code image for scanning with authenticator apps',
-    example: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...',
+    description: 'otpauth:// URI for rendering a QR code on the frontend',
+    example: 'otpauth://totp/Vritti:user@example.com?secret=JBSWY3DPEHPK3PXP&issuer=Vritti',
   })
-  qrCodeDataUrl: string;
+  keyUri: string;
 
   @ApiProperty({
     description: 'Manual setup key for users who cannot scan the QR code, to be entered manually in authenticator app',

@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsObject, IsString } from 'class-validator';
+import { IsNotEmpty, IsObject, IsString, IsUUID } from 'class-validator';
+import type { AuthenticationResponseJSON } from '../../../../mfa/types/webauthn.types';
 
 class AuthenticatorResponseDto {
   @ApiProperty({
@@ -69,25 +70,12 @@ class AuthenticationResponseJSONDto {
   type: 'public-key';
 }
 
-interface AuthenticationResponseJSON {
-  id: string;
-  rawId: string;
-  response: {
-    clientDataJSON: string;
-    authenticatorData: string;
-    signature: string;
-    userHandle?: string;
-  };
-  authenticatorAttachment?: 'platform' | 'cross-platform';
-  clientExtensionResults: Record<string, unknown>;
-  type: 'public-key';
-}
-
 export class StartPasskeyMfaDto {
   @ApiProperty({
     description: 'MFA session identifier obtained from the login challenge response',
     example: 'f47ac10b-58cc-4372-a567-0e02b2c3d479',
   })
+  @IsUUID()
   @IsString()
   @IsNotEmpty({ message: 'Session ID is required' })
   sessionId: string;
@@ -98,6 +86,7 @@ export class VerifyPasskeyMfaDto {
     description: 'MFA session identifier obtained from the login challenge response',
     example: 'f47ac10b-58cc-4372-a567-0e02b2c3d479',
   })
+  @IsUUID()
   @IsString()
   @IsNotEmpty({ message: 'Session ID is required' })
   sessionId: string;

@@ -1,0 +1,2 @@
+CREATE TYPE "cloud"."SignupMethod" AS ENUM('email', 'oauth');--> statement-breakpoint
+ALTER TABLE "cloud"."users" ADD COLUMN "signup_method" "cloud"."SignupMethod" DEFAULT 'email'::"cloud"."SignupMethod" NOT NULL;

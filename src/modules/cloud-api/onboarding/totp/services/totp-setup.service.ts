@@ -9,8 +9,7 @@ import { UserService } from '../../../user/services/user.service';
 import { BackupCodesResponseDto } from '../dto/response/backup-codes-response.dto';
 import { TotpSetupResponseDto } from '../dto/response/totp-setup-response.dto';
 import { TIME_CONSTANTS } from '@/constants/time-constants';
-
-const pendingSetups = new Map<string, { secret: string; expiresAt: Date }>();
+import { TotpPendingStore } from './totp-pending.store';
 
 @Injectable()
 export class TotpSetupService {
@@ -22,6 +21,7 @@ export class TotpSetupService {
     private readonly backupCodeService: BackupCodeService,
     private readonly userService: UserService,
     private readonly sessionService: SessionService,
+    private readonly totpPendingStore: TotpPendingStore,
   ) {}
 
   // Generates a TOTP secret, stores it in a pending map, and returns the QR code
@@ -38,25 +38,24 @@ export class TotpSetupService {
 
     const secret = this.totpService.generateTotpSecret();
     const keyUri = this.totpService.generateKeyUri(user.email, secret);
-    const qrCodeDataUrl = await this.totpService.generateQrCodeDataUrl(keyUri);
 
     const expiresAt = new Date();
     expiresAt.setMinutes(expiresAt.getMinutes() + TIME_CONSTANTS.TOTP_PENDING_SETUP_TTL_MINUTES);
-    pendingSetups.set(userId, { secret, expiresAt });
+    this.totpPendingStore.set(userId, secret, expiresAt);
 
     this.logger.log(`Initiated TOTP setup for user: ${userId}`);
 
     return new TotpSetupResponseDto({
-      qrCodeDataUrl,
+      keyUri,
       manualSetupKey: this.totpService.formatSecretForDisplay(secret),
       issuer: this.totpService.getIssuer(),
       accountName: user.email,
     });
   }
 
-  // Validates the TOTP token, persists the secret, generates backup codes, and completes onboarding
-  async verifySetup(userId: string, token: string): Promise<BackupCodesResponseDto> {
-    const pending = pendingSetups.get(userId);
+  // Validates the TOTP code, persists the secret, generates backup codes, and completes onboarding
+  async verifySetup(userId: string, code: string): Promise<BackupCodesResponseDto> {
+    const pending = this.totpPendingStore.get(userId);
     if (!pending) {
       throw new BadRequestException({
         label: 'No Pending Setup',
@@ -64,15 +63,7 @@ export class TotpSetupService {
       });
     }
 
-    if (new Date() > pending.expiresAt) {
-      pendingSetups.delete(userId);
-      throw new BadRequestException({
-        label: 'Session Expired',
-        detail: 'Please start the setup process again.',
-      });
-    }
-
-    const isValid = this.totpService.verifyToken(token, pending.secret);
+    const isValid = this.totpService.verifyToken(code, pending.secret);
     if (!isValid) {
       throw new BadRequestException({
         label: 'Invalid Code',
@@ -87,7 +78,7 @@ export class TotpSetupService {
     await this.mfaRepo.deactivateAllByUserId(userId);
     await this.mfaRepo.createTotp(userId, pending.secret, hashedBackupCodes);
 
-    pendingSetups.delete(userId);
+    this.totpPendingStore.delete(userId);
 
     await this.userService.update(userId, {
       onboardingStep: OnboardingStepValues.COMPLETE,
@@ -109,6 +100,6 @@ export class TotpSetupService {
 
   // Clears any pending TOTP setup for a user
   clearPendingSetup(userId: string): void {
-    pendingSetups.delete(userId);
+    this.totpPendingStore.delete(userId);
   }
 }

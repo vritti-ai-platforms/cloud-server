@@ -9,7 +9,7 @@ export function ApiInitiatePasskeySetup() {
     ApiOperation({ summary: 'Initiate Passkey/WebAuthn setup' }),
     ApiResponse({ status: 200, description: 'Returns WebAuthn registration options for passkey setup', type: PasskeyRegistrationOptionsDto }),
     ApiResponse({ status: 401, description: 'Unauthorized - Invalid or missing onboarding token' }),
-    ApiResponse({ status: 400, description: '2FA already enabled for this user' }),
+    ApiResponse({ status: 400, description: 'MFA already enabled for this user' }),
   );
 }
 

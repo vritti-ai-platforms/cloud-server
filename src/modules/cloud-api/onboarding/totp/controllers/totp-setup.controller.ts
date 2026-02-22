@@ -35,6 +35,6 @@ export class TotpSetupController {
     @Body() dto: VerifyTotpDto,
   ): Promise<BackupCodesResponseDto> {
     this.logger.log(`POST /onboarding/mfa/totp/verify - User: ${userId}`);
-    return this.totpSetupService.verifySetup(userId, dto.token);
+    return this.totpSetupService.verifySetup(userId, dto.code);
   }
 }

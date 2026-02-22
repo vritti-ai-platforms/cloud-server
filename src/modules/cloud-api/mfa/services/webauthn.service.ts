@@ -7,7 +7,11 @@ import {
   verifyRegistrationResponse,
 } from '@simplewebauthn/server';
 import { isoBase64URL, isoUint8Array } from '@simplewebauthn/server/helpers';
-import type { AuthenticatorTransportFuture, AuthenticationResponseJSON, RegistrationResponseJSON } from '../types/webauthn.types';
+import type {
+  AuthenticationResponseJSON,
+  AuthenticatorTransportFuture,
+  RegistrationResponseJSON,
+} from '../types/webauthn.types';
 
 @Injectable()
 export class WebAuthnService {
@@ -17,7 +21,7 @@ export class WebAuthnService {
   private readonly origin: string;
 
   constructor(private readonly configService: ConfigService) {
-    this.rpName = this.configService.get<string>('WEBAUTHN_RP_NAME', 'Vritti');
+    this.rpName = this.configService.get<string>('WEBAUTHN_RP_NAME', 'Vritti AI Cloud');
     this.rpID = this.configService.get<string>('WEBAUTHN_RP_ID', 'localhost');
     this.origin = this.configService.get<string>('WEBAUTHN_ORIGIN', 'http://localhost:3012');
 

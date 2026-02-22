@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { BadRequestException, UnauthorizedException } from '@vritti/api-sdk';
 import { type MfaAuth, MfaMethodValues, SessionTypeValues, type User, VerificationChannelValues } from '@/db/schema';
 import { MfaRepository } from '../../../mfa/repositories/mfa.repository';
@@ -6,8 +6,8 @@ import { BackupCodeService } from '../../../mfa/services/backup-code.service';
 import { TotpService } from '../../../mfa/services/totp.service';
 import { WebAuthnService } from '../../../mfa/services/webauthn.service';
 import type { AuthenticationResponseJSON } from '../../../mfa/types/webauthn.types';
-import { VerificationService } from '../../../verification/services/verification.service';
 import { UserService } from '../../../user/services/user.service';
+import { VerificationService } from '../../../verification/services/verification.service';
 import { SessionService } from '../../root/services/session.service';
 import { MfaVerificationResponseDto, PasskeyMfaOptionsDto, SmsOtpSentResponseDto } from '../dto';
 import { type MfaChallenge, MfaChallengeStore, type MfaMethod } from './mfa-challenge.store';
@@ -89,10 +89,7 @@ export class MfaVerificationService {
     }
 
     // Get user's MFA configuration
-    const mfaRecord = await this.mfaRepo.findByUserIdAndMethod(
-      challenge.userId,
-      MfaMethodValues.TOTP,
-    );
+    const mfaRecord = await this.mfaRepo.findByUserIdAndMethod(challenge.userId, MfaMethodValues.TOTP);
 
     if (!mfaRecord || !mfaRecord.totpSecret) {
       throw new UnauthorizedException({
@@ -319,10 +316,7 @@ export class MfaVerificationService {
     return challenge;
   }
 
-  private async tryBackupCode(
-    code: string,
-    mfaRecord: MfaAuth,
-  ): Promise<{ valid: boolean }> {
+  private async tryBackupCode(code: string, mfaRecord: MfaAuth): Promise<{ valid: boolean }> {
     if (!mfaRecord.totpBackupCodes) {
       return { valid: false };
     }

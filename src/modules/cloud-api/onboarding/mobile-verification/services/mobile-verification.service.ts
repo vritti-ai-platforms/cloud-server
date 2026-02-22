@@ -140,7 +140,7 @@ export class MobileVerificationService {
       if (this.sseConnectionService.hasConnection(userId)) {
         this.eventEmitter.emit(
           VERIFICATION_EVENTS.MOBILE_EXPIRED,
-          new MobileVerificationEvent(userId, '', 'expired', undefined, 'Verification window expired'),
+          new MobileVerificationEvent(userId, '', 'expired', undefined, 'Your verification code has expired. Please try again with a new code.'),
         );
       }
     }, timeoutMs);

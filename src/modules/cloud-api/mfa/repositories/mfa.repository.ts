@@ -1,12 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrimaryBaseRepository, PrimaryDatabaseService } from '@vritti/api-sdk';
 import { and, eq } from '@vritti/api-sdk/drizzle-orm';
-import {
-  type MfaAuth,
-  type MfaMethod,
-  MfaMethodValues,
-  mfaAuth,
-} from '@/db/schema';
+import { type MfaAuth, type MfaMethod, MfaMethodValues, mfaAuth } from '@/db/schema';
 
 @Injectable()
 export class MfaRepository extends PrimaryBaseRepository<typeof mfaAuth> {
@@ -33,7 +28,8 @@ export class MfaRepository extends PrimaryBaseRepository<typeof mfaAuth> {
   // Deactivates all active MFA records for a user before enabling a new method
   async deactivateAllByUserId(userId: string): Promise<number> {
     this.logger.log(`Deactivating all MFA for user: ${userId}`);
-    const condition = and(eq(mfaAuth.userId, userId), eq(mfaAuth.isActive, true))!;
+    const condition = and(eq(mfaAuth.userId, userId), eq(mfaAuth.isActive, true));
+    if (!condition) return 0;
     const result = await this.updateMany(condition, { isActive: false });
     return result.count;
   }
