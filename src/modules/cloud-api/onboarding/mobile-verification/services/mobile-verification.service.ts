@@ -2,7 +2,7 @@ import { Injectable, Logger, type MessageEvent } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { BadRequestException, extractCountryFromPhone, normalizePhoneNumber } from '@vritti/api-sdk';
-import { concat, Observable, of } from 'rxjs';
+import { concat, finalize, Observable, of } from 'rxjs';
 import { type Verification } from '@/db/schema';
 import { type VerificationChannel, VerificationChannelValues } from '@/db/schema/enums';
 import { SmsService } from '@/services';
@@ -18,6 +18,7 @@ import { SseConnectionService } from './sse-connection.service';
 export class MobileVerificationService {
   private readonly logger = new Logger(MobileVerificationService.name);
   private readonly whatsappBusinessNumber: string;
+  private readonly smsBusinessNumber: string;
 
   constructor(
     private readonly userService: UserService,
@@ -27,7 +28,8 @@ export class MobileVerificationService {
     private readonly sseConnectionService: SseConnectionService,
     private readonly smsService: SmsService,
   ) {
-    this.whatsappBusinessNumber = this.configService.get<string>('WHATSAPP_BUSINESS_NUMBER') || '';
+    this.whatsappBusinessNumber = this.configService.getOrThrow<string>('WHATSAPP_BUSINESS_NUMBER');
+    this.smsBusinessNumber = this.configService.getOrThrow<string>('SMS_BUSINESS_NUMBER');
   }
 
   // Creates a manual OTP verification record and sends the verification message via SMS
@@ -91,19 +93,24 @@ export class MobileVerificationService {
         verificationCode: result.verificationCode,
         instructions: result.instructions,
         expiresAt: result.expiresAt,
-        whatsappNumber: result.whatsappNumber,
+        recipientNumber: result.recipientNumber,
       }),
       type: 'initiated',
     };
 
-    return concat(of(initiatedEvent), subject.asObservable());
+    return concat(of(initiatedEvent), subject.asObservable()).pipe(
+      finalize(() => {
+        // Runs on client disconnect (unsubscribe), normal complete, or error — cleans up the connection
+        this.sseConnectionService.closeConnection(userId);
+      }),
+    );
   }
 
   // Extracts QR-specific logic: validates state, creates verification, returns initiation data
   private async initiateQrVerification(
     userId: string,
     channel: VerificationChannel,
-  ): Promise<{ verificationCode: string; instructions: string; expiresAt: Date; whatsappNumber?: string }> {
+  ): Promise<{ verificationCode: string; instructions: string; expiresAt: Date; recipientNumber: string }> {
     const user = await this.userService.findById(userId);
 
     if (user.phoneVerified) {
@@ -124,11 +131,13 @@ export class MobileVerificationService {
       ? `Send the code to our WhatsApp number to verify your phone`
       : `Send the code via SMS to our number to verify your phone`;
 
+    const recipientNumber = isWhatsApp ? this.whatsappBusinessNumber : this.smsBusinessNumber;
+
     return {
       verificationCode: otp,
       instructions,
       expiresAt,
-      whatsappNumber: isWhatsApp && this.whatsappBusinessNumber ? this.whatsappBusinessNumber : undefined,
+      recipientNumber: recipientNumber,
     };
   }
 
@@ -136,14 +145,22 @@ export class MobileVerificationService {
   private scheduleExpiry(userId: string, expiresAt: Date): void {
     const timeoutMs = Math.max(0, expiresAt.getTime() - Date.now());
 
-    setTimeout(() => {
+    const timer = setTimeout(() => {
       if (this.sseConnectionService.hasConnection(userId)) {
         this.eventEmitter.emit(
           VERIFICATION_EVENTS.MOBILE_EXPIRED,
-          new MobileVerificationEvent(userId, '', 'expired', undefined, 'Your verification code has expired. Please try again with a new code.'),
+          new MobileVerificationEvent(
+            userId,
+            '',
+            'expired',
+            undefined,
+            'Your verification code has expired. Please try again with a new code.',
+          ),
         );
       }
     }, timeoutMs);
+
+    this.sseConnectionService.registerExpiryTimer(userId, timer);
   }
 
   // Processes an inbound webhook token, validates the phone, and marks verification complete

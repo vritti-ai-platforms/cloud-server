@@ -1,7 +1,6 @@
 import fastifyCookie from '@fastify/cookie';
 import fastifyCsrfProtection from '@fastify/csrf-protection';
 import { ValidationPipe } from '@nestjs/common';
-import type { ValidationError } from 'class-validator';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
@@ -14,6 +13,7 @@ import {
   HttpLoggerInterceptor,
   LoggerService,
 } from '@vritti/api-sdk';
+import type { ValidationError } from 'class-validator';
 import fastifyRawBody from 'fastify-raw-body';
 import { readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
@@ -26,11 +26,10 @@ import { AppModule } from './app.module';
 const ENV = {
   nodeEnv: process.env.NODE_ENV,
   useHttps: process.env.USE_HTTPS === 'true',
-  logProvider: process.env.LOG_PROVIDER || 'winston',
+  logProvider: process.env.LOG_PROVIDER,
   port: process.env.PORT ?? 3000,
   host: 'local.vrittiai.com',
-  // Cookie configuration
-  refreshCookieName: process.env.REFRESH_COOKIE_NAME ?? 'vritti_refresh',
+  refreshCookieName: process.env.REFRESH_COOKIE_NAME,
   refreshCookieDomain: process.env.REFRESH_COOKIE_DOMAIN,
 } as const;
 

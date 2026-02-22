@@ -8,7 +8,7 @@ export class TotpService {
   private readonly issuer: string;
 
   constructor(private readonly configService: ConfigService) {
-    this.issuer = this.configService.get<string>('TOTP_ISSUER', 'Vritti AI Cloud');
+    this.issuer = this.configService.getOrThrow<string>('APP_NAME');
     authenticator.options = {
       digits: 6,
       step: 30,

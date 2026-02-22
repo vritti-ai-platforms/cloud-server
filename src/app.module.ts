@@ -9,13 +9,13 @@ import './db/schema.registry';
 import { RouterModule } from '@nestjs/core';
 import { AuthConfigModule, DatabaseModule, type DatabaseModuleOptions, LoggerModule } from '@vritti/api-sdk';
 import { validate } from './config/env.validation';
-import { AppController } from './modules/root/controllers/app.controller';
-import { CsrfController } from './modules/root/controllers/csrf.controller';
-import { AppService } from './modules/root/services/app.service';
 import { AuthModule } from './modules/cloud-api/auth/auth.module';
 import { OnboardingModule } from './modules/cloud-api/onboarding/onboarding.module';
 import { TenantModule } from './modules/cloud-api/tenant/tenant.module';
 import { UserModule } from './modules/cloud-api/user/user.module';
+import { AppController } from './modules/root/controllers/app.controller';
+import { CsrfController } from './modules/root/controllers/csrf.controller';
+import { AppService } from './modules/root/services/app.service';
 
 @Module({
   imports: [
@@ -26,28 +26,20 @@ import { UserModule } from './modules/cloud-api/user/user.module';
     }),
     // Event emitter for SSE real-time updates
     EventEmitterModule.forRoot(),
-    // Logger module configuration with environment presets
-    // Presets available: 'development', 'staging', 'production', 'test'
-    // All preset values can be overridden with explicit options
+    // Logger module
     LoggerModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => {
         return {
-          // Explicit environment selection (required for preset system)
-          environment: configService.get('NODE_ENV', 'development'),
+          environment: configService.getOrThrow('NODE_ENV'),
+          appName: configService.getOrThrow('APP_NAME'),
+          provider: configService.getOrThrow('LOG_PROVIDER'),
+          level: configService.getOrThrow('LOG_LEVEL'),
+          format: configService.getOrThrow('LOG_FORMAT'),
+          enableFileLogger: configService.getOrThrow('LOG_TO_FILE'),
+          filePath: configService.getOrThrow('LOG_FILE_PATH'),
+          maxFiles: configService.getOrThrow('LOG_MAX_FILES'),
 
-          // Application metadata
-          appName: configService.get('APP_NAME', 'vritti-api-nexus'),
-
-          // Optional overrides (if not set, preset values are used)
-          provider: configService.get('LOG_PROVIDER'),
-          level: configService.get('LOG_LEVEL'),
-          format: configService.get('LOG_FORMAT'),
-          enableFileLogger: configService.get('LOG_TO_FILE'),
-          filePath: configService.get('LOG_FILE_PATH'),
-          maxFiles: configService.get('LOG_MAX_FILES'),
-
-          // // HTTP logging configuration (optional)
           enableHttpLogger: true,
           httpLogger: {
             enableRequestLog: true,

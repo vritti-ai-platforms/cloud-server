@@ -24,8 +24,8 @@ export class VerificationService {
     private readonly encryptionService: EncryptionService,
     private readonly configService: ConfigService,
   ) {
-    this.expiryMs = parseExpiryToMs(this.configService.get<string>('OTP_EXPIRY', '10m'));
-    this.maxAttempts = this.configService.get<number>('OTP_MAX_ATTEMPTS', 5);
+    this.expiryMs = parseExpiryToMs(this.configService.getOrThrow<string>('OTP_EXPIRY'));
+    this.maxAttempts = this.configService.getOrThrow<number>('OTP_MAX_ATTEMPTS');
   }
 
   // Creates or updates a verification record; returns the secret to deliver to the user

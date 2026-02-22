@@ -22,15 +22,8 @@ export class VerificationWebhookService {
     private readonly mobileVerificationService: MobileVerificationService,
     private readonly configService: ConfigService,
   ) {
-    this.whatsappVerifyToken = this.configService.get<string>('WHATSAPP_VERIFY_TOKEN') || '';
-    this.smsVerifyToken = this.configService.get<string>('SMS_VERIFY_TOKEN') || '';
-
-    if (!this.whatsappVerifyToken) {
-      this.logger.warn('WHATSAPP_VERIFY_TOKEN is not configured. WhatsApp webhook verification will fail.');
-    }
-    if (!this.smsVerifyToken) {
-      this.logger.warn('SMS_VERIFY_TOKEN is not configured. SMS webhook verification will fail.');
-    }
+    this.whatsappVerifyToken = this.configService.getOrThrow<string>('WHATSAPP_VERIFY_TOKEN');
+    this.smsVerifyToken = this.configService.getOrThrow<string>('SMS_VERIFY_TOKEN');
   }
 
   // Validates the subscription challenge token and returns the challenge string

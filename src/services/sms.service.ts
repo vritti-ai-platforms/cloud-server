@@ -9,7 +9,7 @@ export class SmsService {
   private readonly isDevelopment: boolean;
 
   constructor(private readonly configService: ConfigService) {
-    this.webhookSecret = this.configService.get<string>('SMS_WEBHOOK_SECRET') || '';
+    this.webhookSecret = this.configService.getOrThrow<string>('SMS_WEBHOOK_SECRET');
     this.isDevelopment = this.configService.get<string>('NODE_ENV') !== 'production';
 
     this.logger.warn('SMS service is currently in mock mode');

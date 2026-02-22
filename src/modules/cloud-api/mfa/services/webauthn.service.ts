@@ -21,9 +21,10 @@ export class WebAuthnService {
   private readonly origin: string;
 
   constructor(private readonly configService: ConfigService) {
-    this.rpName = this.configService.get<string>('WEBAUTHN_RP_NAME', 'Vritti AI Cloud');
-    this.rpID = this.configService.get<string>('WEBAUTHN_RP_ID', 'localhost');
-    this.origin = this.configService.get<string>('WEBAUTHN_ORIGIN', 'http://localhost:3012');
+    this.rpName = this.configService.getOrThrow<string>('APP_NAME');
+    const frontendBaseUrl = this.configService.getOrThrow<string>('FRONTEND_BASE_URL');
+    this.origin = frontendBaseUrl;
+    this.rpID = new URL(frontendBaseUrl).hostname;
 
     this.logger.log(`WebAuthn initialized - RP: ${this.rpName}, ID: ${this.rpID}, Origin: ${this.origin}`);
   }

@@ -1,5 +1,5 @@
 import { plainToInstance, Transform } from 'class-transformer';
-import { IsBoolean, IsEmail, IsEnum, IsNumber, IsOptional, IsString, Max, Min, validateSync } from 'class-validator';
+import { IsBoolean, IsEmail, IsEnum, IsNumber, IsString, Max, Min, validateSync } from 'class-validator';
 
 enum Environment {
   Development = 'development',
@@ -8,35 +8,76 @@ enum Environment {
   Staging = 'staging',
 }
 
-/**
- * Environment variables validation schema
- *
- * This class defines and validates all required environment variables
- * at application startup. If any required variable is missing or invalid,
- * the application will fail to start with a detailed error message.
- */
 class EnvironmentVariables {
-  // Application environment
+  // Application
   @IsEnum(Environment)
-  @IsOptional()
-  NODE_ENV: Environment = Environment.Development;
+  NODE_ENV: Environment;
 
-  // Application port
   @IsNumber()
   @Min(1)
   @Max(65535)
-  @IsOptional()
-  PORT: number = 3000;
+  PORT: number;
 
-  // Primary Database Configuration (Tenant Registry)
+  @IsBoolean()
+  @Transform(({ value }) => value === 'true')
+  USE_HTTPS: boolean;
+
+  // Security
+  @IsString()
+  COOKIE_SECRET: string;
+
+  @IsString()
+  HMAC_KEY: string;
+
+  // JWT
+  @IsString()
+  JWT_SECRET: string;
+
+  @IsString()
+  ACCESS_TOKEN_EXPIRY: string;
+
+  @IsString()
+  REFRESH_TOKEN_EXPIRY: string;
+
+  // Frontend
+  @IsString()
+  FRONTEND_BASE_URL: string;
+
+  // Logging
+  @IsString()
+  APP_NAME: string;
+
+  @IsEnum(['default', 'winston'])
+  LOG_PROVIDER: string;
+
+  @IsString()
+  LOG_LEVEL: string;
+
+  @IsString()
+  LOG_FORMAT: string;
+
+  @IsBoolean()
+  @Transform(({ value }) => value === 'true')
+  LOG_TO_FILE: boolean;
+
+  @IsString()
+  LOG_FILE_PATH: string;
+
+  @IsString()
+  LOG_MAX_FILES: string;
+
+  @IsBoolean()
+  @Transform(({ value }) => value === 'true')
+  MASK_PII: boolean;
+
+  // Primary Database
   @IsString()
   PRIMARY_DB_HOST: string;
 
   @IsNumber()
   @Min(1)
   @Max(65535)
-  @IsOptional()
-  PRIMARY_DB_PORT: number = 5432;
+  PRIMARY_DB_PORT: number;
 
   @IsString()
   PRIMARY_DB_USERNAME: string;
@@ -48,44 +89,15 @@ class EnvironmentVariables {
   PRIMARY_DB_DATABASE: string;
 
   @IsString()
-  @IsOptional()
-  PRIMARY_DB_SCHEMA: string = 'public';
+  PRIMARY_DB_SCHEMA: string;
 
   @IsEnum(['require', 'prefer', 'disable', 'no-verify'])
-  @IsOptional()
-  PRIMARY_DB_SSL_MODE: 'require' | 'prefer' | 'disable' | 'no-verify' = 'require';
-
-  // JWT Configuration
-  @IsString()
-  JWT_SECRET: string;
+  PRIMARY_DB_SSL_MODE: 'require' | 'prefer' | 'disable' | 'no-verify';
 
   @IsString()
-  @IsOptional()
-  ACCESS_TOKEN_EXPIRY: string = '15m';
-
-  @IsString()
-  @IsOptional()
-  REFRESH_TOKEN_EXPIRY: string = '30d';
-
-  // Bcrypt Configuration
-  @IsNumber()
-  @Min(4)
-  @Max(31)
-  @IsOptional()
-  BCRYPT_SALT_ROUNDS: number = 10;
-
-  // Token Rotation
-  @IsNumber()
-  @Min(1)
-  @IsOptional()
-  REFRESH_TOKEN_ROTATION_DAYS: number = 7;
-
-  // Optional: Encryption key for database credentials
-  @IsString()
-  @IsOptional()
   ENCRYPTION_KEY: string;
 
-  // Brevo Email Configuration
+  // Email
   @IsString()
   BREVO_API_KEY: string;
 
@@ -95,89 +107,119 @@ class EnvironmentVariables {
   @IsString()
   SENDER_NAME: string;
 
-  // Logger Configuration
-  @IsEnum(['default', 'winston'])
-  @IsOptional()
-  LOG_PROVIDER: string = 'default';
-
-  @IsBoolean()
-  @IsOptional()
-  @Transform(({ value }) => value === 'true')
-  LOG_TO_FILE: boolean = false;
+  // Cookie / Session
+  @IsString()
+  REFRESH_COOKIE_NAME: string;
 
   @IsString()
-  @IsOptional()
-  LOG_FILE_PATH: string = './logs';
+  REFRESH_COOKIE_DOMAIN: string;
 
+  @IsNumber()
+  @Min(1)
+  REFRESH_TOKEN_ROTATION_DAYS: number;
+
+  // OTP / Verification
   @IsString()
-  @IsOptional()
-  LOG_MAX_FILES: string = '14d';
+  OTP_EXPIRY: string;
 
-  @IsBoolean()
-  @IsOptional()
-  @Transform(({ value }) => value === 'true')
-  MASK_PII: boolean = false;
+  @IsNumber()
+  @Min(1)
+  OTP_MAX_ATTEMPTS: number;
 
-  // WhatsApp Cloud API Configuration
+  // WhatsApp
   @IsString()
-  @IsOptional()
   WHATSAPP_PHONE_NUMBER_ID: string;
 
   @IsString()
-  @IsOptional()
   WHATSAPP_ACCESS_TOKEN: string;
 
   @IsString()
-  @IsOptional()
-  META_CLIENT_ID: string;
-
-  @IsString()
-  @IsOptional()
-  META_CLIENT_SECRET: string;
-
-  @IsString()
-  @IsOptional()
   WHATSAPP_VERIFY_TOKEN: string;
 
   @IsString()
-  @IsOptional()
-  WHATSAPP_API_VERSION: string = 'v18.0';
-
-  @IsString()
-  @IsOptional()
   WHATSAPP_BUSINESS_NUMBER: string;
 
-  // WebAuthn Configuration
   @IsString()
-  @IsOptional()
-  WEBAUTHN_RP_NAME: string = 'Vritti';
+  WHATSAPP_API_VERSION: string;
+
+  // SMS
+  @IsString()
+  SMS_BUSINESS_NUMBER: string;
 
   @IsString()
-  @IsOptional()
-  WEBAUTHN_RP_ID: string = 'localhost';
+  SMS_VERIFY_TOKEN: string;
 
   @IsString()
-  @IsOptional()
-  WEBAUTHN_ORIGIN: string = 'http://localhost:3012';
+  SMS_WEBHOOK_SECRET: string;
+
+
+  // OAuth — Google
+  @IsString()
+  GOOGLE_CLIENT_ID: string;
+
+  @IsString()
+  GOOGLE_CLIENT_SECRET: string;
+
+  @IsString()
+  GOOGLE_CALLBACK_URL: string;
+
+  // OAuth — Facebook (Meta)
+  @IsString()
+  META_CLIENT_ID: string;
+
+  @IsString()
+  META_CLIENT_SECRET: string;
+
+  @IsString()
+  FACEBOOK_CALLBACK_URL: string;
+
+  // OAuth — Microsoft
+  @IsString()
+  MICROSOFT_CLIENT_ID: string;
+
+  @IsString()
+  MICROSOFT_CLIENT_SECRET: string;
+
+  @IsString()
+  MICROSOFT_CALLBACK_URL: string;
+
+  // OAuth — X (Twitter)
+  @IsString()
+  X_CLIENT_ID: string;
+
+  @IsString()
+  X_CLIENT_SECRET: string;
+
+  @IsString()
+  X_CALLBACK_URL: string;
+
+  // OAuth — Apple
+  @IsString()
+  APPLE_CLIENT_ID: string;
+
+  @IsString()
+  APPLE_TEAM_ID: string;
+
+  @IsString()
+  APPLE_KEY_ID: string;
+
+  @IsString()
+  APPLE_PRIVATE_KEY: string;
+
+  @IsString()
+  APPLE_CALLBACK_URL: string;
 }
 
-/**
- * Validates environment variables at application startup
- *
- * @param config Raw environment variables from process.env
- * @returns The original config object if validation passes
- * @throws Error if validation fails
- */
+// Validates environment variables at application startup
 export function validate(config: Record<string, unknown>): Record<string, unknown> {
-  // Convert numeric string values to numbers for validation
   const processedConfig = {
     ...config,
     PORT: config.PORT ? parseInt(config.PORT as string, 10) : undefined,
     PRIMARY_DB_PORT: config.PRIMARY_DB_PORT ? parseInt(config.PRIMARY_DB_PORT as string, 10) : undefined,
-    BCRYPT_SALT_ROUNDS: config.BCRYPT_SALT_ROUNDS ? parseInt(config.BCRYPT_SALT_ROUNDS as string, 10) : undefined,
     REFRESH_TOKEN_ROTATION_DAYS: config.REFRESH_TOKEN_ROTATION_DAYS
       ? parseInt(config.REFRESH_TOKEN_ROTATION_DAYS as string, 10)
       : undefined,
+    OTP_MAX_ATTEMPTS: config.OTP_MAX_ATTEMPTS ? parseInt(config.OTP_MAX_ATTEMPTS as string, 10) : undefined,
   };
 
   const validatedConfig = plainToInstance(EnvironmentVariables, processedConfig, {
@@ -201,6 +243,5 @@ export function validate(config: Record<string, unknown>): Record<string, unknow
     );
   }
 
-  // Return the processed config with converted numeric values
   return processedConfig;
 }

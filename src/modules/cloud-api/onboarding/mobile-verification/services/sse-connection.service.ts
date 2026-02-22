@@ -5,6 +5,7 @@ interface UserConnection {
   subject: Subject<MessageEvent>;
   expiresAt: Date;
   createdAt: Date;
+  expiryTimer?: NodeJS.Timeout;
 }
 
 @Injectable()
@@ -21,6 +22,7 @@ export class SseConnectionService implements OnModuleDestroy {
   onModuleDestroy() {
     clearInterval(this.cleanupInterval);
     for (const [, connection] of this.connections) {
+      if (connection.expiryTimer) clearTimeout(connection.expiryTimer);
       connection.subject.complete();
     }
     this.connections.clear();
@@ -60,15 +62,30 @@ export class SseConnectionService implements OnModuleDestroy {
     return true;
   }
 
-  // Completes the user's SSE subject and removes the connection from the map
+  // Completes the user's SSE subject, cancels any pending expiry timer, and removes the connection from the map
   closeConnection(userId: string): void {
     const connection = this.connections.get(userId);
 
     if (connection) {
+      if (connection.expiryTimer) clearTimeout(connection.expiryTimer);
       connection.subject.complete();
       this.connections.delete(userId);
       this.logger.log(`Closed SSE connection for user ${userId}`);
     }
+  }
+
+  // Associates a pending expiry timer with the user's connection so it can be cancelled on close
+  registerExpiryTimer(userId: string, timer: NodeJS.Timeout): void {
+    const connection = this.connections.get(userId);
+
+    if (!connection) {
+      // Connection already gone before timer was registered — disarm it immediately
+      clearTimeout(timer);
+      return;
+    }
+
+    if (connection.expiryTimer) clearTimeout(connection.expiryTimer);
+    connection.expiryTimer = timer;
   }
 
   // Checks whether the user has an active, non-closed SSE connection
@@ -87,6 +104,7 @@ export class SseConnectionService implements OnModuleDestroy {
 
     for (const [userId, connection] of this.connections) {
       if (connection.expiresAt < now || connection.subject.closed) {
+        if (connection.expiryTimer) clearTimeout(connection.expiryTimer);
         connection.subject.complete();
         this.connections.delete(userId);
         cleanedCount++;

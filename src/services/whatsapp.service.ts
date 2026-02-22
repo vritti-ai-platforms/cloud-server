@@ -17,16 +17,10 @@ export class WhatsAppService {
   private readonly apiVersion: string;
 
   constructor(private readonly configService: ConfigService) {
-    // Get WhatsApp configuration
-    this.phoneNumberId = this.configService.get<string>('WHATSAPP_PHONE_NUMBER_ID') || '';
-    this.accessToken = this.configService.get<string>('WHATSAPP_ACCESS_TOKEN') || '';
-    this.appSecret = this.configService.get<string>('META_CLIENT_SECRET') || '';
-    this.apiVersion = this.configService.get<string>('WHATSAPP_API_VERSION') || 'v18.0';
-
-    // Validate configuration
-    if (!this.phoneNumberId || !this.accessToken || !this.appSecret) {
-      this.logger.warn('WhatsApp configuration is incomplete. WhatsApp verification will not work.');
-    }
+    this.phoneNumberId = this.configService.getOrThrow<string>('WHATSAPP_PHONE_NUMBER_ID');
+    this.accessToken = this.configService.getOrThrow<string>('WHATSAPP_ACCESS_TOKEN');
+    this.appSecret = this.configService.getOrThrow<string>('META_CLIENT_SECRET');
+    this.apiVersion = this.configService.getOrThrow<string>('WHATSAPP_API_VERSION');
 
     // Initialize WhatsApp Cloud API client
     this.whatsappClient = axios.create({

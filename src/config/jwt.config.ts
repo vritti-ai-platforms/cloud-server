@@ -17,8 +17,8 @@ export interface TokenExpiry {
 }
 
 export const getTokenExpiry = (configService: ConfigService): TokenExpiry => ({
-  access: (configService.get<string>('ACCESS_TOKEN_EXPIRY') ?? '15m') as TokenExpiryString,
-  refresh: (configService.get<string>('REFRESH_TOKEN_EXPIRY') ?? '30d') as TokenExpiryString,
+  access: configService.getOrThrow<string>('ACCESS_TOKEN_EXPIRY') as TokenExpiryString,
+  refresh: configService.getOrThrow<string>('REFRESH_TOKEN_EXPIRY') as TokenExpiryString,
 });
 
 export enum TokenType {
