@@ -1,5 +1,5 @@
 import { defineConfig } from 'drizzle-kit';
-import 'dotenv/config';  // Add th
+import 'dotenv/config';
 
 const dbUrl = process.env.PRIMARY_DB_DATABASE_DIRECT_URL;
 if (!dbUrl) {
