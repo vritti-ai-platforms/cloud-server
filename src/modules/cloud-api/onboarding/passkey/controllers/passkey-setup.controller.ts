@@ -1,9 +1,9 @@
 import { Body, Controller, HttpCode, HttpStatus, Logger, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { Onboarding, UserId } from '@vritti/api-sdk';
+import { type SessionInfo, Onboarding, SessionData, UserId } from '@vritti/api-sdk';
+import type { BackupCodesResponseDto } from '../../totp/dto/response/backup-codes-response.dto';
 import { ApiInitiatePasskeySetup, ApiVerifyPasskeySetup } from '../docs/passkey-setup.docs';
 import { VerifyPasskeyDto } from '../dto/request/verify-passkey.dto';
-import type { BackupCodesResponseDto } from '../../totp/dto/response/backup-codes-response.dto';
 import type { PasskeyRegistrationOptionsDto } from '../dto/response/passkey-registration-options.dto';
 import { PasskeySetupService } from '../services/passkey-setup.service';
 
@@ -30,11 +30,8 @@ export class PasskeySetupController {
   @Onboarding()
   @HttpCode(HttpStatus.OK)
   @ApiVerifyPasskeySetup()
-  async verifyPasskeySetup(
-    @UserId() userId: string,
-    @Body() dto: VerifyPasskeyDto,
-  ): Promise<BackupCodesResponseDto> {
-    this.logger.log(`POST /onboarding/mfa/passkey/verify - User: ${userId}`);
-    return this.passkeySetupService.verifySetup(userId, dto.credential);
+  async verifyPasskeySetup(@SessionData() session: SessionInfo, @Body() dto: VerifyPasskeyDto): Promise<BackupCodesResponseDto> {
+    this.logger.log(`POST /onboarding/mfa/passkey/verify - User: ${session.userId}`);
+    return this.passkeySetupService.verifySetup(session.userId, dto.credential, session.sessionId);
   }
 }

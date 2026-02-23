@@ -136,6 +136,7 @@ export class AuthController {
 
   // Invalidates the current session and clears the refresh cookie
   @Post('logout')
+  @HttpCode(HttpStatus.OK)
   @ApiLogout()
   async logout(
     @AccessToken() accessToken: string,
@@ -148,6 +149,7 @@ export class AuthController {
 
   // Invalidates all sessions across all devices for the current user
   @Post('logout-all')
+  @HttpCode(HttpStatus.OK)
   @ApiLogoutAll()
   async logoutAll(@UserId() userId: string, @Res({ passthrough: true }) reply: FastifyReply): Promise<MessageResponse> {
     const count = await this.authService.logoutAll(userId);

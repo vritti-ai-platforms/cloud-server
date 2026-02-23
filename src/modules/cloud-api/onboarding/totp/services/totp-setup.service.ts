@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { BadRequestException } from '@vritti/api-sdk';
+import { BadRequestException, NotFoundException } from '@vritti/api-sdk';
 import { AccountStatusValues, OnboardingStepValues, SessionTypeValues } from '@/db/schema';
 import { BackupCodeService } from '../../../mfa/services/backup-code.service';
 import { MfaRepository } from '../../../mfa/repositories/mfa.repository';
@@ -8,8 +8,6 @@ import { SessionService } from '../../../auth/root/services/session.service';
 import { UserService } from '../../../user/services/user.service';
 import { BackupCodesResponseDto } from '../dto/response/backup-codes-response.dto';
 import { TotpSetupResponseDto } from '../dto/response/totp-setup-response.dto';
-import { TIME_CONSTANTS } from '@/constants/time-constants';
-import { TotpPendingStore } from './totp-pending.store';
 
 @Injectable()
 export class TotpSetupService {
@@ -21,10 +19,9 @@ export class TotpSetupService {
     private readonly backupCodeService: BackupCodeService,
     private readonly userService: UserService,
     private readonly sessionService: SessionService,
-    private readonly totpPendingStore: TotpPendingStore,
   ) {}
 
-  // Generates a TOTP secret, stores it in a pending map, and returns the QR code
+  // Generates a TOTP secret, persists a pending record in the DB, and returns the QR code
   async initiateSetup(userId: string): Promise<TotpSetupResponseDto> {
     const user = await this.userService.findById(userId);
 
@@ -36,12 +33,15 @@ export class TotpSetupService {
       });
     }
 
+    // Delete any stale pending TOTP record if the user is still in setup
+    if (user.onboardingStep !== OnboardingStepValues.COMPLETE) {
+      await this.mfaRepo.deletePendingByUserIdAndMethod(userId, 'TOTP');
+    }
+
     const secret = this.totpService.generateTotpSecret();
     const keyUri = this.totpService.generateKeyUri(user.email, secret);
 
-    const expiresAt = new Date();
-    expiresAt.setMinutes(expiresAt.getMinutes() + TIME_CONSTANTS.TOTP_PENDING_SETUP_TTL_MINUTES);
-    this.totpPendingStore.set(userId, secret, expiresAt);
+    await this.mfaRepo.createPendingTotp(userId, secret);
 
     this.logger.log(`Initiated TOTP setup for user: ${userId}`);
 
@@ -53,17 +53,17 @@ export class TotpSetupService {
     });
   }
 
-  // Validates the TOTP code, persists the secret, generates backup codes, and completes onboarding
-  async verifySetup(userId: string, code: string): Promise<BackupCodesResponseDto> {
-    const pending = this.totpPendingStore.get(userId);
-    if (!pending) {
-      throw new BadRequestException({
+  // Validates the TOTP code against the pending DB record, confirms it, and completes onboarding
+  async verifySetup(userId: string, code: string, sessionId: string): Promise<BackupCodesResponseDto> {
+    const pending = await this.mfaRepo.findPendingByUserIdAndMethod(userId, 'TOTP');
+    if (!pending || !pending.totpSecret) {
+      throw new NotFoundException({
         label: 'No Pending Setup',
-        detail: 'Your setup session has expired. Please start the process again.',
+        detail: 'Your setup session could not be found. Please start the process again.',
       });
     }
 
-    const isValid = this.totpService.verifyToken(code, pending.secret);
+    const isValid = this.totpService.verifyToken(code, pending.totpSecret);
     if (!isValid) {
       throw new BadRequestException({
         label: 'Invalid Code',
@@ -75,17 +75,14 @@ export class TotpSetupService {
     const backupCodes = this.backupCodeService.generateBackupCodes();
     const hashedBackupCodes = await this.backupCodeService.hashBackupCodes(backupCodes);
 
-    await this.mfaRepo.deactivateAllByUserId(userId);
-    await this.mfaRepo.createTotp(userId, pending.secret, hashedBackupCodes);
-
-    this.totpPendingStore.delete(userId);
+    await this.mfaRepo.confirmTotp(pending.id, JSON.stringify(hashedBackupCodes));
 
     await this.userService.update(userId, {
       onboardingStep: OnboardingStepValues.COMPLETE,
       accountStatus: AccountStatusValues.ACTIVE,
     });
 
-    await this.sessionService.upgradeSession(userId, SessionTypeValues.ONBOARDING, SessionTypeValues.CLOUD);
+    await this.sessionService.upgradeSession(sessionId, userId, SessionTypeValues.ONBOARDING, SessionTypeValues.CLOUD);
 
     this.logger.log(`TOTP setup completed for user: ${userId}`);
 
@@ -96,10 +93,5 @@ export class TotpSetupService {
       warning:
         'Save these backup codes in a secure location. Each code can only be used once and they will not be shown again.',
     });
-  }
-
-  // Clears any pending TOTP setup for a user
-  clearPendingSetup(userId: string): void {
-    this.totpPendingStore.delete(userId);
   }
 }

@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { Injectable, Logger } from '@nestjs/common';
 import { getConfig, getRefreshCookieOptions, UnauthorizedException } from '@vritti/api-sdk';
-import { and, eq } from '@vritti/api-sdk/drizzle-orm';
+import { and, eq, ne } from '@vritti/api-sdk/drizzle-orm';
 import { type Session, type SessionType, SessionTypeValues, sessions } from '@/db/schema';
 import { TokenType } from '../../../../../config/jwt.config';
 import { SessionRepository } from '../repositories/session.repository';
@@ -134,32 +134,34 @@ export class SessionService {
     return { accessToken, expiresIn };
   }
 
-  // Upgrades all active sessions of one type to another and regenerates tokens
-  async upgradeSession(userId: string, fromType: SessionType, toType: SessionType): Promise<void> {
-    const targetSessions = await this.sessionRepository.findMany({
-      where: { userId, type: fromType, isActive: true },
-    });
+  // Upgrades the current session type and deletes all other sessions of the old type
+  async upgradeSession(
+    sessionId: string,
+    userId: string,
+    fromType: SessionType,
+    toType: SessionType,
+  ): Promise<void> {
+    await this.sessionRepository.update(sessionId, { type: toType });
+    await this.deleteOtherSessionsByType(userId, fromType, sessionId);
+    this.logger.log(`Upgraded session ${sessionId} from ${fromType} to ${toType} for user: ${userId}`);
+  }
 
-    for (const session of targetSessions) {
-      const refreshToken = this.jwtService.generateRefreshToken(userId, session.id, toType);
-      const accessToken = this.jwtService.generateAccessToken(
-        userId,
-        session.id,
-        toType,
-        refreshToken,
-      );
-
-      await this.sessionRepository.update(session.id, {
-        type: toType,
-        accessToken,
-        refreshToken,
-        accessTokenExpiresAt: this.jwtService.getExpiryTime(TokenType.ACCESS),
-        refreshTokenExpiresAt: this.jwtService.getExpiryTime(TokenType.REFRESH),
-      });
-    }
-
-    if (targetSessions.length > 0) {
-      this.logger.log(`Upgraded ${targetSessions.length} ${fromType} sessions to ${toType} for user: ${userId}`);
+  // Deletes all sessions of a given type for a user, excluding one session
+  private async deleteOtherSessionsByType(
+    userId: string,
+    type: SessionType,
+    excludeSessionId: string,
+  ): Promise<void> {
+    const condition = and(
+      eq(sessions.userId, userId),
+      eq(sessions.type, type),
+      ne(sessions.id, excludeSessionId),
+    );
+    if (condition) {
+      const result = await this.sessionRepository.deleteMany(condition);
+      if (result.count > 0) {
+        this.logger.log(`Deleted ${result.count} other ${type} sessions for user: ${userId}`);
+      }
     }
   }
 

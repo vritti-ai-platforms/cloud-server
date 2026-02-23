@@ -4437,7 +4437,7 @@
         "properties": {
           "phone": {
             "type": "string",
-            "description": "Phone number in E.164 format (with + prefix). Optional for QR-based methods, required for OTP-based method.",
+            "description": "Phone number in E.164 format (with + prefix).",
             "example": "+919876543210",
             "minLength": 10,
             "maxLength": 20
@@ -4461,6 +4461,8 @@
           }
         },
         "required": [
+          "phone",
+          "phoneCountry",
           "method"
         ]
       },

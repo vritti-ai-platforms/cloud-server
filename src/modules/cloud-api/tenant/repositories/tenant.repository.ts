@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { PrimaryBaseRepository, PrimaryDatabaseService } from '@vritti/api-sdk';
-import { eq } from '@vritti/api-sdk/drizzle-orm';
 import { tenants } from '@/db/schema';
 
 type Tenant = typeof tenants.$inferSelect;
@@ -21,7 +20,7 @@ export class TenantRepository extends PrimaryBaseRepository<typeof tenants> {
   // Finds a tenant by ID including its database configuration
   async findByIdWithConfig(id: string) {
     return this.model.findFirst({
-      where: eq(tenants.id, id),
+      where: { id },
       with: { databaseConfig: true },
     });
   }
@@ -30,11 +29,11 @@ export class TenantRepository extends PrimaryBaseRepository<typeof tenants> {
   async findBySubdomain(subdomain: string, includeConfig = false) {
     if (!includeConfig) {
       return this.model.findFirst({
-        where: eq(tenants.subdomain, subdomain),
+        where: { subdomain },
       });
     }
     return this.model.findFirst({
-      where: eq(tenants.subdomain, subdomain),
+      where: { subdomain },
       with: { databaseConfig: true },
     });
   }

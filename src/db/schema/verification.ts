@@ -31,7 +31,7 @@ export const verifications = cloudSchema.table(
   ],
 );
 
-// MFA authentication — stores MFA settings (TOTP, Passkey)
+// MFA authentication — stores MFA settings (TOTP, Passkey) including pending setup state
 export const mfaAuth = cloudSchema.table(
   'mfa_auth',
   {
@@ -41,6 +41,7 @@ export const mfaAuth = cloudSchema.table(
       .references(() => users.id, { onDelete: 'cascade' }),
     method: mfaMethodEnum('method').notNull(),
     isActive: boolean('is_active').notNull().default(true),
+    isConfirmed: boolean('is_confirmed').notNull().default(true),
     totpSecret: varchar('totp_secret', { length: 255 }),
     totpBackupCodes: text('totp_backup_codes'),
     passkeyCredentialId: varchar('passkey_credential_id', {
@@ -49,6 +50,7 @@ export const mfaAuth = cloudSchema.table(
     passkeyPublicKey: text('passkey_public_key'),
     passkeyCounter: integer('passkey_counter'),
     passkeyTransports: varchar('passkey_transports', { length: 255 }), // JSON array: ["internal","hybrid"]
+    pendingChallenge: varchar('pending_challenge', { length: 512 }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true })
       .notNull()

@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { TIME_CONSTANTS } from '@/constants/time-constants';
+import { ConfigService } from '@nestjs/config';
 
 export type MfaMethod = 'totp' | 'sms' | 'passkey';
 
@@ -19,7 +19,12 @@ export interface MfaChallenge {
 export class MfaChallengeStore {
   private readonly logger = new Logger(MfaChallengeStore.name);
   private readonly challenges = new Map<string, MfaChallenge>();
-  private readonly MFA_CHALLENGE_TTL_MINUTES = TIME_CONSTANTS.MFA_CHALLENGE_TTL_MINUTES;
+
+  constructor(private readonly configService: ConfigService) {}
+
+  private get ttlMinutes(): number {
+    return this.configService.getOrThrow<number>('MFA_CHALLENGE_TTL_MINUTES');
+  }
 
   // Creates a new MFA challenge with available methods and stores it in memory
   create(
@@ -33,7 +38,7 @@ export class MfaChallengeStore {
   ): MfaChallenge {
     const sessionId = crypto.randomUUID();
     const expiresAt = new Date();
-    expiresAt.setMinutes(expiresAt.getMinutes() + this.MFA_CHALLENGE_TTL_MINUTES);
+    expiresAt.setMinutes(expiresAt.getMinutes() + this.ttlMinutes);
 
     // Determine default method (prefer TOTP > SMS > Passkey)
     let defaultMethod: MfaMethod = 'totp';
@@ -111,11 +116,12 @@ export class MfaChallengeStore {
           this.logger.debug(`Auto-cleaned expired MFA challenge: ${sessionId}`);
         }
       },
-      this.MFA_CHALLENGE_TTL_MINUTES * 60 * 1000,
+      this.ttlMinutes * 60 * 1000,
     );
   }
 
+  // Returns the configured MFA challenge TTL in minutes
   getTtlMinutes(): number {
-    return this.MFA_CHALLENGE_TTL_MINUTES;
+    return this.ttlMinutes;
   }
 }

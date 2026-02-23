@@ -126,6 +126,15 @@ class EnvironmentVariables {
   @Min(1)
   OTP_MAX_ATTEMPTS: number;
 
+  @IsNumber()
+  @Min(1)
+  MFA_CHALLENGE_TTL_MINUTES: number;
+
+  // Security — Hashing
+  @IsNumber()
+  @Min(10)
+  BCRYPT_SALT_ROUNDS: number;
+
   // WhatsApp
   @IsString()
   WHATSAPP_PHONE_NUMBER_ID: string;
@@ -220,6 +229,10 @@ export function validate(config: Record<string, unknown>): Record<string, unknow
       ? parseInt(config.REFRESH_TOKEN_ROTATION_DAYS as string, 10)
       : undefined,
     OTP_MAX_ATTEMPTS: config.OTP_MAX_ATTEMPTS ? parseInt(config.OTP_MAX_ATTEMPTS as string, 10) : undefined,
+    MFA_CHALLENGE_TTL_MINUTES: config.MFA_CHALLENGE_TTL_MINUTES
+      ? parseInt(config.MFA_CHALLENGE_TTL_MINUTES as string, 10)
+      : undefined,
+    BCRYPT_SALT_ROUNDS: config.BCRYPT_SALT_ROUNDS ? parseInt(config.BCRYPT_SALT_ROUNDS as string, 10) : undefined,
   };
 
   const validatedConfig = plainToInstance(EnvironmentVariables, processedConfig, {

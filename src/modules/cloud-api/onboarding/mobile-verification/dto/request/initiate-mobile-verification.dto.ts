@@ -1,32 +1,29 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsEnum, IsString, MaxLength, MinLength } from 'class-validator';
 import { type FrontendVerificationMethod } from '../../utils/method-mapping.util';
 
 export class InitiateMobileVerificationDto {
-  @ApiPropertyOptional({
-    description:
-      'Phone number in E.164 format (with + prefix). Optional for QR-based methods, required for OTP-based method.',
+  @ApiProperty({
+    description: 'Phone number in E.164 format (with + prefix).',
     example: '+919876543210',
     minLength: 10,
     maxLength: 20,
   })
-  @IsOptional()
   @IsString()
   @MinLength(10)
   @MaxLength(20)
-  phone?: string;
+  phone: string;
 
-  @ApiPropertyOptional({
+  @ApiProperty({
     description: 'ISO 3166-1 alpha-2 country code for the phone number',
     example: 'IN',
     minLength: 2,
     maxLength: 5,
   })
-  @IsOptional()
   @IsString()
   @MinLength(2)
   @MaxLength(5)
-  phoneCountry?: string;
+  phoneCountry: string;
 
   @ApiProperty({
     description: 'Method to use for mobile verification.',

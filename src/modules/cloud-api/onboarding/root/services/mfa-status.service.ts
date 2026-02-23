@@ -16,13 +16,13 @@ export class MfaStatusService {
   ) {}
 
   // Clears any pending setup and marks onboarding as complete without enabling MFA
-  async skipMfaSetup(userId: string): Promise<{ success: boolean; message: string }> {
+  async skipMfaSetup(userId: string, sessionId: string): Promise<{ success: boolean; message: string }> {
     await this.userService.update(userId, {
       onboardingStep: OnboardingStepValues.COMPLETE,
       accountStatus: AccountStatusValues.ACTIVE,
     });
 
-    await this.sessionService.upgradeSession(userId, SessionTypeValues.ONBOARDING, SessionTypeValues.CLOUD);
+    await this.sessionService.upgradeSession(sessionId, userId, SessionTypeValues.ONBOARDING, SessionTypeValues.CLOUD);
 
     this.logger.log(`User ${userId} skipped MFA setup`);
 

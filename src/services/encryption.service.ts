@@ -2,14 +2,16 @@ import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
-import { TIME_CONSTANTS } from '../constants/time-constants';
 
 @Injectable()
 export class EncryptionService {
   private readonly logger = new Logger(EncryptionService.name);
-  private readonly saltRounds = TIME_CONSTANTS.BCRYPT_SALT_ROUNDS;
 
   constructor(private readonly configService: ConfigService) {}
+
+  private get saltRounds(): number {
+    return this.configService.getOrThrow<number>('BCRYPT_SALT_ROUNDS');
+  }
 
   // Hashes a password with bcrypt
   async hashPassword(password: string): Promise<string> {

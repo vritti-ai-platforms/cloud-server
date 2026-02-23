@@ -1,7 +1,7 @@
 export type {
-  AuthenticatorTransportFuture,
-  RegistrationResponseJSON,
   AuthenticationResponseJSON,
+  AuthenticatorTransportFuture,
   PublicKeyCredentialCreationOptionsJSON,
   PublicKeyCredentialRequestOptionsJSON,
+  RegistrationResponseJSON,
 } from '@simplewebauthn/server';

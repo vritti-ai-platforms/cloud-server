@@ -1,17 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { BadRequestException } from '@vritti/api-sdk';
+import { BadRequestException, NotFoundException } from '@vritti/api-sdk';
 import { AccountStatusValues, OnboardingStepValues, SessionTypeValues } from '@/db/schema';
-import type { RegistrationResponseJSON } from '../../../mfa/types/webauthn.types';
-import { BackupCodeService } from '../../../mfa/services/backup-code.service';
-import { MfaRepository } from '../../../mfa/repositories/mfa.repository';
-import { WebAuthnService } from '../../../mfa/services/webauthn.service';
 import { SessionService } from '../../../auth/root/services/session.service';
+import { MfaRepository } from '../../../mfa/repositories/mfa.repository';
+import { BackupCodeService } from '../../../mfa/services/backup-code.service';
+import { WebAuthnService } from '../../../mfa/services/webauthn.service';
+import type { RegistrationResponseJSON } from '../../../mfa/types/webauthn.types';
 import { UserService } from '../../../user/services/user.service';
 import { BackupCodesResponseDto } from '../../totp/dto/response/backup-codes-response.dto';
 import { PasskeyRegistrationOptionsDto } from '../dto/response/passkey-registration-options.dto';
-import { TIME_CONSTANTS } from '@/constants/time-constants';
-
-const pendingPasskeyRegistrations = new Map<string, { challenge: string; expiresAt: Date }>();
 
 @Injectable()
 export class PasskeySetupService {
@@ -25,7 +22,7 @@ export class PasskeySetupService {
     private readonly sessionService: SessionService,
   ) {}
 
-  // Generates WebAuthn registration options and stores the challenge in a pending map
+  // Generates WebAuthn registration options and stores the challenge as a pending DB record
   async initiateSetup(userId: string): Promise<PasskeyRegistrationOptionsDto> {
     const user = await this.userService.findById(userId);
 
@@ -37,54 +34,38 @@ export class PasskeySetupService {
       });
     }
 
-    const existingPasskeys = await this.mfaRepo.findAllPasskeysByUserId(userId);
-    const excludeCredentials = existingPasskeys
-      .filter((pk) => pk.passkeyCredentialId)
-      .map((pk) => ({
-        id: pk.passkeyCredentialId!,
-        transports: pk.passkeyTransports ? JSON.parse(pk.passkeyTransports) : undefined,
-      }));
+    // Delete any stale pending passkey record if the user is still in setup
+    if (user.onboardingStep !== OnboardingStepValues.COMPLETE) {
+      await this.mfaRepo.deletePendingByUserIdAndMethod(userId, 'PASSKEY');
+    }
 
     const options = await this.webAuthnService.generateRegistrationOptions(
       userId,
       user.email,
       user.fullName || user.email,
-      excludeCredentials,
+      [],
     );
 
-    const expiresAt = new Date();
-    expiresAt.setMinutes(expiresAt.getMinutes() + TIME_CONSTANTS.PASSKEY_PENDING_SETUP_TTL_MINUTES);
-    pendingPasskeyRegistrations.set(userId, {
-      challenge: options.challenge,
-      expiresAt,
-    });
+    await this.mfaRepo.createPendingPasskey(userId, options.challenge);
 
     this.logger.log(`Initiated Passkey setup for user: ${userId}`);
 
     return new PasskeyRegistrationOptionsDto(options);
   }
 
-  // Verifies the passkey registration response, stores the credential, and completes onboarding
-  async verifySetup(userId: string, credential: RegistrationResponseJSON): Promise<BackupCodesResponseDto> {
-    const pending = pendingPasskeyRegistrations.get(userId);
-    if (!pending) {
-      throw new BadRequestException({
+  // Verifies the passkey registration response against the pending DB challenge and completes onboarding
+  async verifySetup(userId: string, credential: RegistrationResponseJSON, sessionId: string): Promise<BackupCodesResponseDto> {
+    const pending = await this.mfaRepo.findPendingByUserIdAndMethod(userId, 'PASSKEY');
+    if (!pending || !pending.pendingChallenge) {
+      throw new NotFoundException({
         label: 'No Pending Setup',
-        detail: 'Your setup session has expired. Please start the process again.',
-      });
-    }
-
-    if (new Date() > pending.expiresAt) {
-      pendingPasskeyRegistrations.delete(userId);
-      throw new BadRequestException({
-        label: 'Session Expired',
-        detail: 'Please start the setup process again.',
+        detail: 'Your setup session could not be found. Please start the process again.',
       });
     }
 
     let verification;
     try {
-      verification = await this.webAuthnService.verifyRegistration(credential, pending.challenge);
+      verification = await this.webAuthnService.verifyRegistration(credential, pending.pendingChallenge);
     } catch (error) {
       this.logger.error(`Passkey verification failed: ${(error as Error).message}`);
       throw new BadRequestException({
@@ -104,30 +85,26 @@ export class PasskeySetupService {
     const backupCodes = this.backupCodeService.generateBackupCodes();
     const hashedBackupCodes = await this.backupCodeService.hashBackupCodes(backupCodes);
 
-    await this.mfaRepo.deactivateAllByUserId(userId);
-
     // In @simplewebauthn/server v13+, credential.id is already a base64url string
     const credentialIdBase64 = registrationInfo.credential.id;
     const publicKeyBase64 = this.webAuthnService.uint8ArrayToBase64url(registrationInfo.credential.publicKey);
     const transports = (registrationInfo.credential.transports as string[]) || [];
 
-    await this.mfaRepo.createPasskey(
-      userId,
+    await this.mfaRepo.confirmPasskey(
+      pending.id,
       credentialIdBase64,
       publicKeyBase64,
       registrationInfo.credential.counter,
-      transports,
-      hashedBackupCodes,
+      JSON.stringify(transports),
+      JSON.stringify(hashedBackupCodes),
     );
-
-    pendingPasskeyRegistrations.delete(userId);
 
     await this.userService.update(userId, {
       onboardingStep: OnboardingStepValues.COMPLETE,
       accountStatus: AccountStatusValues.ACTIVE,
     });
 
-    await this.sessionService.upgradeSession(userId, SessionTypeValues.ONBOARDING, SessionTypeValues.CLOUD);
+    await this.sessionService.upgradeSession(sessionId, userId, SessionTypeValues.ONBOARDING, SessionTypeValues.CLOUD);
 
     this.logger.log(`Passkey setup completed for user: ${userId}`);
 
@@ -138,10 +115,5 @@ export class PasskeySetupService {
       warning:
         'Save these backup codes in a secure location. Each code can only be used once and they will not be shown again.',
     });
-  }
-
-  // Clears any pending passkey registration for a user
-  clearPendingSetup(userId: string): void {
-    pendingPasskeyRegistrations.delete(userId);
   }
 }

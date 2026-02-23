@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { BadRequestException, UnauthorizedException } from '@vritti/api-sdk';
 import { MfaRepository } from '../../../mfa/repositories/mfa.repository';
 import { WebAuthnService } from '../../../mfa/services/webauthn.service';
@@ -7,7 +8,6 @@ import { UserService } from '../../../user/services/user.service';
 import { PasskeyAuthOptionsDto } from '../dto/response/passkey-auth-options.dto';
 import { PasskeyAuthResponseDto } from '../dto/response/passkey-auth-response.dto';
 import { SessionService } from '../../root/services/session.service';
-import { TIME_CONSTANTS } from '@/constants/time-constants';
 
 const pendingAuthentications = new Map<
   string,
@@ -23,6 +23,7 @@ export class PasskeyAuthService {
   private readonly logger = new Logger(PasskeyAuthService.name);
 
   constructor(
+    private readonly configService: ConfigService,
     private readonly webAuthnService: WebAuthnService,
     private readonly mfaRepo: MfaRepository,
     private readonly userService: UserService,
@@ -57,7 +58,7 @@ export class PasskeyAuthService {
 
     // Store challenge
     const expiresAt = new Date();
-    expiresAt.setMinutes(expiresAt.getMinutes() + TIME_CONSTANTS.PASSKEY_AUTH_CHALLENGE_TTL_MINUTES);
+    expiresAt.setMinutes(expiresAt.getMinutes() + this.configService.getOrThrow<number>('MFA_CHALLENGE_TTL_MINUTES'));
     pendingAuthentications.set(sessionId, {
       challenge: options.challenge,
       userId,

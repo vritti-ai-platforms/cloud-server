@@ -24,7 +24,6 @@ import { MfaStatusController } from './root/controllers/mfa-status.controller';
 import { OnboardingService } from './root/services/onboarding.service';
 import { MfaStatusService } from './root/services/mfa-status.service';
 import { TotpSetupController } from './totp/controllers/totp-setup.controller';
-import { TotpPendingStore } from './totp/services/totp-pending.store';
 import { TotpSetupService } from './totp/services/totp-setup.service';
 
 @Module({
@@ -60,7 +59,6 @@ import { TotpSetupService } from './totp/services/totp-setup.service';
     VerificationEventListener,
     // TOTP setup
     TotpSetupService,
-    TotpPendingStore,
     // Passkey setup
     PasskeySetupService,
     // Auth (needed for session management during onboarding)
