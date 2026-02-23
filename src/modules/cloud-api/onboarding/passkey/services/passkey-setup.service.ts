@@ -61,24 +61,15 @@ export class PasskeySetupService {
       });
     }
 
-    let verification;
-    try {
-      verification = await this.webAuthnService.verifyRegistration(credential, pending.pendingChallenge);
-    } catch (error) {
-      this.logger.error(`Passkey verification failed: ${(error as Error).message}`);
-      throw new BadRequestException({
-        label: 'Passkey Verification Failed',
-        detail: 'Could not verify your passkey. Please try again.',
+    const { registrationInfo } = await this.webAuthnService
+      .verifyRegistration(credential, pending.pendingChallenge)
+      .catch((error: Error) => {
+        this.logger.error(`Passkey verification failed: ${error.message}`);
+        throw new BadRequestException({
+          label: 'Passkey Verification Failed',
+          detail: 'Could not verify your passkey. Please try again.',
+        });
       });
-    }
-
-    const { registrationInfo } = verification;
-    if (!registrationInfo) {
-      throw new BadRequestException({
-        label: 'Passkey Verification Failed',
-        detail: 'Could not verify your passkey. Please try again.',
-      });
-    }
 
     const backupCodes = this.backupCodeService.generateBackupCodes();
     const hashedBackupCodes = await this.backupCodeService.hashBackupCodes(backupCodes);
