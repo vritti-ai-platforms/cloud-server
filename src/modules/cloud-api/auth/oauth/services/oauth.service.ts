@@ -131,14 +131,12 @@ export class OAuthService {
         return await this.handleExistingCompleteUser(existingUser, profile, tokens);
       }
 
-      // Case 2: User exists BUT onboarding incomplete → delete and recreate
+      // Case 2: User exists BUT onboarding incomplete → resume onboarding
       if (existingUser) {
-        await this.oauthProviderRepository.deleteByUserId(existingUser.id);
-        await this.userRepository.hardDelete(existingUser.id);
-        this.logger.log(`Deleted incomplete user for re-signup: ${profile.email} (${existingUser.id})`);
+        return await this.handleExistingIncompleteUser(existingUser, profile, tokens);
       }
 
-      // Case 3: No user exists (or was just deleted) → create new user
+      // Case 3: No user exists → create new user
       return await this.handleNewUser(profile, tokens);
     } catch (error) {
       this.logger.error('OAuth callback error', error);
@@ -169,6 +167,17 @@ export class OAuthService {
       throw new BadRequestException('The selected login method is not available. Please choose a different option.');
     }
     return oauthProvider;
+  }
+
+  // Resumes onboarding for an OAuth user who previously signed up but didn't finish
+  private async handleExistingIncompleteUser(
+    existingUser: User,
+    profile: OAuthUserProfile,
+    tokens: { accessToken: string; refreshToken?: string; expiresIn?: number },
+  ): Promise<{ redirectUrl: string; refreshToken: string }> {
+    this.logger.log(`Resuming onboarding for incomplete OAuth user: ${profile.email} (${existingUser.id})`);
+    await this.sessionService.deleteOnboardingSessions(existingUser.id);
+    return this.linkProviderAndCreateSession(existingUser, profile, tokens, SessionTypeValues.ONBOARDING, true);
   }
 
   // Handles existing user with completed onboarding
@@ -206,6 +215,7 @@ export class OAuthService {
     profile: OAuthUserProfile,
     tokens: { accessToken: string; refreshToken?: string; expiresIn?: number },
     sessionType: SessionType,
+    resume = false,
   ): Promise<{ redirectUrl: string; refreshToken: string }> {
     // Link OAuth provider to user
     const tokenExpiresAt = tokens.expiresIn ? new Date(Date.now() + tokens.expiresIn * 1000) : undefined;
@@ -226,7 +236,7 @@ export class OAuthService {
     const isFullyOnboarded = sessionType === SessionTypeValues.CLOUD;
     const redirectUrl = isFullyOnboarded
       ? baseUrl // Complete users → dashboard
-      : `${baseUrl}/auth-success?email=${encodeURIComponent(user.email)}`; // Incomplete users → auth-success
+      : `${baseUrl}/auth-success?email=${encodeURIComponent(user.email)}${resume ? '&resume=true' : ''}`; // Incomplete users → auth-success
 
     this.logger.log(
       `OAuth callback completed for user: ${user.email}, sessionType: ${sessionType}, redirecting to: ${isFullyOnboarded ? 'dashboard' : 'auth-success'}`,
