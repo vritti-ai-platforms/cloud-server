@@ -1,7 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { AccountStatusValues, OnboardingStepValues, SessionTypeValues } from '@/db/schema';
+import { AccountStatusValues, OnboardingStepValues } from '@/db/schema';
 import { MfaRepository } from '../../../mfa/repositories/mfa.repository';
-import { SessionService } from '../../../auth/root/services/session.service';
 import { UserService } from '../../../user/services/user.service';
 import { MfaStatusResponseDto } from '../../totp/dto/response/mfa-status-response.dto';
 
@@ -12,17 +11,14 @@ export class MfaStatusService {
   constructor(
     private readonly mfaRepo: MfaRepository,
     private readonly userService: UserService,
-    private readonly sessionService: SessionService,
   ) {}
 
   // Clears any pending setup and marks onboarding as complete without enabling MFA
-  async skipMfaSetup(userId: string, sessionId: string): Promise<{ success: boolean; message: string }> {
+  async skipMfaSetup(userId: string): Promise<{ success: boolean; message: string }> {
     await this.userService.update(userId, {
       onboardingStep: OnboardingStepValues.COMPLETE,
       accountStatus: AccountStatusValues.ACTIVE,
     });
-
-    await this.sessionService.upgradeSession(sessionId, userId, SessionTypeValues.ONBOARDING, SessionTypeValues.CLOUD);
 
     this.logger.log(`User ${userId} skipped MFA setup`);
 

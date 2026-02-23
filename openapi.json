@@ -2194,6 +2194,37 @@
         ]
       }
     },
+    "/cloud-api/onboarding/complete": {
+      "post": {
+        "description": "Upgrades session from ONBOARDING to CLOUD and rotates tokens. Call this when the user clicks Go to Dashboard.",
+        "operationId": "OnboardingController_completeOnboarding",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Session upgraded successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Complete onboarding",
+        "tags": [
+          "Onboarding"
+        ]
+      }
+    },
     "/cloud-api/onboarding/email-verification/send-otp": {
       "post": {
         "operationId": "EmailVerificationController_sendEmailOtp",

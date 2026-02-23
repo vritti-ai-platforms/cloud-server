@@ -1,7 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { BadRequestException } from '@vritti/api-sdk';
-import { OnboardingStepValues } from '@/db/schema';
+import { AccountStatusValues, OnboardingStepValues, SessionTypeValues } from '@/db/schema';
 import { EncryptionService } from '../../../../../services';
+import { SessionService } from '../../../auth/root/services/session.service';
 import { UserService } from '../../../user/services/user.service';
 import { OnboardingStatusResponseDto } from '../dto/entity/onboarding-status-response.dto';
 import { StartOnboardingResponseDto } from '../dto/response/start-onboarding-response.dto';
@@ -13,6 +14,7 @@ export class OnboardingService {
   constructor(
     private readonly userService: UserService,
     private readonly encryptionService: EncryptionService,
+    private readonly sessionService: SessionService,
   ) {}
 
   // Fetches the user and maps their profile to an onboarding status response
@@ -55,5 +57,31 @@ export class OnboardingService {
       success: true,
       message: 'Password set successfully',
     });
+  }
+
+  // Validates onboarding is complete, then upgrades session to CLOUD and rotates tokens
+  async completeSession(
+    sessionId: string,
+    userId: string,
+    refreshToken: string,
+  ): Promise<{ accessToken: string; refreshToken: string; expiresIn: number }> {
+    const user = await this.userService.findById(userId);
+
+    if (user.onboardingStep !== OnboardingStepValues.COMPLETE) {
+      throw new BadRequestException({
+        label: 'Onboarding Incomplete',
+        detail: 'Please complete all onboarding steps before accessing the dashboard.',
+      });
+    }
+
+    if (user.accountStatus !== AccountStatusValues.ACTIVE) {
+      throw new BadRequestException({
+        label: 'Account Not Active',
+        detail: 'Your account is not active. Please complete onboarding first.',
+      });
+    }
+
+    await this.sessionService.upgradeSession(sessionId, userId, SessionTypeValues.ONBOARDING, SessionTypeValues.CLOUD);
+    return this.sessionService.refreshTokens(refreshToken);
   }
 }

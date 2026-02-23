@@ -1,10 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { BadRequestException, NotFoundException } from '@vritti/api-sdk';
-import { AccountStatusValues, OnboardingStepValues, SessionTypeValues } from '@/db/schema';
+import { AccountStatusValues, OnboardingStepValues } from '@/db/schema';
 import { BackupCodeService } from '../../../mfa/services/backup-code.service';
 import { MfaRepository } from '../../../mfa/repositories/mfa.repository';
 import { TotpService } from '../../../mfa/services/totp.service';
-import { SessionService } from '../../../auth/root/services/session.service';
 import { UserService } from '../../../user/services/user.service';
 import { BackupCodesResponseDto } from '../dto/response/backup-codes-response.dto';
 import { TotpSetupResponseDto } from '../dto/response/totp-setup-response.dto';
@@ -18,7 +17,6 @@ export class TotpSetupService {
     private readonly totpService: TotpService,
     private readonly backupCodeService: BackupCodeService,
     private readonly userService: UserService,
-    private readonly sessionService: SessionService,
   ) {}
 
   // Generates a TOTP secret, persists a pending record in the DB, and returns the QR code
@@ -54,7 +52,7 @@ export class TotpSetupService {
   }
 
   // Validates the TOTP code against the pending DB record, confirms it, and completes onboarding
-  async verifySetup(userId: string, code: string, sessionId: string): Promise<BackupCodesResponseDto> {
+  async verifySetup(userId: string, code: string): Promise<BackupCodesResponseDto> {
     const pending = await this.mfaRepo.findPendingByUserIdAndMethod(userId, 'TOTP');
     if (!pending || !pending.totpSecret) {
       throw new NotFoundException({
@@ -81,8 +79,6 @@ export class TotpSetupService {
       onboardingStep: OnboardingStepValues.COMPLETE,
       accountStatus: AccountStatusValues.ACTIVE,
     });
-
-    await this.sessionService.upgradeSession(sessionId, userId, SessionTypeValues.ONBOARDING, SessionTypeValues.CLOUD);
 
     this.logger.log(`TOTP setup completed for user: ${userId}`);
 

@@ -1,7 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { BadRequestException, NotFoundException } from '@vritti/api-sdk';
-import { AccountStatusValues, OnboardingStepValues, SessionTypeValues } from '@/db/schema';
-import { SessionService } from '../../../auth/root/services/session.service';
+import { AccountStatusValues, OnboardingStepValues } from '@/db/schema';
 import { MfaRepository } from '../../../mfa/repositories/mfa.repository';
 import { BackupCodeService } from '../../../mfa/services/backup-code.service';
 import { WebAuthnService } from '../../../mfa/services/webauthn.service';
@@ -19,7 +18,6 @@ export class PasskeySetupService {
     private readonly webAuthnService: WebAuthnService,
     private readonly backupCodeService: BackupCodeService,
     private readonly userService: UserService,
-    private readonly sessionService: SessionService,
   ) {}
 
   // Generates WebAuthn registration options and stores the challenge as a pending DB record
@@ -54,7 +52,7 @@ export class PasskeySetupService {
   }
 
   // Verifies the passkey registration response against the pending DB challenge and completes onboarding
-  async verifySetup(userId: string, credential: RegistrationResponseJSON, sessionId: string): Promise<BackupCodesResponseDto> {
+  async verifySetup(userId: string, credential: RegistrationResponseJSON): Promise<BackupCodesResponseDto> {
     const pending = await this.mfaRepo.findPendingByUserIdAndMethod(userId, 'PASSKEY');
     if (!pending || !pending.pendingChallenge) {
       throw new NotFoundException({
@@ -103,8 +101,6 @@ export class PasskeySetupService {
       onboardingStep: OnboardingStepValues.COMPLETE,
       accountStatus: AccountStatusValues.ACTIVE,
     });
-
-    await this.sessionService.upgradeSession(sessionId, userId, SessionTypeValues.ONBOARDING, SessionTypeValues.CLOUD);
 
     this.logger.log(`Passkey setup completed for user: ${userId}`);
 

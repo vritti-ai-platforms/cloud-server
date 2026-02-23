@@ -1,5 +1,6 @@
 import { applyDecorators } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { TokenResponse } from '../../../auth/root/dto/response/token-response.dto';
 import { SetPasswordDto } from '../dto/request/set-password.dto';
 import { StartOnboardingResponseDto } from '../dto/response/start-onboarding-response.dto';
 
@@ -25,5 +26,16 @@ export function ApiSetPassword() {
     }),
     ApiResponse({ status: 400, description: 'Invalid password format or validation failed' }),
     ApiResponse({ status: 401, description: 'Unauthorized - Invalid or missing onboarding token' }),
+  );
+}
+
+export function ApiCompleteOnboarding() {
+  return applyDecorators(
+    ApiOperation({
+      summary: 'Complete onboarding',
+      description: 'Upgrades session from ONBOARDING to CLOUD and rotates tokens. Call this when the user clicks Go to Dashboard.',
+    }),
+    ApiResponse({ status: 200, description: 'Session upgraded successfully.', type: TokenResponse }),
+    ApiResponse({ status: 401, description: 'Unauthorized.' }),
   );
 }

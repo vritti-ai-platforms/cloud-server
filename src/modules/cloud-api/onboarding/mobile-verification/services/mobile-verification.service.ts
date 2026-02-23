@@ -71,7 +71,7 @@ export class MobileVerificationService {
 
     return {
       success: true,
-      message: 'Verification initiated successfully',
+      message: isQrChannel ? 'Verification initiated successfully' : 'OTP sent to your mobile number',
       verificationCode: isQrChannel ? otp : undefined,
       whatsappNumber:
         channel === VerificationChannelValues.WHATSAPP_IN && this.whatsappBusinessNumber
