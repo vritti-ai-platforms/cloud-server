@@ -59,6 +59,12 @@ export class LoginResponse {
   })
   mfaChallenge?: MfaChallengeInfo;
 
+  @ApiPropertyOptional({
+    description: 'Whether user must complete onboarding before accessing the dashboard',
+    example: true,
+  })
+  requiresOnboarding?: boolean;
+
   constructor(partial: Partial<LoginResponse>) {
     Object.assign(this, partial);
   }

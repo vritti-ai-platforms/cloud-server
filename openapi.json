@@ -3821,6 +3821,11 @@
                 "$ref": "#/components/schemas/MfaChallengeInfo"
               }
             ]
+          },
+          "requiresOnboarding": {
+            "type": "boolean",
+            "description": "Whether user must complete onboarding before accessing the dashboard",
+            "example": true
           }
         }
       },

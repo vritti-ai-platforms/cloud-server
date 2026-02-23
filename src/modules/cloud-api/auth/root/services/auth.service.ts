@@ -43,19 +43,10 @@ export class AuthService {
     const existingUser = await this.userService.findByEmail(dto.email);
 
     if (existingUser) {
-      // Completed onboarding — must use login
-      if (existingUser.onboardingStep === OnboardingStepValues.COMPLETE) {
-        throw new ConflictException({
-          label: 'Account Exists',
-          detail: 'An account with this email already exists. Please log in instead.',
-        });
-      }
-
-      // Incomplete onboarding — delete and start fresh
-      await this.sessionService.invalidateAllUserSessions(existingUser.id);
-      await this.userService.delete(existingUser.id);
-
-      this.logger.log(`Deleted incomplete user for re-signup: ${existingUser.email} (${existingUser.id})`);
+      throw new ConflictException({
+        label: 'Account Exists',
+        detail: 'An account with this email already exists. Please log in instead.',
+      });
     }
 
     // New user
@@ -100,8 +91,8 @@ export class AuthService {
 
     if (!user.passwordHash) {
       throw new UnauthorizedException({
-        label: 'Invalid Credentials',
-        detail: 'The email or password you entered is incorrect. Please check your credentials and try again.',
+        label: 'Sign in with Provider',
+        detail: 'This account was created with an OAuth provider. Please sign in using your provider.',
       });
     }
 
@@ -114,14 +105,23 @@ export class AuthService {
       });
     }
 
-    // Incomplete onboarding — reject login and ask user to signup again
+    // Incomplete onboarding — create ONBOARDING session so user can resume
     if (user.onboardingStep !== OnboardingStepValues.COMPLETE) {
-      this.logger.warn(`Login blocked for incomplete account: ${user.email} (${user.id})`);
+      this.logger.log(`Resuming onboarding for user: ${user.email} (${user.id})`);
 
-      throw new UnauthorizedException({
-        label: 'Incomplete Account',
-        detail: 'This is an incomplete account. Please sign up again to complete your onboarding.',
-      });
+      await this.sessionService.deleteOnboardingSessions(user.id);
+
+      const { refreshToken } = await this.sessionService.createSession(
+        user.id,
+        SessionTypeValues.ONBOARDING,
+        ipAddress,
+        userAgent,
+      );
+
+      return {
+        ...new LoginResponse({ requiresOnboarding: true }),
+        refreshToken,
+      };
     }
 
     // Only ACTIVE users can login
