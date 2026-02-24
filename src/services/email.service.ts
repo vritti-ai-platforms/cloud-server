@@ -1,36 +1,15 @@
-import { TransactionalEmailsApi, TransactionalEmailsApiApiKeys } from '@getbrevo/brevo';
+import { BrevoClient, BrevoError, BrevoTimeoutError } from '@getbrevo/brevo';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
-/**
- * Interface for Brevo API errors
- */
-interface BrevoError {
-  status?: number;
-  response?: {
-    status?: number;
-  };
-  body?: {
-    message?: string;
-  };
-  message?: string;
-}
-
-/**
- * Email Service for sending transactional emails using Brevo
- * Provides methods for sending verification and password reset emails
- */
 @Injectable()
 export class EmailService {
   private readonly logger = new Logger(EmailService.name);
-  private readonly brevoApi: TransactionalEmailsApi;
+  private readonly brevoClient: BrevoClient;
   private readonly senderEmail: string;
   private readonly senderName: string;
-  private readonly maxRetries: number = 3;
 
   constructor(private readonly configService: ConfigService) {
-    // Initialize Brevo API client
-    this.brevoApi = new TransactionalEmailsApi();
     const apiKey = this.configService.get<string>('BREVO_API_KEY');
 
     if (!apiKey) {
@@ -38,7 +17,8 @@ export class EmailService {
       throw new Error('Email service configuration error: Missing BREVO_API_KEY');
     }
 
-    this.brevoApi.setApiKey(TransactionalEmailsApiApiKeys.apiKey, apiKey);
+    // Initialize Brevo client with built-in retry support
+    this.brevoClient = new BrevoClient({ apiKey, maxRetries: 3 });
 
     // Get sender configuration
     const senderEmail = this.configService.get<string>('SENDER_EMAIL');
@@ -55,12 +35,7 @@ export class EmailService {
     this.logger.log('Brevo email service initialized successfully');
   }
 
-  /**
-   * Send email verification OTP
-   * @param email Recipient email address
-   * @param otp One-time password
-   * @param displayName Optional recipient display name for personalization
-   */
+  // Sends an email verification OTP to the given recipient
   async sendVerificationEmail(email: string, otp: string, expiresAt: Date, displayName?: string): Promise<void> {
     const name = displayName || 'there';
     const expiryMinutes = Math.ceil((expiresAt.getTime() - Date.now()) / 60_000);
@@ -156,12 +131,7 @@ This is an automated message, please do not reply.
     this.logger.log(`Verification email sent to ${email}`);
   }
 
-  /**
-   * Send password reset OTP
-   * @param email Recipient email address
-   * @param otp One-time password
-   * @param displayName Optional recipient display name for personalization
-   */
+  // Sends a password reset OTP to the given recipient
   async sendPasswordResetEmail(email: string, otp: string, expiresAt: Date, displayName?: string): Promise<void> {
     const name = displayName || 'there';
     const expiryMinutes = Math.ceil((expiresAt.getTime() - Date.now()) / 60_000);
@@ -264,97 +234,48 @@ This is an automated message, please do not reply.
     this.logger.log(`Password reset email sent to ${email}`);
   }
 
-  /**
-   * Generic email sending method with retry logic
-   * @private
-   */
-  private async sendEmail(
-    emailData: {
-      to: Array<{ email: string; name?: string }>;
-      subject: string;
-      htmlContent: string;
-      textContent: string;
-    },
-    attempt: number = 1,
-  ): Promise<void> {
+  // Sends a transactional email via Brevo — retries handled internally by BrevoClient
+  private async sendEmail(emailData: {
+    to: Array<{ email: string; name?: string }>;
+    subject: string;
+    htmlContent: string;
+    textContent: string;
+  }): Promise<void> {
     try {
-      const result = await this.brevoApi.sendTransacEmail({
-        sender: {
-          email: this.senderEmail,
-          name: this.senderName,
-        },
+      const result = await this.brevoClient.transactionalEmails.sendTransacEmail({
+        sender: { email: this.senderEmail, name: this.senderName },
         to: emailData.to,
         subject: emailData.subject,
         htmlContent: emailData.htmlContent,
         textContent: emailData.textContent,
       });
-
-      this.logger.debug(`Email sent successfully. Message ID: ${result.body.messageId}`);
+      this.logger.debug(`Email sent successfully. Message ID: ${result.messageId}`);
     } catch (err) {
-      const error = err as BrevoError;
-      const errorStatus = error?.status || error?.response?.status;
-      const errorMessage = error?.body?.message || error?.message || 'Unknown error';
-
-      // Handle rate limiting with exponential backoff
-      if (errorStatus === 429 && attempt < this.maxRetries) {
-        const waitTime = 2 ** attempt * 1000;
-        this.logger.warn(`Rate limit hit. Retrying in ${waitTime}ms... (Attempt ${attempt}/${this.maxRetries})`);
-        await this.delay(waitTime);
-        return this.sendEmail(emailData, attempt + 1);
+      if (err instanceof BrevoTimeoutError) {
+        this.logger.error('Brevo request timed out after retries.');
+        throw new Error('Email sending failed: timeout');
       }
-
-      // Handle authentication errors
-      if (errorStatus === 401) {
-        this.logger.error('Brevo authentication failed. Check your API key.');
-        throw new Error('Email service authentication failed');
-      }
-
-      // Handle bad request errors
-      if (errorStatus === 400) {
-        this.logger.error('Bad request to Brevo API:', errorMessage);
-        throw new Error(`Invalid email parameters: ${errorMessage}`);
-      }
-
-      // Retry on server errors or network issues
-      if ((errorStatus && errorStatus >= 500) || !errorStatus) {
-        if (attempt < this.maxRetries) {
-          const waitTime = 1000 * attempt;
-          this.logger.warn(
-            `Email sending failed (status: ${errorStatus ?? 'unknown'}). Retrying in ${waitTime}ms... (Attempt ${attempt}/${this.maxRetries})`,
-          );
-          await this.delay(waitTime);
-          return this.sendEmail(emailData, attempt + 1);
+      if (err instanceof BrevoError) {
+        if (err.statusCode === 429) {
+          this.logger.error('Brevo rate limit exceeded after retries.');
+          throw new Error('Email sending failed: rate limit exceeded');
         }
+        if (err.statusCode === 401) {
+          this.logger.error('Brevo authentication failed. Check your API key.');
+          throw new Error('Email service authentication failed');
+        }
+        if (err.statusCode === 400) {
+          this.logger.error('Bad request to Brevo API:', err.message);
+          throw new Error(`Invalid email parameters: ${err.message}`);
+        }
+        this.logger.error(`Brevo API error ${err.statusCode}:`, err.message);
+        throw new Error(`Email sending failed: ${err.message}`);
       }
-
-      // Log final failure
-      this.logger.error('Failed to send email after retries', {
-        status: errorStatus ?? 'unknown',
-        message: errorMessage,
-        attempt,
-        recipients: emailData.to.map((r) => r.email).join(', '),
-      });
-
-      throw new Error(`Email sending failed: ${errorMessage}`);
+      throw err;
     }
   }
 
-  /**
-   * Delay utility for retry logic
-   * @private
-   */
-  private delay(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-  }
-
-  /**
-   * Send email change notification to old email with revert link
-   * @param oldEmail Old email address
-   * @param newEmail New email address
-   * @param revertToken Revert token for the change
-   * @param revertExpiresAt Expiry date of revert token
-   * @param displayName Optional recipient display name for personalization
-   */
+  // Sends an email change notification to the old address with a revert link
   async sendEmailChangeNotification(
     oldEmail: string,
     newEmail: string,
@@ -484,11 +405,7 @@ This is an automated message, please do not reply.
     this.logger.log(`Email change notification sent to ${oldEmail}`);
   }
 
-  /**
-   * Send email revert confirmation
-   * @param email Email address that was restored
-   * @param displayName Optional recipient display name for personalization
-   */
+  // Sends a confirmation to the restored email address after a revert
   async sendEmailRevertConfirmation(email: string, displayName?: string): Promise<void> {
     const name = displayName || 'there';
     const subject = 'Email Address Change Reverted - Vritti AI Cloud';
@@ -577,33 +494,22 @@ This is an automated message, please do not reply.
     this.logger.log(`Email revert confirmation sent to ${email}`);
   }
 
-  /**
-   * Verify Brevo API connection (useful for health checks)
-   * @returns true if connection is successful, false otherwise
-   */
+  // Verifies Brevo API connectivity — a 400 response means the API is reachable
   async verifyConnection(): Promise<boolean> {
     try {
-      // Send a test request to verify API key is valid
-      // We'll use the account endpoint which is lightweight
-      await this.brevoApi.sendTransacEmail({
-        sender: {
-          email: this.senderEmail,
-          name: this.senderName,
-        },
+      await this.brevoClient.transactionalEmails.sendTransacEmail({
+        sender: { email: this.senderEmail, name: this.senderName },
         to: [{ email: this.senderEmail }],
         subject: 'Connection Test',
         htmlContent: '<p>Test</p>',
-        // Add a test mode header if available, or just catch the error
       });
       return true;
     } catch (err) {
-      const error = err as BrevoError;
-      // If we get a 400 error, it means the API is reachable but we're missing params
-      // This is still a successful connection test
-      if (error?.status === 400) {
+      // A 400 error means the API is reachable but params are incomplete — still a successful connection test
+      if (err instanceof BrevoError && err.statusCode === 400) {
         return true;
       }
-      this.logger.error('Brevo connection verification failed:', error);
+      this.logger.error('Brevo connection verification failed:', err);
       return false;
     }
   }
