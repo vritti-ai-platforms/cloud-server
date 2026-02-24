@@ -246,7 +246,7 @@ async function bootstrap() {
 
   // Get logger from DI container for final bootstrap message
   const logger = app.get(LoggerService);
-  logger.log(`API Nexus running on ${baseUrl}`, 'Bootstrap');
+  logger.log(`Cloud Server running on ${baseUrl}`, 'Bootstrap');
 }
 
 bootstrap();

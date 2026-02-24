@@ -8,5 +8,5 @@ jobs:
   build:
     uses: vritti-ai-platforms/infrastructure/.github/workflows/reusable-build-backend-image.yml@main
     with:
-      service_name: api-nexus
+      service_name: cloud-server
     secrets: inherit
