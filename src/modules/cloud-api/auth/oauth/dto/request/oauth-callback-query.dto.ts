@@ -34,6 +34,11 @@ export class OAuthCallbackQueryDto {
   error_reason?: string;
 
   // Optional extra params that OAuth providers may include
+  @ApiProperty({ description: 'Issuer identifier (OpenID Connect)', required: false })
+  @IsOptional()
+  @IsString()
+  iss?: string;
+
   @ApiProperty({ description: 'OAuth scope parameter', required: false })
   @IsOptional()
   @IsString()

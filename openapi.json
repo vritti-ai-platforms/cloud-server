@@ -1716,6 +1716,15 @@
             }
           },
           {
+            "name": "iss",
+            "required": false,
+            "in": "query",
+            "description": "Issuer identifier (OpenID Connect)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "scope",
             "required": false,
             "in": "query",
