@@ -1,7 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { BadRequestException, ConflictException, ForbiddenException } from '@vritti/api-sdk';
+import { BadRequestException, ConflictException, EmailService, ForbiddenException } from '@vritti/api-sdk';
 import { OnboardingStepValues, VerificationChannelValues } from '@/db/schema';
-import { EmailService } from '@vritti/api-sdk';
 import { UserService } from '../../../user/services/user.service';
 import { VerificationService } from '../../../verification/services/verification.service';
 import { type ChangeEmailDto } from '../dto/request/change-email.dto';
@@ -99,13 +98,10 @@ export class EmailVerificationService {
       dto.email,
     );
 
-    this.emailService
-      .sendVerificationEmail(dto.email, otp, expiresAt, user.displayName ?? undefined)
-      .catch((error) => {
-        this.logger.error(`Failed to send verification email to ${dto.email}: ${error.message}`);
-      });
+    this.emailService.sendVerificationEmail(dto.email, otp, expiresAt, user.displayName ?? undefined).catch((error) => {
+      this.logger.error(`Failed to send verification email to ${dto.email}: ${error.message}`);
+    });
 
     return { success: true, message: 'Email updated. A new verification code has been sent.' };
   }
-
 }

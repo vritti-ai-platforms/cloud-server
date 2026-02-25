@@ -1,9 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { BadRequestException, NotFoundException, UnauthorizedException } from '@vritti/api-sdk';
+import { BadRequestException, NotFoundException, parseExpiryToMs, UnauthorizedException } from '@vritti/api-sdk';
 import type { Verification, VerificationChannel } from '@/db/schema';
 import { VerificationChannelValues } from '@/db/schema/enums';
-import { parseExpiryToMs } from '@vritti/api-sdk';
 import { EncryptionService } from '../../../../services';
 import { VerificationRepository } from '../repositories/verification.repository';
 

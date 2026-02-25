@@ -1,8 +1,7 @@
 import * as crypto from 'node:crypto';
 import { Injectable, Logger } from '@nestjs/common';
-import { BadRequestException, NotFoundException } from '@vritti/api-sdk';
+import { BadRequestException, EmailService, NotFoundException } from '@vritti/api-sdk';
 import { VerificationChannelValues } from '@/db/schema';
-import { EmailService } from '@vritti/api-sdk';
 import { VerificationService } from '../../verification/services/verification.service';
 import { EmailChangeRequestRepository } from '../repositories/email-change-request.repository';
 import { RateLimitService } from './rate-limit.service';
@@ -40,9 +39,11 @@ export class EmailChangeService {
     );
 
     // Send OTP email (fire and forget)
-    this.emailService.sendVerificationEmail(user.email, otp, expiresAt, user.displayName || undefined).catch((error) => {
-      this.logger.error(`Failed to send identity verification email to ${user.email}: ${error.message}`);
-    });
+    this.emailService
+      .sendVerificationEmail(user.email, otp, expiresAt, user.displayName || undefined)
+      .catch((error) => {
+        this.logger.error(`Failed to send identity verification email to ${user.email}: ${error.message}`);
+      });
 
     this.logger.log(`Identity verification OTP sent to ${user.email} for user ${userId}`);
 
@@ -55,7 +56,11 @@ export class EmailChangeService {
     otpCode: string,
   ): Promise<{ changeRequestId: string; changeRequestsToday: number }> {
     // Verify OTP via unified verification service (throws on failure)
-    const verification = await this.verificationService.verifyVerification(otpCode, VerificationChannelValues.EMAIL, userId);
+    const verification = await this.verificationService.verifyVerification(
+      otpCode,
+      VerificationChannelValues.EMAIL,
+      userId,
+    );
 
     // Check rate limit
     const { requestsToday } = await this.rateLimitService.checkAndIncrementChangeRequestLimit(userId, 'email');
@@ -82,11 +87,7 @@ export class EmailChangeService {
   }
 
   // Validates new email and sends verification OTP to it (step 3)
-  async submitNewEmail(
-    userId: string,
-    changeRequestId: string,
-    newEmail: string,
-  ): Promise<{ expiresAt: Date }> {
+  async submitNewEmail(userId: string, changeRequestId: string, newEmail: string): Promise<{ expiresAt: Date }> {
     const changeRequest = await this.emailChangeRequestRepo.findById(changeRequestId);
 
     if (!changeRequest || changeRequest.userId !== userId) {
@@ -269,7 +270,11 @@ export class EmailChangeService {
     if (!existing || !existing.target) {
       throw new NotFoundException('No active verification found. Please start the process again.');
     }
-    const { otp, expiresAt } = await this.verificationService.createVerification(userId, VerificationChannelValues.EMAIL, existing.target);
+    const { otp, expiresAt } = await this.verificationService.createVerification(
+      userId,
+      VerificationChannelValues.EMAIL,
+      existing.target,
+    );
     const user = await this.userService.findById(userId);
     this.emailService
       .sendVerificationEmail(existing.target, otp, expiresAt, user.displayName || undefined)
