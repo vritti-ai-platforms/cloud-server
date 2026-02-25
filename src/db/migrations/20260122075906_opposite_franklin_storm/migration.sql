@@ -1,1 +1,0 @@
-ALTER TABLE "cloud"."two_factor_auth" ADD COLUMN "passkey_transports" varchar(255);
