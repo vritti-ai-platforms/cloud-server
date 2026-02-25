@@ -1,7 +1,7 @@
-import { Controller, Get, Logger } from '@nestjs/common';
+import { Controller, Get, Logger, Query } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { Public } from '@vritti/api-sdk';
-import { ApiGetIndustries } from '../docs/industry.docs';
+import { type SelectQueryResult, Public, SelectOptionsQueryDto } from '@vritti/api-sdk';
+import { ApiGetIndustries, ApiGetIndustriesSelect } from '../docs/industry.docs';
 import { IndustryDto } from '../dto/entity/industry.dto';
 import { IndustryService } from '../services/industry.service';
 
@@ -20,4 +20,14 @@ export class IndustryController {
     this.logger.log('GET /industries');
     return this.industryService.findAll();
   }
+
+  // Returns paginated industry options for select component
+  @Get('select')
+  @Public()
+  @ApiGetIndustriesSelect()
+  findForSelect(@Query() query: SelectOptionsQueryDto): Promise<SelectQueryResult> {
+    this.logger.log('GET /industries/select');
+    return this.industryService.findForSelect(query);
+  }
 }
+
