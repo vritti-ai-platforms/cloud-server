@@ -200,7 +200,11 @@ export class AuthController {
   ): Promise<ForgotPasswordResponseDto> {
     this.logger.log(`POST /auth/forgot-password - Email: ${dto.email}`);
 
-    const { refreshToken, ...response } = await this.passwordResetService.requestPasswordReset(dto.email, ipAddress, userAgent);
+    const { refreshToken, ...response } = await this.passwordResetService.requestPasswordReset(
+      dto.email,
+      ipAddress,
+      userAgent,
+    );
 
     if (refreshToken) {
       reply.setCookie(getRefreshCookieName(), refreshToken, getRefreshCookieOptionsFromConfig());
@@ -243,7 +247,12 @@ export class AuthController {
   ): Promise<ResetPasswordResponseDto> {
     this.logger.log(`POST /auth/reset-password - User: ${userId}`);
 
-    const { refreshToken, ...response } = await this.passwordResetService.resetPassword(userId, dto.newPassword, ipAddress, userAgent);
+    const { refreshToken, ...response } = await this.passwordResetService.resetPassword(
+      userId,
+      dto.newPassword,
+      ipAddress,
+      userAgent,
+    );
 
     reply.clearCookie(getRefreshCookieName(), { path: '/' });
     reply.setCookie(getRefreshCookieName(), refreshToken, getRefreshCookieOptionsFromConfig());

@@ -2,12 +2,12 @@ import { Body, Controller, HttpCode, HttpStatus, Logger, Post, Req, Res } from '
 import { ApiTags } from '@nestjs/swagger';
 import { Public } from '@vritti/api-sdk';
 import type { FastifyReply, FastifyRequest } from 'fastify';
+import { getRefreshCookieName, getRefreshCookieOptionsFromConfig } from '../../root/services/session.service';
 import { ApiStartPasskeyAuth, ApiVerifyPasskeyAuth } from '../docs/passkey-auth.docs';
 import { StartPasskeyAuthDto, VerifyPasskeyAuthDto } from '../dto/request/verify-passkey-auth.dto';
 import { PasskeyAuthOptionsDto } from '../dto/response/passkey-auth-options.dto';
 import { PasskeyAuthResponseDto } from '../dto/response/passkey-auth-response.dto';
 import { PasskeyAuthService } from '../services/passkey-auth.service';
-import { getRefreshCookieName, getRefreshCookieOptionsFromConfig } from '../../root/services/session.service';
 
 @ApiTags('Auth - Passkey')
 @Controller('auth/passkey')

@@ -1,8 +1,8 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
-import { jwtConfigFactory } from '../../../config/jwt.config';
-import { ServicesModule } from '../../../services';
+import { jwtConfigFactory } from '@vritti/api-sdk';
+import { ServicesModule } from '../../../services/services.module';
 import { MfaModule } from '../mfa/mfa.module';
 import { UserModule } from '../user/user.module';
 import { VerificationModule } from '../verification/verification.module';
@@ -29,16 +29,12 @@ import { PasskeyAuthService } from './passkey/services/passkey-auth.service';
 import { AuthController } from './root/controllers/auth.controller';
 import { SessionRepository } from './root/repositories/session.repository';
 import { AuthService } from './root/services/auth.service';
-import { JwtAuthService } from './root/services/jwt.service';
 import { PasswordResetService } from './root/services/password-reset.service';
 import { SessionService } from './root/services/session.service';
 
 @Module({
   imports: [
-    JwtModule.registerAsync({
-      inject: [ConfigService],
-      useFactory: jwtConfigFactory,
-    }),
+    JwtModule.registerAsync({ inject: [ConfigService], useFactory: jwtConfigFactory }),
     ServicesModule,
     VerificationModule,
     forwardRef(() => UserModule),
@@ -48,7 +44,6 @@ import { SessionService } from './root/services/session.service';
   providers: [
     // Root
     AuthService,
-    JwtAuthService,
     SessionService,
     SessionRepository,
     PasswordResetService,
@@ -69,6 +64,6 @@ import { SessionService } from './root/services/session.service';
     MfaVerificationService,
     MfaChallengeStore,
   ],
-  exports: [AuthService, JwtAuthService, SessionService, MfaVerificationService, MfaChallengeStore],
+  exports: [AuthService, SessionService, MfaVerificationService, MfaChallengeStore],
 })
 export class AuthModule {}

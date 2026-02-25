@@ -1,7 +1,7 @@
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
-import { BadRequestException, ConflictException, NotFoundException, UnauthorizedException } from '@vritti/api-sdk';
+import { BadRequestException, ConflictException, hashToken, NotFoundException, UnauthorizedException } from '@vritti/api-sdk';
 import { AccountStatusValues, OnboardingStepValues, SessionTypeValues } from '@/db/schema';
-import { TokenType } from '../../../../../config/jwt.config';
+import { JwtAuthService, TokenType } from '@vritti/api-sdk';
 import { EncryptionService } from '../../../../../services';
 import { UserDto } from '../../../user/dto/entity/user.dto';
 import { UserService } from '../../../user/services/user.service';
@@ -12,7 +12,6 @@ import { SignupDto } from '../dto/request/signup.dto';
 import { AuthStatusResponse } from '../dto/response/auth-status-response.dto';
 import { LoginResponse } from '../dto/response/login-response.dto';
 import { SignupResponseDto } from '../dto/response/signup-response.dto';
-import { JwtAuthService } from './jwt.service';
 import { SessionService } from './session.service';
 
 @Injectable()
@@ -252,10 +251,11 @@ export class AuthService {
     return user;
   }
 
-  // Returns active sessions for the user, marking the current one
+  // Returns all sessions for the user, marking the current one by access token hash
   async getUserSessions(userId: string, currentAccessToken: string): Promise<SessionResponse[]> {
     const sessions = await this.sessionService.getUserActiveSessions(userId);
-    return sessions.map((session) => SessionResponse.from(session, currentAccessToken));
+    const currentAccessTokenHash = hashToken(currentAccessToken);
+    return sessions.map((session) => SessionResponse.from(session, currentAccessTokenHash));
   }
 
   // Revokes a specific session, preventing revocation of the current one
@@ -279,7 +279,7 @@ export class AuthService {
       throw new UnauthorizedException('You do not have permission to revoke this session.');
     }
 
-    await this.sessionService.invalidateSession(targetSession.accessToken);
+    await this.sessionService.deleteSessionById(targetSession.id);
     this.logger.log(`Session ${sessionId} revoked for user: ${userId}`);
 
     return { message: 'Session revoked successfully' };

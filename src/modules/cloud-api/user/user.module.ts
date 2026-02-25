@@ -1,5 +1,5 @@
 import { forwardRef, Module } from '@nestjs/common';
-import { EmailService, EncryptionService, SmsService } from '@/services';
+import { EncryptionService, SmsService } from '@/services';
 import { AuthModule } from '../auth/auth.module';
 import { OnboardingModule } from '../onboarding/onboarding.module';
 import { VerificationModule } from '../verification/verification.module';
@@ -26,7 +26,6 @@ import { UserService } from './services/user.service';
     EmailChangeRequestRepository,
     PhoneChangeRequestRepository,
     ChangeRequestRateLimitRepository,
-    EmailService,
     SmsService,
     EncryptionService,
   ],

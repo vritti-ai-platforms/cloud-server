@@ -2,7 +2,7 @@ import * as crypto from 'node:crypto';
 import { Injectable, Logger } from '@nestjs/common';
 import { BadRequestException, NotFoundException } from '@vritti/api-sdk';
 import { VerificationChannelValues } from '@/db/schema';
-import { EmailService } from '@/services';
+import { EmailService } from '@vritti/api-sdk';
 import { VerificationService } from '../../verification/services/verification.service';
 import { EmailChangeRequestRepository } from '../repositories/email-change-request.repository';
 import { RateLimitService } from './rate-limit.service';

@@ -1,4 +1,3 @@
-export { EmailService } from './email.service';
 export { EncryptionService } from './encryption.service';
 export { ServicesModule } from './services.module';
 export { SmsService } from './sms.service';

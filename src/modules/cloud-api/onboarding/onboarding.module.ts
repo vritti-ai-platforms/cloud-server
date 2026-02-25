@@ -1,11 +1,7 @@
 import { Module, forwardRef } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { JwtModule } from '@nestjs/jwt';
-import { jwtConfigFactory } from '../../../config/jwt.config';
-import { ServicesModule } from '../../../services';
+import { ServicesModule } from '../../../services/services.module';
 import { MfaModule } from '../mfa/mfa.module';
 import { SessionRepository } from '../auth/root/repositories/session.repository';
-import { JwtAuthService } from '../auth/root/services/jwt.service';
 import { SessionService } from '../auth/root/services/session.service';
 import { UserModule } from '../user/user.module';
 import { VerificationModule } from '../verification/verification.module';
@@ -28,10 +24,6 @@ import { TotpSetupService } from './totp/services/totp-setup.service';
 
 @Module({
   imports: [
-    JwtModule.registerAsync({
-      inject: [ConfigService],
-      useFactory: jwtConfigFactory,
-    }),
     ServicesModule,
     MfaModule,
     forwardRef(() => UserModule),
@@ -63,7 +55,6 @@ import { TotpSetupService } from './totp/services/totp-setup.service';
     PasskeySetupService,
     // Auth (needed for session management during onboarding)
     SessionService,
-    JwtAuthService,
     SessionRepository,
   ],
   exports: [

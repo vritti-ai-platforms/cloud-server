@@ -3,8 +3,8 @@ import { ConfigService } from '@nestjs/config';
 import { BadRequestException, NotFoundException, UnauthorizedException } from '@vritti/api-sdk';
 import type { Verification, VerificationChannel } from '@/db/schema';
 import { VerificationChannelValues } from '@/db/schema/enums';
+import { parseExpiryToMs } from '@vritti/api-sdk';
 import { EncryptionService } from '../../../../services';
-import { parseExpiryToMs } from '../../../../utils/parse-expiry.util';
 import { VerificationRepository } from '../repositories/verification.repository';
 
 export interface CreateVerificationResult {

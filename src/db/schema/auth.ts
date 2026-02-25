@@ -3,9 +3,6 @@ import { cloudSchema } from './cloud-schema';
 import { oauthProviderTypeEnum, sessionTypeEnum } from './enums';
 import { users } from './user';
 
-/**
- * Session - tracks active user sessions with access and refresh tokens
- */
 export const sessions = cloudSchema.table(
   'sessions',
   {
@@ -14,33 +11,20 @@ export const sessions = cloudSchema.table(
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
     type: sessionTypeEnum('type').notNull().default('CLOUD'),
-    accessToken: varchar('access_token', { length: 2048 }).notNull().unique(),
-    refreshToken: varchar('refresh_token', { length: 2048 }).notNull().unique(),
+    accessTokenHash: text('access_token_hash').notNull().unique(),
+    refreshTokenHash: text('refresh_token_hash').notNull().unique(),
     ipAddress: varchar('ip_address', { length: 45 }),
     userAgent: text('user_agent'),
-    isActive: boolean('is_active').notNull().default(true),
-    accessTokenExpiresAt: timestamp('access_token_expires_at', {
-      withTimezone: true,
-    }).notNull(),
-    refreshTokenExpiresAt: timestamp('refresh_token_expires_at', {
-      withTimezone: true,
-    }).notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp('updated_at', { withTimezone: true })
-      .notNull()
-      .defaultNow()
-      .$onUpdate(() => new Date()),
   },
   (table) => [
-    index('sessions_user_id_active_idx').on(table.userId, table.isActive),
-    index('sessions_access_token_idx').on(table.accessToken),
-    index('sessions_refresh_token_idx').on(table.refreshToken),
+    index('sessions_user_id_idx').on(table.userId),
+    index('sessions_access_token_hash_idx').on(table.accessTokenHash),
+    index('sessions_refresh_token_hash_idx').on(table.refreshTokenHash),
   ],
 );
 
-/**
- * OAuth provider - links external OAuth providers to user accounts
- */
 export const oauthProviders = cloudSchema.table(
   'oauth_providers',
   {
@@ -67,9 +51,6 @@ export const oauthProviders = cloudSchema.table(
   ],
 );
 
-/**
- * OAuth state tokens - for CSRF protection in OAuth flows
- */
 export const oauthStates = cloudSchema.table(
   'oauth_states',
   {

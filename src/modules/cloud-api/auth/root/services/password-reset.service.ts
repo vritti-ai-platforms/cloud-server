@@ -1,7 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { BadRequestException } from '@vritti/api-sdk';
 import { OnboardingStepValues, SessionTypeValues, VerificationChannelValues } from '@/db/schema';
-import { EmailService, EncryptionService } from '../../../../../services';
+import { EmailService } from '@vritti/api-sdk';
+import { EncryptionService } from '../../../../../services';
 import { UserService } from '../../../user/services/user.service';
 import { VerificationService } from '../../../verification/services/verification.service';
 import { SessionService } from './session.service';

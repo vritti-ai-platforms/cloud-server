@@ -38,14 +38,14 @@ export class SessionResponse {
   })
   isCurrent: boolean;
 
-  static from(session: Session, currentAccessToken: string): SessionResponse {
+  static from(session: Session, currentAccessTokenHash: string): SessionResponse {
     return {
       sessionId: session.id,
       device: this.parseUserAgent(session.userAgent),
       location: 'Unknown', // Stub for now, can add IP geolocation later
       ipAddress: session.ipAddress || 'Unknown',
-      lastActive: session.updatedAt,
-      isCurrent: session.accessToken === currentAccessToken,
+      lastActive: session.createdAt,
+      isCurrent: session.accessTokenHash === currentAccessTokenHash,
     };
   }
 
