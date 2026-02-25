@@ -5,11 +5,7 @@ export const databaseTypeEnum = cloudSchema.enum('DatabaseType', ['SHARED', 'DED
 export const tenantStatusEnum = cloudSchema.enum('TenantStatus', ['ACTIVE', 'SUSPENDED', 'ARCHIVED']);
 
 // User account enums
-export const accountStatusEnum = cloudSchema.enum('AccountStatus', [
-  'PENDING_VERIFICATION',
-  'ACTIVE',
-  'INACTIVE',
-]);
+export const accountStatusEnum = cloudSchema.enum('AccountStatus', ['PENDING_VERIFICATION', 'ACTIVE', 'INACTIVE']);
 
 export const onboardingStepEnum = cloudSchema.enum('OnboardingStep', [
   'EMAIL_VERIFICATION',
@@ -21,10 +17,10 @@ export const onboardingStepEnum = cloudSchema.enum('OnboardingStep', [
 
 // Verification enums
 export const verificationChannelEnum = cloudSchema.enum('verification_channel', [
-  'EMAIL',        // Outbound email with OTP
-  'SMS_OUT',      // Outbound SMS with OTP (we send to user)
-  'SMS_IN',       // Inbound SMS with code (user sends to us via QR)
-  'WHATSAPP_IN',  // Inbound WhatsApp with code (user sends to us via QR)
+  'EMAIL', // Outbound email with OTP
+  'SMS_OUT', // Outbound SMS with OTP (we send to user)
+  'SMS_IN', // Inbound SMS with code (user sends to us via QR)
+  'WHATSAPP_IN', // Inbound WhatsApp with code (user sends to us via QR)
 ]);
 
 export const mfaMethodEnum = cloudSchema.enum('MfaMethod', ['TOTP', 'PASSKEY']);
@@ -113,6 +109,15 @@ export const SessionTypeValues = {
   RESET: 'RESET' as const,
 };
 
+export const mediaStatusEnum = cloudSchema.enum('MediaStatus', ['pending', 'ready', 'failed', 'deleted']);
+export type MediaStatus = (typeof mediaStatusEnum.enumValues)[number];
+export const MediaStatusValues = {
+  PENDING: 'pending' as const,
+  READY: 'ready' as const,
+  FAILED: 'failed' as const,
+  DELETED: 'deleted' as const,
+};
+
 // Organization enums
 export const orgPlanEnum = cloudSchema.enum('OrgPlan', ['free', 'pro', 'enterprise']);
 export type OrgPlan = (typeof orgPlanEnum.enumValues)[number];
@@ -120,7 +125,14 @@ export const OrgPlanValues = { free: 'free' as const, pro: 'pro' as const, enter
 
 export const orgSizeEnum = cloudSchema.enum('OrgSize', ['0-10', '10-20', '20-50', '50-100', '100-500', '500+']);
 export type OrgSize = (typeof orgSizeEnum.enumValues)[number];
-export const OrgSizeValues = { s0_10: '0-10' as const, s10_20: '10-20' as const, s20_50: '20-50' as const, s50_100: '50-100' as const, s100_500: '100-500' as const, s500plus: '500+' as const };
+export const OrgSizeValues = {
+  s0_10: '0-10' as const,
+  s10_20: '10-20' as const,
+  s20_50: '20-50' as const,
+  s50_100: '50-100' as const,
+  s100_500: '100-500' as const,
+  s500plus: '500+' as const,
+};
 
 export const orgMemberRoleEnum = cloudSchema.enum('OrgMemberRole', ['Owner', 'Admin']);
 export type OrgMemberRole = (typeof orgMemberRoleEnum.enumValues)[number];

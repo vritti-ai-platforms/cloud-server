@@ -2920,6 +2920,355 @@
         ]
       }
     },
+    "/cloud-api/media/upload": {
+      "post": {
+        "operationId": "MediaController_uploadSingle",
+        "parameters": [
+          {
+            "name": "entityType",
+            "required": false,
+            "in": "query",
+            "description": "Entity type to associate with",
+            "schema": {
+              "example": "user",
+              "type": "string"
+            }
+          },
+          {
+            "name": "entityId",
+            "required": false,
+            "in": "query",
+            "description": "Entity ID to associate with",
+            "schema": {
+              "example": "550e8400-e29b-41d4-a716-446655440000",
+              "type": "string"
+            }
+          },
+          {
+            "name": "subEntityType",
+            "required": false,
+            "in": "query",
+            "description": "Sub-entity type",
+            "schema": {
+              "example": "avatar",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "File uploaded successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MediaDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid file type, file too large, or no file provided."
+          },
+          "401": {
+            "description": "Unauthorized."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Upload a single file",
+        "tags": [
+          "Media"
+        ]
+      }
+    },
+    "/cloud-api/media/upload/batch": {
+      "post": {
+        "operationId": "MediaController_uploadBatch",
+        "parameters": [
+          {
+            "name": "entityType",
+            "required": false,
+            "in": "query",
+            "description": "Entity type to associate with",
+            "schema": {
+              "example": "user",
+              "type": "string"
+            }
+          },
+          {
+            "name": "entityId",
+            "required": false,
+            "in": "query",
+            "description": "Entity ID to associate with",
+            "schema": {
+              "example": "550e8400-e29b-41d4-a716-446655440000",
+              "type": "string"
+            }
+          },
+          {
+            "name": "subEntityType",
+            "required": false,
+            "in": "query",
+            "description": "Sub-entity type",
+            "schema": {
+              "example": "avatar",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Files uploaded successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BatchUploadResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid files or exceeded batch limit."
+          },
+          "401": {
+            "description": "Unauthorized."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Upload multiple files (max 10)",
+        "tags": [
+          "Media"
+        ]
+      }
+    },
+    "/cloud-api/media/{id}": {
+      "get": {
+        "operationId": "MediaController_findById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Media ID",
+            "schema": {
+              "example": "550e8400-e29b-41d4-a716-446655440000",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Media metadata.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MediaDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "404": {
+            "description": "Media not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get media metadata by ID",
+        "tags": [
+          "Media"
+        ]
+      },
+      "delete": {
+        "operationId": "MediaController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Media ID",
+            "schema": {
+              "example": "550e8400-e29b-41d4-a716-446655440000",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Media deleted."
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "404": {
+            "description": "Media not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a media item",
+        "tags": [
+          "Media"
+        ]
+      }
+    },
+    "/cloud-api/media/{id}/url": {
+      "get": {
+        "operationId": "MediaController_getPresignedUrl",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Media ID",
+            "schema": {
+              "example": "550e8400-e29b-41d4-a716-446655440000",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Presigned URL generated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PresignedUrlResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "404": {
+            "description": "Media not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get presigned download URL",
+        "tags": [
+          "Media"
+        ]
+      }
+    },
+    "/cloud-api/media/{id}/download": {
+      "get": {
+        "operationId": "MediaController_download",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Media ID",
+            "schema": {
+              "example": "550e8400-e29b-41d4-a716-446655440000",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "File stream."
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "404": {
+            "description": "Media not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Download/stream a file",
+        "tags": [
+          "Media"
+        ]
+      }
+    },
+    "/cloud-api/media": {
+      "get": {
+        "operationId": "MediaController_findByEntity",
+        "parameters": [
+          {
+            "name": "entityType",
+            "required": true,
+            "in": "query",
+            "description": "Entity type to filter by",
+            "schema": {
+              "example": "user",
+              "type": "string"
+            }
+          },
+          {
+            "name": "entityId",
+            "required": true,
+            "in": "query",
+            "description": "Entity ID to filter by",
+            "schema": {
+              "example": "550e8400-e29b-41d4-a716-446655440000",
+              "type": "string"
+            }
+          },
+          {
+            "name": "subEntityType",
+            "required": false,
+            "in": "query",
+            "description": "Sub-entity type filter",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of media items.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MediaDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Query media by entity type and ID",
+        "tags": [
+          "Media"
+        ]
+      }
+    },
     "/cloud-api/organizations/check-subdomain": {
       "get": {
         "operationId": "OrganizationController_checkSubdomain",
@@ -3251,6 +3600,10 @@
     {
       "name": "Users",
       "description": "User management"
+    },
+    {
+      "name": "Media",
+      "description": "File upload and management"
     }
   ],
   "servers": [
@@ -5027,6 +5380,134 @@
         "required": [
           "isEnabled",
           "backupCodesRemaining"
+        ]
+      },
+      "MediaDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "originalName": {
+            "type": "string",
+            "example": "profile-photo.jpg"
+          },
+          "mimeType": {
+            "type": "string",
+            "example": "image/jpeg"
+          },
+          "size": {
+            "type": "number",
+            "example": 245760
+          },
+          "checksum": {
+            "type": "object",
+            "example": "a1b2c3d4e5f6..."
+          },
+          "storageKey": {
+            "type": "string",
+            "example": "user/2026/02/abc123.jpg"
+          },
+          "bucket": {
+            "type": "object",
+            "example": "my-bucket"
+          },
+          "provider": {
+            "type": "string",
+            "example": "r2"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "ready",
+              "failed",
+              "deleted"
+            ],
+            "example": "ready"
+          },
+          "entityType": {
+            "type": "object",
+            "example": "user"
+          },
+          "entityId": {
+            "type": "object",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "subEntityType": {
+            "type": "object",
+            "example": "avatar"
+          },
+          "uploadedBy": {
+            "type": "object",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "metadata": {
+            "type": "object",
+            "example": {
+              "width": 800,
+              "height": 600
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "originalName",
+          "mimeType",
+          "size",
+          "storageKey",
+          "provider",
+          "status",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "BatchUploadResponseDto": {
+        "type": "object",
+        "properties": {
+          "uploaded": {
+            "description": "Successfully uploaded media items",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MediaDto"
+            }
+          },
+          "failed": {
+            "type": "number",
+            "example": 0,
+            "description": "Number of failed uploads"
+          }
+        },
+        "required": [
+          "uploaded",
+          "failed"
+        ]
+      },
+      "PresignedUrlResponseDto": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "example": "https://account.r2.cloudflarestorage.com/bucket/key?signature=..."
+          },
+          "expiresIn": {
+            "type": "number",
+            "example": 3600,
+            "description": "URL expiry in seconds"
+          }
+        },
+        "required": [
+          "url",
+          "expiresIn"
         ]
       },
       "SubdomainAvailabilityResponseDto": {

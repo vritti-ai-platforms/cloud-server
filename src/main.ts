@@ -1,5 +1,6 @@
 import fastifyCookie from '@fastify/cookie';
 import fastifyCsrfProtection from '@fastify/csrf-protection';
+import fastifyMultipart from '@fastify/multipart';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
@@ -108,6 +109,7 @@ function createSwaggerConfig() {
     .addTag('Onboarding - Webhooks', 'Webhook handlers for SMS/WhatsApp')
     .addTag('Tenants', 'Tenant management')
     .addTag('Users', 'User management')
+    .addTag('Media', 'File upload and management')
     .build();
 }
 
@@ -168,6 +170,14 @@ async function bootstrap() {
     global: true,
     encoding: 'utf8',
     runFirst: true, // Run before other hooks
+  });
+
+  // Register multipart support for file uploads
+  await app.register(fastifyMultipart, {
+    limits: {
+      fileSize: 10 * 1024 * 1024, // 10 MB max file size
+      files: 10, // Max 10 files per request
+    },
   });
 
   // Register CSRF protection

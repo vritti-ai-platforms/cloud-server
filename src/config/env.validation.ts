@@ -161,6 +161,18 @@ class EnvironmentVariables {
   @IsString()
   SMS_WEBHOOK_SECRET: string;
 
+  // Cloudflare R2 (S3-compatible storage)
+  @IsString()
+  R2_ACCOUNT_ID: string;
+
+  @IsString()
+  R2_ACCESS_KEY_ID: string;
+
+  @IsString()
+  R2_SECRET_ACCESS_KEY: string;
+
+  @IsString()
+  R2_BUCKET_NAME: string;
 
   // OAuth — Google
   @IsString()

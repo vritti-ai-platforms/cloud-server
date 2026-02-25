@@ -7,10 +7,18 @@ import { relations } from '@/db/schema';
 import './db/schema.registry';
 
 import { RouterModule } from '@nestjs/core';
-import { AuthConfigModule, DatabaseModule, type DatabaseModuleOptions, EmailModule, LoggerModule, RootModule } from '@vritti/api-sdk';
+import {
+  AuthConfigModule,
+  DatabaseModule,
+  type DatabaseModuleOptions,
+  EmailModule,
+  LoggerModule,
+  RootModule,
+} from '@vritti/api-sdk';
 import { validate } from './config/env.validation';
 import { AuthModule } from './modules/cloud-api/auth/auth.module';
 import { IndustryModule } from './modules/cloud-api/industry/industry.module';
+import { MediaModule } from './modules/cloud-api/media/media.module';
 import { OnboardingModule } from './modules/cloud-api/onboarding/onboarding.module';
 import { OrganizationModule } from './modules/cloud-api/organization/organization.module';
 import { TenantModule } from './modules/cloud-api/tenant/tenant.module';
@@ -89,13 +97,22 @@ import { UserModule } from './modules/cloud-api/user/user.module';
     UserModule,
     OnboardingModule,
     AuthModule,
+    MediaModule,
     OrganizationModule,
     IndustryModule,
     // Cloud API routes with 'cloud-api' prefix
     RouterModule.register([
       {
         path: 'cloud-api',
-        children: [TenantModule, UserModule, OnboardingModule, AuthModule, OrganizationModule, IndustryModule],
+        children: [
+          TenantModule,
+          UserModule,
+          OnboardingModule,
+          AuthModule,
+          MediaModule,
+          OrganizationModule,
+          IndustryModule,
+        ],
       },
     ]),
   ],

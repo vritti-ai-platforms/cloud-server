@@ -10,5 +10,6 @@ export * from './organization';
 export * from './tenant';
 export * from './user';
 export * from './verification';
+export * from './media';
 // Export relations last (depends on tables above)
 export * from './relations';
