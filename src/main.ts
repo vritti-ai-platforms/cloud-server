@@ -167,7 +167,7 @@ async function bootstrap() {
   // global: true ensures rawBody is available for all routes (needed for webhooks)
   await app.register(fastifyRawBody, {
     field: 'rawBody',
-    global: true,
+    global: false,
     encoding: 'utf8',
     runFirst: true, // Run before other hooks
   });

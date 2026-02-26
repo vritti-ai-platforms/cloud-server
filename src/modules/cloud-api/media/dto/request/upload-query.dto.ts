@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsNotEmpty, IsString, MaxLength } from 'class-validator';
 
 export class UploadQueryDto {
   @ApiPropertyOptional({
@@ -19,13 +19,4 @@ export class UploadQueryDto {
   @IsNotEmpty()
   @MaxLength(255)
   entityId: string;
-
-  @ApiPropertyOptional({
-    description: 'Sub-entity type for finer categorization',
-    example: 'avatar',
-  })
-  @IsString()
-  @IsOptional()
-  @MaxLength(255)
-  subEntityType?: string;
 }

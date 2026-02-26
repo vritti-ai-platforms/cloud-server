@@ -5,6 +5,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { BadRequestException, NotFoundException } from '@vritti/api-sdk';
 import type { FastifyRequest } from 'fastify';
+import { type Media, MediaStatusValues } from '@/db/schema';
 import { MediaDto } from '../dto/entity/media.dto';
 import type { MediaQueryDto } from '../dto/request/media-query.dto';
 import type { UploadQueryDto } from '../dto/request/upload-query.dto';
@@ -87,10 +88,28 @@ export class MediaService {
   // Uploads a single file to storage and saves metadata to database
   async upload(file: FilePayload, uploadedBy: string, query: UploadQueryDto): Promise<MediaDto> {
     this.validateFile(file);
-
     const checksum = this.computeChecksum(file.buffer);
 
-    // Dedup: reuse storage key if identical file already exists
+    // Replace: if entity already has media, return or replace
+    if (query.entityType && query.entityId) {
+      const existingForEntity = await this.mediaRepository.findOneByEntity(query.entityType, query.entityId);
+
+      if (existingForEntity) {
+        // Same file → return existing (no-op)
+        if (existingForEntity.checksum === checksum) {
+          this.logger.log(
+            `Same file already exists for entity ${query.entityType}/${query.entityId}, returning existing`,
+          );
+          return MediaDto.from(existingForEntity);
+        }
+
+        // Different file → delete old one first
+        await this.deleteRecord(existingForEntity);
+        this.logger.log(`Replaced media ${existingForEntity.id} for entity ${query.entityType}/${query.entityId}`);
+      }
+    }
+
+    // Dedup: reuse storage key if identical file exists elsewhere
     const existing = await this.mediaRepository.findByChecksum(checksum);
     let storageKey: string;
 
@@ -99,11 +118,7 @@ export class MediaService {
     } else {
       storageKey = this.generateStorageKey(file.filename, query.entityType);
       const provider = this.storageFactory.resolve(DEFAULT_PROVIDER);
-      await provider.upload({
-        key: storageKey,
-        body: file.buffer,
-        contentType: file.mimetype,
-      });
+      await provider.upload({ key: storageKey, body: file.buffer, contentType: file.mimetype });
     }
 
     const record = await this.mediaRepository.create({
@@ -114,13 +129,15 @@ export class MediaService {
       storageKey,
       bucket: this.defaultBucket,
       provider: DEFAULT_PROVIDER,
-      status: 'ready',
+      status: MediaStatusValues.READY,
       entityType: query.entityType,
       entityId: query.entityId,
       uploadedBy,
     });
 
-    this.logger.log(`Uploaded media ${record.id}: ${file.filename} (${file.buffer.length} bytes)${existing ? ' [dedup]' : ''}`);
+    this.logger.log(
+      `Uploaded media ${record.id}: ${file.filename} (${file.buffer.length} bytes)${existing ? ' [dedup]' : ''}`,
+    );
     return MediaDto.from(record);
   }
 
@@ -185,23 +202,25 @@ export class MediaService {
       throw new NotFoundException('Media not found.');
     }
 
-    await this.mediaRepository.hardDelete(id);
-
-    // Only delete from storage if this was the last reference
-    const remaining = await this.mediaRepository.countByStorageKey(record.storageKey);
-    if (remaining === 0) {
-      const provider = this.storageFactory.resolve(record.provider);
-      await provider.delete(record.storageKey, record.bucket ?? undefined);
-      this.logger.log(`Deleted media ${id} and storage file by user ${userId}`);
-    } else {
-      this.logger.log(`Deleted media ${id} (${remaining} references remain) by user ${userId}`);
-    }
+    await this.deleteRecord(record);
+    this.logger.log(`Deleted media ${id} by user ${userId}`);
   }
 
   // Queries media by entity type and entity ID
   async findByEntity(query: MediaQueryDto): Promise<MediaDto[]> {
     const records = await this.mediaRepository.findByEntity(query.entityType, query.entityId);
     return records.map((record) => MediaDto.from(record));
+  }
+
+  // Deletes a media record and removes storage file if no other records reference it
+  private async deleteRecord(record: Media): Promise<void> {
+    await this.mediaRepository.hardDelete(record.id);
+
+    const remaining = await this.mediaRepository.countByStorageKey(record.storageKey);
+    if (remaining === 0) {
+      const provider = this.storageFactory.resolve(record.provider);
+      await provider.delete(record.storageKey, record.bucket ?? undefined);
+    }
   }
 
   // Validates file size and MIME type

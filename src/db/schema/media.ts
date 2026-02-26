@@ -30,6 +30,7 @@ export const media = cloudSchema.table(
     index('idx_media_uploaded_by').on(table.uploadedBy),
     index('idx_media_status').on(table.status),
     index('idx_media_checksum').on(table.checksum),
+    index('idx_media_storage_key').on(table.storageKey),
   ],
 );
 
