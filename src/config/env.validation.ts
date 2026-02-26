@@ -174,6 +174,22 @@ class EnvironmentVariables {
   @IsString()
   R2_BUCKET_NAME: string;
 
+  // Media upload
+  @IsNumber()
+  @Min(1)
+  MEDIA_MAX_FILE_SIZE_MB: number;
+
+  @IsNumber()
+  @Min(1)
+  MEDIA_MAX_BATCH_SIZE: number;
+
+  @IsNumber()
+  @Min(1)
+  MEDIA_SIGNED_URL_EXPIRY: number;
+
+  @IsString()
+  MEDIA_STORAGE_PROVIDER: string;
+
   // OAuth — Google
   @IsString()
   GOOGLE_CLIENT_ID: string;
@@ -245,6 +261,15 @@ export function validate(config: Record<string, unknown>): Record<string, unknow
       ? parseInt(config.MFA_CHALLENGE_TTL_MINUTES as string, 10)
       : undefined,
     BCRYPT_SALT_ROUNDS: config.BCRYPT_SALT_ROUNDS ? parseInt(config.BCRYPT_SALT_ROUNDS as string, 10) : undefined,
+    MEDIA_MAX_FILE_SIZE_MB: config.MEDIA_MAX_FILE_SIZE_MB
+      ? parseInt(config.MEDIA_MAX_FILE_SIZE_MB as string, 10)
+      : undefined,
+    MEDIA_MAX_BATCH_SIZE: config.MEDIA_MAX_BATCH_SIZE
+      ? parseInt(config.MEDIA_MAX_BATCH_SIZE as string, 10)
+      : undefined,
+    MEDIA_SIGNED_URL_EXPIRY: config.MEDIA_SIGNED_URL_EXPIRY
+      ? parseInt(config.MEDIA_SIGNED_URL_EXPIRY as string, 10)
+      : undefined,
   };
 
   const validatedConfig = plainToInstance(EnvironmentVariables, processedConfig, {

@@ -27,8 +27,8 @@ export class OrgListItemDto {
   })
   size: OrgSize;
 
-  @ApiPropertyOptional({ description: 'Media asset ID for the organization logo', example: 42, nullable: true })
-  mediaId: number | null;
+  @ApiPropertyOptional({ description: 'Media asset ID for the organization logo', example: '550e8400-e29b-41d4-a716-446655440000', nullable: true })
+  mediaId: string | null;
 
   @ApiProperty({ description: 'Subscription plan', enum: ['free', 'pro', 'enterprise'], example: 'free' })
   plan: OrgPlan;

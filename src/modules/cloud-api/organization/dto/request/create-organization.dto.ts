@@ -45,9 +45,4 @@ export class CreateOrganizationDto {
   @IsOptional()
   @IsInt()
   industryId?: number;
-
-  @ApiPropertyOptional({ description: 'Media asset ID for the organization logo', example: 42 })
-  @IsOptional()
-  @IsInt()
-  mediaId?: number;
 }

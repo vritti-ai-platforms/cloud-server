@@ -1,6 +1,5 @@
 import { applyDecorators } from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
-import { CreateOrganizationDto } from '../dto/request/create-organization.dto';
+import { ApiBody, ApiConsumes, ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
 import { CreateOrganizationResponseDto } from '../dto/response/create-organization-response.dto';
 import { PaginatedOrgsResponseDto } from '../dto/response/paginated-orgs-response.dto';
 import { SubdomainAvailabilityResponseDto } from '../dto/response/subdomain-availability-response.dto';
@@ -18,9 +17,29 @@ export function ApiCreateOrganization() {
   return applyDecorators(
     ApiOperation({
       summary: 'Create a new organization',
-      description: 'Creates an organization and adds the authenticated user as Owner.',
+      description:
+        'Creates an organization and adds the authenticated user as Owner. Accepts multipart/form-data with optional file upload for organization logo.',
     }),
-    ApiBody({ type: CreateOrganizationDto }),
+    ApiConsumes('multipart/form-data'),
+    ApiBody({
+      schema: {
+        type: 'object',
+        required: ['name', 'subdomain', 'orgIdentifier', 'size'],
+        properties: {
+          name: { type: 'string', example: 'Acme Corp' },
+          subdomain: { type: 'string', example: 'acme-corp', pattern: '^[a-z0-9-]+$' },
+          orgIdentifier: { type: 'string', example: 'acme' },
+          size: {
+            type: 'string',
+            enum: ['0-10', '10-20', '20-50', '50-100', '100-500', '500+'],
+            example: '0-10',
+          },
+          plan: { type: 'string', enum: ['free', 'pro', 'enterprise'], example: 'free' },
+          industryId: { type: 'integer', example: 1 },
+          file: { type: 'string', format: 'binary', description: 'Optional logo file' },
+        },
+      },
+    }),
     ApiResponse({
       status: 201,
       description: 'Organization created successfully.',

@@ -2926,7 +2926,7 @@
         "parameters": [
           {
             "name": "entityType",
-            "required": false,
+            "required": true,
             "in": "query",
             "description": "Entity type to associate with",
             "schema": {
@@ -2936,7 +2936,7 @@
           },
           {
             "name": "entityId",
-            "required": false,
+            "required": true,
             "in": "query",
             "description": "Entity ID to associate with",
             "schema": {
@@ -2980,7 +2980,7 @@
         "parameters": [
           {
             "name": "entityType",
-            "required": false,
+            "required": true,
             "in": "query",
             "description": "Entity type to associate with",
             "schema": {
@@ -2990,20 +2990,13 @@
           },
           {
             "name": "entityId",
-            "required": false,
+            "required": true,
             "in": "query",
             "description": "Entity ID to associate with",
             "schema": {
               "example": "550e8400-e29b-41d4-a716-446655440000",
               "type": "string"
             }
-          },
-          {
-            "name": "subEntityType",
-            "required": false,
-            "in": "query",
-            "description": "Sub-entity type",
-            "schema": {}
           }
         ],
         "responses": {
@@ -3218,13 +3211,6 @@
               "example": "550e8400-e29b-41d4-a716-446655440000",
               "type": "string"
             }
-          },
-          {
-            "name": "subEntityType",
-            "required": false,
-            "in": "query",
-            "description": "Sub-entity type filter",
-            "schema": {}
           }
         ],
         "responses": {
@@ -3298,15 +3284,66 @@
     },
     "/cloud-api/organizations": {
       "post": {
-        "description": "Creates an organization and adds the authenticated user as Owner.",
+        "description": "Creates an organization and adds the authenticated user as Owner. Accepts multipart/form-data with optional file upload for organization logo.",
         "operationId": "OrganizationController_create",
         "parameters": [],
         "requestBody": {
           "required": true,
           "content": {
-            "application/json": {
+            "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/CreateOrganizationDto"
+                "type": "object",
+                "required": [
+                  "name",
+                  "subdomain",
+                  "orgIdentifier",
+                  "size"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "example": "Acme Corp"
+                  },
+                  "subdomain": {
+                    "type": "string",
+                    "example": "acme-corp",
+                    "pattern": "^[a-z0-9-]+$"
+                  },
+                  "orgIdentifier": {
+                    "type": "string",
+                    "example": "acme"
+                  },
+                  "size": {
+                    "type": "string",
+                    "enum": [
+                      "0-10",
+                      "10-20",
+                      "20-50",
+                      "50-100",
+                      "100-500",
+                      "500+"
+                    ],
+                    "example": "0-10"
+                  },
+                  "plan": {
+                    "type": "string",
+                    "enum": [
+                      "free",
+                      "pro",
+                      "enterprise"
+                    ],
+                    "example": "free"
+                  },
+                  "industryId": {
+                    "type": "integer",
+                    "example": 1
+                  },
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Optional logo file"
+                  }
+                }
               }
             }
           }
@@ -5422,10 +5459,6 @@
             "type": "object",
             "example": "550e8400-e29b-41d4-a716-446655440000"
           },
-          "subEntityType": {
-            "type": "object",
-            "example": "avatar"
-          },
           "uploadedBy": {
             "type": "object",
             "example": "550e8400-e29b-41d4-a716-446655440000"
@@ -5508,67 +5541,6 @@
           "available"
         ]
       },
-      "CreateOrganizationDto": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "description": "Display name of the organization",
-            "example": "Acme Corp"
-          },
-          "subdomain": {
-            "type": "string",
-            "description": "Unique subdomain for the organization. Lowercase letters, numbers, and hyphens only.",
-            "example": "acme-corp",
-            "pattern": "^[a-z0-9-]+$"
-          },
-          "orgIdentifier": {
-            "type": "string",
-            "description": "Unique identifier for the organization",
-            "example": "acme"
-          },
-          "size": {
-            "type": "string",
-            "description": "Size of the organization",
-            "enum": [
-              "0-10",
-              "10-20",
-              "20-50",
-              "50-100",
-              "100-500",
-              "500+"
-            ],
-            "example": "0-10"
-          },
-          "plan": {
-            "type": "string",
-            "description": "Subscription plan for the organization",
-            "enum": [
-              "free",
-              "pro",
-              "enterprise"
-            ],
-            "example": "free",
-            "default": "free"
-          },
-          "industryId": {
-            "type": "number",
-            "description": "Industry ID for the organization",
-            "example": 1
-          },
-          "mediaId": {
-            "type": "number",
-            "description": "Media asset ID for the organization logo",
-            "example": 42
-          }
-        },
-        "required": [
-          "name",
-          "subdomain",
-          "orgIdentifier",
-          "size"
-        ]
-      },
       "CreateOrganizationResponseDto": {
         "type": "object",
         "properties": {
@@ -5614,7 +5586,7 @@
           "mediaId": {
             "type": "object",
             "description": "Media asset ID for the organization logo",
-            "example": 42,
+            "example": "550e8400-e29b-41d4-a716-446655440000",
             "nullable": true
           },
           "plan": {
@@ -5709,7 +5681,7 @@
           "mediaId": {
             "type": "object",
             "description": "Media asset ID for the organization logo",
-            "example": 42,
+            "example": "550e8400-e29b-41d4-a716-446655440000",
             "nullable": true
           },
           "plan": {

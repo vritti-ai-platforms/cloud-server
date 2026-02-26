@@ -12,28 +12,28 @@ export class MediaRepository extends PrimaryBaseRepository<typeof media> {
   // Finds a media record by ID excluding soft-deleted records
   async findActiveById(id: string): Promise<Media | undefined> {
     return this.model.findFirst({
-      where: { id, deletedAt: null },
+      where: { id, deletedAt: { isNull: true } },
     });
   }
 
   // Finds active media by entity type and entity ID
   async findByEntity(entityType: string, entityId: string): Promise<Media[]> {
     return this.model.findMany({
-      where: { entityType, entityId, deletedAt: null },
+      where: { entityType, entityId, deletedAt: { isNull: true } },
     });
   }
 
   // Finds a single ready media record for an entity (1 media per entity)
   async findOneByEntity(entityType: string, entityId: string): Promise<Media | undefined> {
     return this.model.findFirst({
-      where: { entityType, entityId, status: MediaStatusValues.READY, deletedAt: null },
+      where: { entityType, entityId, status: MediaStatusValues.READY, deletedAt: { isNull: true } },
     });
   }
 
   // Finds a ready media record matching the given checksum
   async findByChecksum(checksum: string): Promise<Media | undefined> {
     return this.model.findFirst({
-      where: { checksum, status: MediaStatusValues.READY, deletedAt: null },
+      where: { checksum, status: MediaStatusValues.READY, deletedAt: { isNull: true } },
     });
   }
 

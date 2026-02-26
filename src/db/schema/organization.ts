@@ -11,7 +11,7 @@ export const organizations = cloudSchema.table('organizations', {
   orgIdentifier: varchar('org_identifier', { length: 100 }).notNull().unique(),
   industryId: integer('industry_id'),
   size: orgSizeEnum('size').notNull(),
-  mediaId: integer('media_id'),
+  mediaId: varchar('media_id', { length: 255 }),
   plan: orgPlanEnum('plan').notNull().default('free'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).$onUpdate(() => new Date()),

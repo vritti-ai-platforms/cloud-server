@@ -29,11 +29,6 @@ const DEFAULT_ALLOWED_MIME_TYPES = [
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
 ];
 
-const DEFAULT_MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
-const MAX_BATCH_SIZE = 10;
-const DEFAULT_SIGNED_URL_EXPIRY = 3600; // 1 hour
-const DEFAULT_PROVIDER = 'r2';
-
 interface FilePayload {
   buffer: Buffer;
   filename: string;
@@ -44,6 +39,10 @@ interface FilePayload {
 export class MediaService {
   private readonly logger = new Logger(MediaService.name);
   private readonly defaultBucket: string;
+  private readonly maxFileSize: number;
+  private readonly maxBatchSize: number;
+  private readonly signedUrlExpiry: number;
+  private readonly defaultProvider: string;
 
   constructor(
     private readonly mediaRepository: MediaRepository,
@@ -51,6 +50,10 @@ export class MediaService {
     private readonly configService: ConfigService,
   ) {
     this.defaultBucket = this.configService.getOrThrow<string>('R2_BUCKET_NAME');
+    this.maxFileSize = this.configService.getOrThrow<number>('MEDIA_MAX_FILE_SIZE_MB') * 1024 * 1024;
+    this.maxBatchSize = this.configService.getOrThrow<number>('MEDIA_MAX_BATCH_SIZE');
+    this.signedUrlExpiry = this.configService.getOrThrow<number>('MEDIA_SIGNED_URL_EXPIRY');
+    this.defaultProvider = this.configService.getOrThrow<string>('MEDIA_STORAGE_PROVIDER');
   }
 
   // Extracts and uploads a single file from a Fastify multipart request
@@ -115,7 +118,7 @@ export class MediaService {
       storageKey = existing.storageKey;
     } else {
       storageKey = this.generateStorageKey(file.filename, query.entityType);
-      const provider = this.storageFactory.resolve(DEFAULT_PROVIDER);
+      const provider = this.storageFactory.resolve(this.defaultProvider);
       await provider.upload({ key: storageKey, body: file.buffer, contentType: file.mimetype });
     }
 
@@ -128,7 +131,7 @@ export class MediaService {
         checksum,
         storageKey,
         bucket: this.defaultBucket,
-        provider: DEFAULT_PROVIDER,
+        provider: this.defaultProvider,
         status: MediaStatusValues.READY,
         entityType: query.entityType,
         entityId: query.entityId,
@@ -141,7 +144,7 @@ export class MediaService {
       return MediaDto.from(record);
     } catch (error) {
       if (!existing) {
-        const provider = this.storageFactory.resolve(DEFAULT_PROVIDER);
+        const provider = this.storageFactory.resolve(this.defaultProvider);
         await provider.delete(storageKey, this.defaultBucket).catch(() => {});
       }
       throw error;
@@ -150,10 +153,10 @@ export class MediaService {
 
   // Uploads multiple files (max 10) and returns results
   async uploadBatch(files: FilePayload[], uploadedBy: string, query: UploadQueryDto): Promise<BatchUploadResponseDto> {
-    if (files.length > MAX_BATCH_SIZE) {
+    if (files.length > this.maxBatchSize) {
       throw new BadRequestException({
         label: 'Too Many Files',
-        detail: `Maximum ${MAX_BATCH_SIZE} files allowed per batch upload. You provided ${files.length}.`,
+        detail: `Maximum ${this.maxBatchSize} files allowed per batch upload. You provided ${files.length}.`,
       });
     }
 
@@ -192,8 +195,8 @@ export class MediaService {
   async getPresignedUrl(id: string): Promise<PresignedUrlResponseDto> {
     const record = await this.findRecordById(id);
     const provider = this.storageFactory.resolve(record.provider);
-    const url = await provider.getSignedUrl(record.storageKey, DEFAULT_SIGNED_URL_EXPIRY, record.bucket ?? undefined);
-    return { url, expiresIn: DEFAULT_SIGNED_URL_EXPIRY };
+    const url = await provider.getSignedUrl(record.storageKey, this.signedUrlExpiry, record.bucket ?? undefined);
+    return { url, expiresIn: this.signedUrlExpiry };
   }
 
   // Returns a readable stream for downloading a media file
@@ -239,10 +242,10 @@ export class MediaService {
 
   // Validates file size and MIME type
   private validateFile(file: FilePayload): void {
-    if (file.buffer.length > DEFAULT_MAX_FILE_SIZE) {
+    if (file.buffer.length > this.maxFileSize) {
       throw new BadRequestException({
         label: 'File Too Large',
-        detail: `File size exceeds the maximum allowed size of ${DEFAULT_MAX_FILE_SIZE / (1024 * 1024)} MB.`,
+        detail: `File size exceeds the maximum allowed size of ${this.maxFileSize / (1024 * 1024)} MB.`,
       });
     }
 
