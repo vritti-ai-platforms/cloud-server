@@ -73,36 +73,4 @@ export const relations = defineRelations(schema, (r) => ({
       to: r.users.id,
     }),
   },
-
-  // Organization relations
-  organizations: {
-    members: r.many.organizationMembers(),
-  },
-
-  // Organization member relations
-  organizationMembers: {
-    organization: r.one.organizations({
-      from: r.organizationMembers.organizationId,
-      to: r.organizations.id,
-    }),
-    user: r.one.users({
-      from: r.organizationMembers.userId,
-      to: r.users.id,
-    }),
-  },
-
-  // Organization relations
-  organizations: {
-    members: r.many.organizationMembers(),
-  },
-  organizationMembers: {
-    organization: r.one.organizations({
-      from: r.organizationMembers.organizationId,
-      to: r.organizations.id,
-    }),
-    user: r.one.users({
-      from: r.organizationMembers.userId,
-      to: r.users.id,
-    }),
-  },
 }));
