@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsInt, IsOptional, IsString, Matches, MinLength } from 'class-validator';
-import type { OrgPlan, OrgSize } from '@/db/schema';
-import { OrgPlanValues, OrgSizeValues } from '@/db/schema';
+import { IsEnum, IsOptional, IsString, IsUUID, Matches, MinLength } from 'class-validator';
+import type { OrgSize } from '@/db/schema';
+import { OrgSizeValues } from '@/db/schema';
 
 export class CreateOrganizationDto {
   @ApiProperty({ description: 'Display name of the organization', example: 'Acme Corp' })
@@ -18,11 +18,6 @@ export class CreateOrganizationDto {
   @Matches(/^[a-z0-9-]+$/, { message: 'Subdomain can only contain lowercase letters, numbers, and hyphens' })
   subdomain: string;
 
-  @ApiProperty({ description: 'Unique identifier for the organization', example: 'acme' })
-  @IsString()
-  @MinLength(1)
-  orgIdentifier: string;
-
   @ApiProperty({
     description: 'Size of the organization',
     enum: ['0-10', '10-20', '20-50', '50-100', '100-500', '500+'],
@@ -31,18 +26,23 @@ export class CreateOrganizationDto {
   @IsEnum(OrgSizeValues)
   size: OrgSize;
 
-  @ApiPropertyOptional({
-    description: 'Subscription plan for the organization',
-    enum: ['free', 'pro', 'enterprise'],
-    example: 'free',
-    default: 'free',
-  })
+  @ApiPropertyOptional({ description: 'Plan ID for the organization', example: '550e8400-e29b-41d4-a716-446655440000' })
   @IsOptional()
-  @IsEnum(OrgPlanValues)
-  plan?: OrgPlan;
+  @IsUUID()
+  planId?: string;
 
-  @ApiPropertyOptional({ description: 'Industry ID for the organization', example: 1 })
+  @ApiPropertyOptional({ description: 'Industry ID for the organization', example: '550e8400-e29b-41d4-a716-446655440001' })
   @IsOptional()
-  @IsInt()
-  industryId?: number;
+  @IsUUID()
+  industryId?: string;
+
+  @ApiPropertyOptional({ description: 'Deployment ID for the organization', example: '550e8400-e29b-41d4-a716-446655440002' })
+  @IsOptional()
+  @IsUUID()
+  deploymentId?: string;
+
+  @ApiPropertyOptional({ description: 'Media asset ID for the organization logo', example: 'media-uuid-here' })
+  @IsOptional()
+  @IsString()
+  mediaId?: string;
 }

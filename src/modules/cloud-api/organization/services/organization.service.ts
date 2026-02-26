@@ -4,15 +4,17 @@ import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import type { FastifyRequest } from 'fastify';
 import { OrgMemberRoleValues } from '@/db/schema';
-import { MediaService } from '../../media/services/media.service';
 import { OrgListItemDto } from '../dto/entity/organization.dto';
 import { CreateOrganizationDto } from '../dto/request/create-organization.dto';
 import type { GetMyOrgsDto } from '../dto/request/get-my-orgs.dto';
 import { CreateOrganizationResponseDto } from '../dto/response/create-organization-response.dto';
 import { PaginatedOrgsResponseDto } from '../dto/response/paginated-orgs-response.dto';
 import { SubdomainAvailabilityResponseDto } from '../dto/response/subdomain-availability-response.dto';
-import { OrganizationRepository } from '../repositories/organization.repository';
 import { OrganizationMemberRepository } from '../repositories/organization-member.repository';
+import { OrganizationRepository } from '../repositories/organization.repository';
+import { MediaService } from '../../media/services/media.service';
+import { NexusApiService } from '@/services/nexus-api.service';
+import { DeploymentRepository } from '@/modules/admin-api/deployment/repositories/deployment.repository';
 
 @Injectable()
 export class OrganizationService {
@@ -22,7 +24,9 @@ export class OrganizationService {
     private readonly orgRepository: OrganizationRepository,
     private readonly orgMemberRepository: OrganizationMemberRepository,
     private readonly mediaService: MediaService,
-  ) {}
+    private readonly nexusApiService: NexusApiService,
+    private readonly deploymentRepository: DeploymentRepository,
+  ) { }
 
   // Checks if a subdomain is available; throws ConflictException if already taken
   async checkSubdomainAvailable(subdomain: string): Promise<SubdomainAvailabilityResponseDto> {
@@ -40,26 +44,44 @@ export class OrganizationService {
   // Creates a new organization with optional logo upload and adds the requesting user as Owner
   async create(userId: string, request: FastifyRequest): Promise<CreateOrganizationResponseDto> {
     const { dto, file } = await this.parseMultipartRequest(request);
+    await this.checkSubdomainAvailable(dto.subdomain);
 
-    const existingSubdomain = await this.orgRepository.findBySubdomain(dto.subdomain);
-    if (existingSubdomain) {
-      throw new ConflictException({
-        label: 'Subdomain Taken',
-        detail: 'This subdomain is already in use. Please choose a different one.',
-        errors: [{ field: 'subdomain', message: 'Already taken' }],
+    // Look up deployment for nexus URL and webhook secret
+    if (!dto.deploymentId) {
+      throw new BadRequestException({
+        label: 'Deployment Required',
+        detail: 'A deployment must be specified to create an organization.',
+        errors: [{ field: 'deploymentId', message: 'Required' }],
       });
     }
 
-    const existingIdentifier = await this.orgRepository.findByOrgIdentifier(dto.orgIdentifier);
-    if (existingIdentifier) {
-      throw new ConflictException({
-        label: 'Identifier Taken',
-        detail: 'This identifier is already in use.',
-        errors: [{ field: 'orgIdentifier', message: 'Already taken' }],
+    const deployment = await this.deploymentRepository.findById(dto.deploymentId);
+    if (!deployment) {
+      throw new BadRequestException({
+        label: 'Invalid Deployment',
+        detail: 'The specified deployment does not exist.',
+        errors: [{ field: 'deploymentId', message: 'Not found' }],
       });
     }
 
-    const org = await this.orgRepository.create({ ...dto, plan: dto.plan ?? 'free' });
+    // Create the organization in api-nexus first to get the nexus org ID
+    const nexusOrg = await this.nexusApiService.createOrganization(
+      deployment.nexusUrl,
+      deployment.webhookSecret,
+      {
+        name: dto.name,
+        subdomain: dto.subdomain,
+        size: dto.size,
+        planId: dto.planId,
+        industryId: dto.industryId,
+        mediaId: dto.mediaId,
+      },
+    );
+
+    const org = await this.orgRepository.create({
+      ...dto,
+      orgIdentifier: nexusOrg.id,
+    });
 
     await this.orgMemberRepository.create({
       organizationId: org.id,
@@ -76,7 +98,8 @@ export class OrganizationService {
       org.mediaId = media.id;
     }
 
-    this.logger.log(`Created organization: ${org.subdomain} (${org.id}) for user: ${userId}`);
+
+    this.logger.log(`Created organization: ${org.subdomain} (${org.id}) with nexus ID: ${nexusOrg.id} for user: ${userId}`);
 
     return { ...OrgListItemDto.from(org, OrgMemberRoleValues.Owner), message: 'Organization created successfully' };
   }

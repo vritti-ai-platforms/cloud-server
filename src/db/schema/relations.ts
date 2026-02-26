@@ -60,6 +60,18 @@ export const relations = defineRelations(schema, (r) => ({
   // Organization relations
   organizations: {
     members: r.many.organizationMembers(),
+    plan: r.one.plans({
+      from: r.organizations.planId,
+      to: r.plans.id,
+    }),
+    industry: r.one.industries({
+      from: r.organizations.industryId,
+      to: r.industries.id,
+    }),
+    deployment: r.one.deployments({
+      from: r.organizations.deploymentId,
+      to: r.deployments.id,
+    }),
   },
 
   // Organization member relations
@@ -71,6 +83,49 @@ export const relations = defineRelations(schema, (r) => ({
     user: r.one.users({
       from: r.organizationMembers.userId,
       to: r.users.id,
+    }),
+  },
+
+  // Plan relations
+  plans: {
+    organizations: r.many.organizations(),
+    industryPlans: r.many.industryPlans(),
+  },
+
+  // Industry relations
+  industries: {
+    organizations: r.many.organizations(),
+    industryPlans: r.many.industryPlans(),
+    industryDeployments: r.many.industryDeployments(),
+  },
+
+  // Deployment relations
+  deployments: {
+    organizations: r.many.organizations(),
+    industryDeployments: r.many.industryDeployments(),
+  },
+
+  // Industry-Plan join table relations
+  industryPlans: {
+    industry: r.one.industries({
+      from: r.industryPlans.industryId,
+      to: r.industries.id,
+    }),
+    plan: r.one.plans({
+      from: r.industryPlans.planId,
+      to: r.plans.id,
+    }),
+  },
+
+  // Industry-Deployment join table relations
+  industryDeployments: {
+    industry: r.one.industries({
+      from: r.industryDeployments.industryId,
+      to: r.industries.id,
+    }),
+    deployment: r.one.deployments({
+      from: r.industryDeployments.deploymentId,
+      to: r.deployments.id,
     }),
   },
 }));

@@ -47,7 +47,7 @@ export function ApiCreateOrganization() {
     }),
     ApiResponse({ status: 400, description: 'Validation failed.' }),
     ApiResponse({ status: 401, description: 'Unauthorized.' }),
-    ApiResponse({ status: 409, description: 'Subdomain or identifier already taken.' }),
+    ApiResponse({ status: 409, description: 'Subdomain already taken.' }),
   );
 }
 

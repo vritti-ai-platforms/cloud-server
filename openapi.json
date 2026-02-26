@@ -3366,7 +3366,7 @@
             "description": "Unauthorized."
           },
           "409": {
-            "description": "Subdomain or identifier already taken."
+            "description": "Subdomain already taken."
           }
         },
         "security": [
@@ -3432,6 +3432,663 @@
         "summary": "Get my organizations",
         "tags": [
           "Organizations"
+        ]
+      }
+    },
+    "/admin-api/industries": {
+      "post": {
+        "operationId": "AdminIndustryController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateIndustryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Industry created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IndustryDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed."
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "409": {
+            "description": "Industry with this slug already exists."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new industry",
+        "tags": [
+          "Admin - Industries"
+        ]
+      },
+      "get": {
+        "operationId": "AdminIndustryController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Industries retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/IndustryDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List all industries",
+        "tags": [
+          "Admin - Industries"
+        ]
+      }
+    },
+    "/admin-api/industries/{id}": {
+      "get": {
+        "operationId": "AdminIndustryController_findById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Industry UUID",
+            "schema": {
+              "example": "550e8400-e29b-41d4-a716-446655440000",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Industry retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IndustryDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "404": {
+            "description": "Industry not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get an industry by ID",
+        "tags": [
+          "Admin - Industries"
+        ]
+      },
+      "patch": {
+        "operationId": "AdminIndustryController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Industry UUID",
+            "schema": {
+              "example": "550e8400-e29b-41d4-a716-446655440000",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateIndustryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Industry updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IndustryDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed."
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "404": {
+            "description": "Industry not found."
+          },
+          "409": {
+            "description": "Industry with this slug already exists."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update an industry",
+        "tags": [
+          "Admin - Industries"
+        ]
+      },
+      "delete": {
+        "operationId": "AdminIndustryController_delete",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Industry UUID",
+            "schema": {
+              "example": "550e8400-e29b-41d4-a716-446655440000",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Industry deleted successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IndustryDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "404": {
+            "description": "Industry not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete an industry",
+        "tags": [
+          "Admin - Industries"
+        ]
+      }
+    },
+    "/admin-api/plans": {
+      "post": {
+        "operationId": "PlanController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePlanDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Plan created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed."
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "409": {
+            "description": "Plan with this code already exists."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new plan",
+        "tags": [
+          "Admin - Plans"
+        ]
+      },
+      "get": {
+        "operationId": "PlanController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Plans retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PlanDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List all plans",
+        "tags": [
+          "Admin - Plans"
+        ]
+      }
+    },
+    "/admin-api/plans/{id}": {
+      "get": {
+        "operationId": "PlanController_findById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Plan UUID",
+            "schema": {
+              "example": "550e8400-e29b-41d4-a716-446655440000",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Plan retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "404": {
+            "description": "Plan not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a plan by ID",
+        "tags": [
+          "Admin - Plans"
+        ]
+      },
+      "patch": {
+        "operationId": "PlanController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Plan UUID",
+            "schema": {
+              "example": "550e8400-e29b-41d4-a716-446655440000",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePlanDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Plan updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed."
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "404": {
+            "description": "Plan not found."
+          },
+          "409": {
+            "description": "Plan with this code already exists."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update a plan",
+        "tags": [
+          "Admin - Plans"
+        ]
+      },
+      "delete": {
+        "operationId": "PlanController_delete",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Plan UUID",
+            "schema": {
+              "example": "550e8400-e29b-41d4-a716-446655440000",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Plan deleted successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "404": {
+            "description": "Plan not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a plan",
+        "tags": [
+          "Admin - Plans"
+        ]
+      }
+    },
+    "/admin-api/deployments": {
+      "post": {
+        "operationId": "DeploymentController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDeploymentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Deployment created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeploymentDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed."
+          },
+          "401": {
+            "description": "Unauthorized."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new deployment",
+        "tags": [
+          "Admin - Deployments"
+        ]
+      },
+      "get": {
+        "operationId": "DeploymentController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Deployments retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DeploymentDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List all deployments",
+        "tags": [
+          "Admin - Deployments"
+        ]
+      }
+    },
+    "/admin-api/deployments/{id}": {
+      "get": {
+        "operationId": "DeploymentController_findById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Deployment UUID",
+            "schema": {
+              "example": "550e8400-e29b-41d4-a716-446655440000",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deployment retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeploymentDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "404": {
+            "description": "Deployment not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a deployment by ID",
+        "tags": [
+          "Admin - Deployments"
+        ]
+      },
+      "patch": {
+        "operationId": "DeploymentController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Deployment UUID",
+            "schema": {
+              "example": "550e8400-e29b-41d4-a716-446655440000",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDeploymentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Deployment updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeploymentDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed."
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "404": {
+            "description": "Deployment not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update a deployment",
+        "tags": [
+          "Admin - Deployments"
+        ]
+      },
+      "delete": {
+        "operationId": "DeploymentController_delete",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Deployment UUID",
+            "schema": {
+              "example": "550e8400-e29b-41d4-a716-446655440000",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deployment deleted successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeploymentDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "404": {
+            "description": "Deployment not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a deployment",
+        "tags": [
+          "Admin - Deployments"
         ]
       }
     },
@@ -5561,13 +6218,13 @@
           },
           "orgIdentifier": {
             "type": "string",
-            "description": "Unique identifier string for the organization",
-            "example": "acme"
+            "description": "Organization ID in api-nexus",
+            "example": "550e8400-e29b-41d4-a716-446655440001"
           },
           "industryId": {
             "type": "object",
             "description": "Industry ID",
-            "example": 1,
+            "example": "550e8400-e29b-41d4-a716-446655440002",
             "nullable": true
           },
           "size": {
@@ -5589,15 +6246,17 @@
             "example": "550e8400-e29b-41d4-a716-446655440000",
             "nullable": true
           },
-          "plan": {
-            "type": "string",
-            "description": "Subscription plan",
-            "enum": [
-              "free",
-              "pro",
-              "enterprise"
-            ],
-            "example": "free"
+          "planId": {
+            "type": "object",
+            "description": "Plan ID",
+            "example": "550e8400-e29b-41d4-a716-446655440003",
+            "nullable": true
+          },
+          "deploymentId": {
+            "type": "object",
+            "description": "Deployment ID",
+            "example": "550e8400-e29b-41d4-a716-446655440004",
+            "nullable": true
           },
           "role": {
             "type": "string",
@@ -5630,7 +6289,6 @@
           "subdomain",
           "orgIdentifier",
           "size",
-          "plan",
           "role",
           "createdAt",
           "message"
@@ -5656,13 +6314,13 @@
           },
           "orgIdentifier": {
             "type": "string",
-            "description": "Unique identifier string for the organization",
-            "example": "acme"
+            "description": "Organization ID in api-nexus",
+            "example": "550e8400-e29b-41d4-a716-446655440001"
           },
           "industryId": {
             "type": "object",
             "description": "Industry ID",
-            "example": 1,
+            "example": "550e8400-e29b-41d4-a716-446655440002",
             "nullable": true
           },
           "size": {
@@ -5684,15 +6342,17 @@
             "example": "550e8400-e29b-41d4-a716-446655440000",
             "nullable": true
           },
-          "plan": {
-            "type": "string",
-            "description": "Subscription plan",
-            "enum": [
-              "free",
-              "pro",
-              "enterprise"
-            ],
-            "example": "free"
+          "planId": {
+            "type": "object",
+            "description": "Plan ID",
+            "example": "550e8400-e29b-41d4-a716-446655440003",
+            "nullable": true
+          },
+          "deploymentId": {
+            "type": "object",
+            "description": "Deployment ID",
+            "example": "550e8400-e29b-41d4-a716-446655440004",
+            "nullable": true
           },
           "role": {
             "type": "string",
@@ -5721,7 +6381,6 @@
           "subdomain",
           "orgIdentifier",
           "size",
-          "plan",
           "role",
           "createdAt"
         ]
@@ -5764,11 +6423,30 @@
           "hasMore"
         ]
       },
+      "CreateIndustryDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Display name of the industry",
+            "example": "Technology"
+          },
+          "slug": {
+            "type": "string",
+            "description": "URL-friendly slug for the industry",
+            "example": "technology"
+          }
+        },
+        "required": [
+          "name",
+          "slug"
+        ]
+      },
       "IndustryDto": {
         "type": "object",
         "properties": {
           "id": {
-            "type": "number"
+            "type": "string"
           },
           "name": {
             "type": "string"
@@ -5783,12 +6461,185 @@
           "slug"
         ]
       },
+      "UpdateIndustryDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Display name of the industry",
+            "example": "Technology"
+          },
+          "slug": {
+            "type": "string",
+            "description": "URL-friendly slug for the industry",
+            "example": "technology"
+          }
+        }
+      },
+      "CreatePlanDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Display name of the plan",
+            "example": "Pro"
+          },
+          "code": {
+            "type": "string",
+            "description": "Unique code identifier for the plan",
+            "example": "pro"
+          },
+          "price": {
+            "type": "string",
+            "description": "Display price for the plan",
+            "example": "$9/mo"
+          }
+        },
+        "required": [
+          "name",
+          "code"
+        ]
+      },
+      "PlanDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "name": {
+            "type": "string",
+            "example": "Pro"
+          },
+          "code": {
+            "type": "string",
+            "example": "pro"
+          },
+          "price": {
+            "type": "object",
+            "example": "$9/mo",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "code",
+          "createdAt"
+        ]
+      },
+      "UpdatePlanDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Display name of the plan",
+            "example": "Pro"
+          },
+          "code": {
+            "type": "string",
+            "description": "Unique code identifier for the plan",
+            "example": "pro"
+          },
+          "price": {
+            "type": "string",
+            "description": "Display price for the plan",
+            "example": "$9/mo"
+          }
+        }
+      },
+      "CreateDeploymentDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Display name of the deployment",
+            "example": "US East Production"
+          },
+          "nexusUrl": {
+            "type": "string",
+            "description": "Base URL of the api-nexus instance",
+            "example": "https://nexus-us-east.vritti.io"
+          },
+          "webhookSecret": {
+            "type": "string",
+            "description": "Shared secret for webhook authentication",
+            "example": "whsec_abc123..."
+          }
+        },
+        "required": [
+          "name",
+          "nexusUrl",
+          "webhookSecret"
+        ]
+      },
+      "DeploymentDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "name": {
+            "type": "string",
+            "example": "US East Production"
+          },
+          "nexusUrl": {
+            "type": "string",
+            "example": "https://nexus-us-east.vritti.io"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "nexusUrl",
+          "createdAt"
+        ]
+      },
+      "UpdateDeploymentDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Display name of the deployment",
+            "example": "US East Production"
+          },
+          "nexusUrl": {
+            "type": "string",
+            "description": "Base URL of the api-nexus instance",
+            "example": "https://nexus-us-east.vritti.io"
+          },
+          "webhookSecret": {
+            "type": "string",
+            "description": "Shared secret for webhook authentication",
+            "example": "whsec_abc123..."
+          }
+        }
+      },
       "IndustrySelectOptionDto": {
         "type": "object",
         "properties": {
           "value": {
-            "type": "number",
-            "example": 1
+            "type": "string",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
           },
           "label": {
             "type": "string",

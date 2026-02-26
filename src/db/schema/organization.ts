@@ -1,6 +1,9 @@
 import { integer, timestamp, uniqueIndex, uuid, varchar } from '@vritti/api-sdk/drizzle-pg-core';
 import { cloudSchema } from './cloud-schema';
-import { orgMemberRoleEnum, orgPlanEnum, orgSizeEnum } from './enums';
+import { deployments } from './deployment';
+import { orgMemberRoleEnum, orgSizeEnum } from './enums';
+import { industries } from './industry';
+import { plans } from './plan';
 import { users } from './user';
 
 // Organizations table - workspace entities created by users
@@ -9,10 +12,11 @@ export const organizations = cloudSchema.table('organizations', {
   name: varchar('name', { length: 255 }).notNull(),
   subdomain: varchar('subdomain', { length: 100 }).notNull().unique(),
   orgIdentifier: varchar('org_identifier', { length: 100 }).notNull().unique(),
-  industryId: integer('industry_id'),
+  industryId: uuid('industry_id').references(() => industries.id),
   size: orgSizeEnum('size').notNull(),
   mediaId: varchar('media_id', { length: 255 }),
-  plan: orgPlanEnum('plan').notNull().default('free'),
+  planId: uuid('plan_id').references(() => plans.id),
+  deploymentId: uuid('deployment_id').references(() => deployments.id),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).$onUpdate(() => new Date()),
 });

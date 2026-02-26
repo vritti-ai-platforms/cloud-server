@@ -14,8 +14,4 @@ export class OrganizationRepository extends PrimaryBaseRepository<typeof organiz
     return this.model.findFirst({ where: { subdomain } });
   }
 
-  // Finds an organization by its unique identifier string
-  async findByOrgIdentifier(orgIdentifier: string): Promise<Organization | undefined> {
-    return this.model.findFirst({ where: { orgIdentifier } });
-  }
 }

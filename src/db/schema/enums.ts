@@ -119,10 +119,6 @@ export const MediaStatusValues = {
 };
 
 // Organization enums
-export const orgPlanEnum = cloudSchema.enum('OrgPlan', ['free', 'pro', 'enterprise']);
-export type OrgPlan = (typeof orgPlanEnum.enumValues)[number];
-export const OrgPlanValues = { free: 'free' as const, pro: 'pro' as const, enterprise: 'enterprise' as const };
-
 export const orgSizeEnum = cloudSchema.enum('OrgSize', ['0-10', '10-20', '20-50', '50-100', '100-500', '500+']);
 export type OrgSize = (typeof orgSizeEnum.enumValues)[number];
 export const OrgSizeValues = {

@@ -16,6 +16,7 @@ import {
   RootModule,
 } from '@vritti/api-sdk';
 import { validate } from './config/env.validation';
+import { AdminApiModule } from './modules/admin-api/admin-api.module';
 import { AuthModule } from './modules/cloud-api/auth/auth.module';
 import { IndustryModule } from './modules/cloud-api/industry/industry.module';
 import { MediaModule } from './modules/cloud-api/media/media.module';
@@ -100,7 +101,9 @@ import { UserModule } from './modules/cloud-api/user/user.module';
     MediaModule,
     OrganizationModule,
     IndustryModule,
-    // Cloud API routes with 'cloud-api' prefix
+    // Admin API module
+    AdminApiModule,
+    // Route prefixes
     RouterModule.register([
       {
         path: 'cloud-api',
@@ -113,6 +116,10 @@ import { UserModule } from './modules/cloud-api/user/user.module';
           OrganizationModule,
           IndustryModule,
         ],
+      },
+      {
+        path: 'admin-api',
+        children: [AdminApiModule],
       },
     ]),
   ],

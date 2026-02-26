@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import type { Organization, OrgMemberRole, OrgPlan, OrgSize } from '@/db/schema';
+import type { Organization, OrgMemberRole, OrgSize } from '@/db/schema';
 
 export class OrgListItemDto {
   @ApiProperty({
@@ -14,11 +14,11 @@ export class OrgListItemDto {
   @ApiProperty({ description: 'Unique subdomain for the organization', example: 'acme-corp' })
   subdomain: string;
 
-  @ApiProperty({ description: 'Unique identifier string for the organization', example: 'acme' })
+  @ApiProperty({ description: 'Organization ID in api-nexus', example: '550e8400-e29b-41d4-a716-446655440001' })
   orgIdentifier: string;
 
-  @ApiPropertyOptional({ description: 'Industry ID', example: 1, nullable: true })
-  industryId: number | null;
+  @ApiPropertyOptional({ description: 'Industry ID', example: '550e8400-e29b-41d4-a716-446655440002', nullable: true })
+  industryId: string | null;
 
   @ApiProperty({
     description: 'Size of the organization',
@@ -30,8 +30,11 @@ export class OrgListItemDto {
   @ApiPropertyOptional({ description: 'Media asset ID for the organization logo', example: '550e8400-e29b-41d4-a716-446655440000', nullable: true })
   mediaId: string | null;
 
-  @ApiProperty({ description: 'Subscription plan', enum: ['free', 'pro', 'enterprise'], example: 'free' })
-  plan: OrgPlan;
+  @ApiPropertyOptional({ description: 'Plan ID', example: '550e8400-e29b-41d4-a716-446655440003', nullable: true })
+  planId: string | null;
+
+  @ApiPropertyOptional({ description: 'Deployment ID', example: '550e8400-e29b-41d4-a716-446655440004', nullable: true })
+  deploymentId: string | null;
 
   @ApiProperty({
     description: "Authenticated user's role in this organization",
@@ -59,7 +62,8 @@ export class OrgListItemDto {
       industryId: org.industryId ?? null,
       size: org.size,
       mediaId: org.mediaId ?? null,
-      plan: org.plan,
+      planId: org.planId ?? null,
+      deploymentId: org.deploymentId ?? null,
       role,
       createdAt: org.createdAt,
       updatedAt: org.updatedAt ?? null,
