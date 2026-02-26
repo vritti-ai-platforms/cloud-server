@@ -3009,19 +3009,40 @@
     },
     "/cloud-api/organizations/me": {
       "get": {
-        "description": "Returns all organizations the authenticated user is a member of.",
+        "description": "Returns paginated organizations the authenticated user is a member of.",
         "operationId": "OrganizationController_getMyOrgs",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "description": "Number of items to skip (default: 0)",
+            "schema": {
+              "minimum": 0,
+              "default": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Items per page (default: 20, max: 100)",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": "List of organizations retrieved successfully.",
+            "description": "Paginated list of organizations retrieved successfully.",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/OrgListItemDto"
-                  }
+                  "$ref": "#/components/schemas/PaginatedOrgsResponseDto"
                 }
               }
             }
@@ -5152,6 +5173,12 @@
             "description": "Timestamp when the organization was created",
             "format": "date-time"
           },
+          "updatedAt": {
+            "type": "string",
+            "description": "Timestamp when the organization was last updated",
+            "format": "date-time",
+            "nullable": true
+          },
           "message": {
             "type": "string",
             "example": "Organization created successfully"
@@ -5240,6 +5267,12 @@
             "type": "string",
             "description": "Timestamp when the organization was created",
             "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "description": "Timestamp when the organization was last updated",
+            "format": "date-time",
+            "nullable": true
           }
         },
         "required": [
@@ -5251,6 +5284,44 @@
           "plan",
           "role",
           "createdAt"
+        ]
+      },
+      "PaginatedOrgsResponseDto": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrgListItemDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "description": "Total number of organizations",
+            "example": 42
+          },
+          "offset": {
+            "type": "number",
+            "description": "Number of items skipped",
+            "example": 0
+          },
+          "limit": {
+            "type": "number",
+            "description": "Items per page",
+            "example": 20
+          },
+          "hasMore": {
+            "type": "boolean",
+            "description": "Whether more pages exist",
+            "example": false
+          }
+        },
+        "required": [
+          "result",
+          "total",
+          "offset",
+          "limit",
+          "hasMore"
         ]
       },
       "IndustryDto": {

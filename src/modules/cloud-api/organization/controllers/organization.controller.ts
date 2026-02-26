@@ -15,10 +15,11 @@ import {
 	ApiCreateOrganization,
 	ApiGetMyOrgs,
 } from "../docs/organization.docs";
-import { OrgListItemDto } from "../dto/entity/organization.dto";
 import { CheckSubdomainDto } from "../dto/request/check-subdomain.dto";
 import { CreateOrganizationDto } from "../dto/request/create-organization.dto";
+import { GetMyOrgsDto } from "../dto/request/get-my-orgs.dto";
 import { CreateOrganizationResponseDto } from "../dto/response/create-organization-response.dto";
+import { PaginatedOrgsResponseDto } from "../dto/response/paginated-orgs-response.dto";
 import { SubdomainAvailabilityResponseDto } from "../dto/response/subdomain-availability-response.dto";
 import { OrganizationService } from "../services/organization.service";
 
@@ -59,10 +60,13 @@ export class OrganizationController {
 	// Returns all organizations that the authenticated user is a member of
 	@Get("me")
 	@ApiGetMyOrgs()
-	async getMyOrgs(@UserId() userId: string): Promise<OrgListItemDto[]> {
+	async getMyOrgs(
+		@UserId() userId: string,
+		@Query() dto: GetMyOrgsDto,
+	): Promise<PaginatedOrgsResponseDto> {
 		this.logger.log(
 			`GET /organizations/me - Fetching organizations for user: ${userId}`,
 		);
-		return this.organizationService.getMyOrgs(userId);
+		return this.organizationService.getMyOrgs(userId, dto);
 	}
 }

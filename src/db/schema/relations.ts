@@ -22,6 +22,7 @@ export const relations = defineRelations(schema, (r) => ({
     mfaAuth: r.many.mfaAuth(),
     oauthProviders: r.many.oauthProviders(),
     sessions: r.many.sessions(),
+    organizationMembers: r.many.organizationMembers(),
   },
 
   // Session relations
@@ -52,6 +53,21 @@ export const relations = defineRelations(schema, (r) => ({
   mfaAuth: {
     user: r.one.users({
       from: r.mfaAuth.userId,
+      to: r.users.id,
+    }),
+  },
+
+  // Organization relations
+  organizations: {
+    members: r.many.organizationMembers(),
+  },
+  organizationMembers: {
+    organization: r.one.organizations({
+      from: r.organizationMembers.organizationId,
+      to: r.organizations.id,
+    }),
+    user: r.one.users({
+      from: r.organizationMembers.userId,
       to: r.users.id,
     }),
   },

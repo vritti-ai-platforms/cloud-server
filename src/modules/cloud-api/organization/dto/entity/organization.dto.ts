@@ -43,6 +43,9 @@ export class OrgListItemDto {
   @ApiProperty({ description: 'Timestamp when the organization was created', type: 'string', format: 'date-time' })
   createdAt: Date;
 
+  @ApiPropertyOptional({ description: 'Timestamp when the organization was last updated', type: 'string', format: 'date-time', nullable: true })
+  updatedAt: Date | null;
+
   constructor(partial: Partial<OrgListItemDto>) {
     Object.assign(this, partial);
   }
@@ -59,6 +62,7 @@ export class OrgListItemDto {
       plan: org.plan,
       role,
       createdAt: org.createdAt,
+      updatedAt: org.updatedAt ?? null,
     });
   }
 }

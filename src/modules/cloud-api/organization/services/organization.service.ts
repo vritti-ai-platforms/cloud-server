@@ -3,7 +3,9 @@ import { ConflictException } from '@vritti/api-sdk';
 import { OrgMemberRoleValues } from '@/db/schema';
 import { OrgListItemDto } from '../dto/entity/organization.dto';
 import type { CreateOrganizationDto } from '../dto/request/create-organization.dto';
+import type { GetMyOrgsDto } from '../dto/request/get-my-orgs.dto';
 import { CreateOrganizationResponseDto } from '../dto/response/create-organization-response.dto';
+import { PaginatedOrgsResponseDto } from '../dto/response/paginated-orgs-response.dto';
 import { SubdomainAvailabilityResponseDto } from '../dto/response/subdomain-availability-response.dto';
 import { OrganizationRepository } from '../repositories/organization.repository';
 import { OrganizationMemberRepository } from '../repositories/organization-member.repository';
@@ -63,9 +65,18 @@ export class OrganizationService {
     return { ...OrgListItemDto.from(org, OrgMemberRoleValues.Owner), message: 'Organization created successfully' };
   }
 
-  // Returns all organizations that the authenticated user belongs to
-  async getMyOrgs(userId: string): Promise<OrgListItemDto[]> {
-    const memberships = await this.orgMemberRepository.findByUserId(userId);
-    return memberships.map((m) => OrgListItemDto.from(m.organization, m.role));
+  // Returns paginated organizations for the authenticated user
+  async getMyOrgs(userId: string, dto: GetMyOrgsDto): Promise<PaginatedOrgsResponseDto> {
+    const limit = dto.limit ?? 20;
+    const offset = dto.offset ?? 0;
+
+    const { result: members, count } = await this.orgMemberRepository.findByUserId(userId, { limit, offset });
+    return {
+      result: members.map((m) => OrgListItemDto.from(m.organization, m.role)),
+      total: count,
+      offset,
+      limit,
+      hasMore: offset + limit < count,
+    };
   }
 }
