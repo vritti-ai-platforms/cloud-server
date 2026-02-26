@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrimaryBaseRepository, PrimaryDatabaseService } from '@vritti/api-sdk';
-import { eq, sql } from '@vritti/api-sdk/drizzle-orm';
+import { and, eq, isNull, sql } from '@vritti/api-sdk/drizzle-orm';
 import { type Media, MediaStatusValues, media } from '@/db/schema';
 
 @Injectable()
@@ -26,14 +26,14 @@ export class MediaRepository extends PrimaryBaseRepository<typeof media> {
   // Finds a single ready media record for an entity (1 media per entity)
   async findOneByEntity(entityType: string, entityId: string): Promise<Media | undefined> {
     return this.model.findFirst({
-      where: { entityType, entityId, status: MediaStatusValues.READY },
+      where: { entityType, entityId, status: MediaStatusValues.READY, deletedAt: null },
     });
   }
 
   // Finds a ready media record matching the given checksum
   async findByChecksum(checksum: string): Promise<Media | undefined> {
     return this.model.findFirst({
-      where: { checksum, status: MediaStatusValues.READY },
+      where: { checksum, status: MediaStatusValues.READY, deletedAt: null },
     });
   }
 
@@ -42,7 +42,7 @@ export class MediaRepository extends PrimaryBaseRepository<typeof media> {
     const result = await this.db
       .select({ count: sql<number>`count(*)` })
       .from(media)
-      .where(eq(media.storageKey, storageKey));
+      .where(and(eq(media.storageKey, storageKey), isNull(media.deletedAt)));
     return Number(result[0]?.count ?? 0);
   }
 

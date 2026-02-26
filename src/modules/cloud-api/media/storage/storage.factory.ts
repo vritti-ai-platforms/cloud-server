@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { BadRequestException } from '@vritti/api-sdk';
 import { R2StorageProvider } from './r2-storage.provider';
 import type { StorageProvider } from './storage-provider.interface';
 
@@ -13,7 +12,7 @@ export class StorageFactory {
       case 'r2':
         return this.r2Provider;
       default:
-        throw new BadRequestException(`Unsupported storage provider: ${provider}`);
+        throw new Error(`Unsupported storage provider: ${provider}`);
     }
   }
 }

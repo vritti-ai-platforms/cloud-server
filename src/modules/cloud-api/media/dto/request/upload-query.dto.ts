@@ -1,8 +1,8 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, MaxLength } from 'class-validator';
 
 export class UploadQueryDto {
-  @ApiPropertyOptional({
+  @ApiProperty({
     description: 'Entity type this media is associated with (e.g., "user", "tenant")',
     example: 'user',
   })
@@ -11,7 +11,7 @@ export class UploadQueryDto {
   @MaxLength(255)
   entityType: string;
 
-  @ApiPropertyOptional({
+  @ApiProperty({
     description: 'Entity ID this media is associated with',
     example: '550e8400-e29b-41d4-a716-446655440000',
   })

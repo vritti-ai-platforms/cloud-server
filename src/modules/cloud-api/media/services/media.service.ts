@@ -91,22 +91,20 @@ export class MediaService {
     const checksum = this.computeChecksum(file.buffer);
 
     // Replace: if entity already has media, return or replace
-    if (query.entityType && query.entityId) {
-      const existingForEntity = await this.mediaRepository.findOneByEntity(query.entityType, query.entityId);
+    const existingForEntity = await this.mediaRepository.findOneByEntity(query.entityType, query.entityId);
 
-      if (existingForEntity) {
-        // Same file → return existing (no-op)
-        if (existingForEntity.checksum === checksum) {
-          this.logger.log(
-            `Same file already exists for entity ${query.entityType}/${query.entityId}, returning existing`,
-          );
-          return MediaDto.from(existingForEntity);
-        }
-
-        // Different file → delete old one first
-        await this.deleteRecord(existingForEntity);
-        this.logger.log(`Replaced media ${existingForEntity.id} for entity ${query.entityType}/${query.entityId}`);
+    if (existingForEntity) {
+      // Same file -> return existing (no-op)
+      if (existingForEntity.checksum === checksum) {
+        this.logger.log(
+          `Same file already exists for entity ${query.entityType}/${query.entityId}, returning existing`,
+        );
+        return MediaDto.from(existingForEntity);
       }
+
+      // Different file -> delete old one first
+      await this.deleteRecord(existingForEntity);
+      this.logger.log(`Replaced media ${existingForEntity.id} for entity ${query.entityType}/${query.entityId}`);
     }
 
     // Dedup: reuse storage key if identical file exists elsewhere
@@ -121,24 +119,33 @@ export class MediaService {
       await provider.upload({ key: storageKey, body: file.buffer, contentType: file.mimetype });
     }
 
-    const record = await this.mediaRepository.create({
-      originalName: file.filename,
-      mimeType: file.mimetype,
-      size: file.buffer.length,
-      checksum,
-      storageKey,
-      bucket: this.defaultBucket,
-      provider: DEFAULT_PROVIDER,
-      status: MediaStatusValues.READY,
-      entityType: query.entityType,
-      entityId: query.entityId,
-      uploadedBy,
-    });
+    // Persist record and clean up orphaned storage on failure
+    try {
+      const record = await this.mediaRepository.create({
+        originalName: file.filename,
+        mimeType: file.mimetype,
+        size: file.buffer.length,
+        checksum,
+        storageKey,
+        bucket: this.defaultBucket,
+        provider: DEFAULT_PROVIDER,
+        status: MediaStatusValues.READY,
+        entityType: query.entityType,
+        entityId: query.entityId,
+        uploadedBy,
+      });
 
-    this.logger.log(
-      `Uploaded media ${record.id}: ${file.filename} (${file.buffer.length} bytes)${existing ? ' [dedup]' : ''}`,
-    );
-    return MediaDto.from(record);
+      this.logger.log(
+        `Uploaded media ${record.id}: ${file.filename} (${file.buffer.length} bytes)${existing ? ' [dedup]' : ''}`,
+      );
+      return MediaDto.from(record);
+    } catch (error) {
+      if (!existing) {
+        const provider = this.storageFactory.resolve(DEFAULT_PROVIDER);
+        await provider.delete(storageKey, this.defaultBucket).catch(() => {});
+      }
+      throw error;
+    }
   }
 
   // Uploads multiple files (max 10) and returns results
@@ -147,6 +154,13 @@ export class MediaService {
       throw new BadRequestException({
         label: 'Too Many Files',
         detail: `Maximum ${MAX_BATCH_SIZE} files allowed per batch upload. You provided ${files.length}.`,
+      });
+    }
+
+    if (files.length > 1) {
+      throw new BadRequestException({
+        label: 'Batch Upload Not Supported',
+        detail: 'Each entity can have only one media file. Upload one file at a time.',
       });
     }
 
@@ -170,38 +184,29 @@ export class MediaService {
 
   // Retrieves media metadata by ID
   async findById(id: string): Promise<MediaDto> {
-    const record = await this.mediaRepository.findActiveById(id);
-    if (!record) {
-      throw new NotFoundException('Media not found.');
-    }
+    const record = await this.findRecordById(id);
     return MediaDto.from(record);
   }
 
   // Generates a presigned download URL for a media item
   async getPresignedUrl(id: string): Promise<PresignedUrlResponseDto> {
-    const media = await this.findById(id);
-    const provider = this.storageFactory.resolve(media.provider);
-    const url = await provider.getSignedUrl(media.storageKey, DEFAULT_SIGNED_URL_EXPIRY, media.bucket ?? undefined);
-
+    const record = await this.findRecordById(id);
+    const provider = this.storageFactory.resolve(record.provider);
+    const url = await provider.getSignedUrl(record.storageKey, DEFAULT_SIGNED_URL_EXPIRY, record.bucket ?? undefined);
     return { url, expiresIn: DEFAULT_SIGNED_URL_EXPIRY };
   }
 
   // Returns a readable stream for downloading a media file
   async getStream(id: string): Promise<{ stream: Readable; media: MediaDto }> {
-    const media = await this.findById(id);
-    const provider = this.storageFactory.resolve(media.provider);
-    const stream = await provider.getStream(media.storageKey, media.bucket ?? undefined);
-
-    return { stream, media };
+    const record = await this.findRecordById(id);
+    const provider = this.storageFactory.resolve(record.provider);
+    const stream = await provider.getStream(record.storageKey, record.bucket ?? undefined);
+    return { stream, media: MediaDto.from(record) };
   }
 
   // Deletes a media record and removes the storage file if no other records reference it
   async delete(id: string, userId: string): Promise<void> {
-    const record = await this.mediaRepository.findActiveById(id);
-    if (!record) {
-      throw new NotFoundException('Media not found.');
-    }
-
+    const record = await this.findRecordById(id);
     await this.deleteRecord(record);
     this.logger.log(`Deleted media ${id} by user ${userId}`);
   }
@@ -210,6 +215,15 @@ export class MediaService {
   async findByEntity(query: MediaQueryDto): Promise<MediaDto[]> {
     const records = await this.mediaRepository.findByEntity(query.entityType, query.entityId);
     return records.map((record) => MediaDto.from(record));
+  }
+
+  // Finds a media record by ID or throws NotFoundException
+  private async findRecordById(id: string): Promise<Media> {
+    const record = await this.mediaRepository.findActiveById(id);
+    if (!record) {
+      throw new NotFoundException('Media not found.');
+    }
+    return record;
   }
 
   // Deletes a media record and removes storage file if no other records reference it
@@ -245,10 +259,16 @@ export class MediaService {
     return createHash('sha256').update(buffer).digest('hex');
   }
 
-  // Generates a storage key: {entityType}/{YYYY}/{MM}/{uuid}.{ext}
+  // Sanitizes a string for use as a storage key path segment
+  private sanitizePathSegment(value: string): string {
+    return value.replace(/[^a-zA-Z0-9_-]/g, '_');
+  }
+
+  // Generates a storage key: {entityType}/{uuid}.{ext}
   private generateStorageKey(filename: string, entityType: string): string {
     const ext = extname(filename).toLowerCase();
     const uuid = randomUUID();
-    return `${entityType}/${uuid}${ext}`;
+    const prefix = this.sanitizePathSegment(entityType);
+    return `${prefix}/${uuid}${ext}`;
   }
 }
