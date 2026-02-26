@@ -2920,6 +2920,46 @@
         ]
       }
     },
+    "/cloud-api/organizations/check-subdomain": {
+      "get": {
+        "operationId": "OrganizationController_checkSubdomain",
+        "parameters": [
+          {
+            "name": "subdomain",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "example": "acme-corp",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Subdomain availability result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubdomainAvailabilityResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Subdomain already taken."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Check subdomain availability",
+        "tags": [
+          "Organizations"
+        ]
+      }
+    },
     "/cloud-api/organizations": {
       "post": {
         "description": "Creates an organization and adds the authenticated user as Owner.",
@@ -4966,6 +5006,17 @@
         "required": [
           "isEnabled",
           "backupCodesRemaining"
+        ]
+      },
+      "SubdomainAvailabilityResponseDto": {
+        "type": "object",
+        "properties": {
+          "available": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "available"
         ]
       },
       "CreateOrganizationDto": {

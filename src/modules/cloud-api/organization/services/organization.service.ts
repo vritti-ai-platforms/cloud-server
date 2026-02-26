@@ -4,8 +4,9 @@ import { OrgMemberRoleValues } from '@/db/schema';
 import { OrgListItemDto } from '../dto/entity/organization.dto';
 import type { CreateOrganizationDto } from '../dto/request/create-organization.dto';
 import { CreateOrganizationResponseDto } from '../dto/response/create-organization-response.dto';
-import { OrganizationMemberRepository } from '../repositories/organization-member.repository';
+import { SubdomainAvailabilityResponseDto } from '../dto/response/subdomain-availability-response.dto';
 import { OrganizationRepository } from '../repositories/organization.repository';
+import { OrganizationMemberRepository } from '../repositories/organization-member.repository';
 
 @Injectable()
 export class OrganizationService {
@@ -15,6 +16,19 @@ export class OrganizationService {
     private readonly orgRepository: OrganizationRepository,
     private readonly orgMemberRepository: OrganizationMemberRepository,
   ) {}
+
+  // Checks if a subdomain is available; throws ConflictException if already taken
+  async checkSubdomainAvailable(subdomain: string): Promise<SubdomainAvailabilityResponseDto> {
+    const existing = await this.orgRepository.findBySubdomain(subdomain);
+    if (existing) {
+      throw new ConflictException({
+        label: 'Subdomain Taken',
+        detail: 'This subdomain is already in use. Please choose a different one.',
+        errors: [{ field: 'subdomain', message: 'Already taken' }],
+      });
+    }
+    return { available: true };
+  }
 
   // Creates a new organization and adds the requesting user as Owner
   async create(userId: string, dto: CreateOrganizationDto): Promise<CreateOrganizationResponseDto> {
