@@ -1,4 +1,10 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  type DeploymentStatus,
+  type DeploymentType,
+  DeploymentStatusValues,
+  DeploymentTypeValues,
+} from '@/db/schema';
 import type { Deployment } from '@/db/schema';
 
 export class DeploymentDto {
@@ -10,6 +16,18 @@ export class DeploymentDto {
 
   @ApiProperty({ example: 'https://nexus-us-east.vritti.io' })
   nexusUrl: string;
+
+  @ApiProperty({ example: '550e8400-e29b-41d4-a716-446655440000' })
+  regionId: string;
+
+  @ApiProperty({ example: '550e8400-e29b-41d4-a716-446655440000' })
+  cloudProviderId: string;
+
+  @ApiProperty({ enum: DeploymentStatusValues })
+  status: DeploymentStatus;
+
+  @ApiProperty({ enum: DeploymentTypeValues })
+  type: DeploymentType;
 
   @ApiProperty({ type: 'string', format: 'date-time' })
   createdAt: Date;
@@ -23,6 +41,10 @@ export class DeploymentDto {
     dto.id = deployment.id;
     dto.name = deployment.name;
     dto.nexusUrl = deployment.nexusUrl;
+    dto.regionId = deployment.regionId;
+    dto.cloudProviderId = deployment.cloudProviderId;
+    dto.status = deployment.status;
+    dto.type = deployment.type;
     dto.createdAt = deployment.createdAt;
     dto.updatedAt = deployment.updatedAt;
     return dto;

@@ -89,15 +89,91 @@ export const relations = defineRelations(schema, (r) => ({
   // Plan relations
   plans: {
     organizations: r.many.organizations(),
+    prices: r.many.prices(),
+    industries: r.many.industries({
+      from: r.plans.id.through(r.prices.planId),
+      to: r.industries.id.through(r.prices.industryId),
+    }),
+    regions: r.many.regions({
+      from: r.plans.id.through(r.prices.planId),
+      to: r.regions.id.through(r.prices.regionId),
+    }),
+    cloudProviders: r.many.cloudProviders({
+      from: r.plans.id.through(r.prices.planId),
+      to: r.cloudProviders.id.through(r.prices.providerId),
+    }),
   },
 
   // Industry relations
   industries: {
     organizations: r.many.organizations(),
+    prices: r.many.prices(),
+    plans: r.many.plans({
+      from: r.industries.id.through(r.prices.industryId),
+      to: r.plans.id.through(r.prices.planId),
+    }),
   },
 
   // Deployment relations
   deployments: {
     organizations: r.many.organizations(),
+  },
+
+  // Region relations
+  regions: {
+    cloudProviders: r.many.cloudProviders({
+      from: r.regions.id.through(r.regionCloudProviders.regionId),
+      to: r.cloudProviders.id.through(r.regionCloudProviders.providerId),
+    }),
+    prices: r.many.prices(),
+    plans: r.many.plans({
+      from: r.regions.id.through(r.prices.regionId),
+      to: r.plans.id.through(r.prices.planId),
+    }),
+  },
+
+  // Cloud provider relations
+  cloudProviders: {
+    regions: r.many.regions({
+      from: r.cloudProviders.id.through(r.regionCloudProviders.providerId),
+      to: r.regions.id.through(r.regionCloudProviders.regionId),
+    }),
+    prices: r.many.prices(),
+    plans: r.many.plans({
+      from: r.cloudProviders.id.through(r.prices.providerId),
+      to: r.plans.id.through(r.prices.planId),
+    }),
+  },
+
+  // Prices relations
+  prices: {
+    plan: r.one.plans({
+      from: r.prices.planId,
+      to: r.plans.id,
+    }),
+    industry: r.one.industries({
+      from: r.prices.industryId,
+      to: r.industries.id,
+    }),
+    region: r.one.regions({
+      from: r.prices.regionId,
+      to: r.regions.id,
+    }),
+    cloudProvider: r.one.cloudProviders({
+      from: r.prices.providerId,
+      to: r.cloudProviders.id,
+    }),
+  },
+
+  // Region-CloudProvider join table relations
+  regionCloudProviders: {
+    region: r.one.regions({
+      from: r.regionCloudProviders.regionId,
+      to: r.regions.id,
+    }),
+    cloudProvider: r.one.cloudProviders({
+      from: r.regionCloudProviders.providerId,
+      to: r.cloudProviders.id,
+    }),
   },
 }));

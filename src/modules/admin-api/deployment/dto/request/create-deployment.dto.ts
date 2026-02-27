@@ -1,5 +1,11 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsUrl, MaxLength, MinLength } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsEnum, IsOptional, IsString, IsUrl, IsUUID, MaxLength, MinLength } from 'class-validator';
+import {
+  type DeploymentStatus,
+  type DeploymentType,
+  DeploymentStatusValues,
+  DeploymentTypeValues,
+} from '@/db/schema';
 
 export class CreateDeploymentDto {
   @ApiProperty({ description: 'Display name of the deployment', example: 'US East Production' })
@@ -19,4 +25,21 @@ export class CreateDeploymentDto {
   @MinLength(8)
   @MaxLength(500)
   webhookSecret: string;
+
+  @ApiProperty({ description: 'Region UUID', example: '550e8400-e29b-41d4-a716-446655440000' })
+  @IsUUID()
+  regionId: string;
+
+  @ApiProperty({ description: 'Cloud provider UUID', example: '550e8400-e29b-41d4-a716-446655440000' })
+  @IsUUID()
+  cloudProviderId: string;
+
+  @ApiPropertyOptional({ enum: DeploymentStatusValues, default: 'Provisioning', description: 'Deployment status' })
+  @IsOptional()
+  @IsEnum(DeploymentStatusValues)
+  status?: DeploymentStatus;
+
+  @ApiProperty({ enum: DeploymentTypeValues, description: 'Deployment type' })
+  @IsEnum(DeploymentTypeValues)
+  type: DeploymentType;
 }

@@ -1,7 +1,7 @@
 import { timestamp, uuid, varchar } from '@vritti/api-sdk/drizzle-pg-core';
 import { cloudSchema } from './cloud-schema';
 
-export const providers = cloudSchema.table('cloud_providers', {
+export const cloudProviders = cloudSchema.table('providers', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: varchar('name', { length: 255 }).notNull(),
   code: varchar('code', { length: 100 }).notNull().unique(),
@@ -9,5 +9,5 @@ export const providers = cloudSchema.table('cloud_providers', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).$onUpdate(() => new Date()),
 });
 
-export type Provider = typeof providers.$inferSelect;
-export type NewProvider = typeof providers.$inferInsert;
+export type Provider = typeof cloudProviders.$inferSelect;
+export type NewProvider = typeof cloudProviders.$inferInsert;

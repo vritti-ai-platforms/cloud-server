@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrimaryBaseRepository, PrimaryDatabaseService } from '@vritti/api-sdk';
 import { asc, count, eq } from '@vritti/api-sdk/drizzle-orm';
 import type { Region } from '@/db/schema';
-import { regionProviders, regions } from '@/db/schema';
+import { regionCloudProviders, regions } from '@/db/schema';
 
 @Injectable()
 export class RegionRepository extends PrimaryBaseRepository<typeof regions> {
@@ -26,10 +26,10 @@ export class RegionRepository extends PrimaryBaseRepository<typeof regions> {
         city: regions.city,
         createdAt: regions.createdAt,
         updatedAt: regions.updatedAt,
-        providerCount: count(regionProviders.providerId),
+        providerCount: count(regionCloudProviders.providerId),
       })
       .from(regions)
-      .leftJoin(regionProviders, eq(regionProviders.regionId, regions.id))
+      .leftJoin(regionCloudProviders, eq(regionCloudProviders.regionId, regions.id))
       .groupBy(regions.id)
       .orderBy(asc(regions.name));
     return rows as Array<Region & { providerCount: number }>;

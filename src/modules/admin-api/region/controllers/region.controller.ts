@@ -10,9 +10,9 @@ import {
 } from '../docs/region.docs';
 import { RegionDto } from '../dto/entity/region.dto';
 import { AssignProvidersDto } from '../dto/request/assign-providers.dto';
-import { AssignProvidersResponseDto } from '../dto/response/assign-providers-response.dto';
 import { CreateRegionDto } from '../dto/request/create-region.dto';
 import { UpdateRegionDto } from '../dto/request/update-region.dto';
+import { AssignProvidersResponseDto } from '../dto/response/assign-providers-response.dto';
 import { RegionService } from '../services/region.service';
 
 @ApiTags('Admin - Regions')
@@ -66,11 +66,11 @@ export class RegionController {
   }
 
   // Bulk-assigns providers to a region
-  @Post(':id/providers')
+  @Post(':id/cloud-providers')
   @HttpCode(HttpStatus.CREATED)
   @ApiAssignRegionProviders()
-  assignProviders(@Param('id') id: string, @Body() dto: AssignProvidersDto): Promise<AssignProvidersResponseDto> {
-    this.logger.log(`POST /admin-api/regions/${id}/providers`);
-    return this.regionService.assignProviders(id, dto);
+  assignCloudProviders(@Param('id') id: string, @Body() dto: AssignProvidersDto): Promise<AssignProvidersResponseDto> {
+    this.logger.log(`POST /admin-api/regions/${id}/cloud-providers`);
+    return this.regionService.assignCloudProviders(id, dto);
   }
 }

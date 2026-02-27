@@ -133,3 +133,21 @@ export const OrgSizeValues = {
 export const orgMemberRoleEnum = cloudSchema.enum('OrgMemberRole', ['Owner', 'Admin']);
 export type OrgMemberRole = (typeof orgMemberRoleEnum.enumValues)[number];
 export const OrgMemberRoleValues = { Owner: 'Owner' as const, Admin: 'Admin' as const };
+
+// Deployment enums
+export const deploymentStatusEnum = cloudSchema.enum('DeploymentStatus', ['active', 'stopped', 'Provisioning']);
+export const deploymentTypeEnum = cloudSchema.enum('DeploymentType', ['shared', 'dedicated']);
+
+export type DeploymentStatus = (typeof deploymentStatusEnum.enumValues)[number];
+export type DeploymentType = (typeof deploymentTypeEnum.enumValues)[number];
+
+export const DeploymentStatusValues = {
+  active: 'active' as const,
+  stopped: 'stopped' as const,
+  Provisioning: 'Provisioning' as const,
+};
+
+export const DeploymentTypeValues = {
+  shared: 'shared' as const,
+  dedicated: 'dedicated' as const,
+};
