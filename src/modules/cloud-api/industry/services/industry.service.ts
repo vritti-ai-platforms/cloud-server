@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { type SelectQueryResult, SelectOptionsQueryDto } from '@vritti/api-sdk';
+import { SelectOptionsQueryDto, type SelectQueryResult } from '@vritti/api-sdk';
 import { IndustryDto } from '../dto/entity/industry.dto';
 import { IndustryRepository } from '../repositories/industry.repository';
 
@@ -18,6 +18,7 @@ export class IndustryService {
     return this.industryRepository.findForSelect({
       value: query.valueKey || 'id',
       label: query.labelKey || 'name',
+      description: query.descriptionKey,
       search: query.search,
       limit: query.limit,
       offset: query.offset,

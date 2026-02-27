@@ -6453,6 +6453,9 @@
           },
           "slug": {
             "type": "string"
+          },
+          "description": {
+            "type": "object"
           }
         },
         "required": [
@@ -6644,6 +6647,10 @@
           "label": {
             "type": "string",
             "example": "Technology"
+          },
+          "description": {
+            "type": "string",
+            "example": "Software companies, SaaS, IT services & digital businesses"
           }
         },
         "required": [
