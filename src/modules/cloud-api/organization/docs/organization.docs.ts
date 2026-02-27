@@ -1,6 +1,7 @@
 import { applyDecorators } from '@nestjs/common';
 import { ApiBody, ApiConsumes, ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
 import { CreateOrganizationResponseDto } from '../dto/response/create-organization-response.dto';
+import { OrganizationSelectResponseDto } from '../dto/response/organization-select-response.dto';
 import { PaginatedOrgsResponseDto } from '../dto/response/paginated-orgs-response.dto';
 import { SubdomainAvailabilityResponseDto } from '../dto/response/subdomain-availability-response.dto';
 
@@ -64,6 +65,18 @@ export function ApiGetMyOrgs() {
       description: 'Paginated list of organizations retrieved successfully.',
       type: PaginatedOrgsResponseDto,
     }),
+    ApiResponse({ status: 401, description: 'Unauthorized.' }),
+  );
+}
+
+export function ApiGetOrganizationsSelect() {
+  return applyDecorators(
+    ApiOperation({
+      summary: 'Get organizations for select component',
+      description:
+        "Returns the authenticated user's organizations as paginated options for quantum-ui Select, grouped by plan.",
+    }),
+    ApiResponse({ status: 200, description: 'Organization select options retrieved.', type: OrganizationSelectResponseDto }),
     ApiResponse({ status: 401, description: 'Unauthorized.' }),
   );
 }

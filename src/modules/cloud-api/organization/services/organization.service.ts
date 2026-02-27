@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { BadRequestException, ConflictException } from '@vritti/api-sdk';
+import { BadRequestException, ConflictException, type SelectOptionsQueryDto, type SelectQueryResult } from '@vritti/api-sdk';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import type { FastifyRequest } from 'fastify';
@@ -113,6 +113,20 @@ export class OrganizationService {
       limit,
       hasMore: offset + limit < count,
     };
+  }
+
+  // Returns user's organizations as select options with plan group data
+  findForSelect(userId: string, query: SelectOptionsQueryDto): Promise<SelectQueryResult> {
+    return this.orgRepository.findForSelectByUser(userId, {
+      value: query.valueKey || 'subdomain',
+      label: query.labelKey || 'name',
+      description: query.descriptionKey,
+      search: query.search,
+      limit: query.limit,
+      offset: query.offset,
+      values: query.values,
+      excludeIds: query.excludeIds,
+    });
   }
 
   // Parses multipart form data into DTO fields and optional file
