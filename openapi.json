@@ -3437,14 +3437,14 @@
     },
     "/admin-api/providers": {
       "post": {
-        "operationId": "ProviderController_create",
+        "operationId": "CloudProviderController_create",
         "parameters": [],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateProviderDto"
+                "$ref": "#/components/schemas/CreateCloudProviderDto"
               }
             }
           }
@@ -3455,7 +3455,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProviderDto"
+                  "$ref": "#/components/schemas/CloudProviderDto"
                 }
               }
             }
@@ -3481,7 +3481,7 @@
         ]
       },
       "get": {
-        "operationId": "ProviderController_findAll",
+        "operationId": "CloudProviderController_findAll",
         "parameters": [],
         "responses": {
           "200": {
@@ -3491,7 +3491,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/ProviderDto"
+                    "$ref": "#/components/schemas/CloudProviderDto"
                   }
                 }
               }
@@ -3514,7 +3514,7 @@
     },
     "/admin-api/providers/{id}": {
       "get": {
-        "operationId": "ProviderController_findById",
+        "operationId": "CloudProviderController_findById",
         "parameters": [
           {
             "name": "id",
@@ -3533,7 +3533,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProviderDto"
+                  "$ref": "#/components/schemas/CloudProviderDto"
                 }
               }
             }
@@ -3556,7 +3556,7 @@
         ]
       },
       "patch": {
-        "operationId": "ProviderController_update",
+        "operationId": "CloudProviderController_update",
         "parameters": [
           {
             "name": "id",
@@ -3574,7 +3574,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateProviderDto"
+                "$ref": "#/components/schemas/UpdateCloudProviderDto"
               }
             }
           }
@@ -3585,7 +3585,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProviderDto"
+                  "$ref": "#/components/schemas/CloudProviderDto"
                 }
               }
             }
@@ -3614,7 +3614,7 @@
         ]
       },
       "delete": {
-        "operationId": "ProviderController_delete",
+        "operationId": "CloudProviderController_delete",
         "parameters": [
           {
             "name": "id",
@@ -3633,7 +3633,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProviderDto"
+                  "$ref": "#/components/schemas/CloudProviderDto"
                 }
               }
             }
@@ -7191,7 +7191,7 @@
           "hasMore"
         ]
       },
-      "CreateProviderDto": {
+      "CreateCloudProviderDto": {
         "type": "object",
         "properties": {
           "name": {
@@ -7210,7 +7210,7 @@
           "code"
         ]
       },
-      "ProviderDto": {
+      "CloudProviderDto": {
         "type": "object",
         "properties": {
           "id": {
@@ -7247,7 +7247,7 @@
           "regionCount"
         ]
       },
-      "UpdateProviderDto": {
+      "UpdateCloudProviderDto": {
         "type": "object",
         "properties": {
           "name": {
@@ -7592,13 +7592,18 @@
             "type": "string",
             "format": "date-time",
             "nullable": true
+          },
+          "priceCount": {
+            "type": "number",
+            "example": 2
           }
         },
         "required": [
           "id",
           "name",
           "code",
-          "createdAt"
+          "createdAt",
+          "priceCount"
         ]
       },
       "UpdatePlanDto": {
