@@ -23,7 +23,10 @@ export class RegionDto {
   @ApiPropertyOptional({ type: 'string', format: 'date-time', nullable: true })
   updatedAt: Date | null;
 
-  static from(region: Region): RegionDto {
+  @ApiProperty({ example: 5 })
+  providerCount: number;
+
+  static from(region: Region, providerCount = 0): RegionDto {
     const dto = new RegionDto();
     dto.id = region.id;
     dto.name = region.name;
@@ -32,6 +35,7 @@ export class RegionDto {
     dto.city = region.city;
     dto.createdAt = region.createdAt;
     dto.updatedAt = region.updatedAt;
+    dto.providerCount = providerCount;
     return dto;
   }
 }

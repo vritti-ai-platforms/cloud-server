@@ -22,10 +22,10 @@ export class ProviderService {
     return ProviderDto.from(provider);
   }
 
-  // Returns all providers mapped to DTOs
+  // Returns all providers mapped to DTOs with region counts
   async findAll(): Promise<ProviderDto[]> {
-    const providers = await this.providerRepository.findAll();
-    return providers.map((provider) => ProviderDto.from(provider));
+    const providers = await this.providerRepository.findAllWithCounts();
+    return providers.map((provider) => ProviderDto.from(provider, provider.regionCount));
   }
 
   // Finds a provider by ID; throws NotFoundException if not found

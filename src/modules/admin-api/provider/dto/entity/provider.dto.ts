@@ -17,13 +17,17 @@ export class ProviderDto {
   @ApiPropertyOptional({ type: 'string', format: 'date-time', nullable: true })
   updatedAt: Date | null;
 
-  static from(provider: Provider): ProviderDto {
+  @ApiProperty({ example: 3 })
+  regionCount: number;
+
+  static from(provider: Provider, regionCount = 0): ProviderDto {
     const dto = new ProviderDto();
     dto.id = provider.id;
     dto.name = provider.name;
     dto.code = provider.code;
     dto.createdAt = provider.createdAt;
     dto.updatedAt = provider.updatedAt;
+    dto.regionCount = regionCount;
     return dto;
   }
 }

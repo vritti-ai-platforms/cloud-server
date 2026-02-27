@@ -28,10 +28,10 @@ export class RegionService {
     return RegionDto.from(region);
   }
 
-  // Returns all regions mapped to DTOs
+  // Returns all regions mapped to DTOs with provider counts
   async findAll(): Promise<RegionDto[]> {
-    const regions = await this.regionRepository.findAll();
-    return regions.map((region) => RegionDto.from(region));
+    const regions = await this.regionRepository.findAllWithCounts();
+    return regions.map((region) => RegionDto.from(region, region.providerCount));
   }
 
   // Finds a region by ID; throws NotFoundException if not found
