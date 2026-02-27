@@ -12,9 +12,9 @@ import { CreateCloudProviderDto } from '../dto/request/create-cloud-provider.dto
 import { UpdateCloudProviderDto } from '../dto/request/update-cloud-provider.dto';
 import { CloudProviderService } from '../services/cloud-provider.service';
 
-@ApiTags('Admin - Providers')
+@ApiTags('Admin - Cloud Providers')
 @ApiBearerAuth()
-@Controller('providers')
+@Controller('cloud-providers')
 export class CloudProviderController {
   private readonly logger = new Logger(CloudProviderController.name);
 
@@ -25,7 +25,7 @@ export class CloudProviderController {
   @HttpCode(HttpStatus.CREATED)
   @ApiCreateCloudProvider()
   create(@Body() dto: CreateCloudProviderDto): Promise<CloudProviderDto> {
-    this.logger.log('POST /admin-api/providers');
+    this.logger.log('POST /admin-api/cloud-providers');
     return this.cloudProviderService.create(dto);
   }
 
@@ -33,7 +33,7 @@ export class CloudProviderController {
   @Get()
   @ApiFindAllCloudProviders()
   findAll(): Promise<CloudProviderDto[]> {
-    this.logger.log('GET /admin-api/providers');
+    this.logger.log('GET /admin-api/cloud-providers');
     return this.cloudProviderService.findAll();
   }
 
@@ -41,7 +41,7 @@ export class CloudProviderController {
   @Get(':id')
   @ApiFindCloudProviderById()
   findById(@Param('id') id: string): Promise<CloudProviderDto> {
-    this.logger.log(`GET /admin-api/providers/${id}`);
+    this.logger.log(`GET /admin-api/cloud-providers/${id}`);
     return this.cloudProviderService.findById(id);
   }
 
@@ -49,7 +49,7 @@ export class CloudProviderController {
   @Patch(':id')
   @ApiUpdateCloudProvider()
   update(@Param('id') id: string, @Body() dto: UpdateCloudProviderDto): Promise<CloudProviderDto> {
-    this.logger.log(`PATCH /admin-api/providers/${id}`);
+    this.logger.log(`PATCH /admin-api/cloud-providers/${id}`);
     return this.cloudProviderService.update(id, dto);
   }
 
@@ -58,7 +58,7 @@ export class CloudProviderController {
   @HttpCode(HttpStatus.OK)
   @ApiDeleteCloudProvider()
   delete(@Param('id') id: string): Promise<CloudProviderDto> {
-    this.logger.log(`DELETE /admin-api/providers/${id}`);
+    this.logger.log(`DELETE /admin-api/cloud-providers/${id}`);
     return this.cloudProviderService.delete(id);
   }
 }

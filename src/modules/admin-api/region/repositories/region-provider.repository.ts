@@ -6,9 +6,9 @@ import { regionProviders } from '@/db/schema';
 export class RegionProviderRepository {
   constructor(private readonly database: PrimaryDatabaseService) {}
 
-  // Bulk-inserts region-provider pairs; skips duplicates via onConflictDoNothing
-  async bulkInsert(regionId: string, providerIds: string[]): Promise<number> {
-    const rows = providerIds.map((providerId) => ({ regionId, providerId }));
+  // Bulk-inserts region-cloud-provider pairs; skips duplicates via onConflictDoNothing
+  async bulkInsert(regionId: string, cloudProviderIds: string[]): Promise<number> {
+    const rows = cloudProviderIds.map((providerId) => ({ regionId, providerId }));
     const result = await this.database.drizzleClient
       .insert(regionProviders)
       .values(rows)

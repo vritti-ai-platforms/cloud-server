@@ -60,10 +60,10 @@ export function ApiDeleteRegion() {
 
 export function ApiAssignRegionProviders() {
   return applyDecorators(
-    ApiOperation({ summary: 'Bulk assign providers to a region' }),
+    ApiOperation({ summary: 'Bulk assign cloud providers to a region' }),
     ApiParam({ name: 'id', description: 'Region UUID', example: '550e8400-e29b-41d4-a716-446655440000' }),
     ApiBody({ type: AssignProvidersDto }),
-    ApiResponse({ status: 201, description: 'Providers assigned successfully.', type: AssignProvidersResponseDto }),
+    ApiResponse({ status: 201, description: 'Cloud providers assigned successfully.', type: AssignProvidersResponseDto }),
     ApiResponse({ status: 400, description: 'Validation failed.' }),
     ApiResponse({ status: 401, description: 'Unauthorized.' }),
     ApiResponse({ status: 404, description: 'Region not found.' }),

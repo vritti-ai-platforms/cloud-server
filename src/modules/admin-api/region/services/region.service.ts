@@ -5,8 +5,8 @@ import type { AssignProvidersDto } from '../dto/request/assign-providers.dto';
 import type { CreateRegionDto } from '../dto/request/create-region.dto';
 import type { UpdateRegionDto } from '../dto/request/update-region.dto';
 import { AssignProvidersResponseDto } from '../dto/response/assign-providers-response.dto';
-import { RegionProviderRepository } from '../repositories/region-provider.repository';
 import { RegionRepository } from '../repositories/region.repository';
+import { RegionProviderRepository } from '../repositories/region-provider.repository';
 
 @Injectable()
 export class RegionService {
@@ -72,21 +72,12 @@ export class RegionService {
     return RegionDto.from(region);
   }
 
-  // Bulk-assigns providers to a region; throws NotFoundException if region missing
-  async assignProviders(regionId: string, dto: AssignProvidersDto): Promise<AssignProvidersResponseDto> {
+  // Bulk-assigns cloud providers to a region; throws NotFoundException if region missing
+  async assignCloudProviders(regionId: string, dto: AssignProvidersDto): Promise<AssignProvidersResponseDto> {
     const region = await this.regionRepository.findById(regionId);
     if (!region) throw new NotFoundException('Region not found.');
-    const assigned = await this.regionProviderRepository.bulkInsert(regionId, dto.providerIds);
-    this.logger.log(`Assigned ${assigned} providers to region ${regionId}`);
+    const assigned = await this.regionProviderRepository.bulkInsert(regionId, dto.cloudProviderIds);
+    this.logger.log(`Assigned ${assigned} cloud providers to region ${regionId}`);
     return { assigned };
-  }
-
-  // Converts PostgreSQL unique constraint violations (23505) to ConflictException
-  private handleUniqueConstraintError(error: unknown, field: string, value: string): never {
-    const pg = error as { code?: string };
-    if (pg.code === '23505') {
-      throw new ConflictException(`Region with ${field} '${value}' already exists.`);
-    }
-    throw error;
   }
 }
