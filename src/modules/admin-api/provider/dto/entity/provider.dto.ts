@@ -11,12 +11,6 @@ export class ProviderDto {
   @ApiProperty({ example: 'healthcare-plus' })
   code: string;
 
-  @ApiProperty({ example: 'Hyderabad' })
-  city: string;
-
-  @ApiProperty({ example: 'Telangana' })
-  state: string;
-
   @ApiProperty({ type: 'string', format: 'date-time' })
   createdAt: Date;
 
@@ -28,8 +22,6 @@ export class ProviderDto {
     dto.id = provider.id;
     dto.name = provider.name;
     dto.code = provider.code;
-    dto.city = provider.city;
-    dto.state = provider.state;
     dto.createdAt = provider.createdAt;
     dto.updatedAt = provider.updatedAt;
     return dto;

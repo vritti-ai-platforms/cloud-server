@@ -12,6 +12,7 @@ export * from './industry-plan';
 export * from './organization';
 export * from './plan';
 export * from './provider';
+export * from './region';
 export * from './tenant';
 export * from './user';
 export * from './verification';

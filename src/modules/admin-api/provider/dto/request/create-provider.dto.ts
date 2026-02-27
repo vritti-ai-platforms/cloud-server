@@ -13,16 +13,4 @@ export class CreateProviderDto {
   @MinLength(1)
   @MaxLength(100)
   code: string;
-
-  @ApiProperty({ description: 'City where the provider is located', example: 'Hyderabad' })
-  @IsString()
-  @MinLength(1)
-  @MaxLength(100)
-  city: string;
-
-  @ApiProperty({ description: 'State where the provider is located', example: 'Telangana' })
-  @IsString()
-  @MinLength(1)
-  @MaxLength(100)
-  state: string;
 }

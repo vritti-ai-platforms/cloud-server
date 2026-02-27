@@ -3871,6 +3871,227 @@
         ]
       }
     },
+    "/admin-api/regions": {
+      "post": {
+        "operationId": "RegionController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRegionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Region created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegionDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed."
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "409": {
+            "description": "Region with this code already exists."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new region",
+        "tags": [
+          "Admin - Regions"
+        ]
+      },
+      "get": {
+        "operationId": "RegionController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Regions retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RegionDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List all regions",
+        "tags": [
+          "Admin - Regions"
+        ]
+      }
+    },
+    "/admin-api/regions/{id}": {
+      "get": {
+        "operationId": "RegionController_findById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Region UUID",
+            "schema": {
+              "example": "550e8400-e29b-41d4-a716-446655440000",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Region retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegionDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "404": {
+            "description": "Region not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a region by ID",
+        "tags": [
+          "Admin - Regions"
+        ]
+      },
+      "patch": {
+        "operationId": "RegionController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Region UUID",
+            "schema": {
+              "example": "550e8400-e29b-41d4-a716-446655440000",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRegionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Region updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegionDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed."
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "404": {
+            "description": "Region not found."
+          },
+          "409": {
+            "description": "Region with this code already exists."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update a region",
+        "tags": [
+          "Admin - Regions"
+        ]
+      },
+      "delete": {
+        "operationId": "RegionController_delete",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Region UUID",
+            "schema": {
+              "example": "550e8400-e29b-41d4-a716-446655440000",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Region deleted successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegionDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "404": {
+            "description": "Region not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a region",
+        "tags": [
+          "Admin - Regions"
+        ]
+      }
+    },
     "/cloud-api/industries": {
       "get": {
         "description": "Returns a list of all available industry types.",
@@ -6224,23 +6445,11 @@
             "type": "string",
             "description": "Unique code identifier for the provider",
             "example": "healthcare-plus"
-          },
-          "city": {
-            "type": "string",
-            "description": "City where the provider is located",
-            "example": "Hyderabad"
-          },
-          "state": {
-            "type": "string",
-            "description": "State where the provider is located",
-            "example": "Telangana"
           }
         },
         "required": [
           "name",
-          "code",
-          "city",
-          "state"
+          "code"
         ]
       },
       "ProviderDto": {
@@ -6258,14 +6467,6 @@
             "type": "string",
             "example": "healthcare-plus"
           },
-          "city": {
-            "type": "string",
-            "example": "Hyderabad"
-          },
-          "state": {
-            "type": "string",
-            "example": "Telangana"
-          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -6280,8 +6481,6 @@
           "id",
           "name",
           "code",
-          "city",
-          "state",
           "createdAt"
         ]
       },
@@ -6297,16 +6496,6 @@
             "type": "string",
             "description": "Unique code identifier for the provider",
             "example": "healthcare-plus"
-          },
-          "city": {
-            "type": "string",
-            "description": "City where the provider is located",
-            "example": "Hyderabad"
-          },
-          "state": {
-            "type": "string",
-            "description": "State where the provider is located",
-            "example": "Telangana"
           }
         }
       },
@@ -6384,6 +6573,104 @@
             "type": "string",
             "description": "Shared secret for webhook authentication",
             "example": "whsec_abc123..."
+          }
+        }
+      },
+      "CreateRegionDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Display name of the region",
+            "example": "Hyderabad Metro"
+          },
+          "code": {
+            "type": "string",
+            "description": "Unique code identifier for the region",
+            "example": "hyd-metro"
+          },
+          "state": {
+            "type": "string",
+            "description": "State of the region",
+            "example": "Telangana"
+          },
+          "city": {
+            "type": "string",
+            "description": "City of the region",
+            "example": "Hyderabad"
+          }
+        },
+        "required": [
+          "name",
+          "code",
+          "state",
+          "city"
+        ]
+      },
+      "RegionDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "name": {
+            "type": "string",
+            "example": "Hyderabad Metro"
+          },
+          "code": {
+            "type": "string",
+            "example": "hyd-metro"
+          },
+          "state": {
+            "type": "string",
+            "example": "Telangana"
+          },
+          "city": {
+            "type": "string",
+            "example": "Hyderabad"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "code",
+          "state",
+          "city",
+          "createdAt"
+        ]
+      },
+      "UpdateRegionDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Display name of the region",
+            "example": "Hyderabad Metro"
+          },
+          "code": {
+            "type": "string",
+            "description": "Unique code identifier for the region",
+            "example": "hyd-metro"
+          },
+          "state": {
+            "type": "string",
+            "description": "State of the region",
+            "example": "Telangana"
+          },
+          "city": {
+            "type": "string",
+            "description": "City of the region",
+            "example": "Hyderabad"
           }
         }
       },
