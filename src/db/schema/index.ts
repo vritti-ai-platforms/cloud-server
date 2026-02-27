@@ -7,8 +7,6 @@ export * from './enums';
 // Export all tables
 export * from './deployment';
 export * from './industry';
-export * from './industry-deployment';
-export * from './industry-plan';
 export * from './organization';
 export * from './plan';
 export * from './provider';
