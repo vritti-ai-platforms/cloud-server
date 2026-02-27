@@ -5,7 +5,7 @@ import type { Provider } from '@/db/schema';
 import { providers, regionProviders } from '@/db/schema';
 
 @Injectable()
-export class ProviderRepository extends PrimaryBaseRepository<typeof providers> {
+export class CloudProviderRepository extends PrimaryBaseRepository<typeof providers> {
   constructor(database: PrimaryDatabaseService) {
     super(database, providers);
   }

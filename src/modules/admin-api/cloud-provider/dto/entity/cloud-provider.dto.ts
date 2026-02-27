@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import type { Provider } from '@/db/schema';
 
-export class ProviderDto {
+export class CloudProviderDto {
   @ApiProperty({ example: '550e8400-e29b-41d4-a716-446655440000' })
   id: string;
 
@@ -20,8 +20,8 @@ export class ProviderDto {
   @ApiProperty({ example: 3 })
   regionCount: number;
 
-  static from(provider: Provider, regionCount = 0): ProviderDto {
-    const dto = new ProviderDto();
+  static from(provider: Provider, regionCount = 0): CloudProviderDto {
+    const dto = new CloudProviderDto();
     dto.id = provider.id;
     dto.name = provider.name;
     dto.code = provider.code;

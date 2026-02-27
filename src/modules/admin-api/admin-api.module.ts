@@ -11,20 +11,20 @@ import { PlanService } from './plan/services/plan.service';
 import { PriceController } from './price/controllers/price.controller';
 import { PriceRepository } from './price/repositories/price.repository';
 import { PriceService } from './price/services/price.service';
-import { ProviderController } from './provider/controllers/provider.controller';
-import { ProviderRepository } from './provider/repositories/provider.repository';
-import { ProviderService } from './provider/services/provider.service';
+import { CloudProviderController } from './cloud-provider/controllers/cloud-provider.controller';
+import { CloudProviderRepository } from './cloud-provider/repositories/cloud-provider.repository';
+import { CloudProviderService } from './cloud-provider/services/cloud-provider.service';
 import { RegionController } from './region/controllers/region.controller';
 import { RegionProviderRepository } from './region/repositories/region-provider.repository';
 import { RegionRepository } from './region/repositories/region.repository';
 import { RegionService } from './region/services/region.service';
 
 @Module({
-  controllers: [ProviderController, DeploymentController, RegionController, IndustryController, PlanController, PriceController],
+  controllers: [CloudProviderController, DeploymentController, RegionController, IndustryController, PlanController, PriceController],
   providers: [
-    // Provider
-    ProviderService,
-    ProviderRepository,
+    // Cloud Provider
+    CloudProviderService,
+    CloudProviderRepository,
     // Deployment
     DeploymentService,
     DeploymentRepository,

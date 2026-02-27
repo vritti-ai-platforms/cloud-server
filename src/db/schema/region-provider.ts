@@ -1,15 +1,15 @@
 import { primaryKey, uuid } from '@vritti/api-sdk/drizzle-pg-core';
+import { providers } from './cloud-provider';
 import { cloudSchema } from './cloud-schema';
-import { providers } from './provider';
 import { regions } from './region';
 
 export const regionProviders = cloudSchema.table(
-  'region_providers',
+  'region_cloud_providers',
   {
     regionId: uuid('region_id')
       .notNull()
       .references(() => regions.id, { onDelete: 'cascade' }),
-    providerId: uuid('provider_id')
+    providerId: uuid('cloud_provider_id')
       .notNull()
       .references(() => providers.id, { onDelete: 'cascade' }),
   },

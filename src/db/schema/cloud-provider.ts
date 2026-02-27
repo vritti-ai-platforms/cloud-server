@@ -1,7 +1,7 @@
 import { timestamp, uuid, varchar } from '@vritti/api-sdk/drizzle-pg-core';
 import { cloudSchema } from './cloud-schema';
 
-export const providers = cloudSchema.table('providers', {
+export const providers = cloudSchema.table('cloud_providers', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: varchar('name', { length: 255 }).notNull(),
   code: varchar('code', { length: 100 }).notNull().unique(),
