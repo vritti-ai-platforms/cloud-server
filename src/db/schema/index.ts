@@ -9,6 +9,7 @@ export * from './deployment';
 export * from './industry';
 export * from './organization';
 export * from './plan';
+export * from './price';
 export * from './provider';
 export * from './region';
 export * from './region-provider';

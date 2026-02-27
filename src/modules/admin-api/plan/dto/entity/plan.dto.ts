@@ -17,13 +17,17 @@ export class PlanDto {
   @ApiPropertyOptional({ type: 'string', format: 'date-time', nullable: true })
   updatedAt: Date | null;
 
-  static from(plan: Plan): PlanDto {
+  @ApiProperty({ example: 2 })
+  priceCount: number;
+
+  static from(plan: Plan, priceCount = 0): PlanDto {
     const dto = new PlanDto();
     dto.id = plan.id;
     dto.name = plan.name;
     dto.code = plan.code;
     dto.createdAt = plan.createdAt;
     dto.updatedAt = plan.updatedAt;
+    dto.priceCount = priceCount;
     return dto;
   }
 }

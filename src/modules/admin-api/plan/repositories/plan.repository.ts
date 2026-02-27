@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { PrimaryBaseRepository, PrimaryDatabaseService } from '@vritti/api-sdk';
+import { asc, count, eq } from '@vritti/api-sdk/drizzle-orm';
 import type { Plan } from '@/db/schema';
-import { plans } from '@/db/schema';
+import { plans, prices } from '@/db/schema';
 
 @Injectable()
 export class PlanRepository extends PrimaryBaseRepository<typeof plans> {
@@ -22,5 +23,23 @@ export class PlanRepository extends PrimaryBaseRepository<typeof plans> {
   // Finds a plan by its unique code
   async findByCode(code: string): Promise<Plan | undefined> {
     return this.model.findFirst({ where: { code } });
+  }
+
+  // Returns all plans with a count of associated prices
+  async findAllWithCounts(): Promise<Array<Plan & { priceCount: number }>> {
+    const rows = await this.db
+      .select({
+        id: plans.id,
+        name: plans.name,
+        code: plans.code,
+        createdAt: plans.createdAt,
+        updatedAt: plans.updatedAt,
+        priceCount: count(prices.id),
+      })
+      .from(plans)
+      .leftJoin(prices, eq(prices.planId, plans.id))
+      .groupBy(plans.id)
+      .orderBy(asc(plans.name));
+    return rows as Array<Plan & { priceCount: number }>;
   }
 }

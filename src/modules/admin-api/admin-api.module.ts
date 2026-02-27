@@ -8,6 +8,9 @@ import { IndustryService } from './industry/services/industry.service';
 import { PlanController } from './plan/controllers/plan.controller';
 import { PlanRepository } from './plan/repositories/plan.repository';
 import { PlanService } from './plan/services/plan.service';
+import { PriceController } from './price/controllers/price.controller';
+import { PriceRepository } from './price/repositories/price.repository';
+import { PriceService } from './price/services/price.service';
 import { ProviderController } from './provider/controllers/provider.controller';
 import { ProviderRepository } from './provider/repositories/provider.repository';
 import { ProviderService } from './provider/services/provider.service';
@@ -17,7 +20,7 @@ import { RegionRepository } from './region/repositories/region.repository';
 import { RegionService } from './region/services/region.service';
 
 @Module({
-  controllers: [ProviderController, DeploymentController, RegionController, IndustryController, PlanController],
+  controllers: [ProviderController, DeploymentController, RegionController, IndustryController, PlanController, PriceController],
   providers: [
     // Provider
     ProviderService,
@@ -35,6 +38,9 @@ import { RegionService } from './region/services/region.service';
     // Plan
     PlanService,
     PlanRepository,
+    // Price
+    PriceService,
+    PriceRepository,
   ],
   exports: [DeploymentRepository],
 })

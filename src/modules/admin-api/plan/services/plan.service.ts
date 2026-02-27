@@ -26,10 +26,10 @@ export class PlanService {
     return PlanDto.from(plan);
   }
 
-  // Returns all plans mapped to DTOs
+  // Returns all plans mapped to DTOs with price counts
   async findAll(): Promise<PlanDto[]> {
-    const plans = await this.planRepository.findAll();
-    return plans.map((plan) => PlanDto.from(plan));
+    const plans = await this.planRepository.findAllWithCounts();
+    return plans.map((plan) => PlanDto.from(plan, plan.priceCount));
   }
 
   // Finds a plan by ID; throws NotFoundException if not found

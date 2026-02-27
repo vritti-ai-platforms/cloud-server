@@ -4092,6 +4092,764 @@
         ]
       }
     },
+    "/admin-api/regions/{id}/providers": {
+      "post": {
+        "operationId": "RegionController_assignProviders",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Region UUID",
+            "schema": {
+              "example": "550e8400-e29b-41d4-a716-446655440000",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignProvidersDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Providers assigned successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssignProvidersResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed."
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "404": {
+            "description": "Region not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Bulk assign providers to a region",
+        "tags": [
+          "Admin - Regions"
+        ]
+      }
+    },
+    "/admin-api/industries": {
+      "post": {
+        "operationId": "IndustryController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateIndustryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Industry created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IndustryDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed."
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "409": {
+            "description": "Industry with this code or slug already exists."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new industry",
+        "tags": [
+          "Admin - Industries"
+        ]
+      },
+      "get": {
+        "operationId": "IndustryController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Industries retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/IndustryDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List all industries",
+        "tags": [
+          "Admin - Industries"
+        ]
+      }
+    },
+    "/admin-api/industries/{id}": {
+      "get": {
+        "operationId": "IndustryController_findById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Industry UUID",
+            "schema": {
+              "example": "550e8400-e29b-41d4-a716-446655440000",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Industry retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IndustryDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "404": {
+            "description": "Industry not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get an industry by ID",
+        "tags": [
+          "Admin - Industries"
+        ]
+      },
+      "patch": {
+        "operationId": "IndustryController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Industry UUID",
+            "schema": {
+              "example": "550e8400-e29b-41d4-a716-446655440000",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateIndustryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Industry updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IndustryDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed."
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "404": {
+            "description": "Industry not found."
+          },
+          "409": {
+            "description": "Industry with this code or slug already exists."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update an industry",
+        "tags": [
+          "Admin - Industries"
+        ]
+      },
+      "delete": {
+        "operationId": "IndustryController_delete",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Industry UUID",
+            "schema": {
+              "example": "550e8400-e29b-41d4-a716-446655440000",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Industry deleted successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IndustryDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "404": {
+            "description": "Industry not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete an industry",
+        "tags": [
+          "Admin - Industries"
+        ]
+      }
+    },
+    "/admin-api/plans": {
+      "post": {
+        "operationId": "PlanController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePlanDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Plan created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed."
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "409": {
+            "description": "Plan with this code already exists."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new plan",
+        "tags": [
+          "Admin - Plans"
+        ]
+      },
+      "get": {
+        "operationId": "PlanController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Plans retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PlanDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List all plans",
+        "tags": [
+          "Admin - Plans"
+        ]
+      }
+    },
+    "/admin-api/plans/{id}": {
+      "get": {
+        "operationId": "PlanController_findById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Plan UUID",
+            "schema": {
+              "example": "550e8400-e29b-41d4-a716-446655440000",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Plan retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "404": {
+            "description": "Plan not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a plan by ID",
+        "tags": [
+          "Admin - Plans"
+        ]
+      },
+      "patch": {
+        "operationId": "PlanController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Plan UUID",
+            "schema": {
+              "example": "550e8400-e29b-41d4-a716-446655440000",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePlanDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Plan updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed."
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "404": {
+            "description": "Plan not found."
+          },
+          "409": {
+            "description": "Plan with this code already exists."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update a plan",
+        "tags": [
+          "Admin - Plans"
+        ]
+      },
+      "delete": {
+        "operationId": "PlanController_delete",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Plan UUID",
+            "schema": {
+              "example": "550e8400-e29b-41d4-a716-446655440000",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Plan deleted successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "404": {
+            "description": "Plan not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a plan",
+        "tags": [
+          "Admin - Plans"
+        ]
+      }
+    },
+    "/admin-api/prices": {
+      "post": {
+        "operationId": "PriceController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePriceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Price created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PriceDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed or invalid reference ID."
+          },
+          "401": {
+            "description": "Unauthorized."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new price entry",
+        "tags": [
+          "Admin - Prices"
+        ]
+      },
+      "get": {
+        "operationId": "PriceController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Prices retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PriceDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List all prices",
+        "tags": [
+          "Admin - Prices"
+        ]
+      }
+    },
+    "/admin-api/prices/plan/{planId}": {
+      "get": {
+        "operationId": "PriceController_findByPlanId",
+        "parameters": [
+          {
+            "name": "planId",
+            "required": true,
+            "in": "path",
+            "description": "Plan UUID",
+            "schema": {
+              "example": "550e8400-e29b-41d4-a716-446655440000",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Prices retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PriceDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List all prices for a plan",
+        "tags": [
+          "Admin - Prices"
+        ]
+      }
+    },
+    "/admin-api/prices/{id}": {
+      "get": {
+        "operationId": "PriceController_findById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Price UUID",
+            "schema": {
+              "example": "550e8400-e29b-41d4-a716-446655440000",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Price retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PriceDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "404": {
+            "description": "Price not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a price by ID",
+        "tags": [
+          "Admin - Prices"
+        ]
+      },
+      "patch": {
+        "operationId": "PriceController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Price UUID",
+            "schema": {
+              "example": "550e8400-e29b-41d4-a716-446655440000",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePriceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Price updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PriceDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed or invalid reference ID."
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "404": {
+            "description": "Price not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update a price",
+        "tags": [
+          "Admin - Prices"
+        ]
+      },
+      "delete": {
+        "operationId": "PriceController_delete",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Price UUID",
+            "schema": {
+              "example": "550e8400-e29b-41d4-a716-446655440000",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Price deleted successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PriceDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "404": {
+            "description": "Price not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a price",
+        "tags": [
+          "Admin - Prices"
+        ]
+      }
+    },
     "/cloud-api/industries": {
       "get": {
         "description": "Returns a list of all available industry types.",
@@ -6475,13 +7233,18 @@
             "type": "string",
             "format": "date-time",
             "nullable": true
+          },
+          "regionCount": {
+            "type": "number",
+            "example": 3
           }
         },
         "required": [
           "id",
           "name",
           "code",
-          "createdAt"
+          "createdAt",
+          "regionCount"
         ]
       },
       "UpdateProviderDto": {
@@ -6638,6 +7401,10 @@
             "type": "string",
             "format": "date-time",
             "nullable": true
+          },
+          "providerCount": {
+            "type": "number",
+            "example": 5
           }
         },
         "required": [
@@ -6646,7 +7413,8 @@
           "code",
           "state",
           "city",
-          "createdAt"
+          "createdAt",
+          "providerCount"
         ]
       },
       "UpdateRegionDto": {
@@ -6674,6 +7442,67 @@
           }
         }
       },
+      "AssignProvidersDto": {
+        "type": "object",
+        "properties": {
+          "providerIds": {
+            "description": "Array of provider UUIDs to assign",
+            "example": [
+              "550e8400-e29b-41d4-a716-446655440000"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "providerIds"
+        ]
+      },
+      "AssignProvidersResponseDto": {
+        "type": "object",
+        "properties": {
+          "assigned": {
+            "type": "number",
+            "example": 3,
+            "description": "Number of provider assignments created"
+          }
+        },
+        "required": [
+          "assigned"
+        ]
+      },
+      "CreateIndustryDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Display name of the industry",
+            "example": "Healthcare"
+          },
+          "code": {
+            "type": "string",
+            "description": "Unique code identifier for the industry",
+            "example": "healthcare"
+          },
+          "slug": {
+            "type": "string",
+            "description": "URL-friendly slug for the industry",
+            "example": "healthcare"
+          },
+          "description": {
+            "type": "string",
+            "description": "Optional description of the industry",
+            "example": "Healthcare and medical services"
+          }
+        },
+        "required": [
+          "name",
+          "code",
+          "slug"
+        ]
+      },
       "IndustryDto": {
         "type": "object",
         "properties": {
@@ -6695,6 +7524,227 @@
           "name",
           "slug"
         ]
+      },
+      "UpdateIndustryDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Display name of the industry",
+            "example": "Healthcare"
+          },
+          "code": {
+            "type": "string",
+            "description": "Unique code identifier for the industry",
+            "example": "healthcare"
+          },
+          "slug": {
+            "type": "string",
+            "description": "URL-friendly slug for the industry",
+            "example": "healthcare"
+          },
+          "description": {
+            "type": "string",
+            "description": "Optional description of the industry",
+            "example": "Healthcare and medical services"
+          }
+        }
+      },
+      "CreatePlanDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Display name of the plan",
+            "example": "Pro"
+          },
+          "code": {
+            "type": "string",
+            "description": "Unique code identifier for the plan",
+            "example": "pro"
+          }
+        },
+        "required": [
+          "name",
+          "code"
+        ]
+      },
+      "PlanDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "name": {
+            "type": "string",
+            "example": "Pro"
+          },
+          "code": {
+            "type": "string",
+            "example": "pro"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "code",
+          "createdAt"
+        ]
+      },
+      "UpdatePlanDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Display name of the plan",
+            "example": "Pro"
+          },
+          "code": {
+            "type": "string",
+            "description": "Unique code identifier for the plan",
+            "example": "pro"
+          }
+        }
+      },
+      "CreatePriceDto": {
+        "type": "object",
+        "properties": {
+          "planId": {
+            "type": "string",
+            "description": "Plan UUID",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "industryId": {
+            "type": "string",
+            "description": "Industry UUID",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "regionId": {
+            "type": "string",
+            "description": "Region UUID",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "providerId": {
+            "type": "string",
+            "description": "Provider UUID",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "price": {
+            "type": "string",
+            "description": "Price amount",
+            "example": "99.99"
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 currency code",
+            "example": "INR"
+          }
+        },
+        "required": [
+          "planId",
+          "industryId",
+          "regionId",
+          "providerId",
+          "price",
+          "currency"
+        ]
+      },
+      "PriceDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "planId": {
+            "type": "string",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "industryId": {
+            "type": "string",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "regionId": {
+            "type": "string",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "providerId": {
+            "type": "string",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "price": {
+            "type": "string",
+            "example": "99.99"
+          },
+          "currency": {
+            "type": "string",
+            "example": "INR"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "planId",
+          "industryId",
+          "regionId",
+          "providerId",
+          "price",
+          "currency",
+          "createdAt"
+        ]
+      },
+      "UpdatePriceDto": {
+        "type": "object",
+        "properties": {
+          "planId": {
+            "type": "string",
+            "description": "Plan UUID",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "industryId": {
+            "type": "string",
+            "description": "Industry UUID",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "regionId": {
+            "type": "string",
+            "description": "Region UUID",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "providerId": {
+            "type": "string",
+            "description": "Provider UUID",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "price": {
+            "type": "string",
+            "description": "Price amount",
+            "example": "99.99"
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 currency code",
+            "example": "INR"
+          }
+        }
       },
       "IndustrySelectOptionDto": {
         "type": "object",
