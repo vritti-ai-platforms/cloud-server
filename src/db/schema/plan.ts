@@ -5,7 +5,6 @@ export const plans = cloudSchema.table('plans', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: varchar('name', { length: 100 }).notNull(),
   code: varchar('code', { length: 100 }).notNull().unique(),
-  price: varchar('price', { length: 50 }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).$onUpdate(() => new Date()),
 });
