@@ -4198,6 +4198,16 @@
             }
           },
           {
+            "name": "descriptionKey",
+            "required": false,
+            "in": "query",
+            "description": "Column name for option description",
+            "schema": {
+              "example": "description",
+              "type": "string"
+            }
+          },
+          {
             "name": "groupIdKey",
             "required": false,
             "in": "query",
@@ -6435,6 +6445,11 @@
             "type": "string",
             "description": "URL-friendly slug for the industry",
             "example": "technology"
+          },
+          "description": {
+            "type": "string",
+            "description": "Short description of the industry",
+            "example": "Software companies, SaaS, IT services & digital businesses"
           }
         },
         "required": [
@@ -6476,6 +6491,11 @@
             "type": "string",
             "description": "URL-friendly slug for the industry",
             "example": "technology"
+          },
+          "description": {
+            "type": "string",
+            "description": "Short description of the industry",
+            "example": "Software companies, SaaS, IT services & digital businesses"
           }
         }
       },

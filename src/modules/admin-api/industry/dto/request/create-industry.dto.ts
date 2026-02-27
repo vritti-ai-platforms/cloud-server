@@ -1,5 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsString, MaxLength, MinLength } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 
 export class CreateIndustryDto {
   @ApiProperty({ description: 'Display name of the industry', example: 'Technology' })
@@ -13,4 +13,9 @@ export class CreateIndustryDto {
   @MinLength(1)
   @MaxLength(100)
   slug: string;
+
+  @ApiPropertyOptional({ description: 'Short description of the industry', example: 'Software companies, SaaS, IT services & digital businesses' })
+  @IsOptional()
+  @IsString()
+  description?: string;
 }
