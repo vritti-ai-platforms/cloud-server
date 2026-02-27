@@ -6563,8 +6563,18 @@
         "type": "object",
         "properties": {
           "value": {
-            "type": "string",
-            "example": "acme-corp"
+            "example": "acme-corp",
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
           },
           "label": {
             "type": "string",
@@ -6572,11 +6582,18 @@
           },
           "description": {
             "type": "string",
-            "example": "A leading technology company"
+            "example": "free"
           },
           "groupId": {
-            "type": "string",
-            "example": "550e8400-e29b-41d4-a716-446655440000"
+            "example": "550e8400-e29b-41d4-a716-446655440000",
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              }
+            ]
           }
         },
         "required": [
@@ -6588,8 +6605,15 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "string",
-            "example": "550e8400-e29b-41d4-a716-446655440000"
+            "example": "550e8400-e29b-41d4-a716-446655440000",
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              }
+            ]
           },
           "name": {
             "type": "string",
@@ -6619,6 +6643,10 @@
           "hasMore": {
             "type": "boolean",
             "example": false
+          },
+          "totalCount": {
+            "type": "number",
+            "example": 5
           }
         },
         "required": [

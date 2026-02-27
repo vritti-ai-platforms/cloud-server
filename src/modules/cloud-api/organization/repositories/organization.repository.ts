@@ -15,19 +15,18 @@ export class OrganizationRepository extends PrimaryBaseRepository<typeof organiz
     return this.model.findFirst({ where: { subdomain } });
   }
 
-  // Returns user's organizations as select options, filtered by membership, with plan groups
+  // Returns user's organizations as select options with plan code as description
   findForSelectByUser(
     userId: string,
     config: Omit<FindForSelectConfig, 'joins' | 'conditions'>,
   ): Promise<SelectQueryResult> {
     return this.findForSelect({
       ...config,
-      joins: [{ table: organizationMembers, on: eq(organizations.id, organizationMembers.organizationId) }],
+      joins: [
+        { table: organizationMembers, on: eq(organizations.id, organizationMembers.organizationId) },
+        { table: plans, on: eq(organizations.planId, plans.id) },
+      ],
       conditions: [eq(organizationMembers.userId, userId)],
-      groupId: 'planId',
-      groupTable: plans,
-      groupLabelKey: 'code',
-      groupIdKey: 'id',
     });
   }
 }
