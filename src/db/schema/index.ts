@@ -13,6 +13,7 @@ export * from './organization';
 export * from './plan';
 export * from './provider';
 export * from './region';
+export * from './region-provider';
 export * from './tenant';
 export * from './user';
 export * from './verification';

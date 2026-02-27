@@ -1,15 +1,21 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConflictException, NotFoundException } from '@vritti/api-sdk';
 import { RegionDto } from '../dto/entity/region.dto';
+import type { AssignProvidersDto } from '../dto/request/assign-providers.dto';
 import type { CreateRegionDto } from '../dto/request/create-region.dto';
 import type { UpdateRegionDto } from '../dto/request/update-region.dto';
+import { AssignProvidersResponseDto } from '../dto/response/assign-providers-response.dto';
+import { RegionProviderRepository } from '../repositories/region-provider.repository';
 import { RegionRepository } from '../repositories/region.repository';
 
 @Injectable()
 export class RegionService {
   private readonly logger = new Logger(RegionService.name);
 
-  constructor(private readonly regionRepository: RegionRepository) {}
+  constructor(
+    private readonly regionRepository: RegionRepository,
+    private readonly regionProviderRepository: RegionProviderRepository,
+  ) {}
 
   // Creates a new region; throws ConflictException on duplicate code
   async create(dto: CreateRegionDto): Promise<RegionDto> {
@@ -64,6 +70,15 @@ export class RegionService {
     }
     this.logger.log(`Deleted region: ${region.name} (${region.id})`);
     return RegionDto.from(region);
+  }
+
+  // Bulk-assigns providers to a region; throws NotFoundException if region missing
+  async assignProviders(regionId: string, dto: AssignProvidersDto): Promise<AssignProvidersResponseDto> {
+    const region = await this.regionRepository.findById(regionId);
+    if (!region) throw new NotFoundException('Region not found.');
+    const assigned = await this.regionProviderRepository.bulkInsert(regionId, dto.providerIds);
+    this.logger.log(`Assigned ${assigned} providers to region ${regionId}`);
+    return { assigned };
   }
 
   // Converts PostgreSQL unique constraint violations (23505) to ConflictException

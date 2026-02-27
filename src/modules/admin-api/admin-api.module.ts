@@ -6,6 +6,7 @@ import { ProviderController } from './provider/controllers/provider.controller';
 import { ProviderRepository } from './provider/repositories/provider.repository';
 import { ProviderService } from './provider/services/provider.service';
 import { RegionController } from './region/controllers/region.controller';
+import { RegionProviderRepository } from './region/repositories/region-provider.repository';
 import { RegionRepository } from './region/repositories/region.repository';
 import { RegionService } from './region/services/region.service';
 
@@ -21,6 +22,7 @@ import { RegionService } from './region/services/region.service';
     // Region
     RegionService,
     RegionRepository,
+    RegionProviderRepository,
   ],
   exports: [DeploymentRepository],
 })

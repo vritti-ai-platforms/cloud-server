@@ -1,6 +1,7 @@
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Logger, Param, Patch, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import {
+  ApiAssignRegionProviders,
   ApiCreateRegion,
   ApiDeleteRegion,
   ApiFindAllRegions,
@@ -8,6 +9,8 @@ import {
   ApiUpdateRegion,
 } from '../docs/region.docs';
 import { RegionDto } from '../dto/entity/region.dto';
+import { AssignProvidersDto } from '../dto/request/assign-providers.dto';
+import { AssignProvidersResponseDto } from '../dto/response/assign-providers-response.dto';
 import { CreateRegionDto } from '../dto/request/create-region.dto';
 import { UpdateRegionDto } from '../dto/request/update-region.dto';
 import { RegionService } from '../services/region.service';
@@ -60,5 +63,14 @@ export class RegionController {
   delete(@Param('id') id: string): Promise<RegionDto> {
     this.logger.log(`DELETE /admin-api/regions/${id}`);
     return this.regionService.delete(id);
+  }
+
+  // Bulk-assigns providers to a region
+  @Post(':id/providers')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiAssignRegionProviders()
+  assignProviders(@Param('id') id: string, @Body() dto: AssignProvidersDto): Promise<AssignProvidersResponseDto> {
+    this.logger.log(`POST /admin-api/regions/${id}/providers`);
+    return this.regionService.assignProviders(id, dto);
   }
 }
