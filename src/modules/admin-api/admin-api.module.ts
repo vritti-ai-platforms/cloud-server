@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { DeploymentController } from './deployment/controllers/deployment.controller';
+import { DeploymentIndustryPlanRepository } from './deployment/repositories/deployment-industry-plan.repository';
 import { DeploymentRepository } from './deployment/repositories/deployment.repository';
 import { DeploymentService } from './deployment/services/deployment.service';
 import { IndustryController } from './industry/controllers/industry.controller';
@@ -28,6 +29,7 @@ import { RegionService } from './region/services/region.service';
     // Deployment
     DeploymentService,
     DeploymentRepository,
+    DeploymentIndustryPlanRepository,
     // Region
     RegionService,
     RegionRepository,

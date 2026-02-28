@@ -102,6 +102,10 @@ export const relations = defineRelations(schema, (r) => ({
       from: r.plans.id.through(r.prices.planId),
       to: r.cloudProviders.id.through(r.prices.providerId),
     }),
+    deployments: r.many.deployments({
+      from: r.plans.id.through(r.deploymentIndustryPlans.planId),
+      to: r.deployments.id.through(r.deploymentIndustryPlans.deploymentId),
+    }),
   },
 
   // Industry relations
@@ -112,11 +116,24 @@ export const relations = defineRelations(schema, (r) => ({
       from: r.industries.id.through(r.prices.industryId),
       to: r.plans.id.through(r.prices.planId),
     }),
+    deployments: r.many.deployments({
+      from: r.industries.id.through(r.deploymentIndustryPlans.industryId),
+      to: r.deployments.id.through(r.deploymentIndustryPlans.deploymentId),
+    }),
   },
 
   // Deployment relations
   deployments: {
     organizations: r.many.organizations(),
+    industryPlans: r.many.deploymentIndustryPlans(),
+    plans: r.many.plans({
+      from: r.deployments.id.through(r.deploymentIndustryPlans.deploymentId),
+      to: r.plans.id.through(r.deploymentIndustryPlans.planId),
+    }),
+    industries: r.many.industries({
+      from: r.deployments.id.through(r.deploymentIndustryPlans.deploymentId),
+      to: r.industries.id.through(r.deploymentIndustryPlans.industryId),
+    }),
   },
 
   // Region relations
@@ -162,6 +179,22 @@ export const relations = defineRelations(schema, (r) => ({
     cloudProvider: r.one.cloudProviders({
       from: r.prices.providerId,
       to: r.cloudProviders.id,
+    }),
+  },
+
+  // Deployment-Industry-Plan join table relations
+  deploymentIndustryPlans: {
+    deployment: r.one.deployments({
+      from: r.deploymentIndustryPlans.deploymentId,
+      to: r.deployments.id,
+    }),
+    plan: r.one.plans({
+      from: r.deploymentIndustryPlans.planId,
+      to: r.plans.id,
+    }),
+    industry: r.one.industries({
+      from: r.deploymentIndustryPlans.industryId,
+      to: r.industries.id,
     }),
   },
 

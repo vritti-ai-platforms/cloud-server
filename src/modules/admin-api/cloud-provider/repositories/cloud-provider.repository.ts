@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrimaryBaseRepository, PrimaryDatabaseService } from '@vritti/api-sdk';
 import { asc, count, eq } from '@vritti/api-sdk/drizzle-orm';
-import type { Provider } from '@/db/schema';
+import type { CloudProvider } from '@/db/schema';
 import { cloudProviders, regionCloudProviders } from '@/db/schema';
 
 @Injectable()
@@ -11,14 +11,14 @@ export class CloudProviderRepository extends PrimaryBaseRepository<typeof cloudP
   }
 
   // Returns all providers ordered by name ascending
-  async findAll(): Promise<Provider[]> {
+  async findAll(): Promise<CloudProvider[]> {
     return this.model.findMany({
       orderBy: { name: 'asc' },
     });
   }
 
   // Returns all providers with a count of assigned regions
-  async findAllWithCounts(): Promise<Array<Provider & { regionCount: number }>> {
+  async findAllWithCounts(): Promise<Array<CloudProvider & { regionCount: number }>> {
     const rows = await this.db
       .select({
         id: cloudProviders.id,
@@ -32,15 +32,15 @@ export class CloudProviderRepository extends PrimaryBaseRepository<typeof cloudP
       .leftJoin(regionCloudProviders, eq(regionCloudProviders.providerId, cloudProviders.id))
       .groupBy(cloudProviders.id)
       .orderBy(asc(cloudProviders.name));
-    return rows as Array<Provider & { regionCount: number }>;
+    return rows as Array<CloudProvider & { regionCount: number }>;
   }
 
   // Finds a provider by its unique identifier
-  async findById(id: string): Promise<Provider | undefined> {
+  async findById(id: string): Promise<CloudProvider | undefined> {
     return this.model.findFirst({ where: { id } });
   }
 
-  async findByCode(code: string): Promise<Provider | undefined> {
+  async findByCode(code: string): Promise<CloudProvider | undefined> {
     return this.model.findFirst({ where: { code } });
   }
 }
