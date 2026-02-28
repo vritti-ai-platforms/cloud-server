@@ -18,9 +18,7 @@
           }
         },
         "summary": "Health check endpoint",
-        "tags": [
-          "Health"
-        ]
+        "tags": ["Health"]
       }
     },
     "/csrf/token": {
@@ -42,18 +40,14 @@
                       "example": "abc123xyz789"
                     }
                   },
-                  "required": [
-                    "csrfToken"
-                  ]
+                  "required": ["csrfToken"]
                 }
               }
             }
           }
         },
         "summary": "Get CSRF token",
-        "tags": [
-          "CSRF"
-        ]
+        "tags": ["CSRF"]
       }
     },
     "/cloud-api/tenants": {
@@ -98,9 +92,7 @@
           }
         ],
         "summary": "Create a new tenant",
-        "tags": [
-          "Tenants"
-        ]
+        "tags": ["Tenants"]
       },
       "get": {
         "operationId": "TenantController_findAll",
@@ -129,9 +121,7 @@
           }
         ],
         "summary": "Retrieve all tenants",
-        "tags": [
-          "Tenants"
-        ]
+        "tags": ["Tenants"]
       }
     },
     "/cloud-api/tenants/{id}": {
@@ -173,9 +163,7 @@
           }
         ],
         "summary": "Retrieve a tenant by ID",
-        "tags": [
-          "Tenants"
-        ]
+        "tags": ["Tenants"]
       },
       "patch": {
         "operationId": "TenantController_update",
@@ -232,9 +220,7 @@
           }
         ],
         "summary": "Update a tenant",
-        "tags": [
-          "Tenants"
-        ]
+        "tags": ["Tenants"]
       },
       "delete": {
         "operationId": "TenantController_archive",
@@ -274,9 +260,7 @@
           }
         ],
         "summary": "Archive a tenant (soft delete)",
-        "tags": [
-          "Tenants"
-        ]
+        "tags": ["Tenants"]
       }
     },
     "/cloud-api/tenants/subdomain/{subdomain}": {
@@ -318,9 +302,7 @@
           }
         ],
         "summary": "Retrieve a tenant by subdomain",
-        "tags": [
-          "Tenants"
-        ]
+        "tags": ["Tenants"]
       }
     },
     "/cloud-api/users": {
@@ -351,9 +333,7 @@
           }
         ],
         "summary": "Retrieve all users (admin/internal use)",
-        "tags": [
-          "Users"
-        ]
+        "tags": ["Users"]
       }
     },
     "/cloud-api/users/{id}": {
@@ -395,9 +375,7 @@
           }
         ],
         "summary": "Retrieve a user by ID",
-        "tags": [
-          "Users"
-        ]
+        "tags": ["Users"]
       }
     },
     "/cloud-api/users/profile": {
@@ -442,9 +420,7 @@
           }
         ],
         "summary": "Update user profile",
-        "tags": [
-          "Users"
-        ]
+        "tags": ["Users"]
       }
     },
     "/cloud-api/users/account": {
@@ -482,9 +458,7 @@
           }
         ],
         "summary": "Delete user account",
-        "tags": [
-          "Users"
-        ]
+        "tags": ["Users"]
       }
     },
     "/cloud-api/users/contact/email/request-identity-verification": {
@@ -523,9 +497,7 @@
           }
         ],
         "summary": "Request identity verification for email change",
-        "tags": [
-          "Contact Change"
-        ]
+        "tags": ["Contact Change"]
       }
     },
     "/cloud-api/users/contact/email/verify-identity": {
@@ -576,9 +548,7 @@
           }
         ],
         "summary": "Verify identity for email change",
-        "tags": [
-          "Contact Change"
-        ]
+        "tags": ["Contact Change"]
       }
     },
     "/cloud-api/users/contact/email/submit-new-email": {
@@ -627,9 +597,7 @@
           }
         ],
         "summary": "Submit new email address",
-        "tags": [
-          "Contact Change"
-        ]
+        "tags": ["Contact Change"]
       }
     },
     "/cloud-api/users/contact/email/verify-new-email": {
@@ -688,9 +656,7 @@
           }
         ],
         "summary": "Verify new email and complete change",
-        "tags": [
-          "Contact Change"
-        ]
+        "tags": ["Contact Change"]
       }
     },
     "/cloud-api/users/contact/email/revert": {
@@ -738,9 +704,7 @@
           }
         ],
         "summary": "Revert email change",
-        "tags": [
-          "Contact Change"
-        ]
+        "tags": ["Contact Change"]
       }
     },
     "/cloud-api/users/contact/email/resend-otp": {
@@ -778,9 +742,7 @@
           }
         ],
         "summary": "Resend email verification OTP",
-        "tags": [
-          "Contact Change"
-        ]
+        "tags": ["Contact Change"]
       }
     },
     "/cloud-api/users/contact/phone/request-identity-verification": {
@@ -819,9 +781,7 @@
           }
         ],
         "summary": "Request identity verification for phone change",
-        "tags": [
-          "Contact Change"
-        ]
+        "tags": ["Contact Change"]
       }
     },
     "/cloud-api/users/contact/phone/verify-identity": {
@@ -872,9 +832,7 @@
           }
         ],
         "summary": "Verify identity for phone change",
-        "tags": [
-          "Contact Change"
-        ]
+        "tags": ["Contact Change"]
       }
     },
     "/cloud-api/users/contact/phone/submit-new-phone": {
@@ -923,9 +881,7 @@
           }
         ],
         "summary": "Submit new phone number",
-        "tags": [
-          "Contact Change"
-        ]
+        "tags": ["Contact Change"]
       }
     },
     "/cloud-api/users/contact/phone/verify-new-phone": {
@@ -983,9 +939,7 @@
           }
         ],
         "summary": "Verify new phone and complete change",
-        "tags": [
-          "Contact Change"
-        ]
+        "tags": ["Contact Change"]
       }
     },
     "/cloud-api/users/contact/phone/revert": {
@@ -1032,9 +986,7 @@
           }
         ],
         "summary": "Revert phone change",
-        "tags": [
-          "Contact Change"
-        ]
+        "tags": ["Contact Change"]
       }
     },
     "/cloud-api/users/contact/phone/resend-otp": {
@@ -1072,9 +1024,7 @@
           }
         ],
         "summary": "Resend phone verification OTP",
-        "tags": [
-          "Contact Change"
-        ]
+        "tags": ["Contact Change"]
       }
     },
     "/cloud-api/auth/signup": {
@@ -1120,9 +1070,7 @@
           }
         },
         "summary": "User signup",
-        "tags": [
-          "Auth"
-        ]
+        "tags": ["Auth"]
       }
     },
     "/cloud-api/auth/login": {
@@ -1168,9 +1116,7 @@
           }
         },
         "summary": "User login",
-        "tags": [
-          "Auth"
-        ]
+        "tags": ["Auth"]
       }
     },
     "/cloud-api/auth/status": {
@@ -1191,9 +1137,7 @@
           }
         },
         "summary": "Get current user authentication status",
-        "tags": [
-          "Auth"
-        ]
+        "tags": ["Auth"]
       }
     },
     "/cloud-api/auth/access-token": {
@@ -1217,9 +1161,7 @@
           }
         },
         "summary": "Recover session token",
-        "tags": [
-          "Auth"
-        ]
+        "tags": ["Auth"]
       }
     },
     "/cloud-api/auth/refresh-tokens": {
@@ -1243,9 +1185,7 @@
           }
         },
         "summary": "Refresh access token",
-        "tags": [
-          "Auth"
-        ]
+        "tags": ["Auth"]
       }
     },
     "/cloud-api/auth/logout": {
@@ -1274,9 +1214,7 @@
           }
         ],
         "summary": "Logout from current device",
-        "tags": [
-          "Auth"
-        ]
+        "tags": ["Auth"]
       }
     },
     "/cloud-api/auth/logout-all": {
@@ -1305,9 +1243,7 @@
           }
         ],
         "summary": "Logout from all devices",
-        "tags": [
-          "Auth"
-        ]
+        "tags": ["Auth"]
       }
     },
     "/cloud-api/auth/sessions": {
@@ -1339,9 +1275,7 @@
           }
         ],
         "summary": "List active sessions",
-        "tags": [
-          "Auth"
-        ]
+        "tags": ["Auth"]
       }
     },
     "/cloud-api/auth/sessions/{id}": {
@@ -1386,9 +1320,7 @@
           }
         ],
         "summary": "Revoke a specific session",
-        "tags": [
-          "Auth"
-        ]
+        "tags": ["Auth"]
       }
     },
     "/cloud-api/auth/password/change": {
@@ -1430,9 +1362,7 @@
           }
         ],
         "summary": "Change password",
-        "tags": [
-          "Auth"
-        ]
+        "tags": ["Auth"]
       }
     },
     "/cloud-api/auth/forgot-password": {
@@ -1475,9 +1405,7 @@
           }
         },
         "summary": "Request password reset",
-        "tags": [
-          "Auth"
-        ]
+        "tags": ["Auth"]
       }
     },
     "/cloud-api/auth/resend-reset-otp": {
@@ -1506,9 +1434,7 @@
           }
         ],
         "summary": "Resend password reset OTP",
-        "tags": [
-          "Auth"
-        ]
+        "tags": ["Auth"]
       }
     },
     "/cloud-api/auth/verify-reset-otp": {
@@ -1550,9 +1476,7 @@
           }
         ],
         "summary": "Verify password reset OTP",
-        "tags": [
-          "Auth"
-        ]
+        "tags": ["Auth"]
       }
     },
     "/cloud-api/auth/reset-password": {
@@ -1603,9 +1527,7 @@
           }
         ],
         "summary": "Reset password",
-        "tags": [
-          "Auth"
-        ]
+        "tags": ["Auth"]
       }
     },
     "/cloud-api/auth/oauth/{provider}": {
@@ -1619,11 +1541,7 @@
             "in": "path",
             "description": "OAuth provider name",
             "schema": {
-              "enum": [
-                "google",
-                "github",
-                "microsoft"
-              ],
+              "enum": ["google", "github", "microsoft"],
               "type": "string"
             }
           }
@@ -1637,9 +1555,7 @@
           }
         },
         "summary": "Initiate OAuth flow",
-        "tags": [
-          "OAuth"
-        ]
+        "tags": ["OAuth"]
       }
     },
     "/cloud-api/auth/oauth/{provider}/callback": {
@@ -1653,11 +1569,7 @@
             "in": "path",
             "description": "OAuth provider name",
             "schema": {
-              "enum": [
-                "google",
-                "github",
-                "microsoft"
-              ],
+              "enum": ["google", "github", "microsoft"],
               "type": "string"
             }
           },
@@ -1770,9 +1682,7 @@
           }
         },
         "summary": "Handle OAuth callback",
-        "tags": [
-          "OAuth"
-        ]
+        "tags": ["OAuth"]
       }
     },
     "/cloud-api/auth/passkey/start": {
@@ -1862,9 +1772,7 @@
           }
         },
         "summary": "Start passkey authentication",
-        "tags": [
-          "Auth - Passkey"
-        ]
+        "tags": ["Auth - Passkey"]
       }
     },
     "/cloud-api/auth/passkey/verify": {
@@ -1941,9 +1849,7 @@
           }
         },
         "summary": "Verify passkey authentication",
-        "tags": [
-          "Auth - Passkey"
-        ]
+        "tags": ["Auth - Passkey"]
       }
     },
     "/cloud-api/auth/mfa/verify-totp": {
@@ -1979,9 +1885,7 @@
           }
         },
         "summary": "Verify TOTP code for MFA",
-        "tags": [
-          "MFA"
-        ]
+        "tags": ["MFA"]
       }
     },
     "/cloud-api/auth/mfa/sms/send": {
@@ -2017,9 +1921,7 @@
           }
         },
         "summary": "Send SMS OTP for MFA verification",
-        "tags": [
-          "MFA"
-        ]
+        "tags": ["MFA"]
       }
     },
     "/cloud-api/auth/mfa/sms/verify": {
@@ -2055,9 +1957,7 @@
           }
         },
         "summary": "Verify SMS OTP code for MFA",
-        "tags": [
-          "MFA"
-        ]
+        "tags": ["MFA"]
       }
     },
     "/cloud-api/auth/mfa/passkey/start": {
@@ -2093,9 +1993,7 @@
           }
         },
         "summary": "Start passkey authentication for MFA",
-        "tags": [
-          "MFA"
-        ]
+        "tags": ["MFA"]
       }
     },
     "/cloud-api/auth/mfa/passkey/verify": {
@@ -2131,9 +2029,7 @@
           }
         },
         "summary": "Verify passkey authentication for MFA",
-        "tags": [
-          "MFA"
-        ]
+        "tags": ["MFA"]
       }
     },
     "/cloud-api/onboarding/status": {
@@ -2154,9 +2050,7 @@
           }
         ],
         "summary": "Get current onboarding status",
-        "tags": [
-          "Onboarding"
-        ]
+        "tags": ["Onboarding"]
       }
     },
     "/cloud-api/onboarding/set-password": {
@@ -2198,9 +2092,7 @@
           }
         ],
         "summary": "Set password for OAuth users",
-        "tags": [
-          "Onboarding"
-        ]
+        "tags": ["Onboarding"]
       }
     },
     "/cloud-api/onboarding/complete": {
@@ -2229,9 +2121,7 @@
           }
         ],
         "summary": "Complete onboarding",
-        "tags": [
-          "Onboarding"
-        ]
+        "tags": ["Onboarding"]
       }
     },
     "/cloud-api/onboarding/email-verification/send-otp": {
@@ -2262,9 +2152,7 @@
           }
         ],
         "summary": "Send initial email verification OTP",
-        "tags": [
-          "Onboarding - Email Verification"
-        ]
+        "tags": ["Onboarding - Email Verification"]
       }
     },
     "/cloud-api/onboarding/email-verification/verify-otp": {
@@ -2306,9 +2194,7 @@
           }
         ],
         "summary": "Verify email address using OTP",
-        "tags": [
-          "Onboarding - Email Verification"
-        ]
+        "tags": ["Onboarding - Email Verification"]
       }
     },
     "/cloud-api/onboarding/email-verification/change-email": {
@@ -2350,9 +2236,7 @@
           }
         ],
         "summary": "Change email during onboarding",
-        "tags": [
-          "Onboarding - Email Verification"
-        ]
+        "tags": ["Onboarding - Email Verification"]
       }
     },
     "/cloud-api/onboarding/mobile-verification/initiate/manual": {
@@ -2395,9 +2279,7 @@
           }
         ],
         "summary": "Initiate manual OTP mobile verification",
-        "tags": [
-          "Onboarding - Mobile Verification"
-        ]
+        "tags": ["Onboarding - Mobile Verification"]
       }
     },
     "/cloud-api/onboarding/mobile-verification/events/whatsapp": {
@@ -2422,9 +2304,7 @@
           }
         ],
         "summary": "Initiate WhatsApp QR verification and subscribe to events",
-        "tags": [
-          "Onboarding - Mobile Verification"
-        ]
+        "tags": ["Onboarding - Mobile Verification"]
       }
     },
     "/cloud-api/onboarding/mobile-verification/events/sms": {
@@ -2449,9 +2329,7 @@
           }
         ],
         "summary": "Initiate SMS QR verification and subscribe to events",
-        "tags": [
-          "Onboarding - Mobile Verification"
-        ]
+        "tags": ["Onboarding - Mobile Verification"]
       }
     },
     "/cloud-api/onboarding/mobile-verification/verify-otp": {
@@ -2503,9 +2381,7 @@
           }
         ],
         "summary": "Verify mobile phone number using OTP",
-        "tags": [
-          "Onboarding - Mobile Verification"
-        ]
+        "tags": ["Onboarding - Mobile Verification"]
       }
     },
     "/cloud-api/onboarding/webhooks/{provider}": {
@@ -2519,10 +2395,7 @@
             "in": "path",
             "description": "Webhook provider type",
             "schema": {
-              "enum": [
-                "whatsapp",
-                "sms"
-              ],
+              "enum": ["whatsapp", "sms"],
               "type": "string"
             }
           },
@@ -2591,9 +2464,7 @@
           }
         },
         "summary": "Verify webhook endpoint (Meta/Twilio subscription verification)",
-        "tags": [
-          "Onboarding - Webhooks"
-        ]
+        "tags": ["Onboarding - Webhooks"]
       },
       "post": {
         "description": "Receives and processes incoming message webhooks from Meta (WhatsApp) and Twilio (SMS).\n\n    Validates webhook signatures before processing:\n    - WhatsApp: Uses X-Hub-Signature-256 header (HMAC-SHA256)\n    - SMS: Uses X-Twilio-Signature header (HMAC-SHA1)\n\n    Messages containing verification tokens are processed to complete mobile verification.",
@@ -2605,10 +2476,7 @@
             "in": "path",
             "description": "Webhook provider type",
             "schema": {
-              "enum": [
-                "whatsapp",
-                "sms"
-              ],
+              "enum": ["whatsapp", "sms"],
               "type": "string"
             }
           },
@@ -2710,9 +2578,7 @@
           }
         },
         "summary": "Handle incoming webhook events from WhatsApp or SMS providers",
-        "tags": [
-          "Onboarding - Webhooks"
-        ]
+        "tags": ["Onboarding - Webhooks"]
       }
     },
     "/cloud-api/onboarding/mfa/totp/setup": {
@@ -2743,9 +2609,7 @@
           }
         ],
         "summary": "Initiate TOTP (Time-based One-Time Password) setup",
-        "tags": [
-          "Onboarding - TOTP"
-        ]
+        "tags": ["Onboarding - TOTP"]
       }
     },
     "/cloud-api/onboarding/mfa/totp/verify": {
@@ -2786,9 +2650,7 @@
           }
         ],
         "summary": "Verify TOTP setup with a code from authenticator app",
-        "tags": [
-          "Onboarding - TOTP"
-        ]
+        "tags": ["Onboarding - TOTP"]
       }
     },
     "/cloud-api/onboarding/mfa/passkey/setup": {
@@ -2819,9 +2681,7 @@
           }
         ],
         "summary": "Initiate Passkey/WebAuthn setup",
-        "tags": [
-          "Onboarding - Passkey"
-        ]
+        "tags": ["Onboarding - Passkey"]
       }
     },
     "/cloud-api/onboarding/mfa/passkey/verify": {
@@ -2862,9 +2722,7 @@
           }
         ],
         "summary": "Verify Passkey/WebAuthn credential registration",
-        "tags": [
-          "Onboarding - Passkey"
-        ]
+        "tags": ["Onboarding - Passkey"]
       }
     },
     "/cloud-api/onboarding/mfa/skip": {
@@ -2885,9 +2743,7 @@
           }
         ],
         "summary": "Skip MFA setup",
-        "tags": [
-          "Onboarding - MFA"
-        ]
+        "tags": ["Onboarding - MFA"]
       }
     },
     "/cloud-api/onboarding/mfa/status": {
@@ -2915,9 +2771,7 @@
           }
         ],
         "summary": "Get current MFA status",
-        "tags": [
-          "Onboarding - MFA"
-        ]
+        "tags": ["Onboarding - MFA"]
       }
     },
     "/cloud-api/media/upload": {
@@ -2969,9 +2823,7 @@
           }
         ],
         "summary": "Upload a single file",
-        "tags": [
-          "Media"
-        ]
+        "tags": ["Media"]
       }
     },
     "/cloud-api/media/upload/batch": {
@@ -3023,9 +2875,7 @@
           }
         ],
         "summary": "Upload multiple files (max 10)",
-        "tags": [
-          "Media"
-        ]
+        "tags": ["Media"]
       }
     },
     "/cloud-api/media/{id}": {
@@ -3067,9 +2917,7 @@
           }
         ],
         "summary": "Get media metadata by ID",
-        "tags": [
-          "Media"
-        ]
+        "tags": ["Media"]
       },
       "delete": {
         "operationId": "MediaController_remove",
@@ -3102,9 +2950,7 @@
           }
         ],
         "summary": "Delete a media item",
-        "tags": [
-          "Media"
-        ]
+        "tags": ["Media"]
       }
     },
     "/cloud-api/media/{id}/url": {
@@ -3146,9 +2992,7 @@
           }
         ],
         "summary": "Get presigned download URL",
-        "tags": [
-          "Media"
-        ]
+        "tags": ["Media"]
       }
     },
     "/cloud-api/media/{id}/download": {
@@ -3183,9 +3027,7 @@
           }
         ],
         "summary": "Download/stream a file",
-        "tags": [
-          "Media"
-        ]
+        "tags": ["Media"]
       }
     },
     "/cloud-api/media": {
@@ -3237,9 +3079,7 @@
           }
         ],
         "summary": "Query media by entity type and ID",
-        "tags": [
-          "Media"
-        ]
+        "tags": ["Media"]
       }
     },
     "/cloud-api/organizations/check-subdomain": {
@@ -3277,9 +3117,7 @@
           }
         ],
         "summary": "Check subdomain availability",
-        "tags": [
-          "Organizations"
-        ]
+        "tags": ["Organizations"]
       }
     },
     "/cloud-api/organizations": {
@@ -3293,12 +3131,7 @@
             "multipart/form-data": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "name",
-                  "subdomain",
-                  "orgIdentifier",
-                  "size"
-                ],
+                "required": ["name", "subdomain", "orgIdentifier", "size"],
                 "properties": {
                   "name": {
                     "type": "string",
@@ -3315,23 +3148,12 @@
                   },
                   "size": {
                     "type": "string",
-                    "enum": [
-                      "0-10",
-                      "10-20",
-                      "20-50",
-                      "50-100",
-                      "100-500",
-                      "500+"
-                    ],
+                    "enum": ["0-10", "10-20", "20-50", "50-100", "100-500", "500+"],
                     "example": "0-10"
                   },
                   "plan": {
                     "type": "string",
-                    "enum": [
-                      "free",
-                      "pro",
-                      "enterprise"
-                    ],
+                    "enum": ["free", "pro", "enterprise"],
                     "example": "free"
                   },
                   "industryId": {
@@ -3375,9 +3197,7 @@
           }
         ],
         "summary": "Create a new organization",
-        "tags": [
-          "Organizations"
-        ]
+        "tags": ["Organizations"]
       }
     },
     "/cloud-api/organizations/me": {
@@ -3430,9 +3250,131 @@
           }
         ],
         "summary": "Get my organizations",
-        "tags": [
-          "Organizations"
-        ]
+        "tags": ["Organizations"]
+      }
+    },
+    "/cloud-api/organizations/select": {
+      "get": {
+        "description": "Returns the authenticated user's organizations as paginated options for quantum-ui Select, grouped by plan.",
+        "operationId": "OrganizationController_findForSelect",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Search term to filter by label",
+            "schema": {
+              "example": "united",
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Maximum number of results",
+            "schema": {
+              "default": 20,
+              "example": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "description": "Number of results to skip",
+            "schema": {
+              "default": 0,
+              "example": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "values",
+            "required": false,
+            "in": "query",
+            "description": "Comma-separated values to fetch specific options",
+            "schema": {
+              "example": "1,2,3",
+              "type": "string"
+            }
+          },
+          {
+            "name": "excludeIds",
+            "required": false,
+            "in": "query",
+            "description": "Comma-separated IDs to exclude from results (already selected)",
+            "schema": {
+              "example": "5,10",
+              "type": "string"
+            }
+          },
+          {
+            "name": "valueKey",
+            "required": false,
+            "in": "query",
+            "description": "Column name for option value",
+            "schema": {
+              "default": "id",
+              "example": "id",
+              "type": "string"
+            }
+          },
+          {
+            "name": "labelKey",
+            "required": false,
+            "in": "query",
+            "description": "Column name for option label",
+            "schema": {
+              "default": "name",
+              "example": "name",
+              "type": "string"
+            }
+          },
+          {
+            "name": "descriptionKey",
+            "required": false,
+            "in": "query",
+            "description": "Column name for option description",
+            "schema": {
+              "example": "description",
+              "type": "string"
+            }
+          },
+          {
+            "name": "groupIdKey",
+            "required": false,
+            "in": "query",
+            "description": "Column name for group ID",
+            "schema": {
+              "example": "regionId",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Organization select options retrieved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationSelectResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get organizations for select component",
+        "tags": ["Organizations"]
       }
     },
     "/admin-api/providers": {
@@ -3476,9 +3418,7 @@
           }
         ],
         "summary": "Create a new provider",
-        "tags": [
-          "Admin - Providers"
-        ]
+        "tags": ["Admin - Providers"]
       },
       "get": {
         "operationId": "CloudProviderController_findAll",
@@ -3507,9 +3447,7 @@
           }
         ],
         "summary": "List all providers",
-        "tags": [
-          "Admin - Providers"
-        ]
+        "tags": ["Admin - Providers"]
       }
     },
     "/admin-api/providers/{id}": {
@@ -3551,9 +3489,7 @@
           }
         ],
         "summary": "Get a provider by ID",
-        "tags": [
-          "Admin - Providers"
-        ]
+        "tags": ["Admin - Providers"]
       },
       "patch": {
         "operationId": "CloudProviderController_update",
@@ -3609,9 +3545,7 @@
           }
         ],
         "summary": "Update a provider",
-        "tags": [
-          "Admin - Providers"
-        ]
+        "tags": ["Admin - Providers"]
       },
       "delete": {
         "operationId": "CloudProviderController_delete",
@@ -3651,9 +3585,7 @@
           }
         ],
         "summary": "Delete a provider",
-        "tags": [
-          "Admin - Providers"
-        ]
+        "tags": ["Admin - Providers"]
       }
     },
     "/admin-api/deployments": {
@@ -3694,9 +3626,7 @@
           }
         ],
         "summary": "Create a new deployment",
-        "tags": [
-          "Admin - Deployments"
-        ]
+        "tags": ["Admin - Deployments"]
       },
       "get": {
         "operationId": "DeploymentController_findAll",
@@ -3725,9 +3655,7 @@
           }
         ],
         "summary": "List all deployments",
-        "tags": [
-          "Admin - Deployments"
-        ]
+        "tags": ["Admin - Deployments"]
       }
     },
     "/admin-api/deployments/{id}": {
@@ -3769,9 +3697,7 @@
           }
         ],
         "summary": "Get a deployment by ID",
-        "tags": [
-          "Admin - Deployments"
-        ]
+        "tags": ["Admin - Deployments"]
       },
       "patch": {
         "operationId": "DeploymentController_update",
@@ -3824,9 +3750,7 @@
           }
         ],
         "summary": "Update a deployment",
-        "tags": [
-          "Admin - Deployments"
-        ]
+        "tags": ["Admin - Deployments"]
       },
       "delete": {
         "operationId": "DeploymentController_delete",
@@ -3866,9 +3790,7 @@
           }
         ],
         "summary": "Delete a deployment",
-        "tags": [
-          "Admin - Deployments"
-        ]
+        "tags": ["Admin - Deployments"]
       }
     },
     "/admin-api/regions": {
@@ -3912,9 +3834,7 @@
           }
         ],
         "summary": "Create a new region",
-        "tags": [
-          "Admin - Regions"
-        ]
+        "tags": ["Admin - Regions"]
       },
       "get": {
         "operationId": "RegionController_findAll",
@@ -3943,9 +3863,7 @@
           }
         ],
         "summary": "List all regions",
-        "tags": [
-          "Admin - Regions"
-        ]
+        "tags": ["Admin - Regions"]
       }
     },
     "/admin-api/regions/{id}": {
@@ -3987,9 +3905,7 @@
           }
         ],
         "summary": "Get a region by ID",
-        "tags": [
-          "Admin - Regions"
-        ]
+        "tags": ["Admin - Regions"]
       },
       "patch": {
         "operationId": "RegionController_update",
@@ -4045,9 +3961,7 @@
           }
         ],
         "summary": "Update a region",
-        "tags": [
-          "Admin - Regions"
-        ]
+        "tags": ["Admin - Regions"]
       },
       "delete": {
         "operationId": "RegionController_delete",
@@ -4087,9 +4001,7 @@
           }
         ],
         "summary": "Delete a region",
-        "tags": [
-          "Admin - Regions"
-        ]
+        "tags": ["Admin - Regions"]
       }
     },
     "/admin-api/regions/{id}/providers": {
@@ -4144,9 +4056,7 @@
           }
         ],
         "summary": "Bulk assign providers to a region",
-        "tags": [
-          "Admin - Regions"
-        ]
+        "tags": ["Admin - Regions"]
       }
     },
     "/admin-api/industries": {
@@ -4190,9 +4100,7 @@
           }
         ],
         "summary": "Create a new industry",
-        "tags": [
-          "Admin - Industries"
-        ]
+        "tags": ["Admin - Industries"]
       },
       "get": {
         "operationId": "IndustryController_findAll",
@@ -4221,9 +4129,7 @@
           }
         ],
         "summary": "List all industries",
-        "tags": [
-          "Admin - Industries"
-        ]
+        "tags": ["Admin - Industries"]
       }
     },
     "/admin-api/industries/{id}": {
@@ -4265,9 +4171,7 @@
           }
         ],
         "summary": "Get an industry by ID",
-        "tags": [
-          "Admin - Industries"
-        ]
+        "tags": ["Admin - Industries"]
       },
       "patch": {
         "operationId": "IndustryController_update",
@@ -4323,9 +4227,7 @@
           }
         ],
         "summary": "Update an industry",
-        "tags": [
-          "Admin - Industries"
-        ]
+        "tags": ["Admin - Industries"]
       },
       "delete": {
         "operationId": "IndustryController_delete",
@@ -4365,9 +4267,7 @@
           }
         ],
         "summary": "Delete an industry",
-        "tags": [
-          "Admin - Industries"
-        ]
+        "tags": ["Admin - Industries"]
       }
     },
     "/admin-api/plans": {
@@ -4411,9 +4311,7 @@
           }
         ],
         "summary": "Create a new plan",
-        "tags": [
-          "Admin - Plans"
-        ]
+        "tags": ["Admin - Plans"]
       },
       "get": {
         "operationId": "PlanController_findAll",
@@ -4442,9 +4340,7 @@
           }
         ],
         "summary": "List all plans",
-        "tags": [
-          "Admin - Plans"
-        ]
+        "tags": ["Admin - Plans"]
       }
     },
     "/admin-api/plans/{id}": {
@@ -4486,9 +4382,7 @@
           }
         ],
         "summary": "Get a plan by ID",
-        "tags": [
-          "Admin - Plans"
-        ]
+        "tags": ["Admin - Plans"]
       },
       "patch": {
         "operationId": "PlanController_update",
@@ -4544,9 +4438,7 @@
           }
         ],
         "summary": "Update a plan",
-        "tags": [
-          "Admin - Plans"
-        ]
+        "tags": ["Admin - Plans"]
       },
       "delete": {
         "operationId": "PlanController_delete",
@@ -4586,9 +4478,7 @@
           }
         ],
         "summary": "Delete a plan",
-        "tags": [
-          "Admin - Plans"
-        ]
+        "tags": ["Admin - Plans"]
       }
     },
     "/admin-api/prices": {
@@ -4629,9 +4519,7 @@
           }
         ],
         "summary": "Create a new price entry",
-        "tags": [
-          "Admin - Prices"
-        ]
+        "tags": ["Admin - Prices"]
       },
       "get": {
         "operationId": "PriceController_findAll",
@@ -4660,9 +4548,7 @@
           }
         ],
         "summary": "List all prices",
-        "tags": [
-          "Admin - Prices"
-        ]
+        "tags": ["Admin - Prices"]
       }
     },
     "/admin-api/prices/plan/{planId}": {
@@ -4704,9 +4590,7 @@
           }
         ],
         "summary": "List all prices for a plan",
-        "tags": [
-          "Admin - Prices"
-        ]
+        "tags": ["Admin - Prices"]
       }
     },
     "/admin-api/prices/{id}": {
@@ -4748,9 +4632,7 @@
           }
         ],
         "summary": "Get a price by ID",
-        "tags": [
-          "Admin - Prices"
-        ]
+        "tags": ["Admin - Prices"]
       },
       "patch": {
         "operationId": "PriceController_update",
@@ -4803,9 +4685,7 @@
           }
         ],
         "summary": "Update a price",
-        "tags": [
-          "Admin - Prices"
-        ]
+        "tags": ["Admin - Prices"]
       },
       "delete": {
         "operationId": "PriceController_delete",
@@ -4845,9 +4725,7 @@
           }
         ],
         "summary": "Delete a price",
-        "tags": [
-          "Admin - Prices"
-        ]
+        "tags": ["Admin - Prices"]
       }
     },
     "/cloud-api/industries": {
@@ -4871,9 +4749,7 @@
           }
         },
         "summary": "Get all industries",
-        "tags": [
-          "Industries"
-        ]
+        "tags": ["Industries"]
       }
     },
     "/cloud-api/industries/select": {
@@ -4989,9 +4865,7 @@
           }
         },
         "summary": "Get industries for select component",
-        "tags": [
-          "Industries"
-        ]
+        "tags": ["Industries"]
       }
     }
   },
@@ -5098,20 +4972,13 @@
           "dbType": {
             "type": "string",
             "description": "Database deployment type for the tenant",
-            "enum": [
-              "SHARED",
-              "DEDICATED"
-            ],
+            "enum": ["SHARED", "DEDICATED"],
             "example": "SHARED"
           },
           "status": {
             "type": "string",
             "description": "Current operational status of the tenant",
-            "enum": [
-              "ACTIVE",
-              "SUSPENDED",
-              "ARCHIVED"
-            ],
+            "enum": ["ACTIVE", "SUSPENDED", "ARCHIVED"],
             "example": "ACTIVE",
             "default": "ACTIVE"
           },
@@ -5150,11 +5017,7 @@
           "dbSslMode": {
             "type": "string",
             "description": "SSL mode for database connection security",
-            "enum": [
-              "require",
-              "prefer",
-              "disable"
-            ],
+            "enum": ["require", "prefer", "disable"],
             "example": "require"
           },
           "connectionPoolSize": {
@@ -5165,11 +5028,7 @@
             "maximum": 100
           }
         },
-        "required": [
-          "subdomain",
-          "name",
-          "dbType"
-        ]
+        "required": ["subdomain", "name", "dbType"]
       },
       "TenantDatabaseConfigResponseDto": {
         "type": "object",
@@ -5210,11 +5069,7 @@
           "dbSslMode": {
             "type": "string",
             "description": "SSL mode for database connection security",
-            "enum": [
-              "require",
-              "prefer",
-              "disable"
-            ],
+            "enum": ["require", "prefer", "disable"],
             "example": "require"
           },
           "connectionPoolSize": {
@@ -5276,20 +5131,13 @@
           "dbType": {
             "type": "string",
             "description": "Database deployment type for the tenant",
-            "enum": [
-              "SHARED",
-              "DEDICATED"
-            ],
+            "enum": ["SHARED", "DEDICATED"],
             "example": "SHARED"
           },
           "status": {
             "type": "string",
             "description": "Current operational status of the tenant",
-            "enum": [
-              "ACTIVE",
-              "SUSPENDED",
-              "ARCHIVED"
-            ],
+            "enum": ["ACTIVE", "SUSPENDED", "ARCHIVED"],
             "example": "ACTIVE"
           },
           "databaseConfig": {
@@ -5314,15 +5162,7 @@
             "format": "date-time"
           }
         },
-        "required": [
-          "id",
-          "subdomain",
-          "name",
-          "dbType",
-          "status",
-          "createdAt",
-          "updatedAt"
-        ]
+        "required": ["id", "subdomain", "name", "dbType", "status", "createdAt", "updatedAt"]
       },
       "UpdateTenantDto": {
         "type": "object",
@@ -5351,20 +5191,13 @@
           "dbType": {
             "type": "string",
             "description": "Database deployment type for the tenant",
-            "enum": [
-              "SHARED",
-              "DEDICATED"
-            ],
+            "enum": ["SHARED", "DEDICATED"],
             "example": "SHARED"
           },
           "status": {
             "type": "string",
             "description": "Current operational status of the tenant",
-            "enum": [
-              "ACTIVE",
-              "SUSPENDED",
-              "ARCHIVED"
-            ],
+            "enum": ["ACTIVE", "SUSPENDED", "ARCHIVED"],
             "example": "ACTIVE",
             "default": "ACTIVE"
           },
@@ -5403,11 +5236,7 @@
           "dbSslMode": {
             "type": "string",
             "description": "SSL mode for database connection security",
-            "enum": [
-              "require",
-              "prefer",
-              "disable"
-            ],
+            "enum": ["require", "prefer", "disable"],
             "example": "require"
           },
           "connectionPoolSize": {
@@ -5446,12 +5275,7 @@
             "type": "string",
             "description": "Account status",
             "example": "ACTIVE",
-            "enum": [
-              "PENDING",
-              "ACTIVE",
-              "SUSPENDED",
-              "DEACTIVATED"
-            ]
+            "enum": ["PENDING", "ACTIVE", "SUSPENDED", "DEACTIVATED"]
           },
           "emailVerified": {
             "type": "boolean",
@@ -5467,13 +5291,7 @@
             "type": "string",
             "description": "Current onboarding step",
             "example": "COMPLETE",
-            "enum": [
-              "EMAIL_VERIFICATION",
-              "PASSWORD_SETUP",
-              "PHONE_VERIFICATION",
-              "TWO_FACTOR_SETUP",
-              "COMPLETE"
-            ]
+            "enum": ["EMAIL_VERIFICATION", "PASSWORD_SETUP", "PHONE_VERIFICATION", "TWO_FACTOR_SETUP", "COMPLETE"]
           },
           "hasPassword": {
             "type": "boolean",
@@ -5484,10 +5302,7 @@
             "type": "string",
             "description": "Method used for signup",
             "example": "email",
-            "enum": [
-              "email",
-              "oauth"
-            ]
+            "enum": ["email", "oauth"]
           },
           "phone": {
             "type": "object",
@@ -5606,11 +5421,7 @@
             "type": "string",
             "description": "The current account status of the user",
             "example": "ACTIVE",
-            "enum": [
-              "PENDING_VERIFICATION",
-              "ACTIVE",
-              "INACTIVE"
-            ]
+            "enum": ["PENDING_VERIFICATION", "ACTIVE", "INACTIVE"]
           },
           "emailVerified": {
             "type": "boolean",
@@ -5626,13 +5437,7 @@
             "type": "string",
             "description": "The current step in the user onboarding process",
             "example": "COMPLETE",
-            "enum": [
-              "EMAIL_VERIFICATION",
-              "SET_PASSWORD",
-              "MOBILE_VERIFICATION",
-              "TWO_FACTOR_SETUP",
-              "COMPLETE"
-            ]
+            "enum": ["EMAIL_VERIFICATION", "SET_PASSWORD", "MOBILE_VERIFICATION", "TWO_FACTOR_SETUP", "COMPLETE"]
           },
           "passwordHash": {
             "type": "string",
@@ -5652,9 +5457,7 @@
             "maxLength": 6
           }
         },
-        "required": [
-          "otpCode"
-        ]
+        "required": ["otpCode"]
       },
       "SubmitNewEmailDto": {
         "type": "object",
@@ -5670,10 +5473,7 @@
             "example": "newemail@example.com"
           }
         },
-        "required": [
-          "changeRequestId",
-          "newEmail"
-        ]
+        "required": ["changeRequestId", "newEmail"]
       },
       "VerifyNewEmailDto": {
         "type": "object",
@@ -5691,10 +5491,7 @@
             "maxLength": 6
           }
         },
-        "required": [
-          "changeRequestId",
-          "otpCode"
-        ]
+        "required": ["changeRequestId", "otpCode"]
       },
       "RevertEmailChangeDto": {
         "type": "object",
@@ -5705,9 +5502,7 @@
             "example": "550e8400-e29b-41d4-a716-446655440000"
           }
         },
-        "required": [
-          "revertToken"
-        ]
+        "required": ["revertToken"]
       },
       "SubmitNewPhoneDto": {
         "type": "object",
@@ -5728,11 +5523,7 @@
             "example": "IN"
           }
         },
-        "required": [
-          "changeRequestId",
-          "newPhone",
-          "newPhoneCountry"
-        ]
+        "required": ["changeRequestId", "newPhone", "newPhoneCountry"]
       },
       "VerifyNewPhoneDto": {
         "type": "object",
@@ -5750,10 +5541,7 @@
             "maxLength": 6
           }
         },
-        "required": [
-          "changeRequestId",
-          "otpCode"
-        ]
+        "required": ["changeRequestId", "otpCode"]
       },
       "RevertPhoneChangeDto": {
         "type": "object",
@@ -5764,9 +5552,7 @@
             "example": "550e8400-e29b-41d4-a716-446655440000"
           }
         },
-        "required": [
-          "revertToken"
-        ]
+        "required": ["revertToken"]
       },
       "SignupDto": {
         "type": "object",
@@ -5789,11 +5575,7 @@
             "example": "John Doe"
           }
         },
-        "required": [
-          "email",
-          "password",
-          "fullName"
-        ]
+        "required": ["email", "password", "fullName"]
       },
       "TokenResponse": {
         "type": "object",
@@ -5807,10 +5589,7 @@
             "example": 3600
           }
         },
-        "required": [
-          "accessToken",
-          "expiresIn"
-        ]
+        "required": ["accessToken", "expiresIn"]
       },
       "LoginDto": {
         "type": "object",
@@ -5828,10 +5607,7 @@
             "minLength": 8
           }
         },
-        "required": [
-          "email",
-          "password"
-        ]
+        "required": ["email", "password"]
       },
       "MfaChallengeInfo": {
         "type": "object",
@@ -5844,28 +5620,17 @@
           "availableMethods": {
             "type": "array",
             "description": "Available MFA methods",
-            "example": [
-              "totp",
-              "sms"
-            ],
+            "example": ["totp", "sms"],
             "items": {
               "type": "string",
-              "enum": [
-                "totp",
-                "sms",
-                "passkey"
-              ]
+              "enum": ["totp", "sms", "passkey"]
             }
           },
           "defaultMethod": {
             "type": "string",
             "description": "Default MFA method",
             "example": "totp",
-            "enum": [
-              "totp",
-              "sms",
-              "passkey"
-            ]
+            "enum": ["totp", "sms", "passkey"]
           },
           "maskedPhone": {
             "type": "string",
@@ -5873,11 +5638,7 @@
             "example": "+1 *** *** 4567"
           }
         },
-        "required": [
-          "sessionId",
-          "availableMethods",
-          "defaultMethod"
-        ]
+        "required": ["sessionId", "availableMethods", "defaultMethod"]
       },
       "LoginResponse": {
         "type": "object",
@@ -5948,9 +5709,7 @@
             "example": false
           }
         },
-        "required": [
-          "isAuthenticated"
-        ]
+        "required": ["isAuthenticated"]
       },
       "MessageResponse": {
         "type": "object",
@@ -5960,9 +5719,7 @@
             "example": "Operation completed successfully"
           }
         },
-        "required": [
-          "message"
-        ]
+        "required": ["message"]
       },
       "SessionResponse": {
         "type": "object",
@@ -5999,14 +5756,7 @@
             "example": false
           }
         },
-        "required": [
-          "sessionId",
-          "device",
-          "location",
-          "ipAddress",
-          "lastActive",
-          "isCurrent"
-        ]
+        "required": ["sessionId", "device", "location", "ipAddress", "lastActive", "isCurrent"]
       },
       "ChangePasswordDto": {
         "type": "object",
@@ -6022,10 +5772,7 @@
             "example": "MyNewPassword456!"
           }
         },
-        "required": [
-          "currentPassword",
-          "newPassword"
-        ]
+        "required": ["currentPassword", "newPassword"]
       },
       "ForgotPasswordDto": {
         "type": "object",
@@ -6037,9 +5784,7 @@
             "format": "email"
           }
         },
-        "required": [
-          "email"
-        ]
+        "required": ["email"]
       },
       "ForgotPasswordResponseDto": {
         "type": "object",
@@ -6057,10 +5802,7 @@
             "type": "number"
           }
         },
-        "required": [
-          "success",
-          "message"
-        ]
+        "required": ["success", "message"]
       },
       "SuccessResponse": {
         "type": "object",
@@ -6074,10 +5816,7 @@
             "example": "Operation completed successfully"
           }
         },
-        "required": [
-          "success",
-          "message"
-        ]
+        "required": ["success", "message"]
       },
       "VerifyResetOtpDto": {
         "type": "object",
@@ -6088,9 +5827,7 @@
             "example": "123456"
           }
         },
-        "required": [
-          "otp"
-        ]
+        "required": ["otp"]
       },
       "ResetPasswordDto": {
         "type": "object",
@@ -6102,9 +5839,7 @@
             "minLength": 8
           }
         },
-        "required": [
-          "newPassword"
-        ]
+        "required": ["newPassword"]
       },
       "ResetPasswordResponseDto": {
         "type": "object",
@@ -6125,13 +5860,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "success",
-          "message",
-          "accessToken",
-          "expiresIn",
-          "sessionType"
-        ]
+        "required": ["success", "message", "accessToken", "expiresIn", "sessionType"]
       },
       "StartPasskeyAuthDto": {
         "type": "object",
@@ -6170,10 +5899,7 @@
             }
           }
         },
-        "required": [
-          "sessionId",
-          "credential"
-        ]
+        "required": ["sessionId", "credential"]
       },
       "VerifyMfaTotpDto": {
         "type": "object",
@@ -6192,10 +5918,7 @@
             "pattern": "^\\d{6}$"
           }
         },
-        "required": [
-          "sessionId",
-          "code"
-        ]
+        "required": ["sessionId", "code"]
       },
       "MfaVerificationUserDto": {
         "type": "object",
@@ -6221,12 +5944,7 @@
             "example": "John"
           }
         },
-        "required": [
-          "id",
-          "email",
-          "fullName",
-          "displayName"
-        ]
+        "required": ["id", "email", "fullName", "displayName"]
       },
       "MfaVerificationResponseDto": {
         "type": "object",
@@ -6250,11 +5968,7 @@
             ]
           }
         },
-        "required": [
-          "accessToken",
-          "expiresIn",
-          "user"
-        ]
+        "required": ["accessToken", "expiresIn", "user"]
       },
       "SendSmsOtpDto": {
         "type": "object",
@@ -6265,9 +5979,7 @@
             "example": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
           }
         },
-        "required": [
-          "sessionId"
-        ]
+        "required": ["sessionId"]
       },
       "SmsOtpSentResponseDto": {
         "type": "object",
@@ -6288,11 +6000,7 @@
             "example": "+1******7890"
           }
         },
-        "required": [
-          "success",
-          "message",
-          "maskedPhone"
-        ]
+        "required": ["success", "message", "maskedPhone"]
       },
       "VerifySmsOtpDto": {
         "type": "object",
@@ -6311,10 +6019,7 @@
             "pattern": "^\\d{6}$"
           }
         },
-        "required": [
-          "sessionId",
-          "code"
-        ]
+        "required": ["sessionId", "code"]
       },
       "StartPasskeyMfaDto": {
         "type": "object",
@@ -6325,9 +6030,7 @@
             "example": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
           }
         },
-        "required": [
-          "sessionId"
-        ]
+        "required": ["sessionId"]
       },
       "PasskeyMfaOptionsDto": {
         "type": "object",
@@ -6349,9 +6052,7 @@
             }
           }
         },
-        "required": [
-          "options"
-        ]
+        "required": ["options"]
       },
       "AuthenticatorResponseDto": {
         "type": "object",
@@ -6377,11 +6078,7 @@
             "example": "dXNlcl9hYmMxMjM"
           }
         },
-        "required": [
-          "clientDataJSON",
-          "authenticatorData",
-          "signature"
-        ]
+        "required": ["clientDataJSON", "authenticatorData", "signature"]
       },
       "AuthenticationResponseJSONDto": {
         "type": "object",
@@ -6408,10 +6105,7 @@
             "type": "string",
             "description": "Type of authenticator attachment used",
             "example": "platform",
-            "enum": [
-              "platform",
-              "cross-platform"
-            ]
+            "enum": ["platform", "cross-platform"]
           },
           "clientExtensionResults": {
             "type": "object",
@@ -6422,18 +6116,10 @@
             "type": "string",
             "description": "Credential type (always \"public-key\" for WebAuthn)",
             "example": "public-key",
-            "enum": [
-              "public-key"
-            ]
+            "enum": ["public-key"]
           }
         },
-        "required": [
-          "id",
-          "rawId",
-          "response",
-          "clientExtensionResults",
-          "type"
-        ]
+        "required": ["id", "rawId", "response", "clientExtensionResults", "type"]
       },
       "VerifyPasskeyMfaDto": {
         "type": "object",
@@ -6452,10 +6138,7 @@
             ]
           }
         },
-        "required": [
-          "sessionId",
-          "credential"
-        ]
+        "required": ["sessionId", "credential"]
       },
       "SetPasswordDto": {
         "type": "object",
@@ -6467,9 +6150,7 @@
             "minLength": 8
           }
         },
-        "required": [
-          "password"
-        ]
+        "required": ["password"]
       },
       "StartOnboardingResponseDto": {
         "type": "object",
@@ -6485,10 +6166,7 @@
             "example": "Onboarding started successfully. OTP sent to your email."
           }
         },
-        "required": [
-          "success",
-          "message"
-        ]
+        "required": ["success", "message"]
       },
       "ResendEmailOtpResponseDto": {
         "type": "object",
@@ -6504,10 +6182,7 @@
             "example": "OTP sent successfully"
           }
         },
-        "required": [
-          "success",
-          "message"
-        ]
+        "required": ["success", "message"]
       },
       "VerifyEmailDto": {
         "type": "object",
@@ -6520,9 +6195,7 @@
             "maxLength": 6
           }
         },
-        "required": [
-          "otp"
-        ]
+        "required": ["otp"]
       },
       "VerifyEmailResponseDto": {
         "type": "object",
@@ -6538,10 +6211,7 @@
             "example": "Email verified successfully"
           }
         },
-        "required": [
-          "success",
-          "message"
-        ]
+        "required": ["success", "message"]
       },
       "ChangeEmailDto": {
         "type": "object",
@@ -6551,9 +6221,7 @@
             "example": "new@example.com"
           }
         },
-        "required": [
-          "email"
-        ]
+        "required": ["email"]
       },
       "InitiateMobileVerificationDto": {
         "type": "object",
@@ -6576,18 +6244,10 @@
             "type": "string",
             "description": "Method to use for mobile verification.",
             "example": "whatsapp",
-            "enum": [
-              "whatsapp",
-              "sms",
-              "manual"
-            ]
+            "enum": ["whatsapp", "sms", "manual"]
           }
         },
-        "required": [
-          "phone",
-          "phoneCountry",
-          "method"
-        ]
+        "required": ["phone", "phoneCountry", "method"]
       },
       "MobileVerificationStatusResponseDto": {
         "type": "object",
@@ -6613,10 +6273,7 @@
             "example": "+14155238886"
           }
         },
-        "required": [
-          "success",
-          "message"
-        ]
+        "required": ["success", "message"]
       },
       "VerifyMobileOtpDto": {
         "type": "object",
@@ -6629,9 +6286,7 @@
             "maxLength": 6
           }
         },
-        "required": [
-          "otp"
-        ]
+        "required": ["otp"]
       },
       "TotpSetupResponseDto": {
         "type": "object",
@@ -6657,12 +6312,7 @@
             "example": "john.doe@example.com"
           }
         },
-        "required": [
-          "keyUri",
-          "manualSetupKey",
-          "issuer",
-          "accountName"
-        ]
+        "required": ["keyUri", "manualSetupKey", "issuer", "accountName"]
       },
       "VerifyTotpDto": {
         "type": "object",
@@ -6675,9 +6325,7 @@
             "maxLength": 6
           }
         },
-        "required": [
-          "code"
-        ]
+        "required": ["code"]
       },
       "BackupCodesResponseDto": {
         "type": "object",
@@ -6694,16 +6342,7 @@
           },
           "backupCodes": {
             "description": "Array of one-time use backup codes for account recovery",
-            "example": [
-              "ABC123DE",
-              "FGH456IJ",
-              "KLM789NO",
-              "PQR012ST",
-              "UVW345XY",
-              "ZAB678CD",
-              "EFG901HI",
-              "JKL234MN"
-            ],
+            "example": ["ABC123DE", "FGH456IJ", "KLM789NO", "PQR012ST", "UVW345XY", "ZAB678CD", "EFG901HI", "JKL234MN"],
             "type": "array",
             "items": {
               "type": "string"
@@ -6715,12 +6354,7 @@
             "example": "These codes will only be shown once. Store them in a secure location. Each code can only be used once."
           }
         },
-        "required": [
-          "success",
-          "message",
-          "backupCodes",
-          "warning"
-        ]
+        "required": ["success", "message", "backupCodes", "warning"]
       },
       "PasskeyRegistrationOptionsDto": {
         "type": "object",
@@ -6755,9 +6389,7 @@
             }
           }
         },
-        "required": [
-          "options"
-        ]
+        "required": ["options"]
       },
       "VerifyPasskeyDto": {
         "type": "object",
@@ -6771,10 +6403,7 @@
               "response": {
                 "clientDataJSON": "base64url-client-data",
                 "attestationObject": "base64url-attestation-object",
-                "transports": [
-                  "internal",
-                  "hybrid"
-                ]
+                "transports": ["internal", "hybrid"]
               },
               "authenticatorAttachment": "platform",
               "clientExtensionResults": {},
@@ -6782,9 +6411,7 @@
             }
           }
         },
-        "required": [
-          "credential"
-        ]
+        "required": ["credential"]
       },
       "MfaStatusResponseDto": {
         "type": "object",
@@ -6798,12 +6425,7 @@
             "type": "string",
             "description": "The multi-factor authentication method configured by the user",
             "example": "TOTP",
-            "enum": [
-              "TOTP",
-              "PASSKEY",
-              "SMS",
-              "EMAIL"
-            ],
+            "enum": ["TOTP", "PASSKEY", "SMS", "EMAIL"],
             "nullable": true
           },
           "backupCodesRemaining": {
@@ -6826,10 +6448,7 @@
             "nullable": true
           }
         },
-        "required": [
-          "isEnabled",
-          "backupCodesRemaining"
-        ]
+        "required": ["isEnabled", "backupCodesRemaining"]
       },
       "MediaDto": {
         "type": "object",
@@ -6868,12 +6487,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "pending",
-              "ready",
-              "failed",
-              "deleted"
-            ],
+            "enum": ["pending", "ready", "failed", "deleted"],
             "example": "ready"
           },
           "entityType": {
@@ -6932,10 +6546,7 @@
             "description": "Number of failed uploads"
           }
         },
-        "required": [
-          "uploaded",
-          "failed"
-        ]
+        "required": ["uploaded", "failed"]
       },
       "PresignedUrlResponseDto": {
         "type": "object",
@@ -6950,10 +6561,7 @@
             "description": "URL expiry in seconds"
           }
         },
-        "required": [
-          "url",
-          "expiresIn"
-        ]
+        "required": ["url", "expiresIn"]
       },
       "SubdomainAvailabilityResponseDto": {
         "type": "object",
@@ -6962,9 +6570,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "available"
-        ]
+        "required": ["available"]
       },
       "CreateOrganizationResponseDto": {
         "type": "object",
@@ -6998,14 +6604,7 @@
           "size": {
             "type": "string",
             "description": "Size of the organization",
-            "enum": [
-              "0-10",
-              "10-20",
-              "20-50",
-              "50-100",
-              "100-500",
-              "500+"
-            ],
+            "enum": ["0-10", "10-20", "20-50", "50-100", "100-500", "500+"],
             "example": "0-10"
           },
           "mediaId": {
@@ -7029,10 +6628,7 @@
           "role": {
             "type": "string",
             "description": "Authenticated user's role in this organization",
-            "enum": [
-              "Owner",
-              "Admin"
-            ],
+            "enum": ["Owner", "Admin"],
             "example": "Owner"
           },
           "createdAt": {
@@ -7051,16 +6647,7 @@
             "example": "Organization created successfully"
           }
         },
-        "required": [
-          "id",
-          "name",
-          "subdomain",
-          "orgIdentifier",
-          "size",
-          "role",
-          "createdAt",
-          "message"
-        ]
+        "required": ["id", "name", "subdomain", "orgIdentifier", "size", "role", "createdAt", "message"]
       },
       "OrgListItemDto": {
         "type": "object",
@@ -7094,14 +6681,7 @@
           "size": {
             "type": "string",
             "description": "Size of the organization",
-            "enum": [
-              "0-10",
-              "10-20",
-              "20-50",
-              "50-100",
-              "100-500",
-              "500+"
-            ],
+            "enum": ["0-10", "10-20", "20-50", "50-100", "100-500", "500+"],
             "example": "0-10"
           },
           "mediaId": {
@@ -7125,10 +6705,7 @@
           "role": {
             "type": "string",
             "description": "Authenticated user's role in this organization",
-            "enum": [
-              "Owner",
-              "Admin"
-            ],
+            "enum": ["Owner", "Admin"],
             "example": "Owner"
           },
           "createdAt": {
@@ -7143,15 +6720,7 @@
             "nullable": true
           }
         },
-        "required": [
-          "id",
-          "name",
-          "subdomain",
-          "orgIdentifier",
-          "size",
-          "role",
-          "createdAt"
-        ]
+        "required": ["id", "name", "subdomain", "orgIdentifier", "size", "role", "createdAt"]
       },
       "PaginatedOrgsResponseDto": {
         "type": "object",
@@ -7183,13 +6752,93 @@
             "example": false
           }
         },
-        "required": [
-          "result",
-          "total",
-          "offset",
-          "limit",
-          "hasMore"
-        ]
+        "required": ["result", "total", "offset", "limit", "hasMore"]
+      },
+      "OrganizationSelectOptionDto": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "example": "acme-corp",
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "label": {
+            "type": "string",
+            "example": "Acme Corporation"
+          },
+          "description": {
+            "type": "string",
+            "example": "free"
+          },
+          "groupId": {
+            "example": "550e8400-e29b-41d4-a716-446655440000",
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              }
+            ]
+          }
+        },
+        "required": ["value", "label"]
+      },
+      "OrganizationSelectGroupDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "example": "550e8400-e29b-41d4-a716-446655440000",
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              }
+            ]
+          },
+          "name": {
+            "type": "string",
+            "example": "free"
+          }
+        },
+        "required": ["id", "name"]
+      },
+      "OrganizationSelectResponseDto": {
+        "type": "object",
+        "properties": {
+          "options": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrganizationSelectOptionDto"
+            }
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrganizationSelectGroupDto"
+            }
+          },
+          "hasMore": {
+            "type": "boolean",
+            "example": false
+          },
+          "totalCount": {
+            "type": "number",
+            "example": 5
+          }
+        },
+        "required": ["options", "hasMore"]
       },
       "CreateCloudProviderDto": {
         "type": "object",
@@ -7205,10 +6854,7 @@
             "example": "healthcare-plus"
           }
         },
-        "required": [
-          "name",
-          "code"
-        ]
+        "required": ["name", "code"]
       },
       "CloudProviderDto": {
         "type": "object",
@@ -7239,13 +6885,7 @@
             "example": 3
           }
         },
-        "required": [
-          "id",
-          "name",
-          "code",
-          "createdAt",
-          "regionCount"
-        ]
+        "required": ["id", "name", "code", "createdAt", "regionCount"]
       },
       "UpdateCloudProviderDto": {
         "type": "object",
@@ -7281,11 +6921,7 @@
             "example": "whsec_abc123..."
           }
         },
-        "required": [
-          "name",
-          "nexusUrl",
-          "webhookSecret"
-        ]
+        "required": ["name", "nexusUrl", "webhookSecret"]
       },
       "DeploymentDto": {
         "type": "object",
@@ -7312,12 +6948,7 @@
             "nullable": true
           }
         },
-        "required": [
-          "id",
-          "name",
-          "nexusUrl",
-          "createdAt"
-        ]
+        "required": ["id", "name", "nexusUrl", "createdAt"]
       },
       "UpdateDeploymentDto": {
         "type": "object",
@@ -7363,12 +6994,7 @@
             "example": "Hyderabad"
           }
         },
-        "required": [
-          "name",
-          "code",
-          "state",
-          "city"
-        ]
+        "required": ["name", "code", "state", "city"]
       },
       "RegionDto": {
         "type": "object",
@@ -7407,15 +7033,7 @@
             "example": 5
           }
         },
-        "required": [
-          "id",
-          "name",
-          "code",
-          "state",
-          "city",
-          "createdAt",
-          "providerCount"
-        ]
+        "required": ["id", "name", "code", "state", "city", "createdAt", "providerCount"]
       },
       "UpdateRegionDto": {
         "type": "object",
@@ -7447,18 +7065,14 @@
         "properties": {
           "providerIds": {
             "description": "Array of provider UUIDs to assign",
-            "example": [
-              "550e8400-e29b-41d4-a716-446655440000"
-            ],
+            "example": ["550e8400-e29b-41d4-a716-446655440000"],
             "type": "array",
             "items": {
               "type": "string"
             }
           }
         },
-        "required": [
-          "providerIds"
-        ]
+        "required": ["providerIds"]
       },
       "AssignProvidersResponseDto": {
         "type": "object",
@@ -7469,9 +7083,7 @@
             "description": "Number of provider assignments created"
           }
         },
-        "required": [
-          "assigned"
-        ]
+        "required": ["assigned"]
       },
       "CreateIndustryDto": {
         "type": "object",
@@ -7497,11 +7109,7 @@
             "example": "Healthcare and medical services"
           }
         },
-        "required": [
-          "name",
-          "code",
-          "slug"
-        ]
+        "required": ["name", "code", "slug"]
       },
       "IndustryDto": {
         "type": "object",
@@ -7519,11 +7127,7 @@
             "type": "object"
           }
         },
-        "required": [
-          "id",
-          "name",
-          "slug"
-        ]
+        "required": ["id", "name", "slug"]
       },
       "UpdateIndustryDto": {
         "type": "object",
@@ -7564,10 +7168,7 @@
             "example": "pro"
           }
         },
-        "required": [
-          "name",
-          "code"
-        ]
+        "required": ["name", "code"]
       },
       "PlanDto": {
         "type": "object",
@@ -7598,13 +7199,7 @@
             "example": 2
           }
         },
-        "required": [
-          "id",
-          "name",
-          "code",
-          "createdAt",
-          "priceCount"
-        ]
+        "required": ["id", "name", "code", "createdAt", "priceCount"]
       },
       "UpdatePlanDto": {
         "type": "object",
@@ -7655,14 +7250,7 @@
             "example": "INR"
           }
         },
-        "required": [
-          "planId",
-          "industryId",
-          "regionId",
-          "providerId",
-          "price",
-          "currency"
-        ]
+        "required": ["planId", "industryId", "regionId", "providerId", "price", "currency"]
       },
       "PriceDto": {
         "type": "object",
@@ -7705,16 +7293,7 @@
             "nullable": true
           }
         },
-        "required": [
-          "id",
-          "planId",
-          "industryId",
-          "regionId",
-          "providerId",
-          "price",
-          "currency",
-          "createdAt"
-        ]
+        "required": ["id", "planId", "industryId", "regionId", "providerId", "price", "currency", "createdAt"]
       },
       "UpdatePriceDto": {
         "type": "object",
@@ -7767,10 +7346,7 @@
             "example": "Software companies, SaaS, IT services & digital businesses"
           }
         },
-        "required": [
-          "value",
-          "label"
-        ]
+        "required": ["value", "label"]
       },
       "IndustrySelectResponseDto": {
         "type": "object",
@@ -7786,10 +7362,7 @@
             "example": false
           }
         },
-        "required": [
-          "options",
-          "hasMore"
-        ]
+        "required": ["options", "hasMore"]
       }
     }
   }

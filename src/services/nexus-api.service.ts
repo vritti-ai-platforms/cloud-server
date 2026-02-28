@@ -18,7 +18,6 @@ export class NexusApiService {
       subdomain: string;
       size: string;
       planId?: string;
-      industryId?: string;
       mediaId?: string;
     },
   ): Promise<{ id: string }> {
