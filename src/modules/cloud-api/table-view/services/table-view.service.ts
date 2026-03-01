@@ -18,26 +18,15 @@ export class TableViewService {
 
   constructor(private readonly tableViewRepository: TableViewRepository) {}
 
-  // Upserts the auto-saved live state for a user+table; updates if exists, inserts if not
+  // Upserts the auto-saved live state for a user+table in a single DB round-trip
   async upsertCurrentState(userId: string, dto: UpsertTableStateDto): Promise<TableViewDto> {
-    const existing = await this.tableViewRepository.findCurrentByUserAndSlug(userId, dto.tableSlug);
-
-    if (existing) {
-      const updated = await this.tableViewRepository.update(existing.id, { state: dto.state });
-      this.logger.log(`Updated live state for user: ${userId}, table: ${dto.tableSlug}`);
-      return TableViewDto.from(updated, userId);
-    }
-
-    const created = await this.tableViewRepository.create({
+    const row = await this.tableViewRepository.upsertCurrent({
       userId,
       tableSlug: dto.tableSlug,
-      name: null,
       state: dto.state,
-      isCurrent: true,
-      isShared: false,
     });
-    this.logger.log(`Created live state for user: ${userId}, table: ${dto.tableSlug}`);
-    return TableViewDto.from(created, userId);
+    this.logger.log(`Upserted live state for user: ${userId}, table: ${dto.tableSlug}`);
+    return TableViewDto.from(row, userId);
   }
 
   // Returns the stored live state for a user+table; returns empty state if no row exists

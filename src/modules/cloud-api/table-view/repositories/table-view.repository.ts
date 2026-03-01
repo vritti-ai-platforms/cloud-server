@@ -16,7 +16,23 @@ export class TableViewRepository extends PrimaryBaseRepository<typeof tableViews
     });
   }
 
-  // Returns all named views for a table — own rows and all shared rows from other users
+  // Upserts the live state row — updates if exists, inserts if not
+  async upsertCurrent(data: { userId: string; tableSlug: string; state: unknown }): Promise<TableView> {
+    const existing = await this.findCurrentByUserAndSlug(data.userId, data.tableSlug);
+    if (existing) {
+      return this.update(existing.id, { state: data.state });
+    }
+    return this.create({
+      userId: data.userId,
+      tableSlug: data.tableSlug,
+      name: null,
+      state: data.state,
+      isCurrent: true,
+      isShared: false,
+    });
+  }
+
+  // Returns all named views for a table — own rows and all shared rows from other users, capped at 100
   async findNamedViewsBySlug(userId: string, tableSlug: string): Promise<TableView[]> {
     const results = await this.db
       .select()
@@ -28,7 +44,8 @@ export class TableViewRepository extends PrimaryBaseRepository<typeof tableViews
           or(eq(tableViews.userId, userId), eq(tableViews.isShared, true)),
         ),
       )
-      .orderBy(tableViews.createdAt);
+      .orderBy(tableViews.createdAt)
+      .limit(100);
     return results;
   }
 }

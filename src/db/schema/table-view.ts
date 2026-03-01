@@ -1,4 +1,5 @@
 import type { TableViewState } from '@vritti/api-sdk';
+import { sql } from '@vritti/api-sdk/drizzle-orm';
 import { boolean, index, jsonb, timestamp, uniqueIndex, uuid, varchar } from '@vritti/api-sdk/drizzle-pg-core';
 import { cloudSchema } from './cloud-schema';
 import { users } from './user';
@@ -24,6 +25,10 @@ export const tableViews = cloudSchema.table(
     index('table_views_shared_slug_idx').on(table.tableSlug, table.isShared),
     // Named views must have a unique name per user+table combination
     uniqueIndex('table_views_user_table_name_unique').on(table.userId, table.tableSlug, table.name),
+    // Partial unique index — enforces one live-state row per user+table; used by onConflictDoUpdate
+    uniqueIndex('table_views_user_slug_current_unique')
+      .on(table.userId, table.tableSlug)
+      .where(sql`${table.isCurrent} = true`),
   ],
 );
 
