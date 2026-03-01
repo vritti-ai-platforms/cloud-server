@@ -1,6 +1,7 @@
 import { applyDecorators } from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse } from '@nestjs/swagger';
 import { CloudProviderDto } from '../dto/entity/cloud-provider.dto';
+import { CloudProvidersResponseDto } from '../dto/response/cloud-providers-response.dto';
 import { CreateCloudProviderDto } from '../dto/request/create-cloud-provider.dto';
 import { UpdateCloudProviderDto } from '../dto/request/update-cloud-provider.dto';
 
@@ -18,7 +19,9 @@ export function ApiCreateCloudProvider() {
 export function ApiFindAllCloudProviders() {
   return applyDecorators(
     ApiOperation({ summary: 'List all cloud providers' }),
-    ApiResponse({ status: 200, description: 'Cloud providers retrieved successfully.', type: CloudProviderDto, isArray: true }),
+    ApiQuery({ name: 'searchColumn', required: false, description: 'Column to search (name, code)' }),
+    ApiQuery({ name: 'searchValue', required: false, description: 'Search value (contains match)' }),
+    ApiResponse({ status: 200, description: 'Cloud providers retrieved successfully.', type: CloudProvidersResponseDto }),
     ApiResponse({ status: 401, description: 'Unauthorized.' }),
   );
 }

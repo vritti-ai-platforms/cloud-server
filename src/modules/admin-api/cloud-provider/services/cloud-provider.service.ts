@@ -1,6 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ConflictException, NotFoundException } from '@vritti/api-sdk';
+import { ConflictException, FilterProcessor, NotFoundException, type FieldMap, type FilterCondition } from '@vritti/api-sdk';
+import { cloudProviders } from '@/db/schema';
+import { TableViewService } from '../../../cloud-api/table-view/services/table-view.service';
 import { CloudProviderDto } from '../dto/entity/cloud-provider.dto';
+import { CloudProvidersResponseDto } from '../dto/response/cloud-providers-response.dto';
 import type { CreateCloudProviderDto } from '../dto/request/create-cloud-provider.dto';
 import type { UpdateCloudProviderDto } from '../dto/request/update-cloud-provider.dto';
 import { CloudProviderRepository } from '../repositories/cloud-provider.repository';
@@ -9,7 +12,15 @@ import { CloudProviderRepository } from '../repositories/cloud-provider.reposito
 export class CloudProviderService {
   private readonly logger = new Logger(CloudProviderService.name);
 
-  constructor(private readonly cloudProviderRepository: CloudProviderRepository) {}
+  private static readonly FIELD_MAP: FieldMap = {
+    name: { column: cloudProviders.name, type: 'string' },
+    code: { column: cloudProviders.code, type: 'string' },
+  };
+
+  constructor(
+    private readonly cloudProviderRepository: CloudProviderRepository,
+    private readonly tableViewService: TableViewService,
+  ) {}
 
   // Creates a new cloud provider; throws ConflictException on duplicate code
   async create(dto: CreateCloudProviderDto): Promise<CloudProviderDto> {
@@ -22,10 +33,20 @@ export class CloudProviderService {
     return CloudProviderDto.from(provider);
   }
 
-  // Returns all cloud providers mapped to DTOs with region counts
-  async findAll(): Promise<CloudProviderDto[]> {
-    const providers = await this.cloudProviderRepository.findAllWithCounts();
-    return providers.map((provider) => CloudProviderDto.from(provider, provider.regionCount));
+  // Returns all cloud providers with region counts, applying server-stored filter/sort state plus an optional search filter
+  async findAll(userId: string, searchColumn?: string, searchValue?: string): Promise<CloudProvidersResponseDto> {
+    const state = await this.tableViewService.getCurrentState(userId, 'cloud-providers');
+    const filters: FilterCondition[] = [...state.filters];
+    if (searchColumn && searchValue && CloudProviderService.FIELD_MAP[searchColumn]) {
+      filters.push({ field: searchColumn, operator: 'contains', value: searchValue });
+    }
+    const where = FilterProcessor.buildWhere(filters, CloudProviderService.FIELD_MAP);
+    const orderBy = FilterProcessor.buildOrderBy(state.sort, CloudProviderService.FIELD_MAP);
+    const providers = await this.cloudProviderRepository.findAllWithCounts(where, orderBy);
+    return {
+      data: providers.map((provider) => CloudProviderDto.from(provider, provider.regionCount)),
+      state,
+    };
   }
 
   // Finds a cloud provider by ID; throws NotFoundException if not found

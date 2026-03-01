@@ -1,5 +1,6 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Logger, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Logger, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { UserId } from '@vritti/api-sdk';
 import {
   ApiCreateCloudProvider,
   ApiDeleteCloudProvider,
@@ -8,6 +9,7 @@ import {
   ApiUpdateCloudProvider,
 } from '../docs/cloud-provider.docs';
 import { CloudProviderDto } from '../dto/entity/cloud-provider.dto';
+import { CloudProvidersResponseDto } from '../dto/response/cloud-providers-response.dto';
 import { CreateCloudProviderDto } from '../dto/request/create-cloud-provider.dto';
 import { UpdateCloudProviderDto } from '../dto/request/update-cloud-provider.dto';
 import { CloudProviderService } from '../services/cloud-provider.service';
@@ -29,12 +31,16 @@ export class CloudProviderController {
     return this.cloudProviderService.create(dto);
   }
 
-  // Returns all cloud providers
+  // Returns all cloud providers with server-stored filter/sort state applied, optionally narrowed by a search param
   @Get()
   @ApiFindAllCloudProviders()
-  findAll(): Promise<CloudProviderDto[]> {
+  findAll(
+    @UserId() userId: string,
+    @Query('searchColumn') searchColumn?: string,
+    @Query('searchValue') searchValue?: string,
+  ): Promise<CloudProvidersResponseDto> {
     this.logger.log('GET /admin-api/cloud-providers');
-    return this.cloudProviderService.findAll();
+    return this.cloudProviderService.findAll(userId, searchColumn, searchValue);
   }
 
   // Returns a single cloud provider by ID

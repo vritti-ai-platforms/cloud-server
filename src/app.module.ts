@@ -22,6 +22,7 @@ import { IndustryModule } from './modules/cloud-api/industry/industry.module';
 import { MediaModule } from './modules/cloud-api/media/media.module';
 import { OnboardingModule } from './modules/cloud-api/onboarding/onboarding.module';
 import { OrganizationModule } from './modules/cloud-api/organization/organization.module';
+import { TableViewModule } from './modules/cloud-api/table-view/table-view.module';
 import { TenantModule } from './modules/cloud-api/tenant/tenant.module';
 import { UserModule } from './modules/cloud-api/user/user.module';
 
@@ -101,6 +102,7 @@ import { UserModule } from './modules/cloud-api/user/user.module';
     MediaModule,
     OrganizationModule,
     IndustryModule,
+    TableViewModule,
     // Admin API module
     AdminApiModule,
     // Route prefixes
@@ -120,6 +122,11 @@ import { UserModule } from './modules/cloud-api/user/user.module';
       {
         path: 'admin-api',
         children: [AdminApiModule],
+      },
+      // Top-level: /table-states and /table-views (no prefix)
+      {
+        path: '',
+        module: TableViewModule,
       },
     ]),
   ],
