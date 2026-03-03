@@ -8483,7 +8483,7 @@
           },
           "name": {
             "type": "object",
-            "description": "Display name of the view — null for the auto-saved live state row",
+            "description": "Display name of the view",
             "nullable": true
           },
           "tableSlug": {
@@ -8499,16 +8499,6 @@
             "type": "boolean",
             "description": "Whether the view is visible to all users",
             "example": false
-          },
-          "isCurrent": {
-            "type": "boolean",
-            "description": "Whether this row represents the auto-saved live state",
-            "example": false
-          },
-          "isOwn": {
-            "type": "boolean",
-            "description": "Whether the requesting user owns this view",
-            "example": true
           },
           "createdAt": {
             "format": "date-time",
@@ -8526,8 +8516,6 @@
           "tableSlug",
           "state",
           "isShared",
-          "isCurrent",
-          "isOwn",
           "createdAt"
         ]
       },
