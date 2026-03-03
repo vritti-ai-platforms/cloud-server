@@ -245,6 +245,18 @@ class EnvironmentVariables {
 
   @IsString()
   APPLE_CALLBACK_URL: string;
+
+  // Redis Cache
+  @IsString()
+  REDIS_URL: string;
+
+  @IsNumber()
+  @Min(1)
+  TABLE_STATE_CACHE_TTL: number;
+
+  @IsNumber()
+  @Min(1)
+  TABLE_VIEWS_CACHE_TTL: number;
 }
 
 // Validates environment variables at application startup
@@ -270,6 +282,12 @@ export function validate(config: Record<string, unknown>): Record<string, unknow
     MEDIA_SIGNED_URL_EXPIRY: config.MEDIA_SIGNED_URL_EXPIRY
       ? parseInt(config.MEDIA_SIGNED_URL_EXPIRY as string, 10)
       : undefined,
+    TABLE_STATE_CACHE_TTL: config.TABLE_STATE_CACHE_TTL
+      ? parseInt(config.TABLE_STATE_CACHE_TTL as string, 10)
+      : 3600,
+    TABLE_VIEWS_CACHE_TTL: config.TABLE_VIEWS_CACHE_TTL
+      ? parseInt(config.TABLE_VIEWS_CACHE_TTL as string, 10)
+      : 86400,
   };
 
   const validatedConfig = plainToInstance(EnvironmentVariables, processedConfig, {

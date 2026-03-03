@@ -5099,7 +5099,7 @@
     },
     "/table-states": {
       "post": {
-        "description": "Saves the current filter, sort, and column visibility state for a table. Creates a new row on first call; updates existing on subsequent calls. Called on filter Apply and on sort column click.",
+        "description": "Stores the current filter, sort, and column visibility state in Redis cache. Called on filter Apply and sort column click. State expires after TABLE_STATE_CACHE_TTL seconds.",
         "operationId": "TableStatesController_upsertCurrentState",
         "parameters": [],
         "requestBody": {
@@ -5114,14 +5114,7 @@
         },
         "responses": {
           "200": {
-            "description": "Live state saved.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TableViewDto"
-                }
-              }
-            }
+            "description": "Live state cached."
           },
           "400": {
             "description": "Invalid request body."
@@ -5135,7 +5128,7 @@
             "bearer": []
           }
         ],
-        "summary": "Upsert live table state",
+        "summary": "Save live table state",
         "tags": [
           "Table States"
         ]
