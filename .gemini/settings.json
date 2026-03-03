@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "AfterTool": [
+      {
+        "matcher": "(write_file|replace)",
+        "hooks": [
+          {
+            "name": "convention-check",
+            "type": "command",
+            "command": "./.gemini/hooks/check-code-conventions.sh"
+          }
+        ]
+      }
+    ]
+  }
+}
