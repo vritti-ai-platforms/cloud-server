@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PrimaryBaseRepository, PrimaryDatabaseService } from '@vritti/api-sdk';
+import { PrimaryBaseRepository, PrimaryDatabaseService, TableViewState } from '@vritti/api-sdk';
 import { and, eq, or } from '@vritti/api-sdk/drizzle-orm';
 import { type TableView, tableViews } from '@/db/schema';
 
@@ -17,7 +17,7 @@ export class TableViewRepository extends PrimaryBaseRepository<typeof tableViews
   }
 
   // Upserts the live state row — updates if exists, inserts if not
-  async upsertCurrent(data: { userId: string; tableSlug: string; state: unknown }): Promise<TableView> {
+  async upsertCurrent(data: { userId: string; tableSlug: string; state: TableViewState }): Promise<TableView> {
     const existing = await this.findCurrentByUserAndSlug(data.userId, data.tableSlug);
     if (existing) {
       return this.update(existing.id, { state: data.state });
