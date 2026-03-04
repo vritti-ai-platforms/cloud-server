@@ -89,18 +89,18 @@ export class TableViewService {
     if (toDelete.length > 0) await this.cacheService.del(...toDelete);
   }
 
-  // Saves live table state to Redis; DB is not written
+  // Saves live table state and active view ID to Redis; DB is not written
   async upsertCurrentState(userId: string, dto: UpsertTableStateDto): Promise<void> {
     const key = `dt:${userId}:${dto.tableSlug}`;
-    await this.cacheService.set(key, dto.state, this.stateTtl);
+    await this.cacheService.set(key, { state: dto.state, activeViewId: dto.activeViewId ?? null }, this.stateTtl);
     this.logger.log(`Cached live state for user: ${userId}, table: ${dto.tableSlug}`);
   }
 
-  // Returns live table state from Redis; returns empty state on miss — no DB query
-  async getCurrentState(userId: string, tableSlug: string): Promise<TableViewState> {
+  // Returns live table state and active view ID from Redis; returns empty state on miss — no DB query
+  async getCurrentState(userId: string, tableSlug: string): Promise<{ state: TableViewState; activeViewId: string | null }> {
     const key = `dt:${userId}:${tableSlug}`;
-    const cached = await this.cacheService.get<TableViewState>(key);
-    return cached ?? EMPTY_TABLE_STATE;
+    const cached = await this.cacheService.get<{ state: TableViewState; activeViewId: string | null }>(key);
+    return cached ?? { state: EMPTY_TABLE_STATE, activeViewId: null };
   }
 
   // Returns personal + shared named views — each pool fetched from cache or DB in parallel

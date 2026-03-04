@@ -1,10 +1,9 @@
 import type { TableViewState } from '@vritti/api-sdk';
-import { sql } from '@vritti/api-sdk/drizzle-orm';
 import { boolean, index, jsonb, timestamp, uniqueIndex, uuid, varchar } from '@vritti/api-sdk/drizzle-pg-core';
 import { cloudSchema } from './cloud-schema';
 import { users } from './user';
 
-// Table views — combines auto-saved live state (isCurrent=true) and named snapshots (isCurrent=false)
+// Named view snapshots — live state is stored in Redis only, not here
 export const tableViews = cloudSchema.table(
   'table_views',
   {
@@ -13,22 +12,17 @@ export const tableViews = cloudSchema.table(
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
     tableSlug: varchar('table_slug', { length: 100 }).notNull(),
-    name: varchar('name', { length: 100 }), // null = auto-saved live state row
+    name: varchar('name', { length: 100 }).notNull(),
     state: jsonb('state').notNull().$type<TableViewState>(),
     isShared: boolean('is_shared').notNull().default(false),
-    isCurrent: boolean('is_current').notNull().default(false), // true = auto-saved live state
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).$onUpdate(() => new Date()),
   },
   (table) => [
     index('table_views_user_table_idx').on(table.userId, table.tableSlug),
     index('table_views_shared_slug_idx').on(table.tableSlug, table.isShared),
-    // Named views must have a unique name per user+table+isShared combination (personal and shared can share names)
+    // Unique name per user+table+isShared — personal and shared views can share names
     uniqueIndex('table_views_user_table_name_shared_unique').on(table.userId, table.tableSlug, table.name, table.isShared),
-    // Partial unique index — enforces one live-state row per user+table; used by onConflictDoUpdate
-    uniqueIndex('table_views_user_slug_current_unique')
-      .on(table.userId, table.tableSlug)
-      .where(sql`${table.isCurrent} = true`),
   ],
 );
 

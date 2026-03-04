@@ -1,6 +1,6 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import type { TableViewState } from '@vritti/api-sdk';
-import { IsObject, IsString, MaxLength } from 'class-validator';
+import { IsObject, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 
 export class UpsertTableStateDto {
   @ApiProperty({ description: 'Unique slug identifying the table', example: 'cloud-providers' })
@@ -11,4 +11,9 @@ export class UpsertTableStateDto {
   @ApiProperty({ description: 'Full table view state including filters, sort, and column visibility' })
   @IsObject()
   state: TableViewState;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsUUID()
+  activeViewId?: string | null;
 }

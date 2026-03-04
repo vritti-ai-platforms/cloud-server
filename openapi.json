@@ -7944,6 +7944,9 @@
           "state": {
             "type": "object",
             "description": "Current active filter/sort/visibility state"
+          },
+          "activeViewId": {
+            "type": "object"
           }
         },
         "required": [
@@ -8584,6 +8587,9 @@
           "state": {
             "type": "object",
             "description": "Full table view state including filters, sort, and column visibility"
+          },
+          "activeViewId": {
+            "type": "object"
           }
         },
         "required": [

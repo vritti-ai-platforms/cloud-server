@@ -35,7 +35,7 @@ export class CloudProviderService {
 
   // Returns all cloud providers with region counts, applying server-stored filter/sort state plus an optional search filter
   async findAll(userId: string, searchColumn?: string, searchValue?: string): Promise<CloudProvidersResponseDto> {
-    const state = await this.tableViewService.getCurrentState(userId, 'cloud-providers');
+    const { state, activeViewId } = await this.tableViewService.getCurrentState(userId, 'cloud-providers');
     const filters: FilterCondition[] = [...state.filters];
     if (searchColumn && searchValue && CloudProviderService.FIELD_MAP[searchColumn]) {
       filters.push({ field: searchColumn, operator: 'contains', value: searchValue });
@@ -46,6 +46,7 @@ export class CloudProviderService {
     return {
       data: providers.map((provider) => CloudProviderDto.from(provider, provider.regionCount)),
       state,
+      activeViewId,
     };
   }
 
