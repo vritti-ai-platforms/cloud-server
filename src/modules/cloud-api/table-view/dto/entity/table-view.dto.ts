@@ -18,20 +18,24 @@ export class TableViewDto {
   @ApiProperty({ description: 'Whether the view is visible to all users', example: false })
   isShared: boolean;
 
+  @ApiProperty({ description: 'Whether the requesting user owns this view', example: true })
+  isOwn: boolean;
+
   @ApiProperty({ description: 'Creation timestamp' })
   createdAt: Date;
 
   @ApiPropertyOptional({ description: 'Last updated timestamp', nullable: true })
   updatedAt: Date | null;
 
-  // Creates a response DTO from a TableView entity
-  static from(view: TableView): TableViewDto {
+  // Creates a response DTO from a TableView entity, computing isOwn by comparing userId
+  static from(view: TableView, userId: string): TableViewDto {
     const dto = new TableViewDto();
     dto.id = view.id;
     dto.name = view.name ?? null;
     dto.tableSlug = view.tableSlug;
     dto.state = view.state;
     dto.isShared = view.isShared;
+    dto.isOwn = view.userId === userId;
     dto.createdAt = view.createdAt;
     dto.updatedAt = view.updatedAt ?? null;
     return dto;

@@ -5323,6 +5323,123 @@
         ]
       }
     },
+    "/table-views/{id}/rename": {
+      "patch": {
+        "description": "Updates the display name of an existing view. The new name must be unique per user+table. Only the owner can rename.",
+        "operationId": "TableViewsController_renameView",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "UUID of the table view to rename",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RenameTableViewDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "View renamed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TableViewDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not owned by caller."
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "404": {
+            "description": "View not found."
+          },
+          "409": {
+            "description": "A view with this name already exists."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Rename a named table view",
+        "tags": [
+          "Table Views"
+        ]
+      }
+    },
+    "/table-views/{id}/share": {
+      "patch": {
+        "description": "Makes a view visible to all users (shared) or restricts it to the owner only (private). Only the owner can toggle sharing.",
+        "operationId": "TableViewsController_toggleShareView",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "UUID of the table view",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ToggleShareTableViewDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sharing status updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TableViewDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not owned by caller."
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "404": {
+            "description": "View not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Toggle view sharing",
+        "tags": [
+          "Table Views"
+        ]
+      }
+    },
     "/cloud-api/industries": {
       "get": {
         "description": "Returns a list of all available industry types.",
@@ -8500,6 +8617,11 @@
             "description": "Whether the view is visible to all users",
             "example": false
           },
+          "isOwn": {
+            "type": "boolean",
+            "description": "Whether the requesting user owns this view",
+            "example": true
+          },
           "createdAt": {
             "format": "date-time",
             "type": "string",
@@ -8516,6 +8638,7 @@
           "tableSlug",
           "state",
           "isShared",
+          "isOwn",
           "createdAt"
         ]
       },
@@ -8551,21 +8674,40 @@
       "UpdateTableViewDto": {
         "type": "object",
         "properties": {
-          "name": {
-            "type": "string",
-            "description": "Display name for the saved view",
-            "example": "AWS Only"
-          },
           "state": {
             "type": "object",
-            "description": "Full table view state including filters, sort, and column visibility"
-          },
+            "description": "Updated filter, sort, and column visibility state"
+          }
+        },
+        "required": [
+          "state"
+        ]
+      },
+      "RenameTableViewDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "New display name for the view",
+            "example": "AWS Only"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "ToggleShareTableViewDto": {
+        "type": "object",
+        "properties": {
           "isShared": {
             "type": "boolean",
-            "description": "Whether this view is visible to all users",
-            "example": false
+            "description": "Whether the view should be visible to all users",
+            "example": true
           }
-        }
+        },
+        "required": [
+          "isShared"
+        ]
       },
       "IndustrySelectOptionDto": {
         "type": "object",

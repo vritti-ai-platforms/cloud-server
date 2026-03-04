@@ -23,8 +23,8 @@ export const tableViews = cloudSchema.table(
   (table) => [
     index('table_views_user_table_idx').on(table.userId, table.tableSlug),
     index('table_views_shared_slug_idx').on(table.tableSlug, table.isShared),
-    // Named views must have a unique name per user+table combination
-    uniqueIndex('table_views_user_table_name_unique').on(table.userId, table.tableSlug, table.name),
+    // Named views must have a unique name per user+table+isShared combination (personal and shared can share names)
+    uniqueIndex('table_views_user_table_name_shared_unique').on(table.userId, table.tableSlug, table.name, table.isShared),
     // Partial unique index — enforces one live-state row per user+table; used by onConflictDoUpdate
     uniqueIndex('table_views_user_slug_current_unique')
       .on(table.userId, table.tableSlug)

@@ -1,5 +1,10 @@
-import { PartialType, OmitType } from '@nestjs/swagger';
-import { CreateTableViewDto } from './create-table-view.dto';
+import { ApiProperty } from '@nestjs/swagger';
+import type { TableViewState } from '@vritti/api-sdk';
+import { IsObject } from 'class-validator';
 
-// Partial update — all fields optional, tableSlug is not updatable
-export class UpdateTableViewDto extends PartialType(OmitType(CreateTableViewDto, ['tableSlug'] as const)) {}
+// State-only update — name, tableSlug, and isShared are not updatable via this DTO
+export class UpdateTableViewDto {
+  @ApiProperty({ description: 'Updated filter, sort, and column visibility state' })
+  @IsObject()
+  state: TableViewState;
+}

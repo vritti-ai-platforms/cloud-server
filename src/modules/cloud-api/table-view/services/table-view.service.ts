@@ -1,7 +1,8 @@
 import { createHash } from 'node:crypto';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { BadRequestException, CacheService, NotFoundException, type TableViewState } from '@vritti/api-sdk';
+import { BadRequestException, CacheService, ConflictException, NotFoundException, type TableViewState } from '@vritti/api-sdk';
+import type { TableView } from '@/db/schema';
 import { TableViewDto } from '../dto/entity/table-view.dto';
 import type { CreateTableViewDto } from '../dto/request/create-table-view.dto';
 import type { UpdateTableViewDto } from '../dto/request/update-table-view.dto';
@@ -50,31 +51,29 @@ export class TableViewService {
   }
 
   // Fetches personal views from cache; falls back to DB and warms cache on miss
-  private async getOrCachePersonalViews(userId: string, tableSlug: string): Promise<TableViewDto[]> {
+  private async getOrCachePersonalViews(userId: string, tableSlug: string): Promise<TableView[]> {
     const key = this.personalViewsKey(userId, tableSlug);
-    const cached = await this.cacheService.get<TableViewDto[]>(key);
+    const cached = await this.cacheService.get<TableView[]>(key);
     if (cached) {
       this.logger.debug(`Cache hit for personal views: user=${userId}, table=${tableSlug}`);
       return cached;
     }
     const rows = await this.tableViewRepository.findPersonalViewsBySlug(userId, tableSlug);
-    const views = rows.map((row) => TableViewDto.from(row));
-    await this.cacheService.set(key, views, this.viewsTtl);
-    return views;
+    await this.cacheService.set(key, rows, this.viewsTtl);
+    return rows;
   }
 
   // Fetches shared views from cache; falls back to DB and warms cache on miss
-  private async getOrCacheSharedViews(tableSlug: string): Promise<TableViewDto[]> {
+  private async getOrCacheSharedViews(tableSlug: string): Promise<TableView[]> {
     const key = this.sharedViewsKey(tableSlug);
-    const cached = await this.cacheService.get<TableViewDto[]>(key);
+    const cached = await this.cacheService.get<TableView[]>(key);
     if (cached) {
       this.logger.debug(`Cache hit for shared views: table=${tableSlug}`);
       return cached;
     }
     const rows = await this.tableViewRepository.findSharedViewsBySlug(tableSlug);
-    const views = rows.map((row) => TableViewDto.from(row));
-    await this.cacheService.set(key, views, this.viewsTtl);
-    return views;
+    await this.cacheService.set(key, rows, this.viewsTtl);
+    return rows;
   }
 
   // Deletes personal and/or shared cache keys based on which pools the mutation affects
@@ -106,11 +105,11 @@ export class TableViewService {
 
   // Returns personal + shared named views — each pool fetched from cache or DB in parallel
   async findViews(userId: string, tableSlug: string): Promise<TableViewDto[]> {
-    const [personalViews, sharedViews] = await Promise.all([
+    const [personalRows, sharedRows] = await Promise.all([
       this.getOrCachePersonalViews(userId, tableSlug),
       this.getOrCacheSharedViews(tableSlug),
     ]);
-    return [...personalViews, ...sharedViews];
+    return [...personalRows, ...sharedRows].map((row) => TableViewDto.from(row, userId));
   }
 
   // Creates a named snapshot and invalidates the relevant cache pool
@@ -125,30 +124,61 @@ export class TableViewService {
     this.logger.log(`Created view "${dto.name}" for user: ${userId}, table: ${dto.tableSlug}`);
     const isShared = dto.isShared ?? false;
     await this.invalidateViewsCache(userId, dto.tableSlug, !isShared, isShared);
-    return TableViewDto.from(view);
+    return TableViewDto.from(view, userId);
   }
 
-  // Updates a named view — skips DB write if state is the sole field and is unchanged
+  // Updates the state of a named view — skips DB write if state is unchanged
   async updateView(userId: string, id: string, dto: UpdateTableViewDto): Promise<TableViewDto> {
     const view = await this.tableViewRepository.findById(id);
     if (!view) throw new NotFoundException('Table view not found.');
     if (view.userId !== userId) throw new BadRequestException('You do not have permission to update this view.');
 
-    // Skip DB write only when state is the sole field being changed and it hasn't changed
-    const onlyStateSent = dto.name === undefined && dto.isShared === undefined;
-    if (onlyStateSent && dto.state !== undefined) {
-      if (computeChecksum(dto.state) === computeChecksum(view.state)) {
-        this.logger.log(`State unchanged for view ${id} — skipping DB write`);
-        return TableViewDto.from(view);
-      }
+    // Skip DB write if the state has not changed
+    if (computeChecksum(dto.state) === computeChecksum(view.state)) {
+      this.logger.log(`State unchanged for view ${id} — skipping DB write`);
+      return TableViewDto.from(view, userId);
     }
 
-    const updated = await this.tableViewRepository.update(id, dto);
-    this.logger.log(`Updated view ${id} for user: ${userId}`);
-    const wasShared = view.isShared;
-    const willBeShared = dto.isShared ?? view.isShared;
-    await this.invalidateViewsCache(userId, view.tableSlug, !(wasShared && willBeShared), wasShared || willBeShared);
-    return TableViewDto.from(updated);
+    const updated = await this.tableViewRepository.update(id, { state: dto.state });
+    this.logger.log(`Updated state for view ${id}, user: ${userId}`);
+    await this.invalidateViewsCache(userId, view.tableSlug, !view.isShared, view.isShared);
+    return TableViewDto.from(updated, userId);
+  }
+
+  // Toggles the sharing status of a named view — updates both personal and shared cache
+  async toggleShareView(userId: string, id: string, isShared: boolean): Promise<TableViewDto> {
+    const view = await this.tableViewRepository.findById(id);
+    if (!view) throw new NotFoundException('Table view not found.');
+    if (view.userId !== userId) throw new BadRequestException('You do not have permission to share this view.');
+
+    const updated = await this.tableViewRepository.update(id, { isShared });
+    this.logger.log(`Set isShared=${isShared} for view ${id}, user: ${userId}`);
+    // Invalidate both pools — the view moves from one to the other
+    await this.invalidateViewsCache(userId, view.tableSlug, true, true);
+    return TableViewDto.from(updated, userId);
+  }
+
+  // Renames a named view — enforces unique name per user+table, invalidates personal cache
+  async renameView(userId: string, id: string, name: string): Promise<TableViewDto> {
+    const view = await this.tableViewRepository.findById(id);
+    if (!view) throw new NotFoundException('Table view not found.');
+    if (view.userId !== userId) throw new BadRequestException('You do not have permission to rename this view.');
+
+    // Check for duplicate name within the same user+table
+    const existing = await this.tableViewRepository.findOne({ userId, tableSlug: view.tableSlug, name, isShared: false });
+    if (existing && existing.id !== id) {
+      throw new ConflictException({
+        label: 'Name Already Taken',
+        detail: 'A view with this name already exists for this table.',
+        errors: [{ field: 'name', message: 'Name already taken' }],
+      });
+    }
+
+    const updated = await this.tableViewRepository.update(id, { name });
+    this.logger.log(`Renamed view ${id} to "${name}" for user: ${userId}`);
+    // Rename only affects personal views (shared views are owned by a user too, but visible to all)
+    await this.invalidateViewsCache(userId, view.tableSlug, !view.isShared, view.isShared);
+    return TableViewDto.from(updated, userId);
   }
 
   // Deletes a named view and invalidates the relevant cache pool
@@ -160,6 +190,6 @@ export class TableViewService {
     await this.tableViewRepository.delete(id);
     this.logger.log(`Deleted view ${id} for user: ${userId}`);
     await this.invalidateViewsCache(userId, view.tableSlug, !view.isShared, view.isShared);
-    return TableViewDto.from(view);
+    return TableViewDto.from(view, userId);
   }
 }
