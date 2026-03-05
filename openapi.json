@@ -4532,17 +4532,33 @@
       },
       "get": {
         "operationId": "IndustryController_findAll",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "searchColumn",
+            "required": false,
+            "in": "query",
+            "description": "Column to search (name, code, slug)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "searchValue",
+            "required": false,
+            "in": "query",
+            "description": "Search value (contains match)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Industries retrieved successfully.",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/IndustryDto"
-                  }
+                  "$ref": "#/components/schemas/IndustriesResponseDto"
                 }
               }
             }
@@ -8466,6 +8482,28 @@
           "id",
           "name",
           "slug"
+        ]
+      },
+      "IndustriesResponseDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IndustryDto"
+            }
+          },
+          "state": {
+            "type": "object",
+            "description": "Current active filter/sort/visibility state"
+          },
+          "activeViewId": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "data",
+          "state"
         ]
       },
       "UpdateIndustryDto": {
