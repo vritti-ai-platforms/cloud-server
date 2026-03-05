@@ -1,8 +1,8 @@
-import { Body, Controller, HttpCode, HttpStatus, Logger, Post, Req, Res } from '@nestjs/common';
+import { Body, Controller, Headers, HttpCode, HttpStatus, Ip, Logger, Post, Res } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { Public } from '@vritti/api-sdk';
-import type { FastifyReply, FastifyRequest } from 'fastify';
-import { getRefreshCookieName, getRefreshCookieOptionsFromConfig } from '../../root/services/session.service';
+import { type CookieSerializeOptions, Public, RefreshCookieOptions } from '@vritti/api-sdk';
+import type { FastifyReply } from 'fastify';
+import { getRefreshCookieName } from '../../root/services/session.service';
 import { ApiStartPasskeyAuth, ApiVerifyPasskeyAuth } from '../docs/passkey-auth.docs';
 import { StartPasskeyAuthDto, VerifyPasskeyAuthDto } from '../dto/request/verify-passkey-auth.dto';
 import { PasskeyAuthOptionsDto } from '../dto/response/passkey-auth-options.dto';
@@ -33,7 +33,9 @@ export class PasskeyAuthController {
   @ApiVerifyPasskeyAuth()
   async verifyPasskeyAuth(
     @Body() dto: VerifyPasskeyAuthDto,
-    @Req() req: FastifyRequest,
+    @Ip() ipAddress: string,
+    @Headers('user-agent') userAgent: string,
+    @RefreshCookieOptions() cookieOptions: CookieSerializeOptions,
     @Res({ passthrough: true }) res: FastifyReply,
   ): Promise<PasskeyAuthResponseDto> {
     this.logger.log('POST /auth/passkey/verify');
@@ -41,12 +43,11 @@ export class PasskeyAuthController {
     const result = await this.passkeyAuthService.verifyAuthentication(
       dto.sessionId,
       dto.credential,
-      req.ip,
-      req.headers['user-agent'],
+      ipAddress,
+      userAgent,
     );
 
-    // Set refresh token cookie (domain from REFRESH_COOKIE_DOMAIN env var)
-    res.setCookie(getRefreshCookieName(), result.refreshToken, getRefreshCookieOptionsFromConfig());
+    res.setCookie(getRefreshCookieName(), result.refreshToken, cookieOptions);
 
     return result;
   }

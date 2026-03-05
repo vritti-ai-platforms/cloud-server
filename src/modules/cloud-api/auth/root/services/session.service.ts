@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { Injectable, Logger } from '@nestjs/common';
-import { getConfig, getRefreshCookieOptions, hashToken, UnauthorizedException } from '@vritti/api-sdk';
+import { getConfig, hashToken, UnauthorizedException } from '@vritti/api-sdk';
 import { and, eq, ne } from '@vritti/api-sdk/drizzle-orm';
 import { type Session, type SessionType, SessionTypeValues, sessions } from '@/db/schema';
 import { JwtAuthService, TokenType } from '@vritti/api-sdk';
@@ -8,10 +8,6 @@ import { SessionRepository } from '../repositories/session.repository';
 
 export function getRefreshCookieName(): string {
   return getConfig().cookie.refreshCookieName;
-}
-
-export function getRefreshCookieOptionsFromConfig() {
-  return getRefreshCookieOptions();
 }
 
 @Injectable()

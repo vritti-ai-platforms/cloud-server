@@ -31,7 +31,7 @@ const ENV = {
   port: process.env.PORT ?? 3000,
   host: 'local.vrittiai.com',
   refreshCookieName: process.env.REFRESH_COOKIE_NAME,
-  refreshCookieDomain: process.env.REFRESH_COOKIE_DOMAIN,
+  refreshCookieDomain: process.env.REFRESH_COOKIE_DOMAIN ?? 'local.vrittiai.com',
 } as const;
 
 const protocol = ENV.useHttps ? 'https' : 'http';
@@ -48,8 +48,10 @@ const CORS_ORIGINS = [
   'http://localhost:5174', // Other possible ports
   `http://${ENV.host}:3012`,
   `http://cloud.${ENV.host}:3012`,
+  `http://admin.${ENV.host}:3012`,
   `https://${ENV.host}:3012`,
   `https://cloud.${ENV.host}:3012`,
+  `https://admin.${ENV.host}:3012`,
 ];
 
 const CORS_CONFIG = {
@@ -74,7 +76,7 @@ function configureApiSdkSettings() {
       refreshCookieSecure: ENV.nodeEnv === 'production',
       refreshCookieMaxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
       refreshCookieSameSite: 'strict',
-      refreshCookieDomain: ENV.refreshCookieDomain,
+      refreshCookieDomain: ENV.refreshCookieDomain, // base domain for hostname validation in @RefreshCookieOptions()
     },
     guard: {
       tenantHeaderName: 'x-tenant-id',
@@ -138,8 +140,8 @@ async function bootstrap() {
     ENV.useHttps
       ? {
           https: {
-            key: readFileSync('./certs/local.vrittiai.com+4-key.pem'),
-            cert: readFileSync('./certs/local.vrittiai.com+4.pem'),
+            key: readFileSync('./certs/_wildcard.local.vrittiai.com+4-key.pem'),
+            cert: readFileSync('./certs/_wildcard.local.vrittiai.com+4.pem'),
           },
         }
       : {},
