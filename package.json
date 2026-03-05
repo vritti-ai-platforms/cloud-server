@@ -12,6 +12,7 @@
     "start": "nest start",
     "dev": "nest start --watch",
     "dev:ssl": "USE_HTTPS=true nest start --watch",
+    "dev:ssl:w": "npx dotenv-cli cross-env USE_HTTPS=true -- nest start --watch",
     "debug": "nest start --debug --watch",
     "prod": "node dist/main",
     "lint": "biome lint .",
