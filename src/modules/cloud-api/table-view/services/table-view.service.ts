@@ -13,6 +13,13 @@ const EMPTY_TABLE_STATE: TableViewState = {
   filters: [],
   sort: [],
   columnVisibility: {},
+  columnOrder: [],
+  columnSizing: {},
+  columnPinning: { left: [], right: [] },
+  lockedColumnSizing: false,
+  density: 'normal',
+  filterOrder: [],
+  filterVisibility: {},
 };
 
 // Computes a deterministic SHA-256 checksum of a value for equality comparison
