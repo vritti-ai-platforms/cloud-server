@@ -5,6 +5,7 @@ import type { AssignProvidersDto } from '../dto/request/assign-providers.dto';
 import type { CreateRegionDto } from '../dto/request/create-region.dto';
 import type { UpdateRegionDto } from '../dto/request/update-region.dto';
 import { AssignProvidersResponseDto } from '../dto/response/assign-providers-response.dto';
+import { RegionCloudProviderDto } from '../dto/response/region-cloud-provider.dto';
 import { RegionRepository } from '../repositories/region.repository';
 import { RegionProviderRepository } from '../repositories/region-provider.repository';
 
@@ -79,5 +80,19 @@ export class RegionService {
     const assigned = await this.regionProviderRepository.bulkInsert(regionId, dto.cloudProviderIds);
     this.logger.log(`Assigned ${assigned} cloud providers to region ${regionId}`);
     return { assigned };
+  }
+
+  // Returns the cloud providers assigned to a region; throws NotFoundException if region missing
+  async getCloudProviders(regionId: string): Promise<RegionCloudProviderDto[]> {
+    const region = await this.regionRepository.findById(regionId);
+    if (!region) throw new NotFoundException('Region not found.');
+    return this.regionProviderRepository.findProvidersByRegionId(regionId);
+  }
+
+  // Removes a cloud provider assignment from a region; throws NotFoundException if region missing
+  async removeCloudProvider(regionId: string, providerId: string): Promise<void> {
+    const region = await this.regionRepository.findById(regionId);
+    if (!region) throw new NotFoundException('Region not found.');
+    await this.regionProviderRepository.deleteByRegionAndProvider(regionId, providerId);
   }
 }

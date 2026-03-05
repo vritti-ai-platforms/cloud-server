@@ -6,6 +6,8 @@ import {
   ApiDeleteRegion,
   ApiFindAllRegions,
   ApiFindRegionById,
+  ApiGetRegionCloudProviders,
+  ApiRemoveRegionCloudProvider,
   ApiUpdateRegion,
 } from '../docs/region.docs';
 import { RegionDto } from '../dto/entity/region.dto';
@@ -13,6 +15,7 @@ import { AssignProvidersDto } from '../dto/request/assign-providers.dto';
 import { CreateRegionDto } from '../dto/request/create-region.dto';
 import { UpdateRegionDto } from '../dto/request/update-region.dto';
 import { AssignProvidersResponseDto } from '../dto/response/assign-providers-response.dto';
+import { RegionCloudProviderDto } from '../dto/response/region-cloud-provider.dto';
 import { RegionService } from '../services/region.service';
 
 @ApiTags('Admin - Regions')
@@ -72,5 +75,22 @@ export class RegionController {
   assignCloudProviders(@Param('id') id: string, @Body() dto: AssignProvidersDto): Promise<AssignProvidersResponseDto> {
     this.logger.log(`POST /admin-api/regions/${id}/cloud-providers`);
     return this.regionService.assignCloudProviders(id, dto);
+  }
+
+  // Returns all cloud providers assigned to a region
+  @Get(':id/cloud-providers')
+  @ApiGetRegionCloudProviders()
+  getCloudProviders(@Param('id') id: string): Promise<RegionCloudProviderDto[]> {
+    this.logger.log(`GET /admin-api/regions/${id}/cloud-providers`);
+    return this.regionService.getCloudProviders(id);
+  }
+
+  // Removes a single cloud provider assignment from a region
+  @Delete(':id/cloud-providers/:providerId')
+  @HttpCode(HttpStatus.OK)
+  @ApiRemoveRegionCloudProvider()
+  removeCloudProvider(@Param('id') id: string, @Param('providerId') providerId: string): Promise<void> {
+    this.logger.log(`DELETE /admin-api/regions/${id}/cloud-providers/${providerId}`);
+    return this.regionService.removeCloudProvider(id, providerId);
   }
 }

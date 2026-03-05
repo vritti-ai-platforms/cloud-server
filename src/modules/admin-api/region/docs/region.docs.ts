@@ -5,6 +5,7 @@ import { AssignProvidersDto } from '../dto/request/assign-providers.dto';
 import { CreateRegionDto } from '../dto/request/create-region.dto';
 import { UpdateRegionDto } from '../dto/request/update-region.dto';
 import { AssignProvidersResponseDto } from '../dto/response/assign-providers-response.dto';
+import { RegionCloudProviderDto } from '../dto/response/region-cloud-provider.dto';
 
 export function ApiCreateRegion() {
   return applyDecorators(
@@ -67,5 +68,26 @@ export function ApiAssignRegionProviders() {
     ApiResponse({ status: 400, description: 'Validation failed.' }),
     ApiResponse({ status: 401, description: 'Unauthorized.' }),
     ApiResponse({ status: 404, description: 'Region not found.' }),
+  );
+}
+
+export function ApiGetRegionCloudProviders() {
+  return applyDecorators(
+    ApiOperation({ summary: 'Get cloud providers assigned to a region' }),
+    ApiParam({ name: 'id', description: 'Region ID' }),
+    ApiResponse({ status: 200, description: 'Cloud providers assigned to the region.', type: [RegionCloudProviderDto] }),
+    ApiResponse({ status: 401, description: 'Unauthorized.' }),
+    ApiResponse({ status: 404, description: 'Region not found.' }),
+  );
+}
+
+export function ApiRemoveRegionCloudProvider() {
+  return applyDecorators(
+    ApiOperation({ summary: 'Remove a cloud provider from a region' }),
+    ApiParam({ name: 'id', description: 'Region ID' }),
+    ApiParam({ name: 'providerId', description: 'Cloud Provider ID' }),
+    ApiResponse({ status: 200, description: 'Cloud provider removed from region.' }),
+    ApiResponse({ status: 401, description: 'Unauthorized.' }),
+    ApiResponse({ status: 404, description: 'Region or provider assignment not found.' }),
   );
 }

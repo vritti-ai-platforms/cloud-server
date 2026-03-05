@@ -4394,6 +4394,95 @@
         "tags": [
           "Admin - Regions"
         ]
+      },
+      "get": {
+        "operationId": "RegionController_getCloudProviders",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Region ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cloud providers assigned to the region.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RegionCloudProviderDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "404": {
+            "description": "Region not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get cloud providers assigned to a region",
+        "tags": [
+          "Admin - Regions"
+        ]
+      }
+    },
+    "/admin-api/regions/{id}/cloud-providers/{providerId}": {
+      "delete": {
+        "operationId": "RegionController_removeCloudProvider",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Region ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "providerId",
+            "required": true,
+            "in": "path",
+            "description": "Cloud Provider ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cloud provider removed from region."
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "404": {
+            "description": "Region or provider assignment not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Remove a cloud provider from a region",
+        "tags": [
+          "Admin - Regions"
+        ]
       }
     },
     "/admin-api/industries": {
@@ -8296,6 +8385,35 @@
         },
         "required": [
           "assigned"
+        ]
+      },
+      "RegionCloudProviderDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "code",
+          "createdAt",
+          "updatedAt"
         ]
       },
       "CreateIndustryDto": {
