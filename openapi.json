@@ -3581,7 +3581,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CloudProviderDto"
+                  "$ref": "#/components/schemas/SuccessResponseDto"
                 }
               }
             }
@@ -3727,7 +3727,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CloudProviderDto"
+                  "$ref": "#/components/schemas/SuccessResponseDto"
                 }
               }
             }
@@ -3775,7 +3775,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CloudProviderDto"
+                  "$ref": "#/components/schemas/SuccessResponseDto"
                 }
               }
             }
@@ -4138,7 +4138,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RegionDto"
+                  "$ref": "#/components/schemas/SuccessResponseDto"
                 }
               }
             }
@@ -4165,17 +4165,33 @@
       },
       "get": {
         "operationId": "RegionController_findAll",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "searchColumn",
+            "required": false,
+            "in": "query",
+            "description": "Column to search (name, code, state, city)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "searchValue",
+            "required": false,
+            "in": "query",
+            "description": "Search value (contains match)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Regions retrieved successfully.",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/RegionDto"
-                  }
+                  "$ref": "#/components/schemas/RegionsResponseDto"
                 }
               }
             }
@@ -4268,7 +4284,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RegionDto"
+                  "$ref": "#/components/schemas/SuccessResponseDto"
                 }
               }
             }
@@ -4316,7 +4332,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RegionDto"
+                  "$ref": "#/components/schemas/SuccessResponseDto"
                 }
               }
             }
@@ -4505,7 +4521,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/IndustryDto"
+                  "$ref": "#/components/schemas/SuccessResponseDto"
                 }
               }
             }
@@ -4532,17 +4548,33 @@
       },
       "get": {
         "operationId": "IndustryController_findAll",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "searchColumn",
+            "required": false,
+            "in": "query",
+            "description": "Column to search (name, code, slug)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "searchValue",
+            "required": false,
+            "in": "query",
+            "description": "Search value (contains match)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Industries retrieved successfully.",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/IndustryDto"
-                  }
+                  "$ref": "#/components/schemas/IndustriesResponseDto"
                 }
               }
             }
@@ -4635,7 +4667,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/IndustryDto"
+                  "$ref": "#/components/schemas/SuccessResponseDto"
                 }
               }
             }
@@ -4683,7 +4715,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/IndustryDto"
+                  "$ref": "#/components/schemas/SuccessResponseDto"
                 }
               }
             }
@@ -7984,6 +8016,23 @@
           "code"
         ]
       },
+      "SuccessResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "example": "Operation completed successfully"
+          }
+        },
+        "required": [
+          "success",
+          "message"
+        ]
+      },
       "CloudProviderDto": {
         "type": "object",
         "properties": {
@@ -8331,6 +8380,28 @@
           "providerCount"
         ]
       },
+      "RegionsResponseDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RegionDto"
+            }
+          },
+          "state": {
+            "type": "object",
+            "description": "Current active filter/sort/visibility state"
+          },
+          "activeViewId": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "data",
+          "state"
+        ]
+      },
       "UpdateRegionDto": {
         "type": "object",
         "properties": {
@@ -8467,6 +8538,28 @@
           "id",
           "name",
           "slug"
+        ]
+      },
+      "IndustriesResponseDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IndustryDto"
+            }
+          },
+          "state": {
+            "type": "object",
+            "description": "Current active filter/sort/visibility state"
+          },
+          "activeViewId": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "data",
+          "state"
         ]
       },
       "UpdateIndustryDto": {
