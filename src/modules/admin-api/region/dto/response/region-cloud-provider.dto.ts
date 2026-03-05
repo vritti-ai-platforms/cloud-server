@@ -13,6 +13,6 @@ export class RegionCloudProviderDto {
   @ApiProperty()
   createdAt: Date;
 
-  @ApiProperty()
-  updatedAt: Date;
+  @ApiProperty({ type: Date, nullable: true })
+  updatedAt: Date | null;
 }
