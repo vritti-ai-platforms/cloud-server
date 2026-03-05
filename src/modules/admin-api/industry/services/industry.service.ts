@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ConflictException, FilterProcessor, NotFoundException, type FieldMap, type FilterCondition } from '@vritti/api-sdk';
+import { ConflictException, FilterProcessor, NotFoundException, SuccessResponseDto, type FieldMap, type FilterCondition } from '@vritti/api-sdk';
 import { industries } from '@/db/schema';
 import { TableViewService } from '../../../cloud-api/table-view/services/table-view.service';
 import { IndustryDto } from '../dto/entity/industry.dto';
@@ -24,7 +24,7 @@ export class IndustryService {
   ) {}
 
   // Creates a new industry; throws ConflictException on duplicate code or slug
-  async create(dto: CreateIndustryDto): Promise<IndustryDto> {
+  async create(dto: CreateIndustryDto): Promise<SuccessResponseDto> {
     const existingCode = await this.industryRepository.findByCode(dto.code);
     if (existingCode) {
       throw new ConflictException({
@@ -43,7 +43,7 @@ export class IndustryService {
     }
     const industry = await this.industryRepository.create(dto);
     this.logger.log(`Created industry: ${industry.name} (${industry.id})`);
-    return IndustryDto.from(industry);
+    return { success: true, message: 'Industry created successfully.' };
   }
 
   // Returns all industries with server-stored filter/sort state applied, optionally narrowed by a search param
@@ -73,7 +73,7 @@ export class IndustryService {
   }
 
   // Updates an industry by ID; throws NotFoundException if not found, ConflictException on duplicate code or slug
-  async update(id: string, dto: UpdateIndustryDto): Promise<IndustryDto> {
+  async update(id: string, dto: UpdateIndustryDto): Promise<SuccessResponseDto> {
     const existing = await this.industryRepository.findById(id);
     if (!existing) {
       throw new NotFoundException('Industry not found.');
@@ -100,16 +100,16 @@ export class IndustryService {
     }
     const industry = await this.industryRepository.update(id, dto);
     this.logger.log(`Updated industry: ${industry.name} (${industry.id})`);
-    return IndustryDto.from(industry);
+    return { success: true, message: 'Industry updated successfully.' };
   }
 
   // Deletes an industry by ID; throws NotFoundException if not found
-  async delete(id: string): Promise<IndustryDto> {
+  async delete(id: string): Promise<SuccessResponseDto> {
     const industry = await this.industryRepository.delete(id);
     if (!industry) {
       throw new NotFoundException('Industry not found.');
     }
     this.logger.log(`Deleted industry: ${industry.name} (${industry.id})`);
-    return IndustryDto.from(industry);
+    return { success: true, message: 'Industry deleted successfully.' };
   }
 }

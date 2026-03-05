@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ConflictException, FilterProcessor, NotFoundException, type FieldMap, type FilterCondition } from '@vritti/api-sdk';
+import { ConflictException, FilterProcessor, NotFoundException, SuccessResponseDto, type FieldMap, type FilterCondition } from '@vritti/api-sdk';
 import { cloudProviders } from '@/db/schema';
 import { TableViewService } from '../../../cloud-api/table-view/services/table-view.service';
 import { CloudProviderDto } from '../dto/entity/cloud-provider.dto';
@@ -23,14 +23,14 @@ export class CloudProviderService {
   ) {}
 
   // Creates a new cloud provider; throws ConflictException on duplicate code
-  async create(dto: CreateCloudProviderDto): Promise<CloudProviderDto> {
+  async create(dto: CreateCloudProviderDto): Promise<SuccessResponseDto> {
     const existing = await this.cloudProviderRepository.findByCode(dto.code);
     if (existing) {
       throw new ConflictException('Provider with this code already exists.');
     }
     const provider = await this.cloudProviderRepository.create(dto);
     this.logger.log(`Created provider: ${provider.name} (${provider.id})`);
-    return CloudProviderDto.from(provider);
+    return { success: true, message: 'Cloud provider created successfully.' };
   }
 
   // Returns all cloud providers with region counts, applying server-stored filter/sort state plus an optional search filter
@@ -60,7 +60,7 @@ export class CloudProviderService {
   }
 
   // Updates a cloud provider by ID; throws NotFoundException if not found
-  async update(id: string, dto: UpdateCloudProviderDto): Promise<CloudProviderDto> {
+  async update(id: string, dto: UpdateCloudProviderDto): Promise<SuccessResponseDto> {
     const existing = await this.cloudProviderRepository.findById(id);
     if (!existing) {
       throw new NotFoundException('Provider not found.');
@@ -75,18 +75,18 @@ export class CloudProviderService {
 
     const provider = await this.cloudProviderRepository.update(id, dto);
     this.logger.log(`Updated provider: ${provider.name} (${provider.id})`);
-    return CloudProviderDto.from(provider);
+    return { success: true, message: 'Cloud provider updated successfully.' };
   }
 
   // Deletes a cloud provider by ID; throws NotFoundException if not found
-  async delete(id: string): Promise<CloudProviderDto> {
+  async delete(id: string): Promise<SuccessResponseDto> {
     const provider = await this.cloudProviderRepository.delete(id);
     if (!provider) {
       throw new NotFoundException('Provider not found.');
     }
 
     this.logger.log(`Deleted provider: ${provider.name} (${provider.id})`);
-    return CloudProviderDto.from(provider);
+    return { success: true, message: 'Cloud provider deleted successfully.' };
   }
 
   // Converts PostgreSQL unique constraint violations (23505) to ConflictException

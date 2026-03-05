@@ -1,5 +1,6 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Logger, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Logger, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { SuccessResponseDto, UserId } from '@vritti/api-sdk';
 import {
   ApiAssignRegionProviders,
   ApiCreateRegion,
@@ -16,6 +17,7 @@ import { CreateRegionDto } from '../dto/request/create-region.dto';
 import { UpdateRegionDto } from '../dto/request/update-region.dto';
 import { AssignProvidersResponseDto } from '../dto/response/assign-providers-response.dto';
 import { RegionCloudProviderDto } from '../dto/response/region-cloud-provider.dto';
+import { RegionsResponseDto } from '../dto/response/regions-response.dto';
 import { RegionService } from '../services/region.service';
 
 @ApiTags('Admin - Regions')
@@ -30,17 +32,21 @@ export class RegionController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiCreateRegion()
-  create(@Body() dto: CreateRegionDto): Promise<RegionDto> {
+  create(@Body() dto: CreateRegionDto): Promise<SuccessResponseDto> {
     this.logger.log('POST /admin-api/regions');
     return this.regionService.create(dto);
   }
 
-  // Returns all regions
+  // Returns all regions with filter/sort state and optional search
   @Get()
   @ApiFindAllRegions()
-  findAll(): Promise<RegionDto[]> {
+  findAll(
+    @UserId() userId: string,
+    @Query('searchColumn') searchColumn?: string,
+    @Query('searchValue') searchValue?: string,
+  ): Promise<RegionsResponseDto> {
     this.logger.log('GET /admin-api/regions');
-    return this.regionService.findAll();
+    return this.regionService.findAll(userId, searchColumn, searchValue);
   }
 
   // Returns a single region by ID
@@ -54,7 +60,7 @@ export class RegionController {
   // Updates a region by ID
   @Patch(':id')
   @ApiUpdateRegion()
-  update(@Param('id') id: string, @Body() dto: UpdateRegionDto): Promise<RegionDto> {
+  update(@Param('id') id: string, @Body() dto: UpdateRegionDto): Promise<SuccessResponseDto> {
     this.logger.log(`PATCH /admin-api/regions/${id}`);
     return this.regionService.update(id, dto);
   }
@@ -63,7 +69,7 @@ export class RegionController {
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
   @ApiDeleteRegion()
-  delete(@Param('id') id: string): Promise<RegionDto> {
+  delete(@Param('id') id: string): Promise<SuccessResponseDto> {
     this.logger.log(`DELETE /admin-api/regions/${id}`);
     return this.regionService.delete(id);
   }

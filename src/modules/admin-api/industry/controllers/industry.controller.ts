@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Logger, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { UserId } from '@vritti/api-sdk';
+import { SuccessResponseDto, UserId } from '@vritti/api-sdk';
 import {
   ApiCreateIndustry,
   ApiDeleteIndustry,
@@ -26,7 +26,7 @@ export class IndustryController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiCreateIndustry()
-  create(@Body() dto: CreateIndustryDto): Promise<IndustryDto> {
+  create(@Body() dto: CreateIndustryDto): Promise<SuccessResponseDto> {
     this.logger.log('POST /admin-api/industries');
     return this.industryService.create(dto);
   }
@@ -54,7 +54,7 @@ export class IndustryController {
   // Updates an industry by ID
   @Patch(':id')
   @ApiUpdateIndustry()
-  update(@Param('id') id: string, @Body() dto: UpdateIndustryDto): Promise<IndustryDto> {
+  update(@Param('id') id: string, @Body() dto: UpdateIndustryDto): Promise<SuccessResponseDto> {
     this.logger.log(`PATCH /admin-api/industries/${id}`);
     return this.industryService.update(id, dto);
   }
@@ -63,7 +63,7 @@ export class IndustryController {
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
   @ApiDeleteIndustry()
-  delete(@Param('id') id: string): Promise<IndustryDto> {
+  delete(@Param('id') id: string): Promise<SuccessResponseDto> {
     this.logger.log(`DELETE /admin-api/industries/${id}`);
     return this.industryService.delete(id);
   }

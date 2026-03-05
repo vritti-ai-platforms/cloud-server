@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrimaryBaseRepository, PrimaryDatabaseService } from '@vritti/api-sdk';
-import { asc, count, eq } from '@vritti/api-sdk/drizzle-orm';
+import { asc, count, eq, type SQL } from '@vritti/api-sdk/drizzle-orm';
 import type { Region } from '@/db/schema';
 import { regionCloudProviders, regions } from '@/db/schema';
 
@@ -15,8 +15,8 @@ export class RegionRepository extends PrimaryBaseRepository<typeof regions> {
     return this.model.findMany({ orderBy: { name: 'asc' } });
   }
 
-  // Returns all regions with a count of assigned providers
-  async findAllWithCounts(): Promise<Array<Region & { providerCount: number }>> {
+  // Returns all regions with a count of assigned providers, filtered and sorted by optional SQL expressions
+  async findAllWithCounts(where?: SQL, orderBy?: SQL[]): Promise<Array<Region & { providerCount: number }>> {
     const rows = await this.db
       .select({
         id: regions.id,
@@ -30,8 +30,9 @@ export class RegionRepository extends PrimaryBaseRepository<typeof regions> {
       })
       .from(regions)
       .leftJoin(regionCloudProviders, eq(regionCloudProviders.regionId, regions.id))
+      .where(where)
       .groupBy(regions.id)
-      .orderBy(asc(regions.name));
+      .orderBy(...(orderBy && orderBy.length > 0 ? orderBy : [asc(regions.name)]));
     return rows as Array<Region & { providerCount: number }>;
   }
 

@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Logger, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { UserId } from '@vritti/api-sdk';
+import { SuccessResponseDto, UserId } from '@vritti/api-sdk';
 import {
   ApiCreateCloudProvider,
   ApiDeleteCloudProvider,
@@ -26,7 +26,7 @@ export class CloudProviderController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiCreateCloudProvider()
-  create(@Body() dto: CreateCloudProviderDto): Promise<CloudProviderDto> {
+  create(@Body() dto: CreateCloudProviderDto): Promise<SuccessResponseDto> {
     this.logger.log('POST /admin-api/cloud-providers');
     return this.cloudProviderService.create(dto);
   }
@@ -54,7 +54,7 @@ export class CloudProviderController {
   // Updates a cloud provider by ID
   @Patch(':id')
   @ApiUpdateCloudProvider()
-  update(@Param('id') id: string, @Body() dto: UpdateCloudProviderDto): Promise<CloudProviderDto> {
+  update(@Param('id') id: string, @Body() dto: UpdateCloudProviderDto): Promise<SuccessResponseDto> {
     this.logger.log(`PATCH /admin-api/cloud-providers/${id}`);
     return this.cloudProviderService.update(id, dto);
   }
@@ -63,7 +63,7 @@ export class CloudProviderController {
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
   @ApiDeleteCloudProvider()
-  delete(@Param('id') id: string): Promise<CloudProviderDto> {
+  delete(@Param('id') id: string): Promise<SuccessResponseDto> {
     this.logger.log(`DELETE /admin-api/cloud-providers/${id}`);
     return this.cloudProviderService.delete(id);
   }

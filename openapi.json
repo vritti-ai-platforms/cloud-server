@@ -3577,14 +3577,7 @@
         },
         "responses": {
           "201": {
-            "description": "Cloud provider created successfully.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CloudProviderDto"
-                }
-              }
-            }
+            "description": "Cloud provider created successfully."
           },
           "400": {
             "description": "Validation failed."
@@ -3723,14 +3716,7 @@
         },
         "responses": {
           "200": {
-            "description": "Cloud provider updated successfully.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CloudProviderDto"
-                }
-              }
-            }
+            "description": "Cloud provider updated successfully."
           },
           "400": {
             "description": "Validation failed."
@@ -3771,14 +3757,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Cloud provider deleted successfully.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CloudProviderDto"
-                }
-              }
-            }
+            "description": "Cloud provider deleted successfully."
           },
           "401": {
             "description": "Unauthorized."
@@ -4134,14 +4113,7 @@
         },
         "responses": {
           "201": {
-            "description": "Region created successfully.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/RegionDto"
-                }
-              }
-            }
+            "description": "Region created successfully."
           },
           "400": {
             "description": "Validation failed."
@@ -4165,17 +4137,33 @@
       },
       "get": {
         "operationId": "RegionController_findAll",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "searchColumn",
+            "required": false,
+            "in": "query",
+            "description": "Column to search (name, code, state, city)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "searchValue",
+            "required": false,
+            "in": "query",
+            "description": "Search value (contains match)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Regions retrieved successfully.",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/RegionDto"
-                  }
+                  "$ref": "#/components/schemas/RegionsResponseDto"
                 }
               }
             }
@@ -4264,14 +4252,7 @@
         },
         "responses": {
           "200": {
-            "description": "Region updated successfully.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/RegionDto"
-                }
-              }
-            }
+            "description": "Region updated successfully."
           },
           "400": {
             "description": "Validation failed."
@@ -4312,14 +4293,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Region deleted successfully.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/RegionDto"
-                }
-              }
-            }
+            "description": "Region deleted successfully."
           },
           "401": {
             "description": "Unauthorized."
@@ -4501,14 +4475,7 @@
         },
         "responses": {
           "201": {
-            "description": "Industry created successfully.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/IndustryDto"
-                }
-              }
-            }
+            "description": "Industry created successfully."
           },
           "400": {
             "description": "Validation failed."
@@ -4647,14 +4614,7 @@
         },
         "responses": {
           "200": {
-            "description": "Industry updated successfully.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/IndustryDto"
-                }
-              }
-            }
+            "description": "Industry updated successfully."
           },
           "400": {
             "description": "Validation failed."
@@ -4695,14 +4655,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Industry deleted successfully.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/IndustryDto"
-                }
-              }
-            }
+            "description": "Industry deleted successfully."
           },
           "401": {
             "description": "Unauthorized."
@@ -8345,6 +8298,28 @@
           "city",
           "createdAt",
           "providerCount"
+        ]
+      },
+      "RegionsResponseDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RegionDto"
+            }
+          },
+          "state": {
+            "type": "object",
+            "description": "Current active filter/sort/visibility state"
+          },
+          "activeViewId": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "data",
+          "state"
         ]
       },
       "UpdateRegionDto": {
