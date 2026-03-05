@@ -4,7 +4,10 @@ import { IndustryDto } from '../entity/industry.dto';
 
 export class IndustriesResponseDto {
   @ApiProperty({ type: [IndustryDto] })
-  data: IndustryDto[];
+  result: IndustryDto[];
+
+  @ApiProperty()
+  count: number;
 
   @ApiProperty({ description: 'Current active filter/sort/visibility state' })
   state: TableViewState;

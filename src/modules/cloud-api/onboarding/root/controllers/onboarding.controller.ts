@@ -1,6 +1,6 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Logger, Post, Res } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { Onboarding, RefreshCookieOptions, RefreshTokenCookie, SessionData, type SessionInfo, UserId } from '@vritti/api-sdk';
+import { type CookieSerializeOptions, Onboarding, RefreshCookieOptions, RefreshTokenCookie, SessionData, type SessionInfo, UserId } from '@vritti/api-sdk';
 import type { FastifyReply } from 'fastify';
 import { TokenResponse } from '../../../auth/root/dto/response/token-response.dto';
 import { getRefreshCookieName } from '../../../auth/root/services/session.service';
@@ -49,7 +49,7 @@ export class OnboardingController {
   async completeOnboarding(
     @SessionData() session: SessionInfo,
     @RefreshTokenCookie() refreshToken: string,
-    @RefreshCookieOptions() cookieOptions: Record<string, unknown>,
+    @RefreshCookieOptions() cookieOptions: CookieSerializeOptions,
     @Res({ passthrough: true }) reply: FastifyReply,
   ): Promise<TokenResponse> {
     this.logger.log(`POST /onboarding/complete - User: ${session.userId}`);

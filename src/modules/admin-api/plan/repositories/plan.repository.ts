@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrimaryBaseRepository, PrimaryDatabaseService } from '@vritti/api-sdk';
 import { asc, count, eq } from '@vritti/api-sdk/drizzle-orm';
 import type { Plan } from '@/db/schema';
-import { plans, prices } from '@/db/schema';
+import { deploymentIndustryPlans, organizations, plans, prices } from '@/db/schema';
 
 @Injectable()
 export class PlanRepository extends PrimaryBaseRepository<typeof plans> {
@@ -23,6 +23,21 @@ export class PlanRepository extends PrimaryBaseRepository<typeof plans> {
   // Finds a plan by its unique code
   async findByCode(code: string): Promise<Plan | undefined> {
     return this.model.findFirst({ where: { code } });
+  }
+
+  // Returns true if any table references this plan (prices, deployment_industry_plans, or organizations)
+  async isReferenced(planId: string): Promise<boolean> {
+    const [priceRows, deploymentRows, orgRows] = await Promise.all([
+      this.db.select({ n: count(prices.id) }).from(prices).where(eq(prices.planId, planId)),
+      this.db
+        .select({ n: count(deploymentIndustryPlans.planId) })
+        .from(deploymentIndustryPlans)
+        .where(eq(deploymentIndustryPlans.planId, planId)),
+      this.db.select({ n: count(organizations.id) }).from(organizations).where(eq(organizations.planId, planId)),
+    ]);
+    return (
+      Number(priceRows[0]?.n ?? 0) + Number(deploymentRows[0]?.n ?? 0) + Number(orgRows[0]?.n ?? 0) > 0
+    );
   }
 
   // Returns all plans with a count of associated prices

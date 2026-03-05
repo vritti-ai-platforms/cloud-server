@@ -1871,7 +1871,16 @@
       "post": {
         "description": "Verifies the WebAuthn authentication response and creates a user session. Returns an access token and sets a refresh token in an httpOnly cookie.",
         "operationId": "PasskeyAuthController_verifyPasskeyAuth",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "user-agent",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -3614,18 +3623,14 @@
             "required": false,
             "in": "query",
             "description": "Column to search (name, code)",
-            "schema": {
-              "type": "string"
-            }
+            "schema": {}
           },
           {
             "name": "searchValue",
             "required": false,
             "in": "query",
             "description": "Search value (contains match)",
-            "schema": {
-              "type": "string"
-            }
+            "schema": {}
           }
         ],
         "responses": {
@@ -3649,6 +3654,131 @@
           }
         ],
         "summary": "List all cloud providers",
+        "tags": [
+          "Admin - Cloud Providers"
+        ]
+      }
+    },
+    "/admin-api/cloud-providers/select": {
+      "get": {
+        "operationId": "CloudProviderController_findForSelect",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Search term to filter by label",
+            "schema": {
+              "example": "united",
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Maximum number of results",
+            "schema": {
+              "default": 20,
+              "example": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "description": "Number of results to skip",
+            "schema": {
+              "default": 0,
+              "example": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "values",
+            "required": false,
+            "in": "query",
+            "description": "Comma-separated values to fetch specific options",
+            "schema": {
+              "example": "1,2,3",
+              "type": "string"
+            }
+          },
+          {
+            "name": "excludeIds",
+            "required": false,
+            "in": "query",
+            "description": "Comma-separated IDs to exclude from results (already selected)",
+            "schema": {
+              "example": "5,10",
+              "type": "string"
+            }
+          },
+          {
+            "name": "valueKey",
+            "required": false,
+            "in": "query",
+            "description": "Column name for option value",
+            "schema": {
+              "default": "id",
+              "example": "id",
+              "type": "string"
+            }
+          },
+          {
+            "name": "labelKey",
+            "required": false,
+            "in": "query",
+            "description": "Column name for option label",
+            "schema": {
+              "default": "name",
+              "example": "name",
+              "type": "string"
+            }
+          },
+          {
+            "name": "descriptionKey",
+            "required": false,
+            "in": "query",
+            "description": "Column name for option description",
+            "schema": {
+              "example": "description",
+              "type": "string"
+            }
+          },
+          {
+            "name": "groupIdKey",
+            "required": false,
+            "in": "query",
+            "description": "Column name for group ID",
+            "schema": {
+              "example": "regionId",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cloud provider options retrieved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CloudProviderSelectResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get cloud providers for select component",
         "tags": [
           "Admin - Cloud Providers"
         ]
@@ -3849,10 +3979,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/DeploymentDto"
-                  }
+                  "$ref": "#/components/schemas/DeploymentsResponseDto"
                 }
               }
             }
@@ -4014,6 +4141,51 @@
       }
     },
     "/admin-api/deployments/{id}/plans": {
+      "get": {
+        "operationId": "DeploymentController_getPlans",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Deployment UUID",
+            "schema": {
+              "example": "550e8400-e29b-41d4-a716-446655440000",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Assignments retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DeploymentPlanListItemDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "404": {
+            "description": "Deployment not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get all plan+industry assignments for a deployment",
+        "tags": [
+          "Admin - Deployments"
+        ]
+      },
       "post": {
         "operationId": "DeploymentController_assignPlan",
         "parameters": [
@@ -4165,26 +4337,7 @@
       },
       "get": {
         "operationId": "RegionController_findAll",
-        "parameters": [
-          {
-            "name": "searchColumn",
-            "required": false,
-            "in": "query",
-            "description": "Column to search (name, code, state, city)",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "searchValue",
-            "required": false,
-            "in": "query",
-            "description": "Search value (contains match)",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
+        "parameters": [],
         "responses": {
           "200": {
             "description": "Regions retrieved successfully.",
@@ -4792,10 +4945,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/PlanDto"
-                  }
+                  "$ref": "#/components/schemas/PlansResponseDto"
                 }
               }
             }
@@ -5702,6 +5852,204 @@
         "summary": "Get industries for select component",
         "tags": [
           "Industries"
+        ]
+      }
+    },
+    "/cloud-api/regions": {
+      "get": {
+        "operationId": "RegionController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Regions retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RegionOptionDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List all active regions",
+        "tags": [
+          "Regions"
+        ]
+      }
+    },
+    "/cloud-api/regions/{id}/cloud-providers": {
+      "get": {
+        "operationId": "RegionController_getCloudProviders",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Region UUID",
+            "schema": {
+              "example": "550e8400-e29b-41d4-a716-446655440000",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Providers retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProviderOptionDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "404": {
+            "description": "Region not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List cloud providers available in a region",
+        "tags": [
+          "Regions"
+        ]
+      }
+    },
+    "/cloud-api/deployments": {
+      "get": {
+        "operationId": "CloudDeploymentController_findActive",
+        "parameters": [
+          {
+            "name": "regionId",
+            "required": true,
+            "in": "query",
+            "description": "Region UUID",
+            "schema": {
+              "example": "550e8400-e29b-41d4-a716-446655440000",
+              "type": "string"
+            }
+          },
+          {
+            "name": "cloudProviderId",
+            "required": true,
+            "in": "query",
+            "description": "Cloud provider UUID",
+            "schema": {
+              "example": "550e8400-e29b-41d4-a716-446655440000",
+              "type": "string"
+            }
+          },
+          {
+            "name": "industryId",
+            "required": true,
+            "in": "query",
+            "description": "Industry UUID",
+            "schema": {
+              "example": "550e8400-e29b-41d4-a716-446655440000",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deployments retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DeploymentOptionDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List active deployments for a region, cloud provider, and industry",
+        "tags": [
+          "Deployments"
+        ]
+      }
+    },
+    "/cloud-api/deployments/{id}/plans": {
+      "get": {
+        "operationId": "CloudDeploymentController_getPlans",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Deployment UUID",
+            "schema": {
+              "example": "550e8400-e29b-41d4-a716-446655440000",
+              "type": "string"
+            }
+          },
+          {
+            "name": "industryId",
+            "required": false,
+            "in": "query",
+            "description": "Industry UUID",
+            "schema": {
+              "example": "550e8400-e29b-41d4-a716-446655440000",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Plans retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PlanOptionDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List plans for a deployment and industry with pricing",
+        "tags": [
+          "Deployments"
         ]
       }
     }
@@ -8003,12 +8351,22 @@
           "name": {
             "type": "string",
             "description": "Display name of the provider",
-            "example": "HealthCare Plus"
+            "example": "Amazon Web Services"
           },
           "code": {
             "type": "string",
             "description": "Unique code identifier for the provider",
-            "example": "healthcare-plus"
+            "example": "AWS"
+          },
+          "logoUrl": {
+            "type": "string",
+            "description": "URL to the provider logo for light mode",
+            "example": "https://cdn.vritti.io/providers/aws-light.svg"
+          },
+          "logoDarkUrl": {
+            "type": "string",
+            "description": "URL to the provider logo for dark mode",
+            "example": "https://cdn.vritti.io/providers/aws-dark.svg"
           }
         },
         "required": [
@@ -8033,6 +8391,42 @@
           "message"
         ]
       },
+      "CloudProviderSelectOptionDto": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "label": {
+            "type": "string",
+            "example": "AWS"
+          }
+        },
+        "required": [
+          "value",
+          "label"
+        ]
+      },
+      "CloudProviderSelectResponseDto": {
+        "type": "object",
+        "properties": {
+          "options": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CloudProviderSelectOptionDto"
+            }
+          },
+          "hasMore": {
+            "type": "boolean",
+            "example": false
+          }
+        },
+        "required": [
+          "options",
+          "hasMore"
+        ]
+      },
       "CloudProviderDto": {
         "type": "object",
         "properties": {
@@ -8048,6 +8442,16 @@
             "type": "string",
             "example": "healthcare-plus"
           },
+          "logoUrl": {
+            "type": "object",
+            "example": "https://cdn.vritti.io/providers/aws-light.svg",
+            "nullable": true
+          },
+          "logoDarkUrl": {
+            "type": "object",
+            "example": "https://cdn.vritti.io/providers/aws-dark.svg",
+            "nullable": true
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -8060,6 +8464,10 @@
           "regionCount": {
             "type": "number",
             "example": 3
+          },
+          "deploymentCount": {
+            "type": "number",
+            "example": 12
           }
         },
         "required": [
@@ -8067,17 +8475,21 @@
           "name",
           "code",
           "createdAt",
-          "regionCount"
+          "regionCount",
+          "deploymentCount"
         ]
       },
       "CloudProvidersResponseDto": {
         "type": "object",
         "properties": {
-          "data": {
+          "result": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/CloudProviderDto"
             }
+          },
+          "count": {
+            "type": "number"
           },
           "state": {
             "type": "object",
@@ -8088,7 +8500,8 @@
           }
         },
         "required": [
-          "data",
+          "result",
+          "count",
           "state"
         ]
       },
@@ -8098,12 +8511,22 @@
           "name": {
             "type": "string",
             "description": "Display name of the provider",
-            "example": "HealthCare Plus"
+            "example": "Amazon Web Services"
           },
           "code": {
             "type": "string",
             "description": "Unique code identifier for the provider",
-            "example": "healthcare-plus"
+            "example": "AWS"
+          },
+          "logoUrl": {
+            "type": "string",
+            "description": "URL to the provider logo for light mode",
+            "example": "https://cdn.vritti.io/providers/aws-light.svg"
+          },
+          "logoDarkUrl": {
+            "type": "string",
+            "description": "URL to the provider logo for dark mode",
+            "example": "https://cdn.vritti.io/providers/aws-dark.svg"
           }
         }
       },
@@ -8209,6 +8632,22 @@
             "type": "string",
             "format": "date-time",
             "nullable": true
+          },
+          "regionName": {
+            "type": "string",
+            "example": "US East"
+          },
+          "regionCode": {
+            "type": "string",
+            "example": "us-east"
+          },
+          "cloudProviderName": {
+            "type": "string",
+            "example": "Amazon Web Services"
+          },
+          "cloudProviderCode": {
+            "type": "string",
+            "example": "aws"
           }
         },
         "required": [
@@ -8220,6 +8659,24 @@
           "status",
           "type",
           "createdAt"
+        ]
+      },
+      "DeploymentsResponseDto": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeploymentDto"
+            }
+          },
+          "count": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "result",
+          "count"
         ]
       },
       "UpdateDeploymentDto": {
@@ -8270,6 +8727,38 @@
           }
         }
       },
+      "DeploymentPlanListItemDto": {
+        "type": "object",
+        "properties": {
+          "planId": {
+            "type": "string",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "planName": {
+            "type": "string",
+            "example": "Free"
+          },
+          "planCode": {
+            "type": "string",
+            "example": "free"
+          },
+          "industryId": {
+            "type": "string",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "industryName": {
+            "type": "string",
+            "example": "Healthcare"
+          }
+        },
+        "required": [
+          "planId",
+          "planName",
+          "planCode",
+          "industryId",
+          "industryName"
+        ]
+      },
       "AssignDeploymentPlanDto": {
         "type": "object",
         "properties": {
@@ -8315,6 +8804,11 @@
             "description": "Unique code identifier for the region",
             "example": "hyd-metro"
           },
+          "country": {
+            "type": "string",
+            "description": "Country of the region",
+            "example": "India"
+          },
           "state": {
             "type": "string",
             "description": "State of the region",
@@ -8324,13 +8818,42 @@
             "type": "string",
             "description": "City of the region",
             "example": "Hyderabad"
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Whether the region is active and available for deployments",
+            "default": true
           }
         },
         "required": [
           "name",
           "code",
+          "country",
           "state",
           "city"
+        ]
+      },
+      "RegionProviderSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "logoUrl": {
+            "type": "object",
+            "nullable": true
+          },
+          "logoDarkUrl": {
+            "type": "object",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "name"
         ]
       },
       "RegionDto": {
@@ -8348,6 +8871,10 @@
             "type": "string",
             "example": "hyd-metro"
           },
+          "country": {
+            "type": "string",
+            "example": "India"
+          },
           "state": {
             "type": "string",
             "example": "Telangana"
@@ -8355,6 +8882,10 @@
           "city": {
             "type": "string",
             "example": "Hyderabad"
+          },
+          "isActive": {
+            "type": "boolean",
+            "example": true
           },
           "createdAt": {
             "type": "string",
@@ -8368,26 +8899,38 @@
           "providerCount": {
             "type": "number",
             "example": 5
+          },
+          "providers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RegionProviderSummary"
+            }
           }
         },
         "required": [
           "id",
           "name",
           "code",
+          "country",
           "state",
           "city",
+          "isActive",
           "createdAt",
-          "providerCount"
+          "providerCount",
+          "providers"
         ]
       },
       "RegionsResponseDto": {
         "type": "object",
         "properties": {
-          "data": {
+          "result": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/RegionDto"
             }
+          },
+          "count": {
+            "type": "number"
           },
           "state": {
             "type": "object",
@@ -8398,7 +8941,8 @@
           }
         },
         "required": [
-          "data",
+          "result",
+          "count",
           "state"
         ]
       },
@@ -8415,6 +8959,11 @@
             "description": "Unique code identifier for the region",
             "example": "hyd-metro"
           },
+          "country": {
+            "type": "string",
+            "description": "Country of the region",
+            "example": "India"
+          },
           "state": {
             "type": "string",
             "description": "State of the region",
@@ -8424,6 +8973,11 @@
             "type": "string",
             "description": "City of the region",
             "example": "Hyderabad"
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Whether the region is active and available for deployments",
+            "default": true
           }
         }
       },
@@ -8469,6 +9023,14 @@
           },
           "code": {
             "type": "string"
+          },
+          "logoUrl": {
+            "type": "object",
+            "nullable": true
+          },
+          "logoDarkUrl": {
+            "type": "object",
+            "nullable": true
           },
           "createdAt": {
             "format": "date-time",
@@ -8543,11 +9105,14 @@
       "IndustriesResponseDto": {
         "type": "object",
         "properties": {
-          "data": {
+          "result": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/IndustryDto"
             }
+          },
+          "count": {
+            "type": "number"
           },
           "state": {
             "type": "object",
@@ -8558,7 +9123,8 @@
           }
         },
         "required": [
-          "data",
+          "result",
+          "count",
           "state"
         ]
       },
@@ -8641,6 +9207,24 @@
           "code",
           "createdAt",
           "priceCount"
+        ]
+      },
+      "PlansResponseDto": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlanDto"
+            }
+          },
+          "count": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "result",
+          "count"
         ]
       },
       "UpdatePlanDto": {
@@ -8965,6 +9549,117 @@
         "required": [
           "options",
           "hasMore"
+        ]
+      },
+      "RegionOptionDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "name": {
+            "type": "string",
+            "example": "US East"
+          },
+          "code": {
+            "type": "string",
+            "example": "us-east"
+          },
+          "state": {
+            "type": "string",
+            "example": "Maharashtra"
+          },
+          "city": {
+            "type": "string",
+            "example": "Mumbai"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "code",
+          "state",
+          "city"
+        ]
+      },
+      "ProviderOptionDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "name": {
+            "type": "string",
+            "example": "Amazon Web Services"
+          },
+          "code": {
+            "type": "string",
+            "example": "aws"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "code"
+        ]
+      },
+      "DeploymentOptionDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "name": {
+            "type": "string",
+            "example": "US East Production"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "shared",
+              "dedicated"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "type"
+        ]
+      },
+      "PlanOptionDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "name": {
+            "type": "string",
+            "example": "Pro"
+          },
+          "code": {
+            "type": "string",
+            "example": "pro"
+          },
+          "price": {
+            "type": "object",
+            "example": "2999.00",
+            "nullable": true
+          },
+          "currency": {
+            "type": "object",
+            "example": "INR",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "code"
         ]
       }
     }

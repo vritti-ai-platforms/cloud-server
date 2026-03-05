@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { PrimaryDatabaseService } from '@vritti/api-sdk';
 import { and, eq } from '@vritti/api-sdk/drizzle-orm';
-import { deploymentIndustryPlans } from '@/db/schema';
+import { deploymentIndustryPlans, industries, plans } from '@/db/schema';
+import type { DeploymentPlanListItemDto } from '../dto/entity/deployment-plan-list-item.dto';
 
 @Injectable()
 export class DeploymentIndustryPlanRepository {
@@ -27,5 +28,21 @@ export class DeploymentIndustryPlanRepository {
           eq(deploymentIndustryPlans.industryId, industryId),
         ),
       );
+  }
+
+  // Returns plan+industry assignments for a deployment with names joined
+  async findByDeploymentId(deploymentId: string): Promise<DeploymentPlanListItemDto[]> {
+    return this.database.drizzleClient
+      .select({
+        planId: deploymentIndustryPlans.planId,
+        planName: plans.name,
+        planCode: plans.code,
+        industryId: deploymentIndustryPlans.industryId,
+        industryName: industries.name,
+      })
+      .from(deploymentIndustryPlans)
+      .innerJoin(plans, eq(deploymentIndustryPlans.planId, plans.id))
+      .innerJoin(industries, eq(deploymentIndustryPlans.industryId, industries.id))
+      .where(eq(deploymentIndustryPlans.deploymentId, deploymentId));
   }
 }

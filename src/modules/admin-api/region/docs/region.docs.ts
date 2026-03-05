@@ -1,5 +1,5 @@
 import { applyDecorators } from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse } from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
 import { SuccessResponseDto } from '@vritti/api-sdk';
 import { RegionDto } from '../dto/entity/region.dto';
 import { AssignProvidersDto } from '../dto/request/assign-providers.dto';
@@ -23,8 +23,6 @@ export function ApiCreateRegion() {
 export function ApiFindAllRegions() {
   return applyDecorators(
     ApiOperation({ summary: 'List all regions' }),
-    ApiQuery({ name: 'searchColumn', required: false, description: 'Column to search (name, code, state, city)' }),
-    ApiQuery({ name: 'searchValue', required: false, description: 'Search value (contains match)' }),
     ApiResponse({ status: 200, description: 'Regions retrieved successfully.', type: RegionsResponseDto }),
     ApiResponse({ status: 401, description: 'Unauthorized.' }),
   );

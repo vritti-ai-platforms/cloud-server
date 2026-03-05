@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { PrimaryDatabaseService } from '@vritti/api-sdk';
 import { eq, and } from '@vritti/api-sdk/drizzle-orm';
-import { cloudProviders, regionCloudProviders } from '@/db/schema';
 import type { CloudProvider } from '@/db/schema';
+import { cloudProviders, regionCloudProviders } from '@/db/schema';
 
 @Injectable()
 export class RegionProviderRepository {
@@ -15,13 +15,15 @@ export class RegionProviderRepository {
     return result.rowCount ?? rows.length;
   }
 
-  // JOINs regionCloudProviders with cloudProviders to return the full provider rows for a region
+  // JOINs regionCloudProviders with cloudProviders to return provider rows for a region
   async findProvidersByRegionId(regionId: string): Promise<CloudProvider[]> {
     return this.database.drizzleClient
       .select({
         id: cloudProviders.id,
         name: cloudProviders.name,
         code: cloudProviders.code,
+        logoUrl: cloudProviders.logoUrl,
+        logoDarkUrl: cloudProviders.logoDarkUrl,
         createdAt: cloudProviders.createdAt,
         updatedAt: cloudProviders.updatedAt,
       })

@@ -5,6 +5,8 @@ export const cloudProviders = cloudSchema.table('cloud_providers', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: varchar('name', { length: 255 }).notNull(),
   code: varchar('code', { length: 100 }).notNull().unique(),
+  logoUrl: varchar('logo_url', { length: 500 }),
+  logoDarkUrl: varchar('logo_dark_url', { length: 500 }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).$onUpdate(() => new Date()),
 });

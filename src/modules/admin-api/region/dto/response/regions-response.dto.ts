@@ -4,7 +4,10 @@ import { RegionDto } from '../entity/region.dto';
 
 export class RegionsResponseDto {
   @ApiProperty({ type: [RegionDto] })
-  data: RegionDto[];
+  result: RegionDto[];
+
+  @ApiProperty()
+  count: number;
 
   @ApiProperty({ description: 'Current active filter/sort/visibility state' })
   state: TableViewState;

@@ -1,10 +1,12 @@
 import { applyDecorators } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
 import { DeploymentDto } from '../dto/entity/deployment.dto';
+import { DeploymentPlanListItemDto } from '../dto/entity/deployment-plan-list-item.dto';
 import { AssignDeploymentPlanDto } from '../dto/request/assign-deployment-plan.dto';
 import { CreateDeploymentDto } from '../dto/request/create-deployment.dto';
 import { UpdateDeploymentDto } from '../dto/request/update-deployment.dto';
 import { AssignDeploymentPlanResponseDto } from '../dto/response/assign-deployment-plan-response.dto';
+import { DeploymentsResponseDto } from '../dto/response/deployments-response.dto';
 
 export function ApiCreateDeployment() {
   return applyDecorators(
@@ -19,7 +21,7 @@ export function ApiCreateDeployment() {
 export function ApiFindAllDeployments() {
   return applyDecorators(
     ApiOperation({ summary: 'List all deployments' }),
-    ApiResponse({ status: 200, description: 'Deployments retrieved successfully.', type: DeploymentDto, isArray: true }),
+    ApiResponse({ status: 200, description: 'Deployments retrieved successfully.', type: DeploymentsResponseDto }),
     ApiResponse({ status: 401, description: 'Unauthorized.' }),
   );
 }
@@ -63,6 +65,16 @@ export function ApiRemoveDeploymentPlan() {
     ApiBody({ type: AssignDeploymentPlanDto }),
     ApiResponse({ status: 200, description: 'Assignment removed successfully.' }),
     ApiResponse({ status: 400, description: 'Validation failed.' }),
+    ApiResponse({ status: 401, description: 'Unauthorized.' }),
+    ApiResponse({ status: 404, description: 'Deployment not found.' }),
+  );
+}
+
+export function ApiGetDeploymentPlans() {
+  return applyDecorators(
+    ApiOperation({ summary: 'Get all plan+industry assignments for a deployment' }),
+    ApiParam({ name: 'id', description: 'Deployment UUID', example: '550e8400-e29b-41d4-a716-446655440000' }),
+    ApiResponse({ status: 200, description: 'Assignments retrieved successfully.', type: DeploymentPlanListItemDto, isArray: true }),
     ApiResponse({ status: 401, description: 'Unauthorized.' }),
     ApiResponse({ status: 404, description: 'Deployment not found.' }),
   );

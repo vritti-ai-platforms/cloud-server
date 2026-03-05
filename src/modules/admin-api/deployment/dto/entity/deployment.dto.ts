@@ -1,11 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-  type DeploymentStatus,
-  type DeploymentType,
-  DeploymentStatusValues,
-  DeploymentTypeValues,
-} from '@/db/schema';
 import type { Deployment } from '@/db/schema';
+import { type DeploymentStatus, DeploymentStatusValues, type DeploymentType, DeploymentTypeValues } from '@/db/schema';
+import type { DeploymentWithNames } from '../../repositories/deployment.repository';
 
 export class DeploymentDto {
   @ApiProperty({ example: '550e8400-e29b-41d4-a716-446655440000' })
@@ -35,8 +31,20 @@ export class DeploymentDto {
   @ApiPropertyOptional({ type: 'string', format: 'date-time', nullable: true })
   updatedAt: Date | null;
 
+  @ApiPropertyOptional({ example: 'US East' })
+  regionName?: string;
+
+  @ApiPropertyOptional({ example: 'us-east' })
+  regionCode?: string;
+
+  @ApiPropertyOptional({ example: 'Amazon Web Services' })
+  cloudProviderName?: string;
+
+  @ApiPropertyOptional({ example: 'aws' })
+  cloudProviderCode?: string;
+
   // Strips webhookSecret from the response for security
-  static from(deployment: Deployment): DeploymentDto {
+  static from(deployment: Deployment | DeploymentWithNames): DeploymentDto {
     const dto = new DeploymentDto();
     dto.id = deployment.id;
     dto.name = deployment.name;
@@ -47,6 +55,12 @@ export class DeploymentDto {
     dto.type = deployment.type;
     dto.createdAt = deployment.createdAt;
     dto.updatedAt = deployment.updatedAt;
+    if ('regionName' in deployment) {
+      dto.regionName = deployment.regionName;
+      dto.regionCode = deployment.regionCode;
+      dto.cloudProviderName = deployment.cloudProviderName;
+      dto.cloudProviderCode = deployment.cloudProviderCode;
+    }
     return dto;
   }
 }

@@ -3,6 +3,7 @@ import { ApiBody, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
 import { PlanDto } from '../dto/entity/plan.dto';
 import { CreatePlanDto } from '../dto/request/create-plan.dto';
 import { UpdatePlanDto } from '../dto/request/update-plan.dto';
+import { PlansResponseDto } from '../dto/response/plans-response.dto';
 
 export function ApiCreatePlan() {
   return applyDecorators(
@@ -18,7 +19,7 @@ export function ApiCreatePlan() {
 export function ApiFindAllPlans() {
   return applyDecorators(
     ApiOperation({ summary: 'List all plans' }),
-    ApiResponse({ status: 200, description: 'Plans retrieved successfully.', type: PlanDto, isArray: true }),
+    ApiResponse({ status: 200, description: 'Plans retrieved successfully.', type: PlansResponseDto }),
     ApiResponse({ status: 401, description: 'Unauthorized.' }),
   );
 }

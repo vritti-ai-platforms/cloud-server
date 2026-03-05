@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class RegionCloudProviderDto {
   @ApiProperty()
@@ -9,6 +9,12 @@ export class RegionCloudProviderDto {
 
   @ApiProperty()
   code: string;
+
+  @ApiPropertyOptional({ nullable: true })
+  logoUrl: string | null;
+
+  @ApiPropertyOptional({ nullable: true })
+  logoDarkUrl: string | null;
 
   @ApiProperty()
   createdAt: Date;

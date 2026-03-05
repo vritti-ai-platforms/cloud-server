@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ConflictException, FilterProcessor, NotFoundException, SuccessResponseDto, type FieldMap, type FilterCondition } from '@vritti/api-sdk';
+import { and } from '@vritti/api-sdk/drizzle-orm';
+import { ConflictException, FilterProcessor, NotFoundException, SelectOptionsQueryDto, SuccessResponseDto, type FieldMap, type SelectQueryResult } from '@vritti/api-sdk';
 import { cloudProviders } from '@/db/schema';
 import { TableViewService } from '../../../cloud-api/table-view/services/table-view.service';
 import { CloudProviderDto } from '../dto/entity/cloud-provider.dto';
@@ -22,6 +23,20 @@ export class CloudProviderService {
     private readonly tableViewService: TableViewService,
   ) {}
 
+  // Returns paginated cloud provider options for the select component
+  findForSelect(query: SelectOptionsQueryDto): Promise<SelectQueryResult> {
+    return this.cloudProviderRepository.findForSelect({
+      value: query.valueKey || 'id',
+      label: query.labelKey || 'name',
+      search: query.search,
+      limit: query.limit,
+      offset: query.offset,
+      values: query.values,
+      excludeIds: query.excludeIds,
+      orderBy: { name: 'asc' },
+    });
+  }
+
   // Creates a new cloud provider; throws ConflictException on duplicate code
   async create(dto: CreateCloudProviderDto): Promise<SuccessResponseDto> {
     const existing = await this.cloudProviderRepository.findByCode(dto.code);
@@ -33,21 +48,17 @@ export class CloudProviderService {
     return { success: true, message: 'Cloud provider created successfully.' };
   }
 
-  // Returns all cloud providers with region counts, applying server-stored filter/sort state plus an optional search filter
-  async findAll(userId: string, searchColumn?: string, searchValue?: string): Promise<CloudProvidersResponseDto> {
+  // Returns paginated cloud providers with region counts, applying server-stored filter/sort/search/pagination state
+  async findAll(userId: string): Promise<CloudProvidersResponseDto> {
     const { state, activeViewId } = await this.tableViewService.getCurrentState(userId, 'cloud-providers');
-    const filters: FilterCondition[] = [...state.filters];
-    if (searchColumn && searchValue && CloudProviderService.FIELD_MAP[searchColumn]) {
-      filters.push({ field: searchColumn, operator: 'contains', value: searchValue });
-    }
-    const where = FilterProcessor.buildWhere(filters, CloudProviderService.FIELD_MAP);
+    const filterWhere = FilterProcessor.buildWhere(state.filters, CloudProviderService.FIELD_MAP);
+    const searchWhere = FilterProcessor.buildSearch(state.search, CloudProviderService.FIELD_MAP);
+    const where = and(filterWhere, searchWhere);
     const orderBy = FilterProcessor.buildOrderBy(state.sort, CloudProviderService.FIELD_MAP);
-    const providers = await this.cloudProviderRepository.findAllWithCounts(where, orderBy);
-    return {
-      data: providers.map((provider) => CloudProviderDto.from(provider, provider.regionCount)),
-      state,
-      activeViewId,
-    };
+    const { pageIndex = 0, pageSize = 20 } = state.pagination ?? {};
+    const { rows, total } = await this.cloudProviderRepository.findAllWithCounts(where, orderBy, pageSize, pageIndex * pageSize);
+    const result = rows.map((provider) => CloudProviderDto.from(provider, provider.regionCount, provider.deploymentCount));
+    return { result, count: total, state, activeViewId };
   }
 
   // Finds a cloud provider by ID; throws NotFoundException if not found

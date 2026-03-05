@@ -1,8 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ConflictException, NotFoundException } from '@vritti/api-sdk';
+import { BadRequestException, ConflictException, NotFoundException } from '@vritti/api-sdk';
 import { PlanDto } from '../dto/entity/plan.dto';
 import type { CreatePlanDto } from '../dto/request/create-plan.dto';
 import type { UpdatePlanDto } from '../dto/request/update-plan.dto';
+import { PlansResponseDto } from '../dto/response/plans-response.dto';
 import { PlanRepository } from '../repositories/plan.repository';
 
 @Injectable()
@@ -27,9 +28,10 @@ export class PlanService {
   }
 
   // Returns all plans mapped to DTOs with price counts
-  async findAll(): Promise<PlanDto[]> {
+  async findAll(): Promise<PlansResponseDto> {
     const plans = await this.planRepository.findAllWithCounts();
-    return plans.map((plan) => PlanDto.from(plan, plan.priceCount));
+    const result = plans.map((plan) => PlanDto.from(plan, plan.priceCount));
+    return { result, count: result.length };
   }
 
   // Finds a plan by ID; throws NotFoundException if not found
@@ -62,12 +64,20 @@ export class PlanService {
     return PlanDto.from(plan);
   }
 
-  // Deletes a plan by ID; throws NotFoundException if not found
+  // Deletes a plan by ID; throws NotFoundException if not found, BadRequestException if prices exist
   async delete(id: string): Promise<PlanDto> {
-    const plan = await this.planRepository.delete(id);
-    if (!plan) {
+    const existing = await this.planRepository.findById(id);
+    if (!existing) {
       throw new NotFoundException('Plan not found.');
     }
+    const referenced = await this.planRepository.isReferenced(id);
+    if (referenced) {
+      throw new BadRequestException({
+        label: 'Cannot Delete Plan',
+        detail: 'This plan is in use (prices or deployments reference it). Remove all associated data before deleting.',
+      });
+    }
+    const plan = await this.planRepository.delete(id);
     this.logger.log(`Deleted plan: ${plan.name} (${plan.id})`);
     return PlanDto.from(plan);
   }

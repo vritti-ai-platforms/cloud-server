@@ -11,6 +11,12 @@ export class CloudProviderDto {
   @ApiProperty({ example: 'healthcare-plus' })
   code: string;
 
+  @ApiPropertyOptional({ example: 'https://cdn.vritti.io/providers/aws-light.svg', nullable: true })
+  logoUrl: string | null;
+
+  @ApiPropertyOptional({ example: 'https://cdn.vritti.io/providers/aws-dark.svg', nullable: true })
+  logoDarkUrl: string | null;
+
   @ApiProperty({ type: 'string', format: 'date-time' })
   createdAt: Date;
 
@@ -20,14 +26,20 @@ export class CloudProviderDto {
   @ApiProperty({ example: 3 })
   regionCount: number;
 
-  static from(cloudProvider: CloudProvider, regionCount = 0): CloudProviderDto {
+  @ApiProperty({ example: 12 })
+  deploymentCount: number;
+
+  static from(cloudProvider: CloudProvider, regionCount = 0, deploymentCount = 0): CloudProviderDto {
     const dto = new CloudProviderDto();
     dto.id = cloudProvider.id;
     dto.name = cloudProvider.name;
     dto.code = cloudProvider.code;
+    dto.logoUrl = cloudProvider.logoUrl ?? null;
+    dto.logoDarkUrl = cloudProvider.logoDarkUrl ?? null;
     dto.createdAt = cloudProvider.createdAt;
     dto.updatedAt = cloudProvider.updatedAt;
     dto.regionCount = regionCount;
+    dto.deploymentCount = deploymentCount;
     return dto;
   }
 }

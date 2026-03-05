@@ -53,6 +53,6 @@ import { RegionService } from './region/services/region.service';
     PriceService,
     PriceRepository,
   ],
-  exports: [DeploymentRepository],
+  exports: [DeploymentRepository, DeploymentIndustryPlanRepository, RegionRepository, RegionProviderRepository, PlanRepository, PriceRepository],
 })
 export class AdminApiModule {}

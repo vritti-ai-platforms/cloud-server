@@ -46,16 +46,15 @@ export class OrganizationService {
     const { dto, file } = await this.parseMultipartRequest(request);
     await this.checkSubdomainAvailable(dto.subdomain);
 
-    // // Look up deployment for nexus URL and webhook secret
-    // if (!dto.deploymentId) {
-    //   throw new BadRequestException({
-    //     label: 'Deployment Required',
-    //     detail: 'A deployment must be specified to create an organization.',
-    //     errors: [{ field: 'deploymentId', message: 'Required' }],
-    //   });
-    // }
+    if (!dto.deploymentId) {
+      throw new BadRequestException({
+        label: 'Deployment Required',
+        detail: 'A deployment must be specified to create an organization.',
+        errors: [{ field: 'deploymentId', message: 'Required' }],
+      });
+    }
 
-    const deployment = await this.deploymentRepository.findById('41fd755d-209e-4b22-a652-91f2e2720b96');
+    const deployment = await this.deploymentRepository.findById(dto.deploymentId);
     if (!deployment) {
       throw new BadRequestException({
         label: 'Invalid Deployment',

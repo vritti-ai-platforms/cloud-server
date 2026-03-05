@@ -55,12 +55,9 @@ export class IndustryService {
     }
     const where = FilterProcessor.buildWhere(filters, IndustryService.FIELD_MAP);
     const orderBy = FilterProcessor.buildOrderBy(state.sort, IndustryService.FIELD_MAP);
-    const result = await this.industryRepository.findFiltered(where, orderBy);
-    return {
-      data: result.map(IndustryDto.from),
-      state,
-      activeViewId,
-    };
+    const rows = await this.industryRepository.findFiltered(where, orderBy);
+    const result = rows.map(IndustryDto.from);
+    return { result, count: result.length, state, activeViewId };
   }
 
   // Finds an industry by ID; throws NotFoundException if not found

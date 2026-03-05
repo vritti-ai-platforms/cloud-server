@@ -2,6 +2,7 @@ import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Logger, Param, Pat
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { ApiCreatePlan, ApiDeletePlan, ApiFindAllPlans, ApiFindPlanById, ApiUpdatePlan } from '../docs/plan.docs';
 import { PlanDto } from '../dto/entity/plan.dto';
+import { PlansResponseDto } from '../dto/response/plans-response.dto';
 import { CreatePlanDto } from '../dto/request/create-plan.dto';
 import { UpdatePlanDto } from '../dto/request/update-plan.dto';
 import { PlanService } from '../services/plan.service';
@@ -26,7 +27,7 @@ export class PlanController {
   // Returns all plans
   @Get()
   @ApiFindAllPlans()
-  findAll(): Promise<PlanDto[]> {
+  findAll(): Promise<PlansResponseDto> {
     this.logger.log('GET /admin-api/plans');
     return this.planService.findAll();
   }

@@ -1,10 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { NotFoundException } from '@vritti/api-sdk';
 import { DeploymentDto } from '../dto/entity/deployment.dto';
+import type { DeploymentPlanListItemDto } from '../dto/entity/deployment-plan-list-item.dto';
 import type { AssignDeploymentPlanDto } from '../dto/request/assign-deployment-plan.dto';
 import type { CreateDeploymentDto } from '../dto/request/create-deployment.dto';
 import type { UpdateDeploymentDto } from '../dto/request/update-deployment.dto';
 import { AssignDeploymentPlanResponseDto } from '../dto/response/assign-deployment-plan-response.dto';
+import { DeploymentsResponseDto } from '../dto/response/deployments-response.dto';
 import { DeploymentIndustryPlanRepository } from '../repositories/deployment-industry-plan.repository';
 import { DeploymentRepository } from '../repositories/deployment.repository';
 
@@ -25,9 +27,10 @@ export class DeploymentService {
   }
 
   // Returns all deployments mapped to DTOs
-  async findAll(): Promise<DeploymentDto[]> {
+  async findAll(): Promise<DeploymentsResponseDto> {
     const deployments = await this.deploymentRepository.findAll();
-    return deployments.map((deployment) => DeploymentDto.from(deployment));
+    const result = deployments.map((deployment) => DeploymentDto.from(deployment));
+    return { result, count: result.length };
   }
 
   // Finds a deployment by ID; throws NotFoundException if not found
@@ -77,5 +80,12 @@ export class DeploymentService {
     if (!deployment) throw new NotFoundException('Deployment not found.');
     await this.deploymentIndustryPlanRepository.remove(deploymentId, dto.planId, dto.industryId);
     this.logger.log(`Removed plan ${dto.planId} + industry ${dto.industryId} from deployment ${deploymentId}`);
+  }
+
+  // Returns all plan+industry assignments for a deployment; throws NotFoundException if deployment missing
+  async getPlans(deploymentId: string): Promise<DeploymentPlanListItemDto[]> {
+    const deployment = await this.deploymentRepository.findById(deploymentId);
+    if (!deployment) throw new NotFoundException('Deployment not found.');
+    return this.deploymentIndustryPlanRepository.findByDeploymentId(deploymentId);
   }
 }

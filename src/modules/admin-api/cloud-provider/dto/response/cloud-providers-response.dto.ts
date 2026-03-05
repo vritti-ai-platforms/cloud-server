@@ -4,7 +4,10 @@ import { CloudProviderDto } from '../entity/cloud-provider.dto';
 
 export class CloudProvidersResponseDto {
   @ApiProperty({ type: [CloudProviderDto] })
-  data: CloudProviderDto[];
+  result: CloudProviderDto[];
+
+  @ApiProperty()
+  count: number;
 
   @ApiProperty({ description: 'Current active filter/sort/visibility state' })
   state: TableViewState;

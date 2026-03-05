@@ -1,5 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsString, MaxLength, MinLength } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsBoolean, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 
 export class CreateRegionDto {
   @ApiProperty({ description: 'Display name of the region', example: 'Hyderabad Metro' })
@@ -14,6 +14,12 @@ export class CreateRegionDto {
   @MaxLength(100)
   code: string;
 
+  @ApiProperty({ description: 'Country of the region', example: 'India' })
+  @IsString()
+  @MinLength(1)
+  @MaxLength(100)
+  country: string;
+
   @ApiProperty({ description: 'State of the region', example: 'Telangana' })
   @IsString()
   @MinLength(1)
@@ -25,4 +31,9 @@ export class CreateRegionDto {
   @MinLength(1)
   @MaxLength(100)
   city: string;
+
+  @ApiPropertyOptional({ description: 'Whether the region is active and available for deployments', default: true })
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
 }

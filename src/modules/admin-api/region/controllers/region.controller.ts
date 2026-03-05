@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Logger, Param, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Logger, Param, Patch, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { SuccessResponseDto, UserId } from '@vritti/api-sdk';
 import {
@@ -37,16 +37,12 @@ export class RegionController {
     return this.regionService.create(dto);
   }
 
-  // Returns all regions with filter/sort state and optional search
+  // Returns all regions with filter/sort/search state applied
   @Get()
   @ApiFindAllRegions()
-  findAll(
-    @UserId() userId: string,
-    @Query('searchColumn') searchColumn?: string,
-    @Query('searchValue') searchValue?: string,
-  ): Promise<RegionsResponseDto> {
+  findAll(@UserId() userId: string): Promise<RegionsResponseDto> {
     this.logger.log('GET /admin-api/regions');
-    return this.regionService.findAll(userId, searchColumn, searchValue);
+    return this.regionService.findAll(userId);
   }
 
   // Returns a single region by ID

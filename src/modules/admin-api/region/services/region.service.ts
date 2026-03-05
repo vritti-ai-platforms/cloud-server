@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ConflictException, FilterProcessor, NotFoundException, SuccessResponseDto, type FieldMap, type FilterCondition } from '@vritti/api-sdk';
+import { and } from '@vritti/api-sdk/drizzle-orm';
+import { ConflictException, FilterProcessor, NotFoundException, SuccessResponseDto, type FieldMap } from '@vritti/api-sdk';
 import { regions } from '@/db/schema';
 import { TableViewService } from '../../../cloud-api/table-view/services/table-view.service';
 import { RegionDto } from '../dto/entity/region.dto';
@@ -21,6 +22,7 @@ export class RegionService {
     code: { column: regions.code, type: 'string' },
     state: { column: regions.state, type: 'string' },
     city: { column: regions.city, type: 'string' },
+    isActive: { column: regions.isActive, type: 'boolean' },
   };
 
   constructor(
@@ -40,21 +42,18 @@ export class RegionService {
     return { success: true, message: 'Region created successfully.' };
   }
 
-  // Returns all regions with provider counts, applying server-stored filter/sort state plus an optional search filter
-  async findAll(userId: string, searchColumn?: string, searchValue?: string): Promise<RegionsResponseDto> {
+  // Returns all regions with provider counts, applying server-stored filter/sort/search/provider state
+  async findAll(userId: string): Promise<RegionsResponseDto> {
     const { state, activeViewId } = await this.tableViewService.getCurrentState(userId, 'regions');
-    const filters: FilterCondition[] = [...state.filters];
-    if (searchColumn && searchValue && RegionService.FIELD_MAP[searchColumn]) {
-      filters.push({ field: searchColumn, operator: 'contains', value: searchValue });
-    }
-    const where = FilterProcessor.buildWhere(filters, RegionService.FIELD_MAP);
+    const providerFilter = state.filters.find((f) => f.field === 'cloudProviderId' && f.operator === 'equals');
+    const standardFilters = state.filters.filter((f) => f.field !== 'cloudProviderId');
+    const filterWhere = FilterProcessor.buildWhere(standardFilters, RegionService.FIELD_MAP);
+    const searchWhere = FilterProcessor.buildSearch(state.search, RegionService.FIELD_MAP);
+    const where = and(filterWhere, searchWhere);
     const orderBy = FilterProcessor.buildOrderBy(state.sort, RegionService.FIELD_MAP);
-    const result = await this.regionRepository.findAllWithCounts(where, orderBy);
-    return {
-      data: result.map((region) => RegionDto.from(region, region.providerCount)),
-      state,
-      activeViewId,
-    };
+    const rows = await this.regionRepository.findAllWithCounts(where, orderBy, providerFilter ? String(providerFilter.value) : undefined);
+    const result = rows.map((region) => RegionDto.from(region, region.providerCount, region.providers ?? []));
+    return { result, count: result.length, state, activeViewId };
   }
 
   // Finds a region by ID; throws NotFoundException if not found

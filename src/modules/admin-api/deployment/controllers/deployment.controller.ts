@@ -1,7 +1,9 @@
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Logger, Param, Patch, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { ApiAssignDeploymentPlan, ApiCreateDeployment, ApiDeleteDeployment, ApiFindAllDeployments, ApiFindDeploymentById, ApiRemoveDeploymentPlan, ApiUpdateDeployment } from '../docs/deployment.docs';
+import { ApiAssignDeploymentPlan, ApiCreateDeployment, ApiDeleteDeployment, ApiFindAllDeployments, ApiFindDeploymentById, ApiGetDeploymentPlans, ApiRemoveDeploymentPlan, ApiUpdateDeployment } from '../docs/deployment.docs';
 import { DeploymentDto } from '../dto/entity/deployment.dto';
+import { DeploymentsResponseDto } from '../dto/response/deployments-response.dto';
+import type { DeploymentPlanListItemDto } from '../dto/entity/deployment-plan-list-item.dto';
 import { AssignDeploymentPlanDto } from '../dto/request/assign-deployment-plan.dto';
 import { CreateDeploymentDto } from '../dto/request/create-deployment.dto';
 import { UpdateDeploymentDto } from '../dto/request/update-deployment.dto';
@@ -28,7 +30,7 @@ export class DeploymentController {
   // Returns all deployments
   @Get()
   @ApiFindAllDeployments()
-  findAll(): Promise<DeploymentDto[]> {
+  findAll(): Promise<DeploymentsResponseDto> {
     this.logger.log('GET /admin-api/deployments');
     return this.deploymentService.findAll();
   }
@@ -56,6 +58,14 @@ export class DeploymentController {
   delete(@Param('id') id: string): Promise<DeploymentDto> {
     this.logger.log(`DELETE /admin-api/deployments/${id}`);
     return this.deploymentService.delete(id);
+  }
+
+  // Returns all plan+industry assignments for a deployment
+  @Get(':id/plans')
+  @ApiGetDeploymentPlans()
+  getPlans(@Param('id') id: string): Promise<DeploymentPlanListItemDto[]> {
+    this.logger.log(`GET /admin-api/deployments/${id}/plans`);
+    return this.deploymentService.getPlans(id);
   }
 
   // Assigns a plan+industry to a deployment

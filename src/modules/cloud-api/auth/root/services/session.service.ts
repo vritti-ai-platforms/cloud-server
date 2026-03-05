@@ -1,9 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import { Injectable, Logger } from '@nestjs/common';
-import { getConfig, hashToken, UnauthorizedException } from '@vritti/api-sdk';
+import { getConfig, hashToken, JwtAuthService, TokenType, UnauthorizedException } from '@vritti/api-sdk';
 import { and, eq, ne } from '@vritti/api-sdk/drizzle-orm';
 import { type Session, type SessionType, SessionTypeValues, sessions } from '@/db/schema';
-import { JwtAuthService, TokenType } from '@vritti/api-sdk';
 import { SessionRepository } from '../repositories/session.repository';
 
 export function getRefreshCookieName(): string {
@@ -111,40 +110,25 @@ export class SessionService {
   }
 
   // Generates an access token bound to the session's refresh token
-  private generateAccessTokenForSession(session: Session, refreshToken: string): { accessToken: string; expiresIn: number } {
-    const accessToken = this.jwtService.generateAccessToken(
-      session.userId,
-      session.id,
-      session.type,
-      refreshToken,
-    );
+  private generateAccessTokenForSession(
+    session: Session,
+    refreshToken: string,
+  ): { accessToken: string; expiresIn: number } {
+    const accessToken = this.jwtService.generateAccessToken(session.userId, session.id, session.type, refreshToken);
     const expiresIn = this.jwtService.getExpiryInSeconds(TokenType.ACCESS);
     return { accessToken, expiresIn };
   }
 
   // Upgrades the current session type and deletes all other sessions of the old type
-  async upgradeSession(
-    sessionId: string,
-    userId: string,
-    fromType: SessionType,
-    toType: SessionType,
-  ): Promise<void> {
+  async upgradeSession(sessionId: string, userId: string, fromType: SessionType, toType: SessionType): Promise<void> {
     await this.sessionRepository.update(sessionId, { type: toType });
     await this.deleteOtherSessionsByType(userId, fromType, sessionId);
     this.logger.log(`Upgraded session ${sessionId} from ${fromType} to ${toType} for user: ${userId}`);
   }
 
   // Deletes all sessions of a given type for a user, excluding one session
-  private async deleteOtherSessionsByType(
-    userId: string,
-    type: SessionType,
-    excludeSessionId: string,
-  ): Promise<void> {
-    const condition = and(
-      eq(sessions.userId, userId),
-      eq(sessions.type, type),
-      ne(sessions.id, excludeSessionId),
-    );
+  private async deleteOtherSessionsByType(userId: string, type: SessionType, excludeSessionId: string): Promise<void> {
+    const condition = and(eq(sessions.userId, userId), eq(sessions.type, type), ne(sessions.id, excludeSessionId));
     if (condition) {
       const result = await this.sessionRepository.deleteMany(condition);
       if (result.count > 0) {

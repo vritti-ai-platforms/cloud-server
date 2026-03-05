@@ -18,10 +18,12 @@ import {
 import { validate } from './config/env.validation';
 import { AdminApiModule } from './modules/admin-api/admin-api.module';
 import { AuthModule } from './modules/cloud-api/auth/auth.module';
+import { CloudDeploymentModule } from './modules/cloud-api/deployment/deployment.module';
 import { IndustryModule } from './modules/cloud-api/industry/industry.module';
 import { MediaModule } from './modules/cloud-api/media/media.module';
 import { OnboardingModule } from './modules/cloud-api/onboarding/onboarding.module';
 import { OrganizationModule } from './modules/cloud-api/organization/organization.module';
+import { RegionModule } from './modules/cloud-api/region/region.module';
 import { TableViewModule } from './modules/cloud-api/table-view/table-view.module';
 import { TenantModule } from './modules/cloud-api/tenant/tenant.module';
 import { UserModule } from './modules/cloud-api/user/user.module';
@@ -103,6 +105,8 @@ import { UserModule } from './modules/cloud-api/user/user.module';
     OrganizationModule,
     IndustryModule,
     TableViewModule,
+    RegionModule,
+    CloudDeploymentModule,
     // Admin API module
     AdminApiModule,
     // Route prefixes
@@ -117,6 +121,8 @@ import { UserModule } from './modules/cloud-api/user/user.module';
           MediaModule,
           OrganizationModule,
           IndustryModule,
+          RegionModule,
+          CloudDeploymentModule,
         ],
       },
       {
