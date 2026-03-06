@@ -20,7 +20,7 @@ const EMPTY_TABLE_STATE: TableViewState = {
   density: 'normal',
   filterOrder: [],
   filterVisibility: {},
-  pagination: { pageIndex: 0, pageSize: 20 },
+  pagination: { limit: 20, offset: 0 },
 };
 
 // Computes a deterministic SHA-256 checksum of a value for equality comparison

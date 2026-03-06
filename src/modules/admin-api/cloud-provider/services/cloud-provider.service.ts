@@ -55,8 +55,8 @@ export class CloudProviderService {
     const searchWhere = FilterProcessor.buildSearch(state.search, CloudProviderService.FIELD_MAP);
     const where = and(filterWhere, searchWhere);
     const orderBy = FilterProcessor.buildOrderBy(state.sort, CloudProviderService.FIELD_MAP);
-    const { pageIndex = 0, pageSize = 20 } = state.pagination ?? {};
-    const { rows, total } = await this.cloudProviderRepository.findAllWithCounts(where, orderBy, pageSize, pageIndex * pageSize);
+    const { limit = 20, offset = 0 } = state.pagination ?? {};
+    const { rows, total } = await this.cloudProviderRepository.findAllWithCounts(where, orderBy, limit, offset);
     const result = rows.map((provider) => CloudProviderDto.from(provider, provider.regionCount, provider.deploymentCount));
     return { result, count: total, state, activeViewId };
   }
