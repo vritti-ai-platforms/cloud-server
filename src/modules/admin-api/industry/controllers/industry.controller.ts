@@ -4,12 +4,12 @@ import { SuccessResponseDto, UserId } from '@vritti/api-sdk';
 import {
   ApiCreateIndustry,
   ApiDeleteIndustry,
-  ApiFindAllIndustries,
+  ApiFindForTableIndustries,
   ApiFindIndustryById,
   ApiUpdateIndustry,
 } from '../docs/industry.docs';
 import { IndustryDto } from '../dto/entity/industry.dto';
-import { IndustriesResponseDto } from '../dto/response/industries-response.dto';
+import { IndustryTableResponseDto } from '../dto/response/industries-response.dto';
 import { CreateIndustryDto } from '../dto/request/create-industry.dto';
 import { UpdateIndustryDto } from '../dto/request/update-industry.dto';
 import { IndustryService } from '../services/industry.service';
@@ -31,16 +31,16 @@ export class IndustryController {
     return this.industryService.create(dto);
   }
 
-  // Returns all industries with server-stored filter/sort state applied, optionally narrowed by a search param
-  @Get()
-  @ApiFindAllIndustries()
-  findAll(
+  // Returns industries for the data table with server-stored filter/sort/search/pagination state
+  @Get('table')
+  @ApiFindForTableIndustries()
+  findForTable(
     @UserId() userId: string,
     @Query('searchColumn') searchColumn?: string,
     @Query('searchValue') searchValue?: string,
-  ): Promise<IndustriesResponseDto> {
-    this.logger.log('GET /admin-api/industries');
-    return this.industryService.findAll(userId, searchColumn, searchValue);
+  ): Promise<IndustryTableResponseDto> {
+    this.logger.log('GET /admin-api/industries/table');
+    return this.industryService.findForTable(userId, searchColumn, searchValue);
   }
 
   // Returns a single industry by ID

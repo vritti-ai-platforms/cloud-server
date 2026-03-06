@@ -7,7 +7,7 @@ import { CreateRegionDto } from '../dto/request/create-region.dto';
 import { UpdateRegionDto } from '../dto/request/update-region.dto';
 import { AssignProvidersResponseDto } from '../dto/response/assign-providers-response.dto';
 import { RegionCloudProviderDto } from '../dto/response/region-cloud-provider.dto';
-import { RegionsResponseDto } from '../dto/response/regions-response.dto';
+import { RegionTableResponseDto } from '../dto/response/regions-response.dto';
 
 export function ApiCreateRegion() {
   return applyDecorators(
@@ -20,10 +20,10 @@ export function ApiCreateRegion() {
   );
 }
 
-export function ApiFindAllRegions() {
+export function ApiFindForTableRegions() {
   return applyDecorators(
-    ApiOperation({ summary: 'List all regions' }),
-    ApiResponse({ status: 200, description: 'Regions retrieved successfully.', type: RegionsResponseDto }),
+    ApiOperation({ summary: 'List regions for data table (server-stored state)' }),
+    ApiResponse({ status: 200, description: 'Regions retrieved successfully.', type: RegionTableResponseDto }),
     ApiResponse({ status: 401, description: 'Unauthorized.' }),
   );
 }

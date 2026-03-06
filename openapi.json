@@ -3614,49 +3614,6 @@
         "tags": [
           "Admin - Cloud Providers"
         ]
-      },
-      "get": {
-        "operationId": "CloudProviderController_findAll",
-        "parameters": [
-          {
-            "name": "searchColumn",
-            "required": false,
-            "in": "query",
-            "description": "Column to search (name, code)",
-            "schema": {}
-          },
-          {
-            "name": "searchValue",
-            "required": false,
-            "in": "query",
-            "description": "Search value (contains match)",
-            "schema": {}
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Cloud providers retrieved successfully.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CloudProvidersResponseDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized."
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "List all cloud providers",
-        "tags": [
-          "Admin - Cloud Providers"
-        ]
       }
     },
     "/admin-api/cloud-providers/select": {
@@ -3779,6 +3736,36 @@
           }
         ],
         "summary": "Get cloud providers for select component",
+        "tags": [
+          "Admin - Cloud Providers"
+        ]
+      }
+    },
+    "/admin-api/cloud-providers/table": {
+      "get": {
+        "operationId": "CloudProviderController_findForTable",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Cloud providers retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CloudProviderTableResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List cloud providers for data table (server-stored state)",
         "tags": [
           "Admin - Cloud Providers"
         ]
@@ -4334,9 +4321,11 @@
         "tags": [
           "Admin - Regions"
         ]
-      },
+      }
+    },
+    "/admin-api/regions/table": {
       "get": {
-        "operationId": "RegionController_findAll",
+        "operationId": "RegionController_findForTable",
         "parameters": [],
         "responses": {
           "200": {
@@ -4344,7 +4333,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RegionsResponseDto"
+                  "$ref": "#/components/schemas/RegionTableResponseDto"
                 }
               }
             }
@@ -4358,7 +4347,7 @@
             "bearer": []
           }
         ],
-        "summary": "List all regions",
+        "summary": "List regions for data table (server-stored state)",
         "tags": [
           "Admin - Regions"
         ]
@@ -4698,24 +4687,24 @@
         "tags": [
           "Admin - Industries"
         ]
-      },
+      }
+    },
+    "/admin-api/industries/table": {
       "get": {
-        "operationId": "IndustryController_findAll",
+        "operationId": "IndustryController_findForTable",
         "parameters": [
           {
             "name": "searchColumn",
-            "required": false,
+            "required": true,
             "in": "query",
-            "description": "Column to search (name, code, slug)",
             "schema": {
               "type": "string"
             }
           },
           {
             "name": "searchValue",
-            "required": false,
+            "required": true,
             "in": "query",
-            "description": "Search value (contains match)",
             "schema": {
               "type": "string"
             }
@@ -4727,7 +4716,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/IndustriesResponseDto"
+                  "$ref": "#/components/schemas/IndustryTableResponseDto"
                 }
               }
             }
@@ -4741,7 +4730,7 @@
             "bearer": []
           }
         ],
-        "summary": "List all industries",
+        "summary": "List industries for data table (server-stored state)",
         "tags": [
           "Admin - Industries"
         ]
@@ -8479,7 +8468,7 @@
           "deploymentCount"
         ]
       },
-      "CloudProvidersResponseDto": {
+      "CloudProviderTableResponseDto": {
         "type": "object",
         "properties": {
           "result": {
@@ -8496,7 +8485,8 @@
             "description": "Current active filter/sort/visibility state"
           },
           "activeViewId": {
-            "type": "object"
+            "type": "object",
+            "nullable": true
           }
         },
         "required": [
@@ -8920,7 +8910,7 @@
           "providers"
         ]
       },
-      "RegionsResponseDto": {
+      "RegionTableResponseDto": {
         "type": "object",
         "properties": {
           "result": {
@@ -8937,7 +8927,8 @@
             "description": "Current active filter/sort/visibility state"
           },
           "activeViewId": {
-            "type": "object"
+            "type": "object",
+            "nullable": true
           }
         },
         "required": [
@@ -9102,7 +9093,7 @@
           "slug"
         ]
       },
-      "IndustriesResponseDto": {
+      "IndustryTableResponseDto": {
         "type": "object",
         "properties": {
           "result": {
@@ -9119,7 +9110,8 @@
             "description": "Current active filter/sort/visibility state"
           },
           "activeViewId": {
-            "type": "object"
+            "type": "object",
+            "nullable": true
           }
         },
         "required": [

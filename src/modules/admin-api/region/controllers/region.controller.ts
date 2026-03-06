@@ -5,7 +5,7 @@ import {
   ApiAssignRegionProviders,
   ApiCreateRegion,
   ApiDeleteRegion,
-  ApiFindAllRegions,
+  ApiFindForTableRegions,
   ApiFindRegionById,
   ApiGetRegionCloudProviders,
   ApiRemoveRegionCloudProvider,
@@ -17,7 +17,7 @@ import { CreateRegionDto } from '../dto/request/create-region.dto';
 import { UpdateRegionDto } from '../dto/request/update-region.dto';
 import { AssignProvidersResponseDto } from '../dto/response/assign-providers-response.dto';
 import { RegionCloudProviderDto } from '../dto/response/region-cloud-provider.dto';
-import { RegionsResponseDto } from '../dto/response/regions-response.dto';
+import { RegionTableResponseDto } from '../dto/response/regions-response.dto';
 import { RegionService } from '../services/region.service';
 
 @ApiTags('Admin - Regions')
@@ -37,12 +37,12 @@ export class RegionController {
     return this.regionService.create(dto);
   }
 
-  // Returns all regions with filter/sort/search state applied
-  @Get()
-  @ApiFindAllRegions()
-  findAll(@UserId() userId: string): Promise<RegionsResponseDto> {
-    this.logger.log('GET /admin-api/regions');
-    return this.regionService.findAll(userId);
+  // Returns regions for the data table with server-stored filter/sort/search/pagination state
+  @Get('table')
+  @ApiFindForTableRegions()
+  findForTable(@UserId() userId: string): Promise<RegionTableResponseDto> {
+    this.logger.log('GET /admin-api/regions/table');
+    return this.regionService.findForTable(userId);
   }
 
   // Returns a single region by ID

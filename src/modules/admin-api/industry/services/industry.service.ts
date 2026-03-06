@@ -3,7 +3,7 @@ import { ConflictException, FilterProcessor, NotFoundException, SuccessResponseD
 import { industries } from '@/db/schema';
 import { TableViewService } from '../../../cloud-api/table-view/services/table-view.service';
 import { IndustryDto } from '../dto/entity/industry.dto';
-import { IndustriesResponseDto } from '../dto/response/industries-response.dto';
+import { IndustryTableResponseDto } from '../dto/response/industries-response.dto';
 import type { CreateIndustryDto } from '../dto/request/create-industry.dto';
 import type { UpdateIndustryDto } from '../dto/request/update-industry.dto';
 import { IndustryRepository } from '../repositories/industry.repository';
@@ -46,8 +46,8 @@ export class IndustryService {
     return { success: true, message: 'Industry created successfully.' };
   }
 
-  // Returns all industries with server-stored filter/sort state applied, optionally narrowed by a search param
-  async findAll(userId: string, searchColumn?: string, searchValue?: string): Promise<IndustriesResponseDto> {
+  // Returns all industries with server-stored filter/sort/pagination state applied, optionally narrowed by a search param
+  async findForTable(userId: string, searchColumn?: string, searchValue?: string): Promise<IndustryTableResponseDto> {
     const { state, activeViewId } = await this.tableViewService.getCurrentState(userId, 'industries');
     const filters: FilterCondition[] = [...state.filters];
     if (searchColumn && searchValue && IndustryService.FIELD_MAP[searchColumn]) {
@@ -55,9 +55,9 @@ export class IndustryService {
     }
     const where = FilterProcessor.buildWhere(filters, IndustryService.FIELD_MAP);
     const orderBy = FilterProcessor.buildOrderBy(state.sort, IndustryService.FIELD_MAP);
-    const rows = await this.industryRepository.findFiltered(where, orderBy);
-    const result = rows.map(IndustryDto.from);
-    return { result, count: result.length, state, activeViewId };
+    const { limit = 20, offset = 0 } = state.pagination ?? {};
+    const { result, count } = await this.industryRepository.findAllAndCount({ where, orderBy, limit, offset });
+    return { result: result.map(IndustryDto.from), count, state, activeViewId };
   }
 
   // Finds an industry by ID; throws NotFoundException if not found

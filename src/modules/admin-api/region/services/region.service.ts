@@ -1,7 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { and } from '@vritti/api-sdk/drizzle-orm';
-import { ConflictException, FilterProcessor, NotFoundException, SuccessResponseDto, type FieldMap } from '@vritti/api-sdk';
-import { regions } from '@/db/schema';
+import {
+  ConflictException,
+  type FieldMap,
+  FilterProcessor,
+  NotFoundException,
+  SuccessResponseDto,
+} from '@vritti/api-sdk';
+import { and, sql } from '@vritti/api-sdk/drizzle-orm';
+import { regionCloudProviders, regions } from '@/db/schema';
 import { TableViewService } from '../../../cloud-api/table-view/services/table-view.service';
 import { RegionDto } from '../dto/entity/region.dto';
 import type { AssignProvidersDto } from '../dto/request/assign-providers.dto';
@@ -9,7 +15,7 @@ import type { CreateRegionDto } from '../dto/request/create-region.dto';
 import type { UpdateRegionDto } from '../dto/request/update-region.dto';
 import { AssignProvidersResponseDto } from '../dto/response/assign-providers-response.dto';
 import { RegionCloudProviderDto } from '../dto/response/region-cloud-provider.dto';
-import { RegionsResponseDto } from '../dto/response/regions-response.dto';
+import { RegionTableResponseDto } from '../dto/response/regions-response.dto';
 import { RegionRepository } from '../repositories/region.repository';
 import { RegionProviderRepository } from '../repositories/region-provider.repository';
 
@@ -23,6 +29,11 @@ export class RegionService {
     state: { column: regions.state, type: 'string' },
     city: { column: regions.city, type: 'string' },
     isActive: { column: regions.isActive, type: 'boolean' },
+    cloudProviderId: {
+      expression: (value) =>
+        sql`${regions.id} IN (SELECT ${regionCloudProviders.regionId} FROM ${regionCloudProviders} WHERE ${regionCloudProviders.providerId} = ${String(value)})`,
+      type: 'string',
+    },
   };
 
   constructor(
@@ -42,18 +53,22 @@ export class RegionService {
     return { success: true, message: 'Region created successfully.' };
   }
 
-  // Returns all regions with provider counts, applying server-stored filter/sort/search/provider state
-  async findAll(userId: string): Promise<RegionsResponseDto> {
+  // Returns all regions with provider counts, applying server-stored filter/sort/search/pagination state
+  async findForTable(userId: string): Promise<RegionTableResponseDto> {
     const { state, activeViewId } = await this.tableViewService.getCurrentState(userId, 'regions');
-    const providerFilter = state.filters.find((f) => f.field === 'cloudProviderId' && f.operator === 'equals');
-    const standardFilters = state.filters.filter((f) => f.field !== 'cloudProviderId');
-    const filterWhere = FilterProcessor.buildWhere(standardFilters, RegionService.FIELD_MAP);
-    const searchWhere = FilterProcessor.buildSearch(state.search, RegionService.FIELD_MAP);
-    const where = and(filterWhere, searchWhere);
-    const orderBy = FilterProcessor.buildOrderBy(state.sort, RegionService.FIELD_MAP);
-    const rows = await this.regionRepository.findAllWithCounts(where, orderBy, providerFilter ? String(providerFilter.value) : undefined);
+    const where = and(
+      FilterProcessor.buildWhere(state.filters, RegionService.FIELD_MAP),
+      FilterProcessor.buildSearch(state.search, RegionService.FIELD_MAP),
+    );
+    const { limit = 20, offset = 0 } = state.pagination ?? {};
+    const { rows, total } = await this.regionRepository.findAllWithCounts({
+      where,
+      orderBy: FilterProcessor.buildOrderBy(state.sort, RegionService.FIELD_MAP),
+      limit,
+      offset,
+    });
     const result = rows.map((region) => RegionDto.from(region, region.providerCount, region.providers ?? []));
-    return { result, count: result.length, state, activeViewId };
+    return { result, count: total, state, activeViewId };
   }
 
   // Finds a region by ID; throws NotFoundException if not found

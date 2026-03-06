@@ -1,17 +1,18 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { TableResponseDto } from '@vritti/api-sdk';
 import type { TableViewState } from '@vritti/api-sdk';
 import { IndustryDto } from '../entity/industry.dto';
 
-export class IndustriesResponseDto {
+export class IndustryTableResponseDto extends TableResponseDto<IndustryDto> {
   @ApiProperty({ type: [IndustryDto] })
-  result: IndustryDto[];
+  declare result: IndustryDto[];
 
   @ApiProperty()
-  count: number;
+  declare count: number;
 
   @ApiProperty({ description: 'Current active filter/sort/visibility state' })
-  state: TableViewState;
+  declare state: TableViewState;
 
   @ApiPropertyOptional()
-  activeViewId: string | null;
+  declare activeViewId: string | null;
 }

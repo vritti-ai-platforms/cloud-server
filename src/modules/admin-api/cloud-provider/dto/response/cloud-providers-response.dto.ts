@@ -1,17 +1,18 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import type { TableViewState } from '@vritti/api-sdk';
+import { TableResponseDto } from '@vritti/api-sdk';
 import { CloudProviderDto } from '../entity/cloud-provider.dto';
 
-export class CloudProvidersResponseDto {
+export class CloudProviderTableResponseDto extends TableResponseDto<CloudProviderDto> {
   @ApiProperty({ type: [CloudProviderDto] })
-  result: CloudProviderDto[];
+  declare result: CloudProviderDto[];
 
   @ApiProperty()
-  count: number;
+  declare count: number;
 
   @ApiProperty({ description: 'Current active filter/sort/visibility state' })
-  state: TableViewState;
+  declare state: TableViewState;
 
   @ApiPropertyOptional()
-  activeViewId: string | null;
+  declare activeViewId: string | null;
 }

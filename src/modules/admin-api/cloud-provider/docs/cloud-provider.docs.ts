@@ -2,10 +2,10 @@ import { applyDecorators } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse } from '@nestjs/swagger';
 import { SuccessResponseDto } from '@vritti/api-sdk';
 import { CloudProviderDto } from '../dto/entity/cloud-provider.dto';
-import { CloudProvidersResponseDto } from '../dto/response/cloud-providers-response.dto';
-import { CloudProviderSelectResponseDto } from '../dto/response/cloud-provider-select-response.dto';
 import { CreateCloudProviderDto } from '../dto/request/create-cloud-provider.dto';
 import { UpdateCloudProviderDto } from '../dto/request/update-cloud-provider.dto';
+import { CloudProviderSelectResponseDto } from '../dto/response/cloud-provider-select-response.dto';
+import { CloudProviderTableResponseDto } from '../dto/response/cloud-providers-response.dto';
 
 export function ApiCreateCloudProvider() {
   return applyDecorators(
@@ -24,17 +24,23 @@ export function ApiFindCloudProvidersSelect() {
     ApiQuery({ name: 'search', required: false }),
     ApiQuery({ name: 'limit', required: false, type: Number }),
     ApiQuery({ name: 'offset', required: false, type: Number }),
-    ApiResponse({ status: 200, description: 'Cloud provider options retrieved.', type: CloudProviderSelectResponseDto }),
+    ApiResponse({
+      status: 200,
+      description: 'Cloud provider options retrieved.',
+      type: CloudProviderSelectResponseDto,
+    }),
     ApiResponse({ status: 401, description: 'Unauthorized.' }),
   );
 }
 
-export function ApiFindAllCloudProviders() {
+export function ApiFindForTableCloudProviders() {
   return applyDecorators(
-    ApiOperation({ summary: 'List all cloud providers' }),
-    ApiQuery({ name: 'searchColumn', required: false, description: 'Column to search (name, code)' }),
-    ApiQuery({ name: 'searchValue', required: false, description: 'Search value (contains match)' }),
-    ApiResponse({ status: 200, description: 'Cloud providers retrieved successfully.', type: CloudProvidersResponseDto }),
+    ApiOperation({ summary: 'List cloud providers for data table (server-stored state)' }),
+    ApiResponse({
+      status: 200,
+      description: 'Cloud providers retrieved successfully.',
+      type: CloudProviderTableResponseDto,
+    }),
     ApiResponse({ status: 401, description: 'Unauthorized.' }),
   );
 }

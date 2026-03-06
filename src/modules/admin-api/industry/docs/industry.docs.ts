@@ -1,8 +1,8 @@
 import { applyDecorators } from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse } from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
 import { SuccessResponseDto } from '@vritti/api-sdk';
 import { IndustryDto } from '../dto/entity/industry.dto';
-import { IndustriesResponseDto } from '../dto/response/industries-response.dto';
+import { IndustryTableResponseDto } from '../dto/response/industries-response.dto';
 import { CreateIndustryDto } from '../dto/request/create-industry.dto';
 import { UpdateIndustryDto } from '../dto/request/update-industry.dto';
 
@@ -17,12 +17,10 @@ export function ApiCreateIndustry() {
   );
 }
 
-export function ApiFindAllIndustries() {
+export function ApiFindForTableIndustries() {
   return applyDecorators(
-    ApiOperation({ summary: 'List all industries' }),
-    ApiQuery({ name: 'searchColumn', required: false, description: 'Column to search (name, code, slug)' }),
-    ApiQuery({ name: 'searchValue', required: false, description: 'Search value (contains match)' }),
-    ApiResponse({ status: 200, description: 'Industries retrieved successfully.', type: IndustriesResponseDto }),
+    ApiOperation({ summary: 'List industries for data table (server-stored state)' }),
+    ApiResponse({ status: 200, description: 'Industries retrieved successfully.', type: IndustryTableResponseDto }),
     ApiResponse({ status: 401, description: 'Unauthorized.' }),
   );
 }

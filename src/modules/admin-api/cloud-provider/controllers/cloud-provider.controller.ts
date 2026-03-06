@@ -4,15 +4,15 @@ import { SelectOptionsQueryDto, SuccessResponseDto, UserId, type SelectQueryResu
 import {
   ApiCreateCloudProvider,
   ApiDeleteCloudProvider,
-  ApiFindAllCloudProviders,
   ApiFindCloudProviderById,
   ApiFindCloudProvidersSelect,
+  ApiFindForTableCloudProviders,
   ApiUpdateCloudProvider,
 } from '../docs/cloud-provider.docs';
 import { CloudProviderDto } from '../dto/entity/cloud-provider.dto';
 import { CreateCloudProviderDto } from '../dto/request/create-cloud-provider.dto';
 import { UpdateCloudProviderDto } from '../dto/request/update-cloud-provider.dto';
-import { CloudProvidersResponseDto } from '../dto/response/cloud-providers-response.dto';
+import { CloudProviderTableResponseDto } from '../dto/response/cloud-providers-response.dto';
 import { CloudProviderService } from '../services/cloud-provider.service';
 
 @ApiTags('Admin - Cloud Providers')
@@ -40,12 +40,12 @@ export class CloudProviderController {
     return this.cloudProviderService.findForSelect(query);
   }
 
-  // Returns all cloud providers with server-stored filter/sort/search state applied
-  @Get()
-  @ApiFindAllCloudProviders()
-  findAll(@UserId() userId: string): Promise<CloudProvidersResponseDto> {
-    this.logger.log('GET /admin-api/cloud-providers');
-    return this.cloudProviderService.findAll(userId);
+  // Returns cloud providers for the data table with server-stored filter/sort/search/pagination state
+  @Get('table')
+  @ApiFindForTableCloudProviders()
+  findForTable(@UserId() userId: string): Promise<CloudProviderTableResponseDto> {
+    this.logger.log('GET /admin-api/cloud-providers/table');
+    return this.cloudProviderService.findForTable(userId);
   }
 
   // Returns a single cloud provider by ID

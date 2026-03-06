@@ -1,12 +1,20 @@
 import { Injectable, Logger } from '@nestjs/common';
+import {
+  ConflictException,
+  type FieldMap,
+  FilterProcessor,
+  NotFoundException,
+  SelectOptionsQueryDto,
+  type SelectQueryResult,
+  SuccessResponseDto,
+} from '@vritti/api-sdk';
 import { and } from '@vritti/api-sdk/drizzle-orm';
-import { ConflictException, FilterProcessor, NotFoundException, SelectOptionsQueryDto, SuccessResponseDto, type FieldMap, type SelectQueryResult } from '@vritti/api-sdk';
 import { cloudProviders } from '@/db/schema';
 import { TableViewService } from '../../../cloud-api/table-view/services/table-view.service';
 import { CloudProviderDto } from '../dto/entity/cloud-provider.dto';
-import { CloudProvidersResponseDto } from '../dto/response/cloud-providers-response.dto';
 import type { CreateCloudProviderDto } from '../dto/request/create-cloud-provider.dto';
 import type { UpdateCloudProviderDto } from '../dto/request/update-cloud-provider.dto';
+import { CloudProviderTableResponseDto } from '../dto/response/cloud-providers-response.dto';
 import { CloudProviderRepository } from '../repositories/cloud-provider.repository';
 
 @Injectable()
@@ -49,7 +57,7 @@ export class CloudProviderService {
   }
 
   // Returns paginated cloud providers with region counts, applying server-stored filter/sort/search/pagination state
-  async findAll(userId: string): Promise<CloudProvidersResponseDto> {
+  async findForTable(userId: string): Promise<CloudProviderTableResponseDto> {
     const { state, activeViewId } = await this.tableViewService.getCurrentState(userId, 'cloud-providers');
     const filterWhere = FilterProcessor.buildWhere(state.filters, CloudProviderService.FIELD_MAP);
     const searchWhere = FilterProcessor.buildSearch(state.search, CloudProviderService.FIELD_MAP);
@@ -57,7 +65,9 @@ export class CloudProviderService {
     const orderBy = FilterProcessor.buildOrderBy(state.sort, CloudProviderService.FIELD_MAP);
     const { limit = 20, offset = 0 } = state.pagination ?? {};
     const { rows, total } = await this.cloudProviderRepository.findAllWithCounts(where, orderBy, limit, offset);
-    const result = rows.map((provider) => CloudProviderDto.from(provider, provider.regionCount, provider.deploymentCount));
+    const result = rows.map((provider) =>
+      CloudProviderDto.from(provider, provider.regionCount, provider.deploymentCount),
+    );
     return { result, count: total, state, activeViewId };
   }
 
