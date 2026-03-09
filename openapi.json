@@ -5360,14 +5360,14 @@
     "/table-states": {
       "post": {
         "description": "Stores the current filter, sort, and column visibility state in Redis cache. Called on filter Apply and sort column click. State expires after TABLE_STATE_CACHE_TTL seconds.",
-        "operationId": "TableStatesController_upsertCurrentState",
+        "operationId": "DataTableStateController_upsertCurrentState",
         "parameters": [],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpsertTableStateDto"
+                "$ref": "#/components/schemas/UpsertDataTableStateDto"
               }
             }
           }
@@ -5397,7 +5397,7 @@
     "/table-views": {
       "get": {
         "description": "Returns the authenticated user's own named views plus all shared views for the given table slug.",
-        "operationId": "TableViewsController_findViews",
+        "operationId": "DataTableViewsController_findViews",
         "parameters": [
           {
             "name": "tableSlug",
@@ -5418,7 +5418,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/TableViewDto"
+                    "$ref": "#/components/schemas/DataTableViewDto"
                   }
                 }
               }
@@ -5440,14 +5440,14 @@
       },
       "post": {
         "description": "Saves the current table state as a named view snapshot. The name must be unique per user+table.",
-        "operationId": "TableViewsController_createView",
+        "operationId": "DataTableViewsController_createView",
         "parameters": [],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateTableViewDto"
+                "$ref": "#/components/schemas/CreateDataTableViewDto"
               }
             }
           }
@@ -5458,7 +5458,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TableViewDto"
+                  "$ref": "#/components/schemas/DataTableViewDto"
                 }
               }
             }
@@ -5483,8 +5483,8 @@
     },
     "/table-views/{id}": {
       "patch": {
-        "description": "Updates the name, state, or sharing status of an existing named view. Only the owner can update.",
-        "operationId": "TableViewsController_updateView",
+        "description": "Updates the state of an existing named view. Only the owner can update.",
+        "operationId": "DataTableViewsController_updateView",
         "parameters": [
           {
             "name": "id",
@@ -5501,7 +5501,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateTableViewDto"
+                "$ref": "#/components/schemas/UpdateDataTableViewDto"
               }
             }
           }
@@ -5512,13 +5512,13 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TableViewDto"
+                  "$ref": "#/components/schemas/DataTableViewDto"
                 }
               }
             }
           },
           "400": {
-            "description": "Validation failed or view is the live state row."
+            "description": "Validation failed or not owned by caller."
           },
           "401": {
             "description": "Unauthorized."
@@ -5539,7 +5539,7 @@
       },
       "delete": {
         "description": "Permanently deletes a named view. Only the owner can delete their own views.",
-        "operationId": "TableViewsController_deleteView",
+        "operationId": "DataTableViewsController_deleteView",
         "parameters": [
           {
             "name": "id",
@@ -5557,13 +5557,13 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TableViewDto"
+                  "$ref": "#/components/schemas/DataTableViewDto"
                 }
               }
             }
           },
           "400": {
-            "description": "View is the live state row or not owned by caller."
+            "description": "Not owned by caller."
           },
           "401": {
             "description": "Unauthorized."
@@ -5586,7 +5586,7 @@
     "/table-views/{id}/rename": {
       "patch": {
         "description": "Updates the display name of an existing view. The new name must be unique per user+table. Only the owner can rename.",
-        "operationId": "TableViewsController_renameView",
+        "operationId": "DataTableViewsController_renameView",
         "parameters": [
           {
             "name": "id",
@@ -5603,7 +5603,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/RenameTableViewDto"
+                "$ref": "#/components/schemas/RenameDataTableViewDto"
               }
             }
           }
@@ -5614,7 +5614,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TableViewDto"
+                  "$ref": "#/components/schemas/DataTableViewDto"
                 }
               }
             }
@@ -5646,7 +5646,7 @@
     "/table-views/{id}/share": {
       "patch": {
         "description": "Makes a view visible to all users (shared) or restricts it to the owner only (private). Only the owner can toggle sharing.",
-        "operationId": "TableViewsController_toggleShareView",
+        "operationId": "DataTableViewsController_toggleShareView",
         "parameters": [
           {
             "name": "id",
@@ -5663,7 +5663,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ToggleShareTableViewDto"
+                "$ref": "#/components/schemas/ToggleShareDataTableViewDto"
               }
             }
           }
@@ -5674,7 +5674,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TableViewDto"
+                  "$ref": "#/components/schemas/DataTableViewDto"
                 }
               }
             }
@@ -9364,7 +9364,7 @@
           }
         }
       },
-      "UpsertTableStateDto": {
+      "UpsertDataTableStateDto": {
         "type": "object",
         "properties": {
           "tableSlug": {
@@ -9385,7 +9385,7 @@
           "state"
         ]
       },
-      "TableViewDto": {
+      "DataTableViewDto": {
         "type": "object",
         "properties": {
           "id": {
@@ -9436,7 +9436,7 @@
           "createdAt"
         ]
       },
-      "CreateTableViewDto": {
+      "CreateDataTableViewDto": {
         "type": "object",
         "properties": {
           "name": {
@@ -9465,7 +9465,7 @@
           "state"
         ]
       },
-      "UpdateTableViewDto": {
+      "UpdateDataTableViewDto": {
         "type": "object",
         "properties": {
           "state": {
@@ -9477,7 +9477,7 @@
           "state"
         ]
       },
-      "RenameTableViewDto": {
+      "RenameDataTableViewDto": {
         "type": "object",
         "properties": {
           "name": {
@@ -9490,7 +9490,7 @@
           "name"
         ]
       },
-      "ToggleShareTableViewDto": {
+      "ToggleShareDataTableViewDto": {
         "type": "object",
         "properties": {
           "isShared": {

@@ -8,7 +8,7 @@ import {
 } from '@vritti/api-sdk';
 import { and, sql } from '@vritti/api-sdk/drizzle-orm';
 import { regionCloudProviders, regions } from '@/db/schema';
-import { TableViewService } from '../../../cloud-api/table-view/services/table-view.service';
+import { DataTableStateService } from '@vritti/api-sdk';
 import { RegionDto } from '../dto/entity/region.dto';
 import type { AssignProvidersDto } from '../dto/request/assign-providers.dto';
 import type { CreateRegionDto } from '../dto/request/create-region.dto';
@@ -39,7 +39,7 @@ export class RegionService {
   constructor(
     private readonly regionRepository: RegionRepository,
     private readonly regionProviderRepository: RegionProviderRepository,
-    private readonly tableViewService: TableViewService,
+    private readonly dataTableStateService: DataTableStateService,
   ) {}
 
   // Creates a new region; throws ConflictException on duplicate code
@@ -55,7 +55,7 @@ export class RegionService {
 
   // Returns all regions with provider counts, applying server-stored filter/sort/search/pagination state
   async findForTable(userId: string): Promise<RegionTableResponseDto> {
-    const { state, activeViewId } = await this.tableViewService.getCurrentState(userId, 'regions');
+    const { state, activeViewId } = await this.dataTableStateService.getCurrentState(userId, 'regions');
     const where = and(
       FilterProcessor.buildWhere(state.filters, RegionService.FIELD_MAP),
       FilterProcessor.buildSearch(state.search, RegionService.FIELD_MAP),

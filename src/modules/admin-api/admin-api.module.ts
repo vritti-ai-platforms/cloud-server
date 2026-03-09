@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { TableViewModule } from '../cloud-api/table-view/table-view.module';
+import { DataTableModule } from '@vritti/api-sdk';
 import { CloudProviderController } from './cloud-provider/controllers/cloud-provider.controller';
 import { CloudProviderRepository } from './cloud-provider/repositories/cloud-provider.repository';
 import { CloudProviderService } from './cloud-provider/services/cloud-provider.service';
@@ -22,7 +22,7 @@ import { RegionProviderRepository } from './region/repositories/region-provider.
 import { RegionService } from './region/services/region.service';
 
 @Module({
-  imports: [TableViewModule],
+  imports: [DataTableModule],
   controllers: [
     CloudProviderController,
     DeploymentController,

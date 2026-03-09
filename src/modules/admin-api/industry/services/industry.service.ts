@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConflictException, FilterProcessor, NotFoundException, SuccessResponseDto, type FieldMap, type FilterCondition } from '@vritti/api-sdk';
 import { industries } from '@/db/schema';
-import { TableViewService } from '../../../cloud-api/table-view/services/table-view.service';
+import { DataTableStateService } from '@vritti/api-sdk';
 import { IndustryDto } from '../dto/entity/industry.dto';
 import { IndustryTableResponseDto } from '../dto/response/industries-response.dto';
 import type { CreateIndustryDto } from '../dto/request/create-industry.dto';
@@ -20,7 +20,7 @@ export class IndustryService {
 
   constructor(
     private readonly industryRepository: IndustryRepository,
-    private readonly tableViewService: TableViewService,
+    private readonly dataTableStateService: DataTableStateService,
   ) {}
 
   // Creates a new industry; throws ConflictException on duplicate code or slug
@@ -48,7 +48,7 @@ export class IndustryService {
 
   // Returns all industries with server-stored filter/sort/pagination state applied, optionally narrowed by a search param
   async findForTable(userId: string, searchColumn?: string, searchValue?: string): Promise<IndustryTableResponseDto> {
-    const { state, activeViewId } = await this.tableViewService.getCurrentState(userId, 'industries');
+    const { state, activeViewId } = await this.dataTableStateService.getCurrentState(userId, 'industries');
     const filters: FilterCondition[] = [...state.filters];
     if (searchColumn && searchValue && IndustryService.FIELD_MAP[searchColumn]) {
       filters.push({ field: searchColumn, operator: 'contains', value: searchValue });

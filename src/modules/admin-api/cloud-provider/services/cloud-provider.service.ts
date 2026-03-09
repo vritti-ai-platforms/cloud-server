@@ -10,7 +10,7 @@ import {
 } from '@vritti/api-sdk';
 import { and } from '@vritti/api-sdk/drizzle-orm';
 import { cloudProviders } from '@/db/schema';
-import { TableViewService } from '../../../cloud-api/table-view/services/table-view.service';
+import { DataTableStateService } from '@vritti/api-sdk';
 import { CloudProviderDto } from '../dto/entity/cloud-provider.dto';
 import type { CreateCloudProviderDto } from '../dto/request/create-cloud-provider.dto';
 import type { UpdateCloudProviderDto } from '../dto/request/update-cloud-provider.dto';
@@ -28,7 +28,7 @@ export class CloudProviderService {
 
   constructor(
     private readonly cloudProviderRepository: CloudProviderRepository,
-    private readonly tableViewService: TableViewService,
+    private readonly dataTableStateService: DataTableStateService,
   ) {}
 
   // Returns paginated cloud provider options for the select component
@@ -58,7 +58,7 @@ export class CloudProviderService {
 
   // Returns paginated cloud providers with region counts, applying server-stored filter/sort/search/pagination state
   async findForTable(userId: string): Promise<CloudProviderTableResponseDto> {
-    const { state, activeViewId } = await this.tableViewService.getCurrentState(userId, 'cloud-providers');
+    const { state, activeViewId } = await this.dataTableStateService.getCurrentState(userId, 'cloud-providers');
     const filterWhere = FilterProcessor.buildWhere(state.filters, CloudProviderService.FIELD_MAP);
     const searchWhere = FilterProcessor.buildSearch(state.search, CloudProviderService.FIELD_MAP);
     const where = and(filterWhere, searchWhere);

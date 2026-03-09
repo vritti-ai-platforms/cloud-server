@@ -11,6 +11,7 @@ import {
   AuthConfigModule,
   DatabaseModule,
   type DatabaseModuleOptions,
+  DataTableModule,
   EmailModule,
   LoggerModule,
   RootModule,
@@ -24,7 +25,6 @@ import { MediaModule } from './modules/cloud-api/media/media.module';
 import { OnboardingModule } from './modules/cloud-api/onboarding/onboarding.module';
 import { OrganizationModule } from './modules/cloud-api/organization/organization.module';
 import { RegionModule } from './modules/cloud-api/region/region.module';
-import { TableViewModule } from './modules/cloud-api/table-view/table-view.module';
 import { TenantModule } from './modules/cloud-api/tenant/tenant.module';
 import { UserModule } from './modules/cloud-api/user/user.module';
 
@@ -104,7 +104,7 @@ import { UserModule } from './modules/cloud-api/user/user.module';
     MediaModule,
     OrganizationModule,
     IndustryModule,
-    TableViewModule,
+    DataTableModule,
     RegionModule,
     CloudDeploymentModule,
     // Admin API module
@@ -132,7 +132,7 @@ import { UserModule } from './modules/cloud-api/user/user.module';
       // Top-level: /table-states and /table-views (no prefix)
       {
         path: '',
-        module: TableViewModule,
+        module: DataTableModule,
       },
     ]),
   ],
