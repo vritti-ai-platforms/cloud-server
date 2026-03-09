@@ -1,16 +1,20 @@
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Logger, Param, Patch, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { UserId } from '@vritti/api-sdk';
 import {
   ApiCreatePrice,
   ApiDeletePrice,
   ApiFindAllPrices,
   ApiFindPriceById,
   ApiFindPricesByPlan,
+  ApiFindPricesForTable,
   ApiUpdatePrice,
 } from '../docs/price.docs';
+import { PriceDetailDto } from '../dto/entity/price-detail.dto';
 import { PriceDto } from '../dto/entity/price.dto';
 import { CreatePriceDto } from '../dto/request/create-price.dto';
 import { UpdatePriceDto } from '../dto/request/update-price.dto';
+import { PricesTableResponseDto } from '../dto/response/prices-table-response.dto';
 import { PriceService } from '../services/price.service';
 
 @ApiTags('Admin - Prices')
@@ -38,10 +42,18 @@ export class PriceController {
     return this.priceService.findAll();
   }
 
+  // Returns prices for a plan for the data table
+  @Get('plan/:planId/table')
+  @ApiFindPricesForTable()
+  findForTable(@UserId() userId: string, @Param('planId') planId: string): Promise<PricesTableResponseDto> {
+    this.logger.log(`GET /admin-api/prices/plan/${planId}/table`);
+    return this.priceService.findForTable(userId, planId);
+  }
+
   // Returns all prices for a given plan
   @Get('plan/:planId')
   @ApiFindPricesByPlan()
-  findByPlanId(@Param('planId') planId: string): Promise<PriceDto[]> {
+  findByPlanId(@Param('planId') planId: string): Promise<PriceDetailDto[]> {
     this.logger.log(`GET /admin-api/prices/plan/${planId}`);
     return this.priceService.findByPlanId(planId);
   }

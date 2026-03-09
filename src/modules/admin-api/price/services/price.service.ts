@@ -1,16 +1,30 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ConflictException, NotFoundException } from '@vritti/api-sdk';
+import { ConflictException, DataTableStateService, type FieldMap, FilterProcessor, NotFoundException } from '@vritti/api-sdk';
+import { and } from '@vritti/api-sdk/drizzle-orm';
+import { cloudProviders, prices, regions } from '@/db/schema';
 import { PriceDto } from '../dto/entity/price.dto';
 import { PriceDetailDto } from '../dto/entity/price-detail.dto';
 import type { CreatePriceDto } from '../dto/request/create-price.dto';
 import type { UpdatePriceDto } from '../dto/request/update-price.dto';
+import { PricesTableResponseDto } from '../dto/response/prices-table-response.dto';
 import { PriceRepository } from '../repositories/price.repository';
 
 @Injectable()
 export class PriceService {
   private readonly logger = new Logger(PriceService.name);
 
-  constructor(private readonly priceRepository: PriceRepository) {}
+  private static readonly FIELD_MAP: FieldMap = {
+    regionId: { column: prices.regionId, type: 'uuid' },
+    providerId: { column: prices.providerId, type: 'uuid' },
+    currency: { column: prices.currency, type: 'string' },
+    regionName: { column: regions.name, type: 'string' },
+    providerName: { column: cloudProviders.name, type: 'string' },
+  };
+
+  constructor(
+    private readonly priceRepository: PriceRepository,
+    private readonly dataTableStateService: DataTableStateService,
+  ) {}
 
   // Creates a new price, rejecting duplicate plan+industry+region+provider combinations
   async create(dto: CreatePriceDto): Promise<PriceDto> {
@@ -45,6 +59,19 @@ export class PriceService {
   async findByPlanId(planId: string): Promise<PriceDetailDto[]> {
     const prices = await this.priceRepository.findByPlanIdWithRelations(planId);
     return prices.map((row) => PriceDetailDto.fromWithRelations(row));
+  }
+
+  // Returns paginated prices for a plan applying stored filter/sort/search/pagination state
+  async findForTable(userId: string, planId: string): Promise<PricesTableResponseDto> {
+    const { state, activeViewId } = await this.dataTableStateService.getCurrentState(userId, `prices-${planId}`);
+    const filterWhere = FilterProcessor.buildWhere(state.filters, PriceService.FIELD_MAP);
+    const searchWhere = FilterProcessor.buildSearch(state.search, PriceService.FIELD_MAP);
+    const where = and(filterWhere, searchWhere);
+    const orderBy = FilterProcessor.buildOrderBy(state.sort, PriceService.FIELD_MAP);
+    const { limit = 20, offset = 0 } = state.pagination ?? {};
+    const { rows, total } = await this.priceRepository.findByPlanIdWithFilters(planId, where, orderBy, limit, offset);
+    const result = rows.map((row) => PriceDetailDto.fromWithRelations(row));
+    return { result, count: total, state, activeViewId };
   }
 
   // Updates a price by ID; throws NotFoundException if not found

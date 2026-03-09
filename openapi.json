@@ -5646,6 +5646,47 @@
         ]
       }
     },
+    "/admin-api/prices/plan/{planId}/table": {
+      "get": {
+        "operationId": "PriceController_findForTable",
+        "parameters": [
+          {
+            "name": "planId",
+            "required": true,
+            "in": "path",
+            "description": "Plan UUID",
+            "schema": {
+              "example": "550e8400-e29b-41d4-a716-446655440000",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Prices retrieved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PricesTableResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List prices for a plan in data table format",
+        "tags": [
+          "Admin - Prices"
+        ]
+      }
+    },
     "/admin-api/prices/plan/{planId}": {
       "get": {
         "operationId": "PriceController_findByPlanId",
@@ -9970,6 +10011,33 @@
           "price",
           "currency",
           "createdAt"
+        ]
+      },
+      "PricesTableResponseDto": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PriceDetailDto"
+            }
+          },
+          "count": {
+            "type": "number"
+          },
+          "state": {
+            "type": "object",
+            "description": "Current active filter/sort/visibility state"
+          },
+          "activeViewId": {
+            "type": "object",
+            "nullable": true
+          }
+        },
+        "required": [
+          "result",
+          "count",
+          "state"
         ]
       },
       "UpdatePriceDto": {

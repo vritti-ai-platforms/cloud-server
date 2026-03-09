@@ -4,6 +4,7 @@ import { PriceDetailDto } from '../dto/entity/price-detail.dto';
 import { PriceDto } from '../dto/entity/price.dto';
 import { CreatePriceDto } from '../dto/request/create-price.dto';
 import { UpdatePriceDto } from '../dto/request/update-price.dto';
+import { PricesTableResponseDto } from '../dto/response/prices-table-response.dto';
 
 export function ApiCreatePrice() {
   return applyDecorators(
@@ -20,6 +21,15 @@ export function ApiFindAllPrices() {
   return applyDecorators(
     ApiOperation({ summary: 'List all prices' }),
     ApiResponse({ status: 200, description: 'Prices retrieved successfully.', type: PriceDto, isArray: true }),
+    ApiResponse({ status: 401, description: 'Unauthorized.' }),
+  );
+}
+
+export function ApiFindPricesForTable() {
+  return applyDecorators(
+    ApiOperation({ summary: 'List prices for a plan in data table format' }),
+    ApiParam({ name: 'planId', description: 'Plan UUID', example: '550e8400-e29b-41d4-a716-446655440000' }),
+    ApiResponse({ status: 200, description: 'Prices retrieved.', type: PricesTableResponseDto }),
     ApiResponse({ status: 401, description: 'Unauthorized.' }),
   );
 }
