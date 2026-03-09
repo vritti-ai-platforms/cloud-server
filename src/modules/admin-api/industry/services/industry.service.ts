@@ -1,11 +1,18 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ConflictException, FilterProcessor, NotFoundException, SuccessResponseDto, type FieldMap, type FilterCondition } from '@vritti/api-sdk';
+import {
+  ConflictException,
+  DataTableStateService,
+  type FieldMap,
+  type FilterCondition,
+  FilterProcessor,
+  NotFoundException,
+  SuccessResponseDto,
+} from '@vritti/api-sdk';
 import { industries } from '@/db/schema';
-import { DataTableStateService } from '@vritti/api-sdk';
 import { IndustryDto } from '../dto/entity/industry.dto';
-import { IndustryTableResponseDto } from '../dto/response/industries-response.dto';
 import type { CreateIndustryDto } from '../dto/request/create-industry.dto';
 import type { UpdateIndustryDto } from '../dto/request/update-industry.dto';
+import { IndustryTableResponseDto } from '../dto/response/industries-response.dto';
 import { IndustryRepository } from '../repositories/industry.repository';
 
 @Injectable()
@@ -100,13 +107,26 @@ export class IndustryService {
     return { success: true, message: 'Industry updated successfully.' };
   }
 
-  // Deletes an industry by ID; throws NotFoundException if not found
+  // Deletes an industry by ID; throws NotFoundException if not found, ConflictException if referenced
   async delete(id: string): Promise<SuccessResponseDto> {
-    const industry = await this.industryRepository.delete(id);
-    if (!industry) {
+    const existing = await this.industryRepository.findById(id);
+    if (!existing) {
       throw new NotFoundException('Industry not found.');
     }
-    this.logger.log(`Deleted industry: ${industry.name} (${industry.id})`);
+    const refs = await this.industryRepository.countReferences(id);
+    const parts: string[] = [];
+    if (refs.organizations > 0) parts.push(`${refs.organizations} organization${refs.organizations > 1 ? 's' : ''}`);
+    if (refs.prices > 0) parts.push(`${refs.prices} price${refs.prices > 1 ? 's' : ''}`);
+    if (refs.deploymentPlans > 0)
+      parts.push(`${refs.deploymentPlans} deployment plan${refs.deploymentPlans > 1 ? 's' : ''}`);
+    if (parts.length > 0) {
+      throw new ConflictException({
+        label: 'Industry In Use',
+        detail: `Cannot delete "${existing.name}" — it is referenced by ${parts.join(', ')}. Remove those references first.`,
+      });
+    }
+    await this.industryRepository.delete(id);
+    this.logger.log(`Deleted industry: ${existing.name} (${existing.id})`);
     return { success: true, message: 'Industry deleted successfully.' };
   }
 }

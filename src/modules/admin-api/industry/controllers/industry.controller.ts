@@ -9,9 +9,9 @@ import {
   ApiUpdateIndustry,
 } from '../docs/industry.docs';
 import { IndustryDto } from '../dto/entity/industry.dto';
-import { IndustryTableResponseDto } from '../dto/response/industries-response.dto';
 import { CreateIndustryDto } from '../dto/request/create-industry.dto';
 import { UpdateIndustryDto } from '../dto/request/update-industry.dto';
+import { IndustryTableResponseDto } from '../dto/response/industries-response.dto';
 import { IndustryService } from '../services/industry.service';
 
 @ApiTags('Admin - Industries')
