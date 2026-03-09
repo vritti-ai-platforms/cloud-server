@@ -8,11 +8,9 @@ import { cloudProviders, regionCloudProviders } from '@/db/schema';
 export class RegionProviderRepository {
   constructor(private readonly database: PrimaryDatabaseService) {}
 
-  // Bulk-inserts region-cloud-provider pairs; skips duplicates via onConflictDoNothing
-  async bulkInsert(regionId: string, cloudProviderIds: string[]): Promise<number> {
-    const rows = cloudProviderIds.map((providerId) => ({ regionId, providerId }));
-    const result = await this.database.drizzleClient.insert(regionCloudProviders).values(rows).onConflictDoNothing();
-    return result.rowCount ?? rows.length;
+  // Inserts a single region-cloud-provider pair; skips if already assigned
+  async insertOne(regionId: string, providerId: string): Promise<void> {
+    await this.database.drizzleClient.insert(regionCloudProviders).values({ regionId, providerId }).onConflictDoNothing();
   }
 
   // JOINs regionCloudProviders with cloudProviders to return provider rows for a region

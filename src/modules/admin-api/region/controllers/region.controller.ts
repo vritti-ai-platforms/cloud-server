@@ -2,21 +2,17 @@ import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Logger, Param, Pat
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { SuccessResponseDto, UserId } from '@vritti/api-sdk';
 import {
-  ApiAssignRegionProviders,
+  ApiAddRegionCloudProvider,
   ApiCreateRegion,
   ApiDeleteRegion,
   ApiFindForTableRegions,
   ApiFindRegionById,
-  ApiGetRegionCloudProviders,
   ApiRemoveRegionCloudProvider,
   ApiUpdateRegion,
 } from '../docs/region.docs';
 import { RegionDto } from '../dto/entity/region.dto';
-import { AssignProvidersDto } from '../dto/request/assign-providers.dto';
 import { CreateRegionDto } from '../dto/request/create-region.dto';
 import { UpdateRegionDto } from '../dto/request/update-region.dto';
-import { AssignProvidersResponseDto } from '../dto/response/assign-providers-response.dto';
-import { RegionCloudProviderDto } from '../dto/response/region-cloud-provider.dto';
 import { RegionTableResponseDto } from '../dto/response/regions-response.dto';
 import { RegionService } from '../services/region.service';
 
@@ -70,21 +66,13 @@ export class RegionController {
     return this.regionService.delete(id);
   }
 
-  // Bulk-assigns providers to a region
-  @Post(':id/cloud-providers')
+  // Assigns a single cloud provider to a region
+  @Post(':id/cloud-providers/:providerId')
   @HttpCode(HttpStatus.CREATED)
-  @ApiAssignRegionProviders()
-  assignCloudProviders(@Param('id') id: string, @Body() dto: AssignProvidersDto): Promise<AssignProvidersResponseDto> {
-    this.logger.log(`POST /admin-api/regions/${id}/cloud-providers`);
-    return this.regionService.assignCloudProviders(id, dto);
-  }
-
-  // Returns all cloud providers assigned to a region
-  @Get(':id/cloud-providers')
-  @ApiGetRegionCloudProviders()
-  getCloudProviders(@Param('id') id: string): Promise<RegionCloudProviderDto[]> {
-    this.logger.log(`GET /admin-api/regions/${id}/cloud-providers`);
-    return this.regionService.getCloudProviders(id);
+  @ApiAddRegionCloudProvider()
+  addCloudProvider(@Param('id') id: string, @Param('providerId') providerId: string): Promise<void> {
+    this.logger.log(`POST /admin-api/regions/${id}/cloud-providers/${providerId}`);
+    return this.regionService.addCloudProvider(id, providerId);
   }
 
   // Removes a single cloud provider assignment from a region

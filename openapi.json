@@ -4497,9 +4497,9 @@
         ]
       }
     },
-    "/admin-api/regions/{id}/cloud-providers": {
+    "/admin-api/regions/{id}/cloud-providers/{providerId}": {
       "post": {
-        "operationId": "RegionController_assignCloudProviders",
+        "operationId": "RegionController_addCloudProvider",
         "parameters": [
           {
             "name": "id",
@@ -4510,75 +4510,21 @@
               "example": "550e8400-e29b-41d4-a716-446655440000",
               "type": "string"
             }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AssignProvidersDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Cloud providers assigned successfully.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AssignProvidersResponseDto"
-                }
-              }
-            }
           },
-          "400": {
-            "description": "Validation failed."
-          },
-          "401": {
-            "description": "Unauthorized."
-          },
-          "404": {
-            "description": "Region not found."
-          }
-        },
-        "security": [
           {
-            "bearer": []
-          }
-        ],
-        "summary": "Bulk assign cloud providers to a region",
-        "tags": [
-          "Admin - Regions"
-        ]
-      },
-      "get": {
-        "operationId": "RegionController_getCloudProviders",
-        "parameters": [
-          {
-            "name": "id",
+            "name": "providerId",
             "required": true,
             "in": "path",
-            "description": "Region ID",
+            "description": "Cloud Provider UUID",
             "schema": {
+              "example": "550e8400-e29b-41d4-a716-446655440000",
               "type": "string"
             }
           }
         ],
         "responses": {
-          "200": {
-            "description": "Cloud providers assigned to the region.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/RegionCloudProviderDto"
-                  }
-                }
-              }
-            }
+          "201": {
+            "description": "Cloud provider assigned successfully."
           },
           "401": {
             "description": "Unauthorized."
@@ -4592,13 +4538,11 @@
             "bearer": []
           }
         ],
-        "summary": "Get cloud providers assigned to a region",
+        "summary": "Assign a cloud provider to a region",
         "tags": [
           "Admin - Regions"
         ]
-      }
-    },
-    "/admin-api/regions/{id}/cloud-providers/{providerId}": {
+      },
       "delete": {
         "operationId": "RegionController_removeCloudProvider",
         "parameters": [
@@ -8854,8 +8798,7 @@
           "id",
           "name",
           "code",
-          "isAssigned",
-          "deploymentCount"
+          "isAssigned"
         ]
       },
       "RegionDto": {
@@ -8998,75 +8941,6 @@
             "default": true
           }
         }
-      },
-      "AssignProvidersDto": {
-        "type": "object",
-        "properties": {
-          "cloudProviderIds": {
-            "description": "Array of cloud provider UUIDs to assign",
-            "example": [
-              "550e8400-e29b-41d4-a716-446655440000"
-            ],
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        },
-        "required": [
-          "cloudProviderIds"
-        ]
-      },
-      "AssignProvidersResponseDto": {
-        "type": "object",
-        "properties": {
-          "assigned": {
-            "type": "number",
-            "example": 3,
-            "description": "Number of provider assignments created"
-          }
-        },
-        "required": [
-          "assigned"
-        ]
-      },
-      "RegionCloudProviderDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "code": {
-            "type": "string"
-          },
-          "logoUrl": {
-            "type": "object",
-            "nullable": true
-          },
-          "logoDarkUrl": {
-            "type": "object",
-            "nullable": true
-          },
-          "createdAt": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "updatedAt": {
-            "format": "date-time",
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "required": [
-          "id",
-          "name",
-          "code",
-          "createdAt",
-          "updatedAt"
-        ]
       },
       "CreateIndustryDto": {
         "type": "object",

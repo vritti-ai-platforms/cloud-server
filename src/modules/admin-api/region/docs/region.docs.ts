@@ -2,11 +2,8 @@ import { applyDecorators } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
 import { SuccessResponseDto } from '@vritti/api-sdk';
 import { RegionDto } from '../dto/entity/region.dto';
-import { AssignProvidersDto } from '../dto/request/assign-providers.dto';
 import { CreateRegionDto } from '../dto/request/create-region.dto';
 import { UpdateRegionDto } from '../dto/request/update-region.dto';
-import { AssignProvidersResponseDto } from '../dto/response/assign-providers-response.dto';
-import { RegionCloudProviderDto } from '../dto/response/region-cloud-provider.dto';
 import { RegionTableResponseDto } from '../dto/response/regions-response.dto';
 
 export function ApiCreateRegion() {
@@ -61,23 +58,12 @@ export function ApiDeleteRegion() {
   );
 }
 
-export function ApiAssignRegionProviders() {
+export function ApiAddRegionCloudProvider() {
   return applyDecorators(
-    ApiOperation({ summary: 'Bulk assign cloud providers to a region' }),
+    ApiOperation({ summary: 'Assign a cloud provider to a region' }),
     ApiParam({ name: 'id', description: 'Region UUID', example: '550e8400-e29b-41d4-a716-446655440000' }),
-    ApiBody({ type: AssignProvidersDto }),
-    ApiResponse({ status: 201, description: 'Cloud providers assigned successfully.', type: AssignProvidersResponseDto }),
-    ApiResponse({ status: 400, description: 'Validation failed.' }),
-    ApiResponse({ status: 401, description: 'Unauthorized.' }),
-    ApiResponse({ status: 404, description: 'Region not found.' }),
-  );
-}
-
-export function ApiGetRegionCloudProviders() {
-  return applyDecorators(
-    ApiOperation({ summary: 'Get cloud providers assigned to a region' }),
-    ApiParam({ name: 'id', description: 'Region ID' }),
-    ApiResponse({ status: 200, description: 'Cloud providers assigned to the region.', type: [RegionCloudProviderDto] }),
+    ApiParam({ name: 'providerId', description: 'Cloud Provider UUID', example: '550e8400-e29b-41d4-a716-446655440000' }),
+    ApiResponse({ status: 201, description: 'Cloud provider assigned successfully.' }),
     ApiResponse({ status: 401, description: 'Unauthorized.' }),
     ApiResponse({ status: 404, description: 'Region not found.' }),
   );

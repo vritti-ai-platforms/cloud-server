@@ -10,11 +10,8 @@ import { and, sql } from '@vritti/api-sdk/drizzle-orm';
 import { regionCloudProviders, regions } from '@/db/schema';
 import { DataTableStateService } from '@vritti/api-sdk';
 import { RegionDto } from '../dto/entity/region.dto';
-import type { AssignProvidersDto } from '../dto/request/assign-providers.dto';
 import type { CreateRegionDto } from '../dto/request/create-region.dto';
 import type { UpdateRegionDto } from '../dto/request/update-region.dto';
-import { AssignProvidersResponseDto } from '../dto/response/assign-providers-response.dto';
-import { RegionCloudProviderDto } from '../dto/response/region-cloud-provider.dto';
 import { RegionTableResponseDto } from '../dto/response/regions-response.dto';
 import { CloudProviderRepository } from '../../cloud-provider/repositories/cloud-provider.repository';
 import { DeploymentRepository } from '../../deployment/repositories/deployment.repository';
@@ -146,20 +143,12 @@ export class RegionService {
     return { success: true, message: 'Region deleted successfully.' };
   }
 
-  // Bulk-assigns cloud providers to a region; throws NotFoundException if region missing
-  async assignCloudProviders(regionId: string, dto: AssignProvidersDto): Promise<AssignProvidersResponseDto> {
+  // Assigns a single cloud provider to a region; throws NotFoundException if region missing
+  async addCloudProvider(regionId: string, providerId: string): Promise<void> {
     const region = await this.regionRepository.findById(regionId);
     if (!region) throw new NotFoundException('Region not found.');
-    const assigned = await this.regionProviderRepository.bulkInsert(regionId, dto.cloudProviderIds);
-    this.logger.log(`Assigned ${assigned} cloud providers to region ${regionId}`);
-    return { assigned };
-  }
-
-  // Returns the cloud providers assigned to a region; throws NotFoundException if region missing
-  async getCloudProviders(regionId: string): Promise<RegionCloudProviderDto[]> {
-    const region = await this.regionRepository.findById(regionId);
-    if (!region) throw new NotFoundException('Region not found.');
-    return this.regionProviderRepository.findProvidersByRegionId(regionId);
+    await this.regionProviderRepository.insertOne(regionId, providerId);
+    this.logger.log(`Assigned cloud provider ${providerId} to region ${regionId}`);
   }
 
   // Removes a cloud provider assignment from a region; throws NotFoundException if region missing
