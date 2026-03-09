@@ -9563,11 +9563,6 @@
             "description": "Unique code identifier for the industry",
             "example": "healthcare"
           },
-          "slug": {
-            "type": "string",
-            "description": "URL-friendly slug for the industry",
-            "example": "healthcare"
-          },
           "description": {
             "type": "string",
             "description": "Optional description of the industry",
@@ -9576,8 +9571,7 @@
         },
         "required": [
           "name",
-          "code",
-          "slug"
+          "code"
         ]
       },
       "IndustryDto": {
@@ -9589,17 +9583,13 @@
           "name": {
             "type": "string"
           },
-          "slug": {
-            "type": "string"
-          },
           "description": {
             "type": "object"
           }
         },
         "required": [
           "id",
-          "name",
-          "slug"
+          "name"
         ]
       },
       "IndustryTableResponseDto": {
@@ -9676,11 +9666,6 @@
           "code": {
             "type": "string",
             "description": "Unique code identifier for the industry",
-            "example": "healthcare"
-          },
-          "slug": {
-            "type": "string",
-            "description": "URL-friendly slug for the industry",
             "example": "healthcare"
           },
           "description": {

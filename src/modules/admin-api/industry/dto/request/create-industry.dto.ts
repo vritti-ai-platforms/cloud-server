@@ -14,12 +14,6 @@ export class CreateIndustryDto {
   @MaxLength(100)
   code: string;
 
-  @ApiProperty({ description: 'URL-friendly slug for the industry', example: 'healthcare' })
-  @IsString()
-  @MinLength(1)
-  @MaxLength(100)
-  slug: string;
-
   @ApiPropertyOptional({ description: 'Optional description of the industry', example: 'Healthcare and medical services' })
   @IsOptional()
   @IsString()

@@ -24,7 +24,6 @@ export class IndustryService {
   private static readonly FIELD_MAP: FieldMap = {
     name: { column: industries.name, type: 'string' },
     code: { column: industries.code, type: 'string' },
-    slug: { column: industries.slug, type: 'string' },
   };
 
   constructor(
@@ -48,7 +47,7 @@ export class IndustryService {
     });
   }
 
-  // Creates a new industry; throws ConflictException on duplicate code or slug
+  // Creates a new industry; throws ConflictException on duplicate code
   async create(dto: CreateIndustryDto): Promise<SuccessResponseDto> {
     const existingCode = await this.industryRepository.findByCode(dto.code);
     if (existingCode) {
@@ -56,14 +55,6 @@ export class IndustryService {
         label: 'Code Already Exists',
         detail: 'An industry with this code already exists. Please choose a different code.',
         errors: [{ field: 'code', message: 'Duplicate code' }],
-      });
-    }
-    const existingSlug = await this.industryRepository.findBySlug(dto.slug);
-    if (existingSlug) {
-      throw new ConflictException({
-        label: 'Slug Already Exists',
-        detail: 'An industry with this slug already exists. Please choose a different slug.',
-        errors: [{ field: 'slug', message: 'Duplicate slug' }],
       });
     }
     const industry = await this.industryRepository.create(dto);
@@ -95,7 +86,7 @@ export class IndustryService {
     return IndustryDto.from(industry);
   }
 
-  // Updates an industry by ID; throws NotFoundException if not found, ConflictException on duplicate code or slug
+  // Updates an industry by ID; throws NotFoundException if not found, ConflictException on duplicate code
   async update(id: string, dto: UpdateIndustryDto): Promise<SuccessResponseDto> {
     const existing = await this.industryRepository.findById(id);
     if (!existing) {
@@ -108,16 +99,6 @@ export class IndustryService {
           label: 'Code Already Exists',
           detail: 'An industry with this code already exists. Please choose a different code.',
           errors: [{ field: 'code', message: 'Duplicate code' }],
-        });
-      }
-    }
-    if (dto.slug) {
-      const existingSlug = await this.industryRepository.findBySlug(dto.slug);
-      if (existingSlug && existingSlug.id !== id) {
-        throw new ConflictException({
-          label: 'Slug Already Exists',
-          detail: 'An industry with this slug already exists. Please choose a different slug.',
-          errors: [{ field: 'slug', message: 'Duplicate slug' }],
         });
       }
     }

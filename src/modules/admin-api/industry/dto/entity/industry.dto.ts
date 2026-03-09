@@ -11,9 +11,6 @@ export class IndustryDto {
   @ApiProperty({ example: 'healthcare' })
   code: string;
 
-  @ApiProperty({ example: 'healthcare' })
-  slug: string;
-
   @ApiPropertyOptional({ example: 'Healthcare and medical services', nullable: true })
   description: string | null;
 
@@ -31,7 +28,6 @@ export class IndustryDto {
     dto.id = industry.id;
     dto.name = industry.name;
     dto.code = industry.code;
-    dto.slug = industry.slug;
     dto.description = industry.description;
     dto.createdAt = industry.createdAt;
     dto.updatedAt = industry.updatedAt;

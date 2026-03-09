@@ -25,11 +25,6 @@ export class IndustryRepository extends PrimaryBaseRepository<typeof industries>
     return this.model.findFirst({ where: { code } });
   }
 
-  // Finds an industry by its unique slug
-  async findBySlug(slug: string): Promise<Industry | undefined> {
-    return this.model.findFirst({ where: { slug } });
-  }
-
   // Returns a set of industry IDs that have at least one reference (cannot be deleted)
   async findReferencedIds(ids: string[]): Promise<Set<string>> {
     if (ids.length === 0) return new Set();
