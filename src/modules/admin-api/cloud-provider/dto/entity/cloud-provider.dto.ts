@@ -29,6 +29,9 @@ export class CloudProviderDto {
   @ApiProperty({ example: 12 })
   deploymentCount: number;
 
+  @ApiProperty({ example: true, description: 'False when the provider has associated regions or deployments' })
+  canDelete: boolean;
+
   static from(cloudProvider: CloudProvider, regionCount = 0, deploymentCount = 0): CloudProviderDto {
     const dto = new CloudProviderDto();
     dto.id = cloudProvider.id;
@@ -40,6 +43,7 @@ export class CloudProviderDto {
     dto.updatedAt = cloudProvider.updatedAt;
     dto.regionCount = regionCount;
     dto.deploymentCount = deploymentCount;
+    dto.canDelete = regionCount === 0 && deploymentCount === 0;
     return dto;
   }
 }

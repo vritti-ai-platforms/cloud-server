@@ -23,7 +23,10 @@ export class IndustryDto {
   @ApiPropertyOptional({ type: 'string', format: 'date-time', nullable: true })
   updatedAt: Date | null;
 
-  static from(industry: Industry): IndustryDto {
+  @ApiProperty({ example: true, description: 'False when the industry is referenced by organizations, prices, or deployment plans' })
+  canDelete: boolean;
+
+  static from(industry: Industry, canDelete = true): IndustryDto {
     const dto = new IndustryDto();
     dto.id = industry.id;
     dto.name = industry.name;
@@ -32,6 +35,7 @@ export class IndustryDto {
     dto.description = industry.description;
     dto.createdAt = industry.createdAt;
     dto.updatedAt = industry.updatedAt;
+    dto.canDelete = canDelete;
     return dto;
   }
 }

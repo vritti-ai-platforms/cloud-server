@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrimaryBaseRepository, PrimaryDatabaseService } from '@vritti/api-sdk';
-import { eq, sql } from '@vritti/api-sdk/drizzle-orm';
+import { eq, inArray, sql } from '@vritti/api-sdk/drizzle-orm';
 import type { Industry } from '@/db/schema';
 import { deploymentIndustryPlans, industries, organizations, prices } from '@/db/schema';
 
@@ -28,6 +28,24 @@ export class IndustryRepository extends PrimaryBaseRepository<typeof industries>
   // Finds an industry by its unique slug
   async findBySlug(slug: string): Promise<Industry | undefined> {
     return this.model.findFirst({ where: { slug } });
+  }
+
+  // Returns a set of industry IDs that have at least one reference (cannot be deleted)
+  async findReferencedIds(ids: string[]): Promise<Set<string>> {
+    if (ids.length === 0) return new Set();
+    const [orgs, pricesList, plans] = await Promise.all([
+      this.db.select({ id: organizations.industryId }).from(organizations).where(inArray(organizations.industryId, ids)),
+      this.db.select({ id: prices.industryId }).from(prices).where(inArray(prices.industryId, ids)),
+      this.db
+        .select({ id: deploymentIndustryPlans.industryId })
+        .from(deploymentIndustryPlans)
+        .where(inArray(deploymentIndustryPlans.industryId, ids)),
+    ]);
+    const referenced = new Set<string>();
+    for (const row of [...orgs, ...pricesList, ...plans]) {
+      if (row.id) referenced.add(row.id);
+    }
+    return referenced;
   }
 
   // Counts references to this industry across organizations, prices, and deployment plans

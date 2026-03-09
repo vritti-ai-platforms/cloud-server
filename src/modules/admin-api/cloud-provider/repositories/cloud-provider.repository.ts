@@ -58,4 +58,27 @@ export class CloudProviderRepository extends PrimaryBaseRepository<typeof cloudP
   async findByCode(code: string): Promise<CloudProvider | undefined> {
     return this.model.findFirst({ where: { code } });
   }
+
+  // Returns a single provider with region/deployment counts, or undefined if not found
+  async findOneWithCounts(id: string): Promise<(CloudProvider & { regionCount: number; deploymentCount: number }) | undefined> {
+    const [row] = await this.db
+      .select({
+        id: cloudProviders.id,
+        name: cloudProviders.name,
+        code: cloudProviders.code,
+        logoUrl: cloudProviders.logoUrl,
+        logoDarkUrl: cloudProviders.logoDarkUrl,
+        createdAt: cloudProviders.createdAt,
+        updatedAt: cloudProviders.updatedAt,
+        regionCount: count(regionCloudProviders.regionId),
+        deploymentCount: count(deployments.id),
+      })
+      .from(cloudProviders)
+      .leftJoin(regionCloudProviders, eq(regionCloudProviders.providerId, cloudProviders.id))
+      .leftJoin(deployments, eq(deployments.cloudProviderId, cloudProviders.id))
+      .where(eq(cloudProviders.id, id))
+      .groupBy(cloudProviders.id)
+      .limit(1);
+    return row as (CloudProvider & { regionCount: number; deploymentCount: number }) | undefined;
+  }
 }

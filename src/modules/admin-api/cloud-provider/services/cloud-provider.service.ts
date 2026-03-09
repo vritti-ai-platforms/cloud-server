@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import {
   ConflictException,
+  DataTableStateService,
   type FieldMap,
   FilterProcessor,
   NotFoundException,
@@ -10,7 +11,6 @@ import {
 } from '@vritti/api-sdk';
 import { and } from '@vritti/api-sdk/drizzle-orm';
 import { cloudProviders } from '@/db/schema';
-import { DataTableStateService } from '@vritti/api-sdk';
 import { CloudProviderDto } from '../dto/entity/cloud-provider.dto';
 import type { CreateCloudProviderDto } from '../dto/request/create-cloud-provider.dto';
 import type { UpdateCloudProviderDto } from '../dto/request/update-cloud-provider.dto';
@@ -99,14 +99,23 @@ export class CloudProviderService {
     return { success: true, message: 'Cloud provider updated successfully.' };
   }
 
-  // Deletes a cloud provider by ID; throws NotFoundException if not found
+  // Deletes a cloud provider by ID; throws NotFoundException if not found, ConflictException if referenced
   async delete(id: string): Promise<SuccessResponseDto> {
-    const provider = await this.cloudProviderRepository.delete(id);
-    if (!provider) {
+    const row = await this.cloudProviderRepository.findOneWithCounts(id);
+    if (!row) {
       throw new NotFoundException('Provider not found.');
     }
-
-    this.logger.log(`Deleted provider: ${provider.name} (${provider.id})`);
+    const parts: string[] = [];
+    if (row.regionCount > 0) parts.push(`${row.regionCount} region${row.regionCount > 1 ? 's' : ''}`);
+    if (row.deploymentCount > 0) parts.push(`${row.deploymentCount} deployment${row.deploymentCount > 1 ? 's' : ''}`);
+    if (parts.length > 0) {
+      throw new ConflictException({
+        label: 'Provider In Use',
+        detail: `Cannot delete "${row.name}" — it is referenced by ${parts.join(', ')}. Remove those references first.`,
+      });
+    }
+    await this.cloudProviderRepository.delete(id);
+    this.logger.log(`Deleted provider: ${row.name} (${row.id})`);
     return { success: true, message: 'Cloud provider deleted successfully.' };
   }
 

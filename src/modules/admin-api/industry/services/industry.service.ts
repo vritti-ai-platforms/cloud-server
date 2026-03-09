@@ -64,7 +64,8 @@ export class IndustryService {
     const orderBy = FilterProcessor.buildOrderBy(state.sort, IndustryService.FIELD_MAP);
     const { limit = 20, offset = 0 } = state.pagination ?? {};
     const { result, count } = await this.industryRepository.findAllAndCount({ where, orderBy, limit, offset });
-    return { result: result.map(IndustryDto.from), count, state, activeViewId };
+    const referencedIds = await this.industryRepository.findReferencedIds(result.map((r) => r.id));
+    return { result: result.map((r) => IndustryDto.from(r, !referencedIds.has(r.id))), count, state, activeViewId };
   }
 
   // Finds an industry by ID; throws NotFoundException if not found

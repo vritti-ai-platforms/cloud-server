@@ -8401,6 +8401,11 @@
           "deploymentCount": {
             "type": "number",
             "example": 12
+          },
+          "canDelete": {
+            "type": "boolean",
+            "example": true,
+            "description": "False when the provider has associated regions or deployments"
           }
         },
         "required": [
@@ -8409,7 +8414,8 @@
           "code",
           "createdAt",
           "regionCount",
-          "deploymentCount"
+          "deploymentCount",
+          "canDelete"
         ]
       },
       "CloudProviderTableResponseDto": {
