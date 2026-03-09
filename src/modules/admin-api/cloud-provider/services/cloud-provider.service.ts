@@ -118,6 +118,4 @@ export class CloudProviderService {
     this.logger.log(`Deleted provider: ${row.name} (${row.id})`);
     return { success: true, message: 'Cloud provider deleted successfully.' };
   }
-
-  // Converts PostgreSQL unique constraint violations (23505) to ConflictException
 }
