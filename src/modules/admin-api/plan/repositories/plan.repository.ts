@@ -40,6 +40,23 @@ export class PlanRepository extends PrimaryBaseRepository<typeof plans> {
     );
   }
 
+  // Returns reference counts across all dependent tables for a given plan
+  async getReferenceCounts(planId: string): Promise<{ priceCount: number; deploymentCount: number; orgCount: number }> {
+    const [priceRows, deploymentRows, orgRows] = await Promise.all([
+      this.db.select({ n: count(prices.id) }).from(prices).where(eq(prices.planId, planId)),
+      this.db
+        .select({ n: count(deploymentIndustryPlans.planId) })
+        .from(deploymentIndustryPlans)
+        .where(eq(deploymentIndustryPlans.planId, planId)),
+      this.db.select({ n: count(organizations.id) }).from(organizations).where(eq(organizations.planId, planId)),
+    ]);
+    return {
+      priceCount: Number(priceRows[0]?.n ?? 0),
+      deploymentCount: Number(deploymentRows[0]?.n ?? 0),
+      orgCount: Number(orgRows[0]?.n ?? 0),
+    };
+  }
+
   // Returns all plans with a count of associated prices
   async findAllWithCounts(): Promise<Array<Plan & { priceCount: number }>> {
     const rows = await this.db

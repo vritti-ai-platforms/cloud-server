@@ -34,13 +34,15 @@ export class PlanService {
     return { result, count: result.length };
   }
 
-  // Finds a plan by ID; throws NotFoundException if not found
+  // Finds a plan by ID with canDelete flag; throws NotFoundException if not found
   async findById(id: string): Promise<PlanDto> {
     const plan = await this.planRepository.findById(id);
     if (!plan) {
       throw new NotFoundException('Plan not found.');
     }
-    return PlanDto.from(plan);
+    const { priceCount, deploymentCount, orgCount } = await this.planRepository.getReferenceCounts(id);
+    const canDelete = priceCount === 0 && deploymentCount === 0 && orgCount === 0;
+    return PlanDto.from(plan, priceCount, canDelete);
   }
 
   // Updates a plan by ID; throws NotFoundException if not found, ConflictException on duplicate code

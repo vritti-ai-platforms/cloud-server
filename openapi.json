@@ -9101,6 +9101,10 @@
           "priceCount": {
             "type": "number",
             "example": 2
+          },
+          "canDelete": {
+            "type": "boolean",
+            "example": true
           }
         },
         "required": [
@@ -9108,7 +9112,8 @@
           "name",
           "code",
           "createdAt",
-          "priceCount"
+          "priceCount",
+          "canDelete"
         ]
       },
       "PlansResponseDto": {
