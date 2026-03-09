@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { BadRequestException, NotFoundException } from '@vritti/api-sdk';
+import { ConflictException, NotFoundException } from '@vritti/api-sdk';
 import { PriceDto } from '../dto/entity/price.dto';
+import { PriceDetailDto } from '../dto/entity/price-detail.dto';
 import type { CreatePriceDto } from '../dto/request/create-price.dto';
 import type { UpdatePriceDto } from '../dto/request/update-price.dto';
 import { PriceRepository } from '../repositories/price.repository';
@@ -11,15 +12,16 @@ export class PriceService {
 
   constructor(private readonly priceRepository: PriceRepository) {}
 
-  // Creates a new price entry; catches FK violations and returns a clear error
+  // Creates a new price, rejecting duplicate plan+industry+region+provider combinations
   async create(dto: CreatePriceDto): Promise<PriceDto> {
-    let price;
-    try {
-      price = await this.priceRepository.create(dto);
-    } catch (error) {
-      this.handleFkViolation(error);
-      throw error;
+    const existing = await this.priceRepository.findByComposite(dto.planId, dto.industryId, dto.regionId, dto.providerId);
+    if (existing) {
+      throw new ConflictException({
+        label: 'Price Already Exists',
+        detail: 'A price for this plan, industry, region, and provider combination already exists.',
+      });
     }
+    const price = await this.priceRepository.create(dto);
     this.logger.log(`Created price: ${price.id}`);
     return PriceDto.from(price);
   }
@@ -39,10 +41,10 @@ export class PriceService {
     return PriceDto.from(price);
   }
 
-  // Returns all prices for a given plan
-  async findByPlanId(planId: string): Promise<PriceDto[]> {
-    const prices = await this.priceRepository.findByPlanId(planId);
-    return prices.map((price) => PriceDto.from(price));
+  // Returns all prices for a given plan with joined region and provider names
+  async findByPlanId(planId: string): Promise<PriceDetailDto[]> {
+    const prices = await this.priceRepository.findByPlanIdWithRelations(planId);
+    return prices.map((row) => PriceDetailDto.fromWithRelations(row));
   }
 
   // Updates a price by ID; throws NotFoundException if not found
@@ -51,13 +53,7 @@ export class PriceService {
     if (!existing) {
       throw new NotFoundException('Price not found.');
     }
-    let price;
-    try {
-      price = await this.priceRepository.update(id, dto);
-    } catch (error) {
-      this.handleFkViolation(error);
-      throw error;
-    }
+    const price = await this.priceRepository.update(id, dto);
     this.logger.log(`Updated price: ${price.id}`);
     return PriceDto.from(price);
   }
@@ -70,16 +66,5 @@ export class PriceService {
     }
     this.logger.log(`Deleted price: ${price.id}`);
     return PriceDto.from(price);
-  }
-
-  // Converts PostgreSQL FK violation (23503) to BadRequestException
-  private handleFkViolation(error: unknown): void {
-    const pg = error as { code?: string };
-    if (pg.code === '23503') {
-      throw new BadRequestException({
-        label: 'Invalid Reference',
-        detail: 'One or more of the provided IDs (plan, industry, region, provider) do not exist.',
-      });
-    }
   }
 }

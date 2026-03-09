@@ -1,5 +1,6 @@
 import { applyDecorators } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
+import { PriceDetailDto } from '../dto/entity/price-detail.dto';
 import { PriceDto } from '../dto/entity/price.dto';
 import { CreatePriceDto } from '../dto/request/create-price.dto';
 import { UpdatePriceDto } from '../dto/request/update-price.dto';
@@ -11,6 +12,7 @@ export function ApiCreatePrice() {
     ApiResponse({ status: 201, description: 'Price created successfully.', type: PriceDto }),
     ApiResponse({ status: 400, description: 'Validation failed or invalid reference ID.' }),
     ApiResponse({ status: 401, description: 'Unauthorized.' }),
+    ApiResponse({ status: 409, description: 'Price for this combination already exists.' }),
   );
 }
 
@@ -26,7 +28,7 @@ export function ApiFindPricesByPlan() {
   return applyDecorators(
     ApiOperation({ summary: 'List all prices for a plan' }),
     ApiParam({ name: 'planId', description: 'Plan UUID', example: '550e8400-e29b-41d4-a716-446655440000' }),
-    ApiResponse({ status: 200, description: 'Prices retrieved successfully.', type: PriceDto, isArray: true }),
+    ApiResponse({ status: 200, description: 'Prices retrieved successfully.', type: PriceDetailDto, isArray: true }),
     ApiResponse({ status: 401, description: 'Unauthorized.' }),
   );
 }

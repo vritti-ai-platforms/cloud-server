@@ -5072,6 +5072,9 @@
           },
           "401": {
             "description": "Unauthorized."
+          },
+          "409": {
+            "description": "Price for this combination already exists."
           }
         },
         "security": [
@@ -5139,7 +5142,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/PriceDto"
+                    "$ref": "#/components/schemas/PriceDetailDto"
                   }
                 }
               }
@@ -9231,6 +9234,78 @@
           "industryId",
           "regionId",
           "providerId",
+          "price",
+          "currency",
+          "createdAt"
+        ]
+      },
+      "PriceDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "planId": {
+            "type": "string",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "industryId": {
+            "type": "string",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "regionId": {
+            "type": "string",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "regionName": {
+            "type": "string",
+            "example": "Mumbai"
+          },
+          "regionCode": {
+            "type": "string",
+            "example": "ap-south-1"
+          },
+          "providerId": {
+            "type": "string",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "providerName": {
+            "type": "string",
+            "example": "Amazon Web Services"
+          },
+          "providerCode": {
+            "type": "string",
+            "example": "AWS"
+          },
+          "price": {
+            "type": "string",
+            "example": "99.99"
+          },
+          "currency": {
+            "type": "string",
+            "example": "INR"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "planId",
+          "industryId",
+          "regionId",
+          "regionName",
+          "regionCode",
+          "providerId",
+          "providerName",
+          "providerCode",
           "price",
           "currency",
           "createdAt"

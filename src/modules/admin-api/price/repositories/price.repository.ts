@@ -2,7 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { PrimaryBaseRepository, PrimaryDatabaseService } from '@vritti/api-sdk';
 import { eq, sql } from '@vritti/api-sdk/drizzle-orm';
 import type { Price } from '@/db/schema';
-import { prices } from '@/db/schema';
+import { cloudProviders, prices, regions } from '@/db/schema';
+import type { PriceWithRelations } from '../dto/entity/price-detail.dto';
 
 @Injectable()
 export class PriceRepository extends PrimaryBaseRepository<typeof prices> {
@@ -23,6 +24,35 @@ export class PriceRepository extends PrimaryBaseRepository<typeof prices> {
   // Returns all prices for a given plan
   async findByPlanId(planId: string): Promise<Price[]> {
     return this.model.findMany({ where: { planId } });
+  }
+
+  // Returns all prices for a plan joined with region and provider names
+  async findByPlanIdWithRelations(planId: string): Promise<PriceWithRelations[]> {
+    return this.db
+      .select({
+        id: prices.id,
+        planId: prices.planId,
+        industryId: prices.industryId,
+        regionId: prices.regionId,
+        regionName: regions.name,
+        regionCode: regions.code,
+        providerId: prices.providerId,
+        providerName: cloudProviders.name,
+        providerCode: cloudProviders.code,
+        price: prices.price,
+        currency: prices.currency,
+        createdAt: prices.createdAt,
+        updatedAt: prices.updatedAt,
+      })
+      .from(prices)
+      .leftJoin(regions, eq(prices.regionId, regions.id))
+      .leftJoin(cloudProviders, eq(prices.providerId, cloudProviders.id))
+      .where(eq(prices.planId, planId));
+  }
+
+  // Finds a price matching the exact plan + industry + region + provider combination
+  async findByComposite(planId: string, industryId: string, regionId: string, providerId: string) {
+    return this.model.findFirst({ where: { planId, industryId, regionId, providerId } });
   }
 
   // Returns the number of prices referencing the given region
