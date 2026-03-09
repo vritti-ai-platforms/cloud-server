@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrimaryBaseRepository, PrimaryDatabaseService } from '@vritti/api-sdk';
+import { eq, sql } from '@vritti/api-sdk/drizzle-orm';
 import type { Price } from '@/db/schema';
 import { prices } from '@/db/schema';
 
@@ -22,5 +23,14 @@ export class PriceRepository extends PrimaryBaseRepository<typeof prices> {
   // Returns all prices for a given plan
   async findByPlanId(planId: string): Promise<Price[]> {
     return this.model.findMany({ where: { planId } });
+  }
+
+  // Returns the number of prices referencing the given region
+  async countByRegionId(regionId: string): Promise<number> {
+    const result = await this.db
+      .select({ count: sql<number>`count(*)` })
+      .from(prices)
+      .where(eq(prices.regionId, regionId));
+    return Number(result[0]?.count ?? 0);
   }
 }

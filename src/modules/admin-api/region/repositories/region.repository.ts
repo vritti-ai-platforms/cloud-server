@@ -6,7 +6,7 @@ import { cloudProviders, regionCloudProviders, regions } from '@/db/schema';
 
 type RegionWithProviders = Region & {
   providerCount: number;
-  providers: Array<{ id: string; name: string; logoUrl: string | null; logoDarkUrl: string | null }>;
+  providers: Array<{ id: string; name: string; code: string; logoUrl: string | null; logoDarkUrl: string | null; isAssigned: boolean }>;
 };
 
 @Injectable()
@@ -46,13 +46,15 @@ export class RegionRepository extends PrimaryBaseRepository<typeof regions> {
           createdAt: regions.createdAt,
           updatedAt: regions.updatedAt,
           providerCount: count(regionCloudProviders.providerId),
-          providers: sql<Array<{ id: string; name: string; logoUrl: string | null; logoDarkUrl: string | null }>>`
+          providers: sql<Array<{ id: string; name: string; code: string; logoUrl: string | null; logoDarkUrl: string | null; isAssigned: boolean }>>`
             json_agg(
               json_build_object(
                 'id', ${cloudProviders.id},
                 'name', ${cloudProviders.name},
+                'code', ${cloudProviders.code},
                 'logoUrl', ${cloudProviders.logoUrl},
-                'logoDarkUrl', ${cloudProviders.logoDarkUrl}
+                'logoDarkUrl', ${cloudProviders.logoDarkUrl},
+                'isAssigned', true
               )
             ) FILTER (WHERE ${cloudProviders.id} IS NOT NULL)
           `,

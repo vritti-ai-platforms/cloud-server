@@ -16,6 +16,9 @@ import type { UpdateRegionDto } from '../dto/request/update-region.dto';
 import { AssignProvidersResponseDto } from '../dto/response/assign-providers-response.dto';
 import { RegionCloudProviderDto } from '../dto/response/region-cloud-provider.dto';
 import { RegionTableResponseDto } from '../dto/response/regions-response.dto';
+import { CloudProviderRepository } from '../../cloud-provider/repositories/cloud-provider.repository';
+import { DeploymentRepository } from '../../deployment/repositories/deployment.repository';
+import { PriceRepository } from '../../price/repositories/price.repository';
 import { RegionRepository } from '../repositories/region.repository';
 import { RegionProviderRepository } from '../repositories/region-provider.repository';
 
@@ -39,7 +42,10 @@ export class RegionService {
   constructor(
     private readonly regionRepository: RegionRepository,
     private readonly regionProviderRepository: RegionProviderRepository,
+    private readonly cloudProviderRepository: CloudProviderRepository,
     private readonly dataTableStateService: DataTableStateService,
+    private readonly deploymentRepository: DeploymentRepository,
+    private readonly priceRepository: PriceRepository,
   ) {}
 
   // Creates a new region; throws ConflictException on duplicate code
@@ -71,13 +77,28 @@ export class RegionService {
     return { result, count: total, state, activeViewId };
   }
 
-  // Finds a region by ID; throws NotFoundException if not found
+  // Finds a region by ID with all providers (isAssigned flag) and deployment/price counts; throws NotFoundException if not found
   async findById(id: string): Promise<RegionDto> {
     const region = await this.regionRepository.findById(id);
     if (!region) {
       throw new NotFoundException('Region not found.');
     }
-    return RegionDto.from(region);
+    const [allProviders, assignedProviders, deploymentCount, priceCount] = await Promise.all([
+      this.cloudProviderRepository.findAll(),
+      this.regionProviderRepository.findProvidersByRegionId(id),
+      this.deploymentRepository.countByRegionId(id),
+      this.priceRepository.countByRegionId(id),
+    ]);
+    const assignedIds = new Set(assignedProviders.map((p) => p.id));
+    const providerItems = allProviders.map((p) => ({
+      id: p.id,
+      name: p.name,
+      code: p.code,
+      logoUrl: p.logoUrl ?? null,
+      logoDarkUrl: p.logoDarkUrl ?? null,
+      isAssigned: assignedIds.has(p.id),
+    }));
+    return RegionDto.from(region, assignedIds.size, providerItems, deploymentCount, priceCount);
   }
 
   // Updates a region by ID; throws NotFoundException if not found, ConflictException on duplicate code
@@ -99,13 +120,27 @@ export class RegionService {
     return { success: true, message: 'Region updated successfully.' };
   }
 
-  // Deletes a region by ID; throws NotFoundException if not found
+  // Deletes a region by ID; throws NotFoundException if not found, ConflictException if dependents exist
   async delete(id: string): Promise<SuccessResponseDto> {
-    const region = await this.regionRepository.delete(id);
-    if (!region) {
+    const existing = await this.regionRepository.findById(id);
+    if (!existing) {
       throw new NotFoundException('Region not found.');
     }
-    this.logger.log(`Deleted region: ${region.name} (${region.id})`);
+
+    const [deploymentCount, priceCount] = await Promise.all([
+      this.deploymentRepository.countByRegionId(id),
+      this.priceRepository.countByRegionId(id),
+    ]);
+
+    if (deploymentCount > 0 || priceCount > 0) {
+      throw new ConflictException({
+        label: 'Region In Use',
+        detail: `This region cannot be deleted because it has ${deploymentCount} deployment(s) and ${priceCount} price(s) associated with it. Remove those first.`,
+      });
+    }
+
+    await this.regionRepository.delete(id);
+    this.logger.log(`Deleted region: ${existing.name} (${existing.id})`);
     return { success: true, message: 'Region deleted successfully.' };
   }
 

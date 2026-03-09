@@ -104,7 +104,7 @@ import { UserModule } from './modules/cloud-api/user/user.module';
     MediaModule,
     OrganizationModule,
     IndustryModule,
-    DataTableModule,
+    DataTableModule.forRoot({ tableViews: schema.tableViews }),
     RegionModule,
     CloudDeploymentModule,
     // Admin API module

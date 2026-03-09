@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrimaryBaseRepository, PrimaryDatabaseService } from '@vritti/api-sdk';
-import { asc, eq } from '@vritti/api-sdk/drizzle-orm';
+import { asc, eq, sql } from '@vritti/api-sdk/drizzle-orm';
 import type { Deployment } from '@/db/schema';
 import { cloudProviders, deployments, regions } from '@/db/schema';
 
@@ -45,5 +45,14 @@ export class DeploymentRepository extends PrimaryBaseRepository<typeof deploymen
   // Finds a deployment by its unique identifier
   async findById(id: string): Promise<Deployment | undefined> {
     return this.model.findFirst({ where: { id } });
+  }
+
+  // Returns the number of deployments referencing the given region
+  async countByRegionId(regionId: string): Promise<number> {
+    const result = await this.db
+      .select({ count: sql<number>`count(*)` })
+      .from(deployments)
+      .where(eq(deployments.regionId, regionId));
+    return Number(result[0]?.count ?? 0);
   }
 }

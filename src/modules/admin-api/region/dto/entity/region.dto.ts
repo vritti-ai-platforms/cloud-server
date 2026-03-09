@@ -1,18 +1,24 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import type { Region } from '@/db/schema';
 
-class RegionProviderSummary {
+class RegionProviderItem {
   @ApiProperty()
   id: string;
 
   @ApiProperty()
   name: string;
 
+  @ApiProperty()
+  code: string;
+
   @ApiPropertyOptional({ nullable: true })
   logoUrl: string | null;
 
   @ApiPropertyOptional({ nullable: true })
   logoDarkUrl: string | null;
+
+  @ApiProperty()
+  isAssigned: boolean;
 }
 
 export class RegionDto {
@@ -46,13 +52,24 @@ export class RegionDto {
   @ApiProperty({ example: 5 })
   providerCount: number;
 
-  @ApiProperty({ type: [RegionProviderSummary] })
-  providers: RegionProviderSummary[];
+  @ApiProperty({ type: [RegionProviderItem] })
+  providers: RegionProviderItem[];
+
+  @ApiProperty({ example: 3 })
+  deploymentCount: number;
+
+  @ApiProperty({ example: 12 })
+  priceCount: number;
+
+  @ApiProperty({ example: true })
+  canDelete: boolean;
 
   static from(
     region: Region,
     providerCount = 0,
-    providers: RegionProviderSummary[] = [],
+    providers: RegionProviderItem[] = [],
+    deploymentCount = 0,
+    priceCount = 0,
   ): RegionDto {
     const dto = new RegionDto();
     dto.id = region.id;
@@ -66,6 +83,9 @@ export class RegionDto {
     dto.updatedAt = region.updatedAt;
     dto.providerCount = providerCount;
     dto.providers = providers;
+    dto.deploymentCount = deploymentCount;
+    dto.priceCount = priceCount;
+    dto.canDelete = deploymentCount === 0 && priceCount === 0;
     return dto;
   }
 }
