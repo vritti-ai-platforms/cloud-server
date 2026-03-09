@@ -1,15 +1,18 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { NotFoundException, type SelectQueryResult } from '@vritti/api-sdk';
+import { and, eq, type SQL } from '@vritti/api-sdk/drizzle-orm';
+import { deploymentIndustryPlans } from '@/db/schema';
 import { DeploymentDto } from '../dto/entity/deployment.dto';
 import type { DeploymentPlanListItemDto } from '../dto/entity/deployment-plan-list-item.dto';
+import type { DeploymentPlanPriceDto } from '../dto/entity/deployment-plan-price.dto';
 import type { AssignDeploymentPlanDto } from '../dto/request/assign-deployment-plan.dto';
 import type { CreateDeploymentDto } from '../dto/request/create-deployment.dto';
 import type { DeploymentSelectQueryDto } from '../dto/request/deployment-select-query.dto';
 import type { UpdateDeploymentDto } from '../dto/request/update-deployment.dto';
 import { AssignDeploymentPlanResponseDto } from '../dto/response/assign-deployment-plan-response.dto';
 import { DeploymentsResponseDto } from '../dto/response/deployments-response.dto';
-import { DeploymentIndustryPlanRepository } from '../repositories/deployment-industry-plan.repository';
 import { DeploymentRepository } from '../repositories/deployment.repository';
+import { DeploymentIndustryPlanRepository } from '../repositories/deployment-industry-plan.repository';
 
 @Injectable()
 export class DeploymentService {
@@ -90,17 +93,34 @@ export class DeploymentService {
   async assignPlan(deploymentId: string, dto: AssignDeploymentPlanDto): Promise<AssignDeploymentPlanResponseDto> {
     const deployment = await this.deploymentRepository.findById(deploymentId);
     if (!deployment) throw new NotFoundException('Deployment not found.');
-    const assigned = await this.deploymentIndustryPlanRepository.insert(deploymentId, dto.planId, dto.industryId);
+    await this.deploymentIndustryPlanRepository.create({
+      deploymentId,
+      planId: dto.planId,
+      industryId: dto.industryId,
+    });
     this.logger.log(`Assigned plan ${dto.planId} + industry ${dto.industryId} to deployment ${deploymentId}`);
-    return { assigned };
+    return { assigned: 1 };
   }
 
   // Removes a plan+industry assignment from a deployment; throws NotFoundException if deployment missing
   async removePlan(deploymentId: string, dto: AssignDeploymentPlanDto): Promise<void> {
     const deployment = await this.deploymentRepository.findById(deploymentId);
     if (!deployment) throw new NotFoundException('Deployment not found.');
-    await this.deploymentIndustryPlanRepository.remove(deploymentId, dto.planId, dto.industryId);
+    await this.deploymentIndustryPlanRepository.deleteMany(
+      and(
+        eq(deploymentIndustryPlans.deploymentId, deploymentId),
+        eq(deploymentIndustryPlans.planId, dto.planId),
+        eq(deploymentIndustryPlans.industryId, dto.industryId),
+      ) as SQL,
+    );
     this.logger.log(`Removed plan ${dto.planId} + industry ${dto.industryId} from deployment ${deploymentId}`);
+  }
+
+  // Returns plan+industry assignments with prices for the deployment's region+provider
+  async getPlanPrices(deploymentId: string): Promise<DeploymentPlanPriceDto[]> {
+    const deployment = await this.deploymentRepository.findById(deploymentId);
+    if (!deployment) throw new NotFoundException('Deployment not found.');
+    return this.deploymentIndustryPlanRepository.findByDeploymentIdWithPrices(deploymentId);
   }
 
   // Returns all plan+industry assignments for a deployment; throws NotFoundException if deployment missing
