@@ -1,10 +1,11 @@
 import { applyDecorators } from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse } from '@nestjs/swagger';
 import { SuccessResponseDto } from '@vritti/api-sdk';
 import { IndustryDto } from '../dto/entity/industry.dto';
-import { IndustryTableResponseDto } from '../dto/response/industries-response.dto';
 import { CreateIndustryDto } from '../dto/request/create-industry.dto';
 import { UpdateIndustryDto } from '../dto/request/update-industry.dto';
+import { IndustrySelectResponseDto } from '../dto/response/industry-select-response.dto';
+import { IndustryTableResponseDto } from '../dto/response/industries-response.dto';
 
 export function ApiCreateIndustry() {
   return applyDecorators(
@@ -14,6 +15,21 @@ export function ApiCreateIndustry() {
     ApiResponse({ status: 400, description: 'Validation failed.' }),
     ApiResponse({ status: 401, description: 'Unauthorized.' }),
     ApiResponse({ status: 409, description: 'Industry with this code or slug already exists.' }),
+  );
+}
+
+export function ApiFindIndustriesSelect() {
+  return applyDecorators(
+    ApiOperation({ summary: 'Get industries for select component' }),
+    ApiQuery({ name: 'search', required: false }),
+    ApiQuery({ name: 'limit', required: false, type: Number }),
+    ApiQuery({ name: 'offset', required: false, type: Number }),
+    ApiResponse({
+      status: 200,
+      description: 'Industry options retrieved.',
+      type: IndustrySelectResponseDto,
+    }),
+    ApiResponse({ status: 401, description: 'Unauthorized.' }),
   );
 }
 

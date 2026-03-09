@@ -5,13 +5,13 @@ import {
   type FieldMap,
   FilterProcessor,
   NotFoundException,
-  SelectOptionsQueryDto,
   type SelectQueryResult,
   SuccessResponseDto,
 } from '@vritti/api-sdk';
-import { and } from '@vritti/api-sdk/drizzle-orm';
-import { cloudProviders } from '@/db/schema';
+import { and, eq } from '@vritti/api-sdk/drizzle-orm';
+import { cloudProviders, regionCloudProviders } from '@/db/schema';
 import { CloudProviderDto } from '../dto/entity/cloud-provider.dto';
+import type { CloudProviderSelectQueryDto } from '../dto/request/cloud-provider-select-query.dto';
 import type { CreateCloudProviderDto } from '../dto/request/create-cloud-provider.dto';
 import type { UpdateCloudProviderDto } from '../dto/request/update-cloud-provider.dto';
 import { CloudProviderTableResponseDto } from '../dto/response/cloud-providers-response.dto';
@@ -31,17 +31,25 @@ export class CloudProviderService {
     private readonly dataTableStateService: DataTableStateService,
   ) {}
 
-  // Returns paginated cloud provider options for the select component
-  findForSelect(query: SelectOptionsQueryDto): Promise<SelectQueryResult> {
+  // Returns paginated cloud provider options for the select component, optionally filtered by region
+  findForSelect(query: CloudProviderSelectQueryDto): Promise<SelectQueryResult> {
     return this.cloudProviderRepository.findForSelect({
       value: query.valueKey || 'id',
       label: query.labelKey || 'name',
+      description: query.descriptionKey,
+      groupId: query.groupIdKey,
       search: query.search,
       limit: query.limit,
       offset: query.offset,
       values: query.values,
       excludeIds: query.excludeIds,
       orderBy: { name: 'asc' },
+      ...(query.regionId
+        ? {
+            joins: [{ table: regionCloudProviders, on: eq(regionCloudProviders.providerId, cloudProviders.id), type: 'inner' as const }],
+            conditions: [eq(regionCloudProviders.regionId, query.regionId)],
+          }
+        : {}),
     });
   }
 

@@ -1,9 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { NotFoundException } from '@vritti/api-sdk';
+import { NotFoundException, type SelectQueryResult } from '@vritti/api-sdk';
 import { DeploymentDto } from '../dto/entity/deployment.dto';
 import type { DeploymentPlanListItemDto } from '../dto/entity/deployment-plan-list-item.dto';
 import type { AssignDeploymentPlanDto } from '../dto/request/assign-deployment-plan.dto';
 import type { CreateDeploymentDto } from '../dto/request/create-deployment.dto';
+import type { DeploymentSelectQueryDto } from '../dto/request/deployment-select-query.dto';
 import type { UpdateDeploymentDto } from '../dto/request/update-deployment.dto';
 import { AssignDeploymentPlanResponseDto } from '../dto/response/assign-deployment-plan-response.dto';
 import { DeploymentsResponseDto } from '../dto/response/deployments-response.dto';
@@ -18,6 +19,26 @@ export class DeploymentService {
     private readonly deploymentRepository: DeploymentRepository,
     private readonly deploymentIndustryPlanRepository: DeploymentIndustryPlanRepository,
   ) {}
+
+  // Returns paginated deployment options for the select component, with optional region and cloud provider filters
+  findForSelect(query: DeploymentSelectQueryDto): Promise<SelectQueryResult> {
+    return this.deploymentRepository.findForSelect({
+      value: query.valueKey || 'id',
+      label: query.labelKey || 'name',
+      description: query.descriptionKey,
+      groupId: query.groupIdKey,
+      search: query.search,
+      limit: query.limit,
+      offset: query.offset,
+      values: query.values,
+      excludeIds: query.excludeIds,
+      orderBy: { name: 'asc' },
+      where: {
+        ...(query.regionId ? { regionId: query.regionId } : {}),
+        ...(query.cloudProviderId ? { cloudProviderId: query.cloudProviderId } : {}),
+      },
+    });
+  }
 
   // Creates a new deployment
   async create(dto: CreateDeploymentDto): Promise<DeploymentDto> {

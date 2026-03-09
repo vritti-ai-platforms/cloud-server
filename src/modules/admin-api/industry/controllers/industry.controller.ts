@@ -1,10 +1,11 @@
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Logger, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { SuccessResponseDto, UserId } from '@vritti/api-sdk';
+import { SelectOptionsQueryDto, SuccessResponseDto, UserId, type SelectQueryResult } from '@vritti/api-sdk';
 import {
   ApiCreateIndustry,
   ApiDeleteIndustry,
   ApiFindForTableIndustries,
+  ApiFindIndustriesSelect,
   ApiFindIndustryById,
   ApiUpdateIndustry,
 } from '../docs/industry.docs';
@@ -41,6 +42,14 @@ export class IndustryController {
   ): Promise<IndustryTableResponseDto> {
     this.logger.log('GET /admin-api/industries/table');
     return this.industryService.findForTable(userId, searchColumn, searchValue);
+  }
+
+  // Returns paginated industry options for the select component
+  @Get('select')
+  @ApiFindIndustriesSelect()
+  findForSelect(@Query() query: SelectOptionsQueryDto): Promise<SelectQueryResult> {
+    this.logger.log('GET /admin-api/industries/select');
+    return this.industryService.findForSelect(query);
   }
 
   // Returns a single industry by ID

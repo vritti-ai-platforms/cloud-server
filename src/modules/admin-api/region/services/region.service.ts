@@ -4,6 +4,8 @@ import {
   type FieldMap,
   FilterProcessor,
   NotFoundException,
+  SelectOptionsQueryDto,
+  type SelectQueryResult,
   SuccessResponseDto,
 } from '@vritti/api-sdk';
 import { and, sql } from '@vritti/api-sdk/drizzle-orm';
@@ -44,6 +46,22 @@ export class RegionService {
     private readonly deploymentRepository: DeploymentRepository,
     private readonly priceRepository: PriceRepository,
   ) {}
+
+  // Returns paginated region options for the select component
+  findForSelect(query: SelectOptionsQueryDto): Promise<SelectQueryResult> {
+    return this.regionRepository.findForSelect({
+      value: query.valueKey || 'id',
+      label: query.labelKey || 'name',
+      description: query.descriptionKey,
+      groupId: query.groupIdKey,
+      search: query.search,
+      limit: query.limit,
+      offset: query.offset,
+      values: query.values,
+      excludeIds: query.excludeIds,
+      orderBy: { name: 'asc' },
+    });
+  }
 
   // Creates a new region; throws ConflictException on duplicate code
   async create(dto: CreateRegionDto): Promise<SuccessResponseDto> {

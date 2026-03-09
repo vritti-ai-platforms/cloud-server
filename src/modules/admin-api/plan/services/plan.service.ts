@@ -1,5 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { BadRequestException, ConflictException, NotFoundException } from '@vritti/api-sdk';
+import {
+  BadRequestException,
+  ConflictException,
+  NotFoundException,
+  SelectOptionsQueryDto,
+  type SelectQueryResult,
+} from '@vritti/api-sdk';
 import { PlanDto } from '../dto/entity/plan.dto';
 import type { CreatePlanDto } from '../dto/request/create-plan.dto';
 import type { UpdatePlanDto } from '../dto/request/update-plan.dto';
@@ -11,6 +17,22 @@ export class PlanService {
   private readonly logger = new Logger(PlanService.name);
 
   constructor(private readonly planRepository: PlanRepository) {}
+
+  // Returns paginated plan options for the select component
+  findForSelect(query: SelectOptionsQueryDto): Promise<SelectQueryResult> {
+    return this.planRepository.findForSelect({
+      value: query.valueKey || 'id',
+      label: query.labelKey || 'name',
+      description: query.descriptionKey,
+      groupId: query.groupIdKey,
+      search: query.search,
+      limit: query.limit,
+      offset: query.offset,
+      values: query.values,
+      excludeIds: query.excludeIds,
+      orderBy: { name: 'asc' },
+    });
+  }
 
   // Creates a new plan; throws ConflictException on duplicate code
   async create(dto: CreatePlanDto): Promise<PlanDto> {

@@ -1,6 +1,7 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Logger, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Logger, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { ApiCreatePlan, ApiDeletePlan, ApiFindAllPlans, ApiFindPlanById, ApiUpdatePlan } from '../docs/plan.docs';
+import { SelectOptionsQueryDto, type SelectQueryResult } from '@vritti/api-sdk';
+import { ApiCreatePlan, ApiDeletePlan, ApiFindAllPlans, ApiFindPlansSelect, ApiFindPlanById, ApiUpdatePlan } from '../docs/plan.docs';
 import { PlanDto } from '../dto/entity/plan.dto';
 import { PlansResponseDto } from '../dto/response/plans-response.dto';
 import { CreatePlanDto } from '../dto/request/create-plan.dto';
@@ -30,6 +31,14 @@ export class PlanController {
   findAll(): Promise<PlansResponseDto> {
     this.logger.log('GET /admin-api/plans');
     return this.planService.findAll();
+  }
+
+  // Returns paginated plan options for the select component
+  @Get('select')
+  @ApiFindPlansSelect()
+  findForSelect(@Query() query: SelectOptionsQueryDto): Promise<SelectQueryResult> {
+    this.logger.log('GET /admin-api/plans/select');
+    return this.planService.findForSelect(query);
   }
 
   // Returns a single plan by ID

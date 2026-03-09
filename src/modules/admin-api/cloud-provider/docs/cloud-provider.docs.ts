@@ -24,6 +24,7 @@ export function ApiFindCloudProvidersSelect() {
     ApiQuery({ name: 'search', required: false }),
     ApiQuery({ name: 'limit', required: false, type: Number }),
     ApiQuery({ name: 'offset', required: false, type: Number }),
+    ApiQuery({ name: 'regionId', required: false, description: 'Filter by region ID' }),
     ApiResponse({
       status: 200,
       description: 'Cloud provider options retrieved.',

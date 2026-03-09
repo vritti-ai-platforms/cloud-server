@@ -1,8 +1,9 @@
 import { applyDecorators } from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse } from '@nestjs/swagger';
 import { PlanDto } from '../dto/entity/plan.dto';
 import { CreatePlanDto } from '../dto/request/create-plan.dto';
 import { UpdatePlanDto } from '../dto/request/update-plan.dto';
+import { PlanSelectResponseDto } from '../dto/response/plan-select-response.dto';
 import { PlansResponseDto } from '../dto/response/plans-response.dto';
 
 export function ApiCreatePlan() {
@@ -13,6 +14,21 @@ export function ApiCreatePlan() {
     ApiResponse({ status: 400, description: 'Validation failed.' }),
     ApiResponse({ status: 401, description: 'Unauthorized.' }),
     ApiResponse({ status: 409, description: 'Plan with this code already exists.' }),
+  );
+}
+
+export function ApiFindPlansSelect() {
+  return applyDecorators(
+    ApiOperation({ summary: 'Get plans for select component' }),
+    ApiQuery({ name: 'search', required: false }),
+    ApiQuery({ name: 'limit', required: false, type: Number }),
+    ApiQuery({ name: 'offset', required: false, type: Number }),
+    ApiResponse({
+      status: 200,
+      description: 'Plan options retrieved.',
+      type: PlanSelectResponseDto,
+    }),
+    ApiResponse({ status: 401, description: 'Unauthorized.' }),
   );
 }
 

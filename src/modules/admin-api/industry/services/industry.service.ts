@@ -6,6 +6,8 @@ import {
   type FilterCondition,
   FilterProcessor,
   NotFoundException,
+  SelectOptionsQueryDto,
+  type SelectQueryResult,
   SuccessResponseDto,
 } from '@vritti/api-sdk';
 import { industries } from '@/db/schema';
@@ -29,6 +31,22 @@ export class IndustryService {
     private readonly industryRepository: IndustryRepository,
     private readonly dataTableStateService: DataTableStateService,
   ) {}
+
+  // Returns paginated industry options for the select component
+  findForSelect(query: SelectOptionsQueryDto): Promise<SelectQueryResult> {
+    return this.industryRepository.findForSelect({
+      value: query.valueKey || 'id',
+      label: query.labelKey || 'name',
+      description: query.descriptionKey,
+      groupId: query.groupIdKey,
+      search: query.search,
+      limit: query.limit,
+      offset: query.offset,
+      values: query.values,
+      excludeIds: query.excludeIds,
+      orderBy: { name: 'asc' },
+    });
+  }
 
   // Creates a new industry; throws ConflictException on duplicate code or slug
   async create(dto: CreateIndustryDto): Promise<SuccessResponseDto> {
