@@ -8845,13 +8845,17 @@
           },
           "isAssigned": {
             "type": "boolean"
+          },
+          "deploymentCount": {
+            "type": "number"
           }
         },
         "required": [
           "id",
           "name",
           "code",
-          "isAssigned"
+          "isAssigned",
+          "deploymentCount"
         ]
       },
       "RegionDto": {

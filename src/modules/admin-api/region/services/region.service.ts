@@ -83,11 +83,12 @@ export class RegionService {
     if (!region) {
       throw new NotFoundException('Region not found.');
     }
-    const [allProviders, assignedProviders, deploymentCount, priceCount] = await Promise.all([
+    const [allProviders, assignedProviders, deploymentCount, priceCount, providerDeploymentCounts] = await Promise.all([
       this.cloudProviderRepository.findAll(),
       this.regionProviderRepository.findProvidersByRegionId(id),
       this.deploymentRepository.countByRegionId(id),
       this.priceRepository.countByRegionId(id),
+      this.deploymentRepository.countByRegionGroupedByProvider(id),
     ]);
     const assignedIds = new Set(assignedProviders.map((p) => p.id));
     const providerItems = allProviders.map((p) => ({
@@ -97,6 +98,7 @@ export class RegionService {
       logoUrl: p.logoUrl ?? null,
       logoDarkUrl: p.logoDarkUrl ?? null,
       isAssigned: assignedIds.has(p.id),
+      deploymentCount: providerDeploymentCounts.get(p.id) ?? 0,
     }));
     return RegionDto.from(region, assignedIds.size, providerItems, deploymentCount, priceCount);
   }

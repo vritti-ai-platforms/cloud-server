@@ -19,6 +19,9 @@ class RegionProviderItem {
 
   @ApiProperty()
   isAssigned: boolean;
+
+  @ApiProperty()
+  deploymentCount: number;
 }
 
 export class RegionDto {

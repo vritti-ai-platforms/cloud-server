@@ -55,4 +55,18 @@ export class DeploymentRepository extends PrimaryBaseRepository<typeof deploymen
       .where(eq(deployments.regionId, regionId));
     return Number(result[0]?.count ?? 0);
   }
+
+  // Returns a map of cloudProviderId → deployment count for deployments in the given region
+  async countByRegionGroupedByProvider(regionId: string): Promise<Map<string, number>> {
+    const results = await this.db
+      .select({ cloudProviderId: deployments.cloudProviderId, count: sql<number>`count(*)` })
+      .from(deployments)
+      .where(eq(deployments.regionId, regionId))
+      .groupBy(deployments.cloudProviderId);
+    const map = new Map<string, number>();
+    for (const row of results) {
+      map.set(row.cloudProviderId, Number(row.count));
+    }
+    return map;
+  }
 }
