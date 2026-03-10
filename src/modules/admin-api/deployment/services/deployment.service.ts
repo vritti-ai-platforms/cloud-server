@@ -3,9 +3,7 @@ import { ConflictException, NotFoundException, type SelectQueryResult, SuccessRe
 import { and, eq, type SQL } from '@vritti/api-sdk/drizzle-orm';
 import { deploymentIndustryPlans } from '@/db/schema';
 import { DeploymentDto } from '../dto/entity/deployment.dto';
-import type { DeploymentPlanListItemDto } from '../dto/entity/deployment-plan-list-item.dto';
 import type { DeploymentPlanAssignmentDto } from '../dto/entity/deployment-plan-assignment.dto';
-import type { DeploymentPlanPriceDto } from '../dto/entity/deployment-plan-price.dto';
 import type { AssignDeploymentPlanDto } from '../dto/request/assign-deployment-plan.dto';
 import type { CreateDeploymentDto } from '../dto/request/create-deployment.dto';
 import type { DeploymentSelectQueryDto } from '../dto/request/deployment-select-query.dto';
@@ -116,22 +114,8 @@ export class DeploymentService {
     return { success: true, message: 'Plan removed successfully.' };
   }
 
-  // Returns plan+industry assignments with prices for the deployment's region+provider
-  async getPlanPrices(deploymentId: string): Promise<DeploymentPlanPriceDto[]> {
-    const deployment = await this.deploymentRepository.findById(deploymentId);
-    if (!deployment) throw new NotFoundException('Deployment not found.');
-    return this.deploymentIndustryPlanRepository.findByDeploymentIdWithPrices(deploymentId);
-  }
-
   // Returns all available plans with prices and assignment status for the deployment
   getPlanAssignments(deploymentId: string): Promise<DeploymentPlanAssignmentDto[]> {
     return this.deploymentIndustryPlanRepository.findPlanAssignmentsForDeployment(deploymentId);
-  }
-
-  // Returns all plan+industry assignments for a deployment; throws NotFoundException if deployment missing
-  async getPlans(deploymentId: string): Promise<DeploymentPlanListItemDto[]> {
-    const deployment = await this.deploymentRepository.findById(deploymentId);
-    if (!deployment) throw new NotFoundException('Deployment not found.');
-    return this.deploymentIndustryPlanRepository.findByDeploymentId(deploymentId);
   }
 }

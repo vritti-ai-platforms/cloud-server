@@ -1,12 +1,10 @@
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Logger, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { type SelectQueryResult, SuccessResponseDto } from '@vritti/api-sdk';
-import { ApiAssignDeploymentPlan, ApiCreateDeployment, ApiDeleteDeployment, ApiFindAllDeployments, ApiFindDeploymentById, ApiFindDeploymentsSelect, ApiGetDeploymentPlanAssignments, ApiGetDeploymentPlanPrices, ApiGetDeploymentPlans, ApiRemoveDeploymentPlan, ApiUpdateDeployment } from '../docs/deployment.docs';
+import { ApiAssignDeploymentPlan, ApiCreateDeployment, ApiDeleteDeployment, ApiFindAllDeployments, ApiFindDeploymentById, ApiFindDeploymentsSelect, ApiGetDeploymentPlanAssignments, ApiRemoveDeploymentPlan, ApiUpdateDeployment } from '../docs/deployment.docs';
 import { DeploymentDto } from '../dto/entity/deployment.dto';
 import { DeploymentsResponseDto } from '../dto/response/deployments-response.dto';
-import type { DeploymentPlanListItemDto } from '../dto/entity/deployment-plan-list-item.dto';
 import type { DeploymentPlanAssignmentDto } from '../dto/entity/deployment-plan-assignment.dto';
-import type { DeploymentPlanPriceDto } from '../dto/entity/deployment-plan-price.dto';
 import { AssignDeploymentPlanDto } from '../dto/request/assign-deployment-plan.dto';
 import { CreateDeploymentDto } from '../dto/request/create-deployment.dto';
 import { DeploymentSelectQueryDto } from '../dto/request/deployment-select-query.dto';
@@ -46,14 +44,6 @@ export class DeploymentController {
     return this.deploymentService.findForSelect(query);
   }
 
-  // Returns plan+industry assignments with prices for the deployment's region and cloud provider
-  @Get(':id/plan-prices')
-  @ApiGetDeploymentPlanPrices()
-  getPlanPrices(@Param('id') id: string): Promise<DeploymentPlanPriceDto[]> {
-    this.logger.log(`GET /admin-api/deployments/${id}/plan-prices`);
-    return this.deploymentService.getPlanPrices(id);
-  }
-
   // Returns a single deployment by ID
   @Get(':id')
   @ApiFindDeploymentById()
@@ -85,14 +75,6 @@ export class DeploymentController {
   getPlanAssignments(@Param('id') id: string): Promise<DeploymentPlanAssignmentDto[]> {
     this.logger.log(`GET /admin-api/deployments/${id}/plan-assignments`);
     return this.deploymentService.getPlanAssignments(id);
-  }
-
-  // Returns all plan+industry assignments for a deployment
-  @Get(':id/plans')
-  @ApiGetDeploymentPlans()
-  getPlans(@Param('id') id: string): Promise<DeploymentPlanListItemDto[]> {
-    this.logger.log(`GET /admin-api/deployments/${id}/plans`);
-    return this.deploymentService.getPlans(id);
   }
 
   // Assigns a plan+industry to a deployment
