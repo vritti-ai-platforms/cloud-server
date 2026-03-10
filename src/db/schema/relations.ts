@@ -134,6 +134,14 @@ export const relations = defineRelations(schema, (r) => ({
       from: r.deployments.id.through(r.deploymentIndustryPlans.deploymentId),
       to: r.industries.id.through(r.deploymentIndustryPlans.industryId),
     }),
+    region: r.one.regions({
+      from: r.deployments.regionId,
+      to: r.regions.id,
+    }),
+    cloudProvider: r.one.cloudProviders({
+      from: r.deployments.cloudProviderId,
+      to: r.cloudProviders.id,
+    }),
   },
 
   // Region relations

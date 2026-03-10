@@ -1,9 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { PrimaryBaseRepository, PrimaryDatabaseService } from '@vritti/api-sdk';
-import { asc, count, and, eq, sql, type SQL } from '@vritti/api-sdk/drizzle-orm';
-import type { Price } from '@/db/schema';
-import { cloudProviders, prices, regions } from '@/db/schema';
-import type { PriceWithRelations } from '../dto/entity/price-detail.dto';
+import { and, asc, count, eq, SQL, sql } from '@vritti/api-sdk/drizzle-orm';
+import { cloudProviders, Price, prices, regions } from '@/db/schema';
+import { PriceWithRelations } from '../dto/entity/price-detail.dto';
 
 @Injectable()
 export class PriceRepository extends PrimaryBaseRepository<typeof prices> {
@@ -28,26 +27,10 @@ export class PriceRepository extends PrimaryBaseRepository<typeof prices> {
 
   // Returns all prices for a plan joined with region and provider names
   async findByPlanIdWithRelations(planId: string): Promise<PriceWithRelations[]> {
-    return this.db
-      .select({
-        id: prices.id,
-        planId: prices.planId,
-        industryId: prices.industryId,
-        regionId: prices.regionId,
-        regionName: regions.name,
-        regionCode: regions.code,
-        providerId: prices.providerId,
-        providerName: cloudProviders.name,
-        providerCode: cloudProviders.code,
-        price: prices.price,
-        currency: prices.currency,
-        createdAt: prices.createdAt,
-        updatedAt: prices.updatedAt,
-      })
-      .from(prices)
-      .leftJoin(regions, eq(prices.regionId, regions.id))
-      .leftJoin(cloudProviders, eq(prices.providerId, cloudProviders.id))
-      .where(eq(prices.planId, planId));
+    return (await this.model.findMany({
+      where: { planId },
+      with: { region: true, cloudProvider: true },
+    })) as unknown as PriceWithRelations[];
   }
 
   // Returns paginated prices for a plan with JOINs, applying where/orderBy/limit/offset
@@ -75,11 +58,15 @@ export class PriceRepository extends PrimaryBaseRepository<typeof prices> {
           planId: prices.planId,
           industryId: prices.industryId,
           regionId: prices.regionId,
-          regionName: regions.name,
-          regionCode: regions.code,
+          region: {
+            name: regions.name,
+            code: regions.code,
+          },
           providerId: prices.providerId,
-          providerName: cloudProviders.name,
-          providerCode: cloudProviders.code,
+          cloudProvider: {
+            name: cloudProviders.name,
+            code: cloudProviders.code,
+          },
           price: prices.price,
           currency: prices.currency,
           createdAt: prices.createdAt,

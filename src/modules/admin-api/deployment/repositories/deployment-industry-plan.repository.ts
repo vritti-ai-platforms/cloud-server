@@ -51,15 +51,17 @@ export class DeploymentIndustryPlanRepository extends PrimaryBaseRepository<type
       if (!planMap.has(r.planId)) {
         planMap.set(r.planId, { planId: r.planId, planName: r.planName, planCode: r.planCode, industries: [] });
       }
-      planMap.get(r.planId)!.industries.push({
-        industryId: r.industryId,
-        industryName: r.industryName,
-        price: r.price ?? null,
-        currency: r.currency ?? null,
-        isAssigned: r.assignedDeploymentId !== null,
-      });
+      const plan = planMap.get(r.planId);
+      if (plan) {
+        plan.industries.push({
+          industryId: r.industryId,
+          industryName: r.industryName,
+          price: r.price ?? null,
+          currency: r.currency ?? null,
+          isAssigned: r.assignedDeploymentId !== null,
+        });
+      }
     }
     return Array.from(planMap.values());
   }
-
 }

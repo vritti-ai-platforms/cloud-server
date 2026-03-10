@@ -1,19 +1,18 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { CloudProvider, Region } from '@/db/schema';
 
 export interface PriceWithRelations {
   id: string;
   planId: string;
   industryId: string;
   regionId: string;
-  regionName: string | null;
-  regionCode: string | null;
   providerId: string;
-  providerName: string | null;
-  providerCode: string | null;
   price: string;
   currency: string;
   createdAt: Date;
   updatedAt: Date | null;
+  region: Region;
+  cloudProvider: CloudProvider;
 }
 
 export class PriceDetailDto {
@@ -62,11 +61,11 @@ export class PriceDetailDto {
     dto.planId = row.planId;
     dto.industryId = row.industryId;
     dto.regionId = row.regionId;
-    dto.regionName = row.regionName ?? '';
-    dto.regionCode = row.regionCode ?? '';
+    dto.regionName = row.region?.name ?? '';
+    dto.regionCode = row.region?.code ?? '';
     dto.providerId = row.providerId;
-    dto.providerName = row.providerName ?? '';
-    dto.providerCode = row.providerCode ?? '';
+    dto.providerName = row.cloudProvider?.name ?? '';
+    dto.providerCode = row.cloudProvider?.code ?? '';
     dto.price = row.price;
     dto.currency = row.currency;
     dto.createdAt = row.createdAt;

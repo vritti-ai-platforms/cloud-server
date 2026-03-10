@@ -55,11 +55,12 @@ export class DeploymentDto {
     dto.type = deployment.type;
     dto.createdAt = deployment.createdAt;
     dto.updatedAt = deployment.updatedAt;
-    if ('regionName' in deployment) {
-      dto.regionName = deployment.regionName;
-      dto.regionCode = deployment.regionCode;
-      dto.cloudProviderName = deployment.cloudProviderName;
-      dto.cloudProviderCode = deployment.cloudProviderCode;
+    if ('region' in deployment && deployment.region) {
+      const withNames = deployment as DeploymentWithNames;
+      dto.regionName = withNames.region.name;
+      dto.regionCode = withNames.region.code;
+      dto.cloudProviderName = withNames.cloudProvider.name;
+      dto.cloudProviderCode = withNames.cloudProvider.code;
     }
     return dto;
   }
