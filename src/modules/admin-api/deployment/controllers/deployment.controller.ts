@@ -1,10 +1,11 @@
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Logger, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { type SelectQueryResult, SuccessResponseDto } from '@vritti/api-sdk';
-import { ApiAssignDeploymentPlan, ApiCreateDeployment, ApiDeleteDeployment, ApiFindAllDeployments, ApiFindDeploymentById, ApiFindDeploymentsSelect, ApiGetDeploymentPlanPrices, ApiGetDeploymentPlans, ApiRemoveDeploymentPlan, ApiUpdateDeployment } from '../docs/deployment.docs';
+import { ApiAssignDeploymentPlan, ApiCreateDeployment, ApiDeleteDeployment, ApiFindAllDeployments, ApiFindDeploymentById, ApiFindDeploymentsSelect, ApiGetDeploymentPlanAssignments, ApiGetDeploymentPlanPrices, ApiGetDeploymentPlans, ApiRemoveDeploymentPlan, ApiUpdateDeployment } from '../docs/deployment.docs';
 import { DeploymentDto } from '../dto/entity/deployment.dto';
 import { DeploymentsResponseDto } from '../dto/response/deployments-response.dto';
 import type { DeploymentPlanListItemDto } from '../dto/entity/deployment-plan-list-item.dto';
+import type { DeploymentPlanAssignmentDto } from '../dto/entity/deployment-plan-assignment.dto';
 import type { DeploymentPlanPriceDto } from '../dto/entity/deployment-plan-price.dto';
 import { AssignDeploymentPlanDto } from '../dto/request/assign-deployment-plan.dto';
 import { CreateDeploymentDto } from '../dto/request/create-deployment.dto';
@@ -76,6 +77,14 @@ export class DeploymentController {
   delete(@Param('id') id: string): Promise<SuccessResponseDto> {
     this.logger.log(`DELETE /admin-api/deployments/${id}`);
     return this.deploymentService.delete(id);
+  }
+
+  // Returns all available plans with prices and assignment status for the deployment
+  @Get(':id/plan-assignments')
+  @ApiGetDeploymentPlanAssignments()
+  getPlanAssignments(@Param('id') id: string): Promise<DeploymentPlanAssignmentDto[]> {
+    this.logger.log(`GET /admin-api/deployments/${id}/plan-assignments`);
+    return this.deploymentService.getPlanAssignments(id);
   }
 
   // Returns all plan+industry assignments for a deployment

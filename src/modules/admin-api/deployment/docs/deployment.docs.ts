@@ -1,6 +1,7 @@
 import { applyDecorators } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse } from '@nestjs/swagger';
 import { DeploymentDto } from '../dto/entity/deployment.dto';
+import { DeploymentPlanAssignmentDto } from '../dto/entity/deployment-plan-assignment.dto';
 import { DeploymentPlanListItemDto } from '../dto/entity/deployment-plan-list-item.dto';
 import { DeploymentPlanPriceDto } from '../dto/entity/deployment-plan-price.dto';
 import { AssignDeploymentPlanDto } from '../dto/request/assign-deployment-plan.dto';
@@ -105,6 +106,18 @@ export function ApiGetDeploymentPlanPrices() {
     ApiParam({ name: 'id', description: 'Deployment UUID', example: '550e8400-e29b-41d4-a716-446655440000' }),
     ApiResponse({ status: 200, description: 'Plan prices retrieved successfully.', type: DeploymentPlanPriceDto, isArray: true }),
     ApiResponse({ status: 401, description: 'Unauthorized.' }),
+    ApiResponse({ status: 404, description: 'Deployment not found.' }),
+  );
+}
+
+export function ApiGetDeploymentPlanAssignments() {
+  return applyDecorators(
+    ApiOperation({
+      summary: 'Get deployment plan assignments',
+      description: 'Returns all available plans with pricing and assignment status for the deployment.',
+    }),
+    ApiParam({ name: 'id', type: 'string', format: 'uuid' }),
+    ApiResponse({ status: 200, description: 'Plan assignments retrieved.', type: DeploymentPlanAssignmentDto, isArray: true }),
     ApiResponse({ status: 404, description: 'Deployment not found.' }),
   );
 }

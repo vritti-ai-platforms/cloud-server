@@ -4326,6 +4326,50 @@
         ]
       }
     },
+    "/admin-api/deployments/{id}/plan-assignments": {
+      "get": {
+        "description": "Returns all available plans with pricing and assignment status for the deployment.",
+        "operationId": "DeploymentController_getPlanAssignments",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Plan assignments retrieved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DeploymentPlanAssignmentDto"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Deployment not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get deployment plan assignments",
+        "tags": [
+          "Admin - Deployments"
+        ]
+      }
+    },
     "/admin-api/deployments/{id}/plans": {
       "get": {
         "operationId": "DeploymentController_getPlans",
@@ -9376,6 +9420,10 @@
             "description": "Deployment type"
           }
         }
+      },
+      "DeploymentPlanAssignmentDto": {
+        "type": "object",
+        "properties": {}
       },
       "DeploymentPlanListItemDto": {
         "type": "object",
