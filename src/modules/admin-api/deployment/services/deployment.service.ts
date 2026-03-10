@@ -55,13 +55,16 @@ export class DeploymentService {
     return { result, count: result.length };
   }
 
-  // Finds a deployment by ID; throws NotFoundException if not found
+  // Finds a deployment by ID with organization count; throws NotFoundException if not found
   async findById(id: string): Promise<DeploymentDto> {
-    const deployment = await this.deploymentRepository.findById(id);
+    const [deployment, organizationCount] = await Promise.all([
+      this.deploymentRepository.findById(id),
+      this.deploymentRepository.countOrganizationsByDeploymentId(id),
+    ]);
     if (!deployment) {
       throw new NotFoundException('Deployment not found.');
     }
-    return DeploymentDto.from(deployment);
+    return DeploymentDto.from(deployment, organizationCount);
   }
 
   // Updates a deployment by ID; throws NotFoundException if not found
@@ -75,11 +78,18 @@ export class DeploymentService {
     return { success: true, message: 'Deployment updated successfully.' };
   }
 
-  // Deletes a deployment by ID; throws NotFoundException if not found
+  // Deletes a deployment by ID; throws NotFoundException if not found, ConflictException if orgs reference it
   async delete(id: string): Promise<SuccessResponseDto> {
     const existing = await this.deploymentRepository.findById(id);
     if (!existing) {
       throw new NotFoundException('Deployment not found.');
+    }
+    const orgCount = await this.deploymentRepository.countOrganizationsByDeploymentId(id);
+    if (orgCount > 0) {
+      throw new ConflictException({
+        label: 'Deployment In Use',
+        detail: `This deployment is used by ${orgCount} organization${orgCount !== 1 ? 's' : ''}. Remove all associated organizations before deleting.`,
+      });
     }
     await this.deploymentRepository.delete(id);
     this.logger.log(`Deleted deployment: ${existing.name} (${existing.id})`);

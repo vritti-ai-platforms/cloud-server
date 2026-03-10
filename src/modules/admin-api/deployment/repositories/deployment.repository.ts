@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrimaryBaseRepository, PrimaryDatabaseService } from '@vritti/api-sdk';
 import { eq, sql } from '@vritti/api-sdk/drizzle-orm';
 import type { CloudProvider, Deployment, Region } from '@/db/schema';
-import { deployments } from '@/db/schema';
+import { deployments, organizations } from '@/db/schema';
 
 export type DeploymentWithNames = Deployment & {
   region: Region;
@@ -34,6 +34,15 @@ export class DeploymentRepository extends PrimaryBaseRepository<typeof deploymen
       .select({ count: sql<number>`count(*)` })
       .from(deployments)
       .where(eq(deployments.regionId, regionId));
+    return Number(result[0]?.count ?? 0);
+  }
+
+  // Returns the number of organizations associated with the given deployment
+  async countOrganizationsByDeploymentId(deploymentId: string): Promise<number> {
+    const result = await this.db
+      .select({ count: sql<number>`count(*)` })
+      .from(organizations)
+      .where(eq(organizations.deploymentId, deploymentId));
     return Number(result[0]?.count ?? 0);
   }
 

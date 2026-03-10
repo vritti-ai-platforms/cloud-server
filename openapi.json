@@ -9158,6 +9158,10 @@
           "cloudProviderCode": {
             "type": "string",
             "example": "aws"
+          },
+          "organizationCount": {
+            "type": "number",
+            "example": 0
           }
         },
         "required": [
@@ -9168,7 +9172,8 @@
           "cloudProviderId",
           "status",
           "type",
-          "createdAt"
+          "createdAt",
+          "organizationCount"
         ]
       },
       "DeploymentsResponseDto": {
