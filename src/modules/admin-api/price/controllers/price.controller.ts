@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Logger, Param, Patch, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { UserId } from '@vritti/api-sdk';
+import { SuccessResponseDto, UserId } from '@vritti/api-sdk';
 import {
   ApiCreatePrice,
   ApiDeletePrice,
@@ -29,7 +29,7 @@ export class PriceController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiCreatePrice()
-  create(@Body() dto: CreatePriceDto): Promise<PriceDto> {
+  create(@Body() dto: CreatePriceDto): Promise<SuccessResponseDto> {
     this.logger.log('POST /admin-api/prices');
     return this.priceService.create(dto);
   }
@@ -69,7 +69,7 @@ export class PriceController {
   // Updates a price by ID
   @Patch(':id')
   @ApiUpdatePrice()
-  update(@Param('id') id: string, @Body() dto: UpdatePriceDto): Promise<PriceDto> {
+  update(@Param('id') id: string, @Body() dto: UpdatePriceDto): Promise<SuccessResponseDto> {
     this.logger.log(`PATCH /admin-api/prices/${id}`);
     return this.priceService.update(id, dto);
   }
@@ -78,7 +78,7 @@ export class PriceController {
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
   @ApiDeletePrice()
-  delete(@Param('id') id: string): Promise<PriceDto> {
+  delete(@Param('id') id: string): Promise<SuccessResponseDto> {
     this.logger.log(`DELETE /admin-api/prices/${id}`);
     return this.priceService.delete(id);
   }

@@ -1,10 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import {
-  BadRequestException,
   ConflictException,
   NotFoundException,
   SelectOptionsQueryDto,
   type SelectQueryResult,
+  SuccessResponseDto,
 } from '@vritti/api-sdk';
 import { PlanDto } from '../dto/entity/plan.dto';
 import type { CreatePlanDto } from '../dto/request/create-plan.dto';
@@ -35,7 +35,7 @@ export class PlanService {
   }
 
   // Creates a new plan; throws ConflictException on duplicate code
-  async create(dto: CreatePlanDto): Promise<PlanDto> {
+  async create(dto: CreatePlanDto): Promise<SuccessResponseDto> {
     const existing = await this.planRepository.findByCode(dto.code);
     if (existing) {
       throw new ConflictException({
@@ -46,7 +46,7 @@ export class PlanService {
     }
     const plan = await this.planRepository.create(dto);
     this.logger.log(`Created plan: ${plan.name} (${plan.id})`);
-    return PlanDto.from(plan);
+    return { success: true, message: 'Plan created successfully.' };
   }
 
   // Returns all plans mapped to DTOs with price counts
@@ -68,7 +68,7 @@ export class PlanService {
   }
 
   // Updates a plan by ID; throws NotFoundException if not found, ConflictException on duplicate code
-  async update(id: string, dto: UpdatePlanDto): Promise<PlanDto> {
+  async update(id: string, dto: UpdatePlanDto): Promise<SuccessResponseDto> {
     const existing = await this.planRepository.findById(id);
     if (!existing) {
       throw new NotFoundException('Plan not found.');
@@ -85,24 +85,24 @@ export class PlanService {
     }
     const plan = await this.planRepository.update(id, dto);
     this.logger.log(`Updated plan: ${plan.name} (${plan.id})`);
-    return PlanDto.from(plan);
+    return { success: true, message: 'Plan updated successfully.' };
   }
 
-  // Deletes a plan by ID; throws NotFoundException if not found, BadRequestException if prices exist
-  async delete(id: string): Promise<PlanDto> {
+  // Deletes a plan by ID; throws NotFoundException if not found, ConflictException if referenced
+  async delete(id: string): Promise<SuccessResponseDto> {
     const existing = await this.planRepository.findById(id);
     if (!existing) {
       throw new NotFoundException('Plan not found.');
     }
     const referenced = await this.planRepository.isReferenced(id);
     if (referenced) {
-      throw new BadRequestException({
-        label: 'Cannot Delete Plan',
-        detail: 'This plan is in use (prices or deployments reference it). Remove all associated data before deleting.',
+      throw new ConflictException({
+        label: 'Plan In Use',
+        detail: `Cannot delete "${existing.name}" — it has prices or deployment assignments. Remove those first.`,
       });
     }
-    const plan = await this.planRepository.delete(id);
-    this.logger.log(`Deleted plan: ${plan.name} (${plan.id})`);
-    return PlanDto.from(plan);
+    await this.planRepository.delete(id);
+    this.logger.log(`Deleted plan: ${existing.name} (${existing.id})`);
+    return { success: true, message: 'Plan deleted successfully.' };
   }
 }

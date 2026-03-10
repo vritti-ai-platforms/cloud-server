@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Logger, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { SelectOptionsQueryDto, type SelectQueryResult } from '@vritti/api-sdk';
+import { SelectOptionsQueryDto, type SelectQueryResult, SuccessResponseDto } from '@vritti/api-sdk';
 import { ApiCreatePlan, ApiDeletePlan, ApiFindAllPlans, ApiFindPlansSelect, ApiFindPlanById, ApiUpdatePlan } from '../docs/plan.docs';
 import { PlanDto } from '../dto/entity/plan.dto';
 import { PlansResponseDto } from '../dto/response/plans-response.dto';
@@ -20,7 +20,7 @@ export class PlanController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiCreatePlan()
-  create(@Body() dto: CreatePlanDto): Promise<PlanDto> {
+  create(@Body() dto: CreatePlanDto): Promise<SuccessResponseDto> {
     this.logger.log('POST /admin-api/plans');
     return this.planService.create(dto);
   }
@@ -52,7 +52,7 @@ export class PlanController {
   // Updates a plan by ID
   @Patch(':id')
   @ApiUpdatePlan()
-  update(@Param('id') id: string, @Body() dto: UpdatePlanDto): Promise<PlanDto> {
+  update(@Param('id') id: string, @Body() dto: UpdatePlanDto): Promise<SuccessResponseDto> {
     this.logger.log(`PATCH /admin-api/plans/${id}`);
     return this.planService.update(id, dto);
   }
@@ -61,7 +61,7 @@ export class PlanController {
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
   @ApiDeletePlan()
-  delete(@Param('id') id: string): Promise<PlanDto> {
+  delete(@Param('id') id: string): Promise<SuccessResponseDto> {
     this.logger.log(`DELETE /admin-api/plans/${id}`);
     return this.planService.delete(id);
   }

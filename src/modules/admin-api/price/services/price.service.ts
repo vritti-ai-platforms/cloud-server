@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ConflictException, DataTableStateService, type FieldMap, FilterProcessor, NotFoundException } from '@vritti/api-sdk';
+import { ConflictException, DataTableStateService, type FieldMap, FilterProcessor, NotFoundException, SuccessResponseDto } from '@vritti/api-sdk';
 import { and } from '@vritti/api-sdk/drizzle-orm';
 import { cloudProviders, prices, regions } from '@/db/schema';
 import { PriceDto } from '../dto/entity/price.dto';
@@ -27,7 +27,7 @@ export class PriceService {
   ) {}
 
   // Creates a new price, rejecting duplicate plan+industry+region+provider combinations
-  async create(dto: CreatePriceDto): Promise<PriceDto> {
+  async create(dto: CreatePriceDto): Promise<SuccessResponseDto> {
     const existing = await this.priceRepository.findByComposite(dto.planId, dto.industryId, dto.regionId, dto.providerId);
     if (existing) {
       throw new ConflictException({
@@ -37,7 +37,7 @@ export class PriceService {
     }
     const price = await this.priceRepository.create(dto);
     this.logger.log(`Created price: ${price.id}`);
-    return PriceDto.from(price);
+    return { success: true, message: 'Price created successfully.' };
   }
 
   // Returns all prices mapped to DTOs
@@ -75,23 +75,24 @@ export class PriceService {
   }
 
   // Updates a price by ID; throws NotFoundException if not found
-  async update(id: string, dto: UpdatePriceDto): Promise<PriceDto> {
+  async update(id: string, dto: UpdatePriceDto): Promise<SuccessResponseDto> {
     const existing = await this.priceRepository.findById(id);
     if (!existing) {
       throw new NotFoundException('Price not found.');
     }
     const price = await this.priceRepository.update(id, dto);
     this.logger.log(`Updated price: ${price.id}`);
-    return PriceDto.from(price);
+    return { success: true, message: 'Price updated successfully.' };
   }
 
   // Deletes a price by ID; throws NotFoundException if not found
-  async delete(id: string): Promise<PriceDto> {
-    const price = await this.priceRepository.delete(id);
-    if (!price) {
+  async delete(id: string): Promise<SuccessResponseDto> {
+    const existing = await this.priceRepository.findById(id);
+    if (!existing) {
       throw new NotFoundException('Price not found.');
     }
-    this.logger.log(`Deleted price: ${price.id}`);
-    return PriceDto.from(price);
+    await this.priceRepository.delete(id);
+    this.logger.log(`Deleted price: ${id}`);
+    return { success: true, message: 'Price deleted successfully.' };
   }
 }
